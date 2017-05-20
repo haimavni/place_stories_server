@@ -18,13 +18,15 @@ myconf = AppConfig(reload=True)
 
 def __open_db():
 
-    def get_dbname(): #database name depends on folder such as dev, test, www etc.
-        dbname = request.application
-        realpath = os.path.realpath('.')
-        lst = realpath.split('/')
-        return lst[-2]
+    #def get_dbname(): #database name depends on folder such as dev, test, www etc.
+        #dbname = request.application
+        #realpath = os.path.realpath('.')
+        #lst = realpath.split('/')
+        #return lst[-2]
 
-    dbname = get_dbname()
+    #dbname = get_dbname()
+    ##dbname = request.application
+    dbname = "gbs_dev"
     adapter = 'psycopg2:'
     _debugging = False ###request.function not in ('whats_up', 'log_file_data')
     try:
