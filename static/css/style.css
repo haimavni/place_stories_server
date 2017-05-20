@@ -1,0 +1,93 @@
+.flatlist ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333333;
+}
+
+.flatlist ul li {
+    float: right;
+}
+
+.flatlist ul li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 16px;
+    text-decoration: none;
+}
+
+.flatlist ul li a:hover {
+    background-color: #111111;
+}
+
+div.toolbar ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #lightgrey;
+    height: 40px;
+    margin-bottom: 20px;
+    padding-bottom:8px;
+}
+
+div.toolbar ul li {
+    float: right;
+    height: 32px;
+}
+
+div.toolbar ul li a {
+    display: block;
+    color: black;
+    text-align: center;
+    padding: 16px;
+    text-decoration: none;
+}
+
+div.toolbar ul li a:hover {
+    background-color: #eeeeee;
+}
+
+
+table.noborder
+{
+    border: 0;
+}
+
+table.noborder tr
+{
+    border: 0;
+}
+table.noborder tr td
+{
+    border: 0;
+}
+
+.rtl{
+    dir=rtl;
+}
+
+.family-chains button
+{
+    min-width: 130px;
+    border-radius:5px;
+}
+.family-chains ul
+{
+    list-style-type: none;
+    /*margin: 10px;*/
+    /*padding: 10px;*/
+}
+.family-chains ul li
+{
+    float: right;
+    margin:5px;
+}
+
+.relation-kind
+{
+    padding-left: 15px;
+    padding-right: 15px;
+}

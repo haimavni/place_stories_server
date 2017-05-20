@@ -1,0 +1,89 @@
+{! extend 'layout.html' !}
+
+<div class="container">
+
+<div class="container {!= direction !}" id="container1">
+    <div class="row centered-form">
+        <div class="col-xs-12 col-sm-8 col-md-4 col-sm-offset-2 col-md-offset-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title text-center">{!= T('Please Register') !}</h3>
+                </div>
+                <div class="panel-body">
+                    <form role="form">
+                        <div class="form-group">
+                            <input type="text" name="first_name" id="first_name" class="form-control input-sm" 
+                                placeholder="{!= T('First Name') !}" ng-model="user_info.first_name">
+                        </div>
+
+                        <div class="form-group">
+                            <input type="text" name="{!= T('last_name') !}" id="last_name" class="form-control input-sm" 
+                                placeholder="{!= T('Last Name') !}" ng-model="user_info.last_name">
+                        </div>
+                    
+                        <div class="form-group">
+                            <input type="email" name="email" id="email" class="form-control input-sm lowercase" 
+                                placeholder="{!= T('Email Address') !}" ng-model="user_info.email">
+                        </div>
+                                                            
+                        <div class="row">
+                            <div class="col-xs-6 col-sm-6 col-md-6">
+                                <div class="form-group">
+                                    <input type="password" name="password" id="password" class="form-control input-sm" 
+                                        placeholder="{!= T('Password') !}" 
+                                        ng-model="user_info.password"
+                                        ng-change="verify_password_ascii()">
+                                </div>
+                            </div>
+                            <div class="col-xs-6 col-sm-6 col-md-6" ng-show="user_info.password != password2">
+                                <div class="form-group">
+                                    <input type="password" name="password_confirmation" 
+                                    id="password_confirmation" class="form-control input-sm" 
+                                    placeholder="{!= T('Confirm Password') !}" ng-model="password2">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-info btn-block" ng-click="register_user()" ng-show="!email_sent">{!= T('Register') !}</button>
+                    </form>
+                    <div ng-show="email_sent">
+                        <div ng-class="email_sent">
+                            <p>{!= T('To complete your registration, please check your email inbox.') !}</p>
+                            <p>{!= T('If you do not find email from ') !}<b>Coolano Technologies</b>, {!= T('check your spam box.') !}</p>
+                            <p>{!= T('You can now close this window.') !}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.email_sent
+{
+    color:white;
+    margin-top: 10px;
+    padding-left:10px;
+    padding-top:4px;
+    min-height:2em;
+    background-color:green;
+}
+        
+#container1 {
+    background-color: #e2dada;
+}
+
+.centered-form {
+    margin-top: 120px;
+    margin-bottom: 120px;
+}
+
+.centered-form .panel {
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: rgba(0, 0, 0, 0.3) 20px 20px 20px;
+}
+</style>
+<!-- Registration Form - END -->
+
+</div>

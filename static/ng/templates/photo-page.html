@@ -1,0 +1,22 @@
+<style>
+    img.centered 
+    {
+        display: block;
+        margin: auto auto;
+    }
+</style>
+<div class="row" dir="rtl">
+    <h3>{{photo_info.name}}</h3>
+</div>
+<div class="row">
+    <!--<div class="col-md-12" ng-style="{'background-image': 'url(' + photo_info.photo_url + ')'}">-->
+         <!--Photo here-->
+    <!--</div>-->
+    <img class="centered" ng-src="{{photo_info.photo_url}}" height="500">
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div dir="rtl" ng-bind-html="story_info.story_text">
+        </div>
+    </div>
+</div>

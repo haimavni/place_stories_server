@@ -1,0 +1,22 @@
+{! extend 'layout.html' !}
+
+<div ng-include="'/gbs/static/ng/templates/member-page.html'" ng-controller="MemberCtrl" ng-show="state.selected == 'members' && has_item['members']">
+</div>
+
+<div ng-include="'/gbs/static/ng/templates/story-page.html'" ng-controller="StoryCtrl" ng-show="state.selected == 'stories' && has_item['stories']">
+</div>
+
+<div ng-include="'/gbs/static/ng/templates/term-page.html'" ng-controller="TermCtrl" ng-show="state.selected == 'terms' && has_item['terms']">
+</div>
+
+<div ng-include="'/gbs/static/ng/templates/event-page.html'" ng-controller="EventCtrl" ng-show="state.selected == 'events' && has_item['events']">
+</div>
+
+<div ng-include="'/gbs/static/ng/templates/photo-page.html'" ng-controller="PhotoCtrl" ng-show="state.selected == 'photos' && has_item['photos']">
+</div>
+
+<div ng-include="'/gbs/static/ng/templates/access_manager_page.html'" ng-controller="AccessManagerCtrl" ng-show="state.selected == 'access_manager'">
+</div>
+
+<div ng-include="'/gbs/static/ng/templates/chat-page.html'" ng-controller="ChatroomsCtrl" ng-show="state.selected == 'chat'">
+</div>

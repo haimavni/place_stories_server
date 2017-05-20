@@ -1,0 +1,50 @@
+<style>
+    i.is_active
+    {
+        font-weight: bold;
+        color: orange;
+    }
+    h3.center
+    {
+        text-align: center;
+    }
+    i.selected-file
+    {
+        color: orange;
+    }
+</style>
+
+<div class="row" style="padding:5px;max-height:800px;">
+    <div class="col-sm-3" style="height:100%;">
+        <h3 class="center">Log Files</h3>
+        <table tr-ng-grid="" items="log_files" page-items="15">
+            <thead>
+                <tr>
+                    <th field-name="fn" display-name="File Name"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="center">
+                        <a href="#" popover="Delete" popover-trigger="mouseenter" ng-click="delete_log_file(gridItem.fn)">
+                            <i class="fa fa-trash-o"></i>
+                        </a>
+                    </td>
+                    <td class="center">
+                        <a href="#" popover="Download" popover-trigger="mouseenter" ng-click="download_log_file(gridItem.fn)">
+                            <i class="fa fa-download"></i>
+                        </a>
+                    </td>
+                    <td class="border-right center">
+                        <a href="" ng-click="show_log_file(gridDisplayItem.fn)"><i class="fa fa-play fa-lg" ng-class="{'selected-file fa-2x': gridDisplayItem.fn==displayed_log_file}"></i></a>
+                    </td> 
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="col-sm-9" style="height:100%;">
+        <h3 class="center">{{ displayed_log_file }}</h3>
+        <div ng-bind-html="log_html" style="max-height:700px;overflow:auto;width:100%;">
+        </div>
+    </div>
+</div>

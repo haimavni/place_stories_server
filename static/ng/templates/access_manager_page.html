@@ -1,0 +1,135 @@
+<style>
+    i.is_active
+    {
+        font-weight: bold;
+        color: orange;
+    }
+    h3.center
+    {
+        text-align: center;
+    }
+</style>
+
+<div class="container main-container" style="padding:5px;max-height:800px;overflow:auto;" ng-controller="AccessManagerCtrl" >
+    <div class="col-sm-9" style="height:100%;">
+        <h3 class="center">Access Manager</h3>
+        <a href class="btn btn-primary" ng-click="add_or_update()"style="margin-bottom:1em;">Add User</a>
+        <table tr-ng-grid="" items="authorized_users" page-items="15">
+            <thead>
+                <tr>
+                    <th field-name="id" display-name="ID" cell-width="4em"></th>
+                    <th field-name="email" display-name="Email"></th>
+                    <th field-name="first_name" display-name="First Name"></th>
+                    <th field-name="last_name" display-name="Last Name"></th>
+                    <th field-name="created_on" display-name="Created" display-format="truncdate" cell-width="7em"></th>
+                    <th field-name="status" display-name="Confirmed?" cell-width="4em"></th>
+                    <!--<th display-format="" field-name='roles'></th>-->
+                    <th cell-width="10em" display-align="center">
+                        <div class="tr-ng-title">
+                            Privileges
+                        </div>
+                    </th>
+                    <th cell-width="5em" display-align="center">
+                        <div class="tr-ng-title">
+                            Edit
+                        </div>
+                    </th>
+                    <th cell-width="4em" display-align="center">
+                        <div class="tr-ng-title">
+                            Delete
+                        </div>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="center">
+                        <span ng-repeat="r in gridItem.roles">
+                            <a href ng-attr-title="{{r.role_title}}" ng-click="toggle_membership(r, gridItem.id)">
+                                <i class="fa" ng-class="role_class(r)"></i>
+                            </a>
+                        </span>
+                    </td>
+                    <td class="center">
+                        <a href ng-click="add_or_update(gridItem)">
+                            <i class="fa fa-pencil" title="Edit User Data" ></i>
+                        </a>
+                        <a href ng-click="display_customer_data(gridItem.id)">
+                            <i class="fa fa-user" title="Display User Data" ></i>
+                        </a>
+                    </td>
+                    <td class="center">
+                        <a href g-click="resend_verification_email(gridItem.id)" ng-show="gridItem.status=='Unconfirmed'">
+                            <i class="fa fa-envelope" ng-attr-title="Resend Verification Email"  ></i>
+                        </a>
+                        <a href ng-attr-title="Delete" ng-click="delete_user(gridItem)">
+                            <i class="fa fa-trash-o"></i>
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script type="text/ng-template" id="add_or_update_template">
+    <div class="ngdialog-message">
+        <h3>User Information</h3>
+        <form class="form-horizontal" role="form">
+            <div class="form-group">
+                <label for="inputFirstName3" class="col-sm-4 control-label">First Name</label>
+                <div class="col-sm-8">
+                    <input type="text" class="form-control" id="inputFirstName3" placeholder="First Name" ng-model="curr_user.first_name">
+                </div>
+            </div>
+        <div class="form-group">
+            <label for="inputLastName3" class="col-sm-4 control-label">Last Name</label>
+            <div class="col-sm-8">
+                <input type="text" class="form-control" id="inputLastName3" placeholder="Last Name" ng-model="curr_user.last_name">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="inputEmail3" class="col-sm-4 control-label">Email</label>
+            <div class="col-sm-8">
+                <input type="email" class="form-control lowercase" id="inputEmail3" placeholder="Email" ng-model="curr_user.email">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="inputPassword3" class="col-sm-4 control-label">Password</label>
+            <div class="col-sm-8">
+                <input type="text" class="form-control" id="inputPassword3" placeholder="Password" ng-model="curr_user.password">
+            </div>
+        </div>
+    </form>			
+    </div>
+    <div class="ngdialog-buttons">
+        <button type="button" class="btn btn-primary" ng-click="save()">Save</button>
+        <button type="button" class="btn btn-info" ng-click="closeThisDialog('button')">Cancel</button>
+    </div>
+</script>
+
+<script type="text/ng-template" id="display_customer_data">
+    <div class="ngdialog-message">
+        <h3>Customer Information</h3>
+        <form class="form-horizontal" role="form">
+            <div class="form-group" ng-repeat="c in customer_info">
+                <label class="col-sm-4 control-label">{{ c.label }}</label>
+                <div class="col-sm-8">
+                    {{ c.data }}                
+                </div>
+            </div>
+        </form>
+    </div>
+</script>
+
+<script type="text/ng-template" id="delete_user_template">
+<div class="ngdialog-message">
+    <h3>Delete User</h3>
+        <p>User {{user_to_delete.first_name}} {{user_to_delete.last_name}} will be deleted.</p>
+        <p>Are you sure?</p>
+        </div>
+    <div class="ngdialog-buttons">
+    <button type="button" class="btn btn-primary" ng-click="confirm()">Delete</button>
+        <button type="button" class="btn btn-info" ng-click="closeThisDialog('button')">Cancel</button>
+        </div>
+    </script>

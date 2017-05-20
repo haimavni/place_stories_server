@@ -1,0 +1,60 @@
+<style>
+    div.box
+    {
+        overflow-y: auto;
+        max-height: 780px;
+        margin-bottom: 10px;
+        padding: 5px;
+    }
+    a:disabled
+    {
+        color: lightgray;
+        background: yellow;
+    }
+</style>
+<div ng-controller="ChatroomsCtrl" dir="rtl">
+    <div class="row">
+        <div class="col-md-4">
+        </div>
+        <div class="col-md-1" style="padding-top:5px;">
+            <a href ng-show="chatrooms.length > chats_per_page" ng-click="move_left()" ng-disabled="! can_move_left()">
+                <i class="fa fa-chevron-left fa-lg"></i>
+            </a>
+        </div>
+        <div class="col-md-2" style="text-align:center">
+            <h3 style="margin-top: 0">{{T.chats}}</h3>
+        </div>
+        <div class="col-md-1" ng-if="privileges.CHAT_MODERATOR" style="padding-top:5px;">
+            <a href style="padding:0;margin:0;height:32px;float:left;" ng-click="add_chatroom()">
+                <i class="fa fa-2x" ng-class="{'fa-floppy-o' : new_chatroom_name_visible, 'fa-plus' : ! new_chatroom_name_visible}"></i>
+            </a>
+        </div>
+        <div class="col-md-2" style="text-align:center" ng-show="new_chatroom_name_visible">
+            <form class="form-horizontal" role="form">
+                <div class="col-md-3" style="margin:5px;">
+                    <input style="font-size: 95%;margin-bottom:3px;float: left;width: 200px;height:28px;" dir="rtl" 
+                        type="text" ng-model="new_chatroom_name" placeholder="enter chatroom name" 
+                        class="form-control input-small" />
+               </div>
+            </form>
+        </div>
+        <div class="col-md-1" style="padding-top:5px;">
+            <a href ng-show="chatrooms.length > chats_per_page" ng-click="move_right()" ng-disabled="! can_move_right()" >
+                <i class="fa fa-chevron-right fa-lg"></i>
+            </a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div ng-repeat="chatroom in chatrooms track by $index">
+                <div ng-include="'/gbs/static/ng/templates/chatroom.html'" 
+                    ng-show="first_chatroom_number <= $index && $index < first_chatroom_number + chats_per_page"
+                    ng-controller="ChatCtrl"
+                    ng-if="true"
+                    onload="room_number=chatroom.id;room_index=$index;read_chatroom()"
+                    class="col-md-3" >
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

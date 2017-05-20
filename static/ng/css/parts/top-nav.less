@@ -1,0 +1,129 @@
+
+
+@import "config";
+
+.navbar-default {
+
+	height: 50px;
+	z-index: 1;
+	.gradient(@default-blue-color, #0185db, #007dcf);
+	.border-radius(0, 0, 0, 0);
+
+	border:none;
+	margin-bottom:0;
+//	.nav {
+//		.open {
+//			a {
+//				background-color: transparent !important;
+//			}
+//		}
+//	}
+	.navbar-nav {
+		li.menu-item {
+			&> a {
+				color:#fff;
+				padding-top: 18px;
+				height: 50px;
+				text-shadow: none;
+				font-weight: normal;
+				&:hover {
+					color: #FFFFFF;
+					background: lighten(saturate(@default-blue-color, -20%), 4%);
+				}
+			}
+			&.active {
+				&> a {
+					font-weight:bold;
+					.gradient(@default-orange-color, #fd9b14, #ff7000);
+					color: #fff;
+					&:focus {
+						background-color:@default-orange-color;
+						color: #fff;
+					}
+					&:after {
+						content: '';
+						position: absolute;
+						border-style: solid;
+						border-width: 5px 5px 0;
+						border-color: #fd9b14 transparent;
+						display: block;
+						width: 0;
+						z-index: 1;
+						right: 48%;
+						bottom: -5px;
+					}
+					&:hover {
+						background: lighten(@default-orange-color, 5%);
+						color: #fff;
+						&:after {
+							border-color: lighten(@default-orange-color, 5%) transparent;
+						}
+					}
+				}
+
+			}
+		}
+
+		.dropdown-alt {
+			a {
+				&:hover {
+					opacity:.8;
+					color: @default-text-color;
+				}
+			}
+			.dropdown-menu {
+				top: 85%;
+				border-radius: 5px;
+				a {
+					color:@default-text-color;
+					padding: 5px 0px;
+					border-bottom:1px solid #cdcdcd;
+					margin: 0px 20px;
+				}
+				&:before {
+					content: '';
+					position: absolute;
+					border-style: solid;
+					border-width: 0 5px 5px;
+					border-color: #fff transparent;
+					display: block;
+					width: 0;
+					z-index: 1;
+					right: 10%;
+					top:-5px;
+					@media (max-width: 767px) {
+						display: none;
+					}
+				}
+			}
+		}
+	}
+	.navbar-header {
+		.navbar-brand {
+			color:#fff;
+			padding-top: 5px;
+			margin-right: 50px;
+			@media (max-width: 950px){
+				margin-right: 5px;
+			}
+			img {
+				margin-top:5px;
+				width: 112px;
+			}
+		}
+	}
+}
+
+div.search-header:hover i.fa-sort-down
+{
+	color: #0081d5;
+}
+ul.dropdown-menu:hover
+{
+	cursor: pointer;
+}
+
+div.search-title
+{
+	cursor: pointer;
+}

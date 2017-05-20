@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<!--[if (gt IE 9)|!(IE)]><!--> 
+<html class="no-js" lang="{!=T.accepted_language or 'en'!}">
+    <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <base href="/">
+        <!-- www.phpied.com/conditional-comments-block-downloads/ -->
+        <!-- Always force latest IE rendering engine
+            (even in intranet) & Chrome Frame
+            Remove this if you use the .htaccess -->
+        <meta http-equiv="X-UA-Compatible" content="IE=edge{!=not request.is_local and ',chrome=1' or ''!}">
+        <!--  Mobile Viewport Fix
+            j.mp/mobileviewport & davidbcalhoun.com/2010/viewport-metatag
+            device-width: Occupy full width of the screen in its current orientation
+            initial-scale = 1.0 retains dimensions instead of zooming out if page height > device height
+            user-scalable = yes allows the user to zoom in -->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{!=response.title or request.application!}</title>
+        <!-- http://dev.w3.org/html5/markup/meta.name.html -->
+        <meta name="application-name" content="{!=request.application!}">
+        <!-- Speaking of Google, don't forget to set your site up:
+            http://google.com/webmasters -->
+        <meta name="google-site-verification" content="">
+        <!-- include stylesheets -->
+        <link rel="stylesheet" href="{!=URL('static','css/bootstrap.min.css')!}"/>
+        <link rel="stylesheet" href="{!=URL('static','css/bootstrap-theme.min.css')!}"/>
+        <link rel="stylesheet" href="{!=URL('static','css/web2py-bootstrap3.css')!}"/>
+        <link rel="stylesheet" href="{!=URL('static','css/style.css')!}"/>
+        <link rel="shortcut icon" href="{!=URL(a=request.application, c='static', f='images/givat-brenner-logo.png')!}" type="image/x-icon">
+        <link rel="apple-touch-icon" href="{!=URL('static','images/favicon.png')!}">
+        <!-- All JavaScript at the bottom, except for Modernizr which enables
+            HTML5 elements & feature detects -->
+        <script src="{!=URL('static','js/modernizr-2.8.3.min.js')!}"></script>
+        <!--[if lt IE 9]>
+            <script src="{!=URL('static','js/respond-1.4.2.min.js')!}"></script>
+        <![endif]-->
+        <!-- Favicons -->
+        {!include 'web2py_ajax.html'!} <!-- this includes jquery.js, calendar.js/.css and web2py.js -->
+        {!include 'bower_list.html' !}
+        <script type="text/javascript" src="{!= URL(c='static/js', f='js_utils.js') !}"></script>
+        <script type="text/javascript" src="{!= URL(c='static/ng/js', f='main.js') !}"></script>
+        <script type="text/javascript" src="{!= URL(c='static/ng/js/services', f='messaging-service.js') !}"></script>
+        <script type="text/javascript" src="{!= URL(c='static/ng/js/services', f='call-server-service.js') !}"></script>
+        <script type="text/javascript" src="{!= URL(c='static/ng/js/controllers', f='main-ctrl.js') !}"></script>
+        <script type="text/javascript" src="{!= URL(c='static/ng/js/controllers', f='member-ctrl.js') !}"></script>
+        <script type="text/javascript" src="{!= URL(c='static/ng/js/controllers', f='story-ctrl.js') !}"></script>
+        <script type="text/javascript" src="{!= URL(c='static/ng/js/controllers', f='editor-ctrl.js') !}"></script>
+        <script type="text/javascript" src="{!= URL(c='static/ng/js/controllers', f='term-ctrl.js') !}"></script>
+        <script type="text/javascript" src="{!= URL(c='static/ng/js/controllers', f='event-ctrl.js') !}"></script>
+        <script type="text/javascript" src="{!= URL(c='static/ng/js/controllers', f='photo-ctrl.js') !}"></script>
+        <script type="text/javascript" src="{!= URL(c='static/ng/js/controllers', f='user-ctrl.js') !}"></script>
+        <script type="text/javascript" src="{!= URL(c='static/ng/js/controllers', f='upload-ctrl.js') !}"></script>
+        <!--<script type="text/javascript" src="{!= URL(c='static/ng/js/controllers/user', f='feedback-ctrl.js') !}"></script>-->
+        <!--<script type="text/javascript" src="{!= URL(c='static/ng/js/controllers/user', f='login-ctrl.js') !}"></script>-->
+        <script type="text/javascript" src="{!= URL(c='static/ng/js/services', f='messaging-service.js') !}"></script>
+        <script type="text/javascript" src="{!= URL(c='static/ng/js/directives', f='draganddrop.js') !}"></script>
+        <script type="text/javascript" src="{!= URL(c='static/ng/js/directives', f='regex_validate.js') !}"></script>
+        <script type="text/javascript" src="{!= URL(c='static/ng/js/filters', f='misc_filters.js') !}"></script>
+        <script type="text/javascript" src="{!= URL(c='static/ng/js/controllers', f='access_manager-ctrl.js') !}"></script>
+        <script type="text/javascript" src="{!= URL(c='static/ng/js/controllers', f='register-ctrl.js') !}"></script>
+        <script type="text/javascript" src="{!= URL(c='static/ng/js/controllers', f='upload-ctrl.js') !}"></script>
+        <script type="text/javascript" src="{!= URL(c='static/ng/js/controllers', f='plugin-scripts-ctrl.js') !}"></script>
+        <script type="text/javascript" src="{!= URL(c='static/ng/js/controllers', f='show_logs-ctrl.js') !}"></script>
+        <script type="text/javascript" src="{!= URL(c='static/ng/js/controllers', f='chat-ctrl.js') !}"></script>
+        {!block head!}{!end!}
+        {!
+        # using sidebars need to know what sidebar you want to use
+        mc0 = 'col-md-12'
+        mc1 = 'col-md-9'
+        mc2 = 'col-md-6'
+        left_sidebar_enabled = globals().get('left_sidebar_enabled', False)
+        right_sidebar_enabled = globals().get('right_sidebar_enabled', False)
+        middle_column = {0: mc0, 1: mc1, 2: mc2}[
+        (left_sidebar_enabled and 1 or 0)+(right_sidebar_enabled and 1 or 0)]
+        !}
+        <script>
+            var APP = "{!=request.application!}"
+            var BASE_URL = "{!= (request.env.http_origin or 'http://' + request.env.http_host) + '/' !}";
+            var BASE_APP_URL = BASE_URL + "{!= request.application + '/' !}";
+            console.log('setting base_url to: ' + BASE_URL);
+        </script>
+        <link rel="stylesheet" type="text/css"
+          href="https://fonts.googleapis.com/css?family=Alef">
+    </head>
+    <style>
+        body
+        {
+          font-family: 'Alef';
+        }
+        a.m_item
+        {
+            padding-right:20px;
+            padding-left:20px;
+            color:white;
+            text-decoration:none;
+        }
+        a.m_item:hover
+        {
+            font-weight: bold;
+        }
+        a.m_item.m_selected
+        {
+            background-color: black;
+        }
+        .popping
+        {
+            opacity: 0.6;
+        }
+        .popping:hover
+        {
+            opacity: 1.0;
+        }
+        div.reka::after 
+        {
+            content: "";
+            background: url(gbs/static/images/founders_group_photo.jpg) no-repeat center center;
+            background-size: cover;
+            opacity: 0.08;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            position: absolute;
+            z-index: -1;
+            min-height: 100%;
+            overflow-y: hidden;
+        }
+        div.reka-cont
+        {
+            width: 100%;
+            height: 100%;
+            min-height:720px;
+            display: block;
+            position: relative;
+            overflow-y:hidden;
+        }
+        
+        .ngdialog-theme-default.ngdialog-chat
+        {
+            padding: 0;
+        }
+        .ngdialog-theme-default.ngdialog-chat .ngdialog-content
+        {
+            width: 30%;
+            height: 90%;
+            top: 0;
+            bottom: 0;
+            margin-top: 0;
+            margin-bottom: 0;
+            margin-left: 0px;
+            padding-bottom: 0;
+            padding-top: 0;
+            padding-left: 0;
+        }
+        
+        .ngdialog-theme-default.ngdialog-scripts
+        {
+            padding: 0;
+        }
+        .ngdialog-theme-default.ngdialog-scripts .ngdialog-content
+        {
+            width: 95%;
+            height: 95%;
+            top: 0;
+            bottom: 0;
+            margin-top: 0;
+            margin-bottom: 0;
+            margin-left: 0px;
+            padding-bottom: 0;
+            padding-top: 0;
+            padding-left: 0;
+        }
+        
+    </style>
+    <body ng-app="gbs" id="ng-app" ng-controller="MainCtrl">
+        <!--[if lt IE 8]>
+        <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+        <![endif]-->
+        <!-- Navbar ======================================= -->
+        <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation"">
+            <div class="container-fluid" style="background-color: #435700;">
+                <div class="navbar-header" style="float:right;margin-top:10px;">
+                    <a href class="m_item" ng-click="do_select('main')">{!= T('main') !}</a>
+                    <a href class="m_item" ng-class="item_class('members')" ng-click="do_select('members')">{!= T('members') !}</a>
+                    <a href class="m_item" ng-class="item_class('stories')" ng-click="do_select('stories')">{!= T('stories') !}</a>
+                    <a href class="m_item" ng-class="item_class('photos')" ng-click="do_select('photos')">{!= T('photos') !}</a>
+                    <a href class="m_item" ng-class="item_class('terms')" ng-click="do_select('terms')">{!= T('terms') !}</a>
+                    <a href class="m_item" ng-class="item_class('events')" ng-click="chat('events')">{!= T('events') !}</a>
+                    <!--<div class="input-group margin-bottom-sm" style="width:200px;">-->
+                        <!--<span class="input-group-addon"><i class="fa fa-envelope-o fa-fw"></i></span>-->
+                    <span ng-if="selected_item_is_searchable()" 
+                          style="float:left;color:white;margin-top:7px;"></span>
+                    <input style="font-size: 95%;margin-bottom:3px;float: left;width: 300px;" dir="rtl" 
+                        type="text" ng-model="fd.names_filter" placeholder="&#128270; {{place_holder}}" 
+                        ng-if="selected_item_is_searchable()"
+                        class="form-control input-small" />
+                    <a href ng-if="selected_item_is_searchable()" style="float:left;color:white;margin-top:7px;margin-left:7px;"><i class="fa fa-navicon"></i></a>
+                    <!--</div>-->
+                    <div style="position:absolute;min-width:300px;z-index:999;" ng-if="fd.names_filter" dir="rtl">
+                        <div style="max-height:160px;overflow-y:auto;width:100%;background-color:lightgray;z-index:1;">
+                            <div ng-repeat="item in item_list | filter: filter_by_name">
+                                <a href ng-click="get_item_info(item.id)">{{item.name}} </a>
+                            </div>
+                        </div>
+                    </div>
+                    <img src="{!= URL(c='static', f='images/gb-stories.png')!}" />
+                    <img src="{!= URL(c='static', f='images/givat-brenner-logo.png')!}" />
+                </div>
+                <div class="collapse navbar-collapse navbar-ex1-collapse">
+                    <ul class="nav navbar-nav navbar-left popping" ng-controller="UserCtrl">
+                        <li class="menu-item"><a href="">{{ user.name }}{{ user.faked_user }}</a>
+                        </li>
+                        <li class="menu-item dropdown dropdown-alt">
+                            <a href class="dropdown-toggle" ng-click="" data-toggle="dropdown">
+                                <img src="{!= URL(c='static/ng/images', f='menu-icon.png') !}" alt="" />
+                            </a>
+                            <ul class="dropdown-menu" >
+                                <li><a href ng-click="register()"><i class="fa fa-user"></i> {!= T('Register')!}</a>
+                                </li>
+                                <li><a href ng-click="login()"><i class="fa fa-user"></i> {!= T('Login')!}</a>
+                                </li>
+                                <li><a href ng-click="profile()"><i class="fa fa-user"></i> {!= T('Profile')!}</a>
+                                </li>
+                                <li><a href ng-click="change_password()"><i class="fa fa-lock"></i> {!= T('Change Password') !}</a>
+                                </li>
+                                <!--<li ng-controller="FeedbackCtrl"><a href="" ng-click="open_feedback_form()"><i class="fa fa-envelope-o"></i>{!= T('Contact Us')!}</a>-->
+                                <!--</li>-->
+                                <li><a href ng-click="stop_faking()" ng-if="user.faked_user"><i class="fa fa-smile-o"></i> Be yourself again</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="menu-item" ng-if="user_id">
+                            <a href ng-click="logout()">{!=T('Log Out')!}</a>
+                        </li>
+                        <li class="menu-item" ng-if="! user_id">
+                            <a href ng-click="login()" >{!=T('Log In')!}</a>
+                        </li>
+                        <li class="menu-item" ng-if="privileges.EDITOR && selected_item_is_editable()">
+                            <a href ng-click="toggle_edit_mode()" ng-attr-title="{{actively_editing ? T.view : T.edit}}">
+                                <i class="fa" ng-class="{'fa-eye': actively_editing, 'fa-pencil': ! actively_editing}"></i>
+                            </a>
+                        </li>
+                        <li class="menu-item" ng-if="privileges.EDITOR && selected_item_is_searchable()">
+                            <a href ng-click="add_item()" title="Add">
+                                <i class="fa fa-plus"></i>
+                            </a>
+                        </li>
+                        <li class="menu-item" ng-if="privileges.PHOTO_UPLOADER">
+                            <a href ng-click="upload_photos()" title="Upload photos">
+                                <i class="fa fa-upload"></i>
+                            </a>
+                        </li>
+                        <li class="menu-item dropdown dropdown-alt" ng-if="privileges.ADMIN || privileges.ACCESS_MANAGER">
+                            <a href class="dropdown-toggle" ng-click="" data-toggle="dropdown">
+                                <i class="fa fa-cogs"> {!= T('Admin') !} </i>
+                            </a>
+                            <ul class="dropdown-menu" >
+                                <li class="menu-item" ng-if="privileges.ACCESS_MANAGER">
+                                    <a href ng-click="do_select('access_manager')" title="Access Manager">
+                                        <i class="fa fa-cogs"> {!= T('Access Manager') !} </i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+
+                        <li class="menu-item dropdown dropdown-alt" ng-if="privileges.DEVELOPER">
+                            <a href class="dropdown-toggle" ng-click="" data-toggle="dropdown">
+                                <i class="fa fa-cogs"> {!= T('Developer') !} </i>
+                            </a>
+                            <ul class="dropdown-menu" >
+                                <li class="menu-item" ng-if="privileges.ACCESS_MANAGER">
+                                    <a href ng-click="do_select('access_manager')" title="Access Manager">
+                                        <i class="fa fa-cogs"> {!= T('Access Manager') !} </i>
+                                    </a>
+                                </li>
+                                <li class="menu-item" ng-if="privileges.DEVELOPER">
+                                    <a href ng-click="show_log_files()" title="{!= T('Show Log Files')!}">
+                                        <i class="fa fa-cogs"> {!= T('Show Log Files') !} </i>
+                                    </a>
+                                </li>
+                                <li class="menu-item" ng-if="privileges.DEVELOPER">
+                                    <a href ng-click="ad_hoc_script()" title="{!= T('Ad Hoc Scripts')!}">
+                                        <i class="fa fa-cogs"> {!= T('Ad Hoc Scripts') !} </i>
+                                    </a>
+                                </li>
+                             </ul>
+                        </li>
+                        <li class="menu-item" ng-if="privileges.CHATTER">
+                            <a href ng-click="do_select('chat')" title="{!=T('Discussion Groups') !}">
+                            <i class="fa fa-group"></i>
+                            </a>
+                        </li>
+                    </ul>
+                    {!if False and response.menu:!}
+                    {!=MENU(response.menu, _class='nav navbar-nav',li_class='dropdown',ul_class='dropdown-menu')!}
+                    {!pass!}
+                </div>
+            </div>
+        </nav>
+        <!-- Masthead ===================================== -->    
+        {!block header!}
+        {!end!}
+        <!-- Main ========================================= -->
+        <!-- Begin page content -->
+        <div class="container-fluid">
+            <div class="reka-cont">
+                <div class="reka">
+                    {!if left_sidebar_enabled:!}
+                    <div class="col-md-3 left-sidebar">
+                        {!block left_sidebar!}
+                        <h3>Left Sidebar</h3>
+                        <p></p>
+                        {!end!}
+                    </div>
+                    {!pass!}
+                    <div class="{!=middle_column!}">
+                        {!block center!}
+                        {!include!}
+                        {!end!}
+                    </div>
+                    {!if right_sidebar_enabled:!}
+                    <div class="col-md-3">
+                        {!block right_sidebar!}
+                        <h3>Right Sidebar</h3>
+                        <p></p>
+                        {!end!}
+                    </div>
+                    {!pass!}
+                </div>
+                <div ng-if="show_working" style="z-index:9999; position: absolute; top: 48%; left: 48%;">
+                    <img ng-src="{!= URL('static', 'images/working.gif') !}" />
+                </div>
+            </div>
+        </div>
+        {! pass !}
+        {!block footer!} <!-- this is default footer -->      
+        <footer class="footer">
+            <div class="container-fluid">
+                <div class="copyright pull-left">{!=T('Copyright')!} &#169; {!=request.now.year!}</div>
+                <div id="poweredBy" class="pull-right">
+                    {!=T('Powered by')!}
+                    <a href="http://www.web2py.com/">web2py</a>
+                </div>
+            </div>
+        </footer>
+        {!end!}
+        <!-- The javascript =============================== -->
+        <script src="{!=URL('static','js/bootstrap.min.js')!}"></script>
+        <script src="{!=URL('static','js/web2py-bootstrap3.js')!}"></script>
+        {!block page_js!}{!end page_js!}
+        {!if response.google_analytics_id:!}
+        <!-- Analytics ==================================== -->
+        <script src="{!=URL('static','js/analytics.min.js')!}"></script>
+        <script type="text/javascript">
+            analytics.initialize({
+            'Google Analytics':{trackingId:'{!=response.google_analytics_id!}'}
+            });
+
+        </script>
+        {!pass!}
+        <!-- Share ============================y============ -->
+        <script src="{!=URL('static','js/share.js',vars=dict(static=URL('static','images')))!}"></script>
+        <toaster-container toaster-options="{'time-out': 30000, 'close-button':true, 'position-class': 'toast-center'}"></toaster-container>
+    </body>
+</html>

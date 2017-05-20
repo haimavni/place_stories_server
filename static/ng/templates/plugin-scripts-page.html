@@ -1,0 +1,35 @@
+<div class="row" style="padding:15px;">
+    <div class="col-md-5">
+        <h2 class="center">Script</h2>
+        <div class="row toolbar">
+            <div class="col-md-10" style="padding-left:20px">
+                <div class="btn-group" style="margin-bottom:15px;">
+                    <button class="btn btn-primary" ng-click="evaluate_script($scope.code)">
+                        Evaluate
+                    </button>
+                    <button type="button" tabindex="-1" class="btn btn-default" ng-click="prev_code($scope.code)" ng-disabled="prev_disabled" >
+                        <i class="fa fa-large fa-chevron-left" ></i>
+                    </button> 
+                    <button type="button" tabindex="-1" class="btn btn-default" ng-click="next_code($scope.code)" ng-disabled="next_disabled" >
+                        <i class="fa fa-large fa-chevron-right" ></i>
+                    </button> 
+                    <button type="button" tabindex="-1" class="btn btn-default" ng-click="delete($scope.code)" >
+                        <i class="fa fa-large fa-trash" ></i>
+                    </button> 
+                    <i class="fa fa-search"> </i>
+                    <input type="text" ng-model="like" class="fa fa-search" style="height:2.3em;border-radius:0.5em;" ng-change="prev_code($scope.code)"></input>
+                </div>
+           </div>
+        </div>
+        <textarea ng-model="code" cols="80%" rows="35" 
+            style="padding:5px;font-size:14px;font-family:courier;line-height:18px;" 
+            placeholder="Type Python code. All globals are available.">
+        </textarea>
+    </div>
+    <div class="col-md-7">
+        <h2 class="center">Results</h2>
+        <div style="border:1px solid white;height:700px;padding:5px;overflow:auto;background-color:lightgray" json-human="results">
+        </div>
+    </div>
+    
+</div>

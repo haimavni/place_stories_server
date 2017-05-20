@@ -1,0 +1,68 @@
+{! extend 'Layout.html' !}
+<div class="navbar navbar-default" role="navigation">
+    <div class="navbar-header">
+        <a class="navbar-brand" href="#"><img src="{!= URL(c='static/ng/images', f='coolano-logo.png') !}" alt=""/></a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="container" id="container1">
+        <div class="row centered-form">
+            <div class="col-xs-12 col-sm-8 col-md-4 col-sm-offset-2 col-md-offset-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title text-center">Please Login</h3>
+                    </div>
+                    <div class="panel-body">
+                        <form role="form">
+                            <div class="form-group">
+                                <input type="email" name="email" id="email" class="form-control input-sm lowercase" placeholder="Email Address">
+                            </div>
+                            <div class="form-group">
+                                <input type="password" name="password" id="password" class="form-control input-sm" placeholder="Password">
+                            </div>
+                            <br><br>
+                            <input type="submit" id="login" name="login" value="Login" class="btn btn-primary btn-block">
+                            <input type="submit" id="register" name="register" value="Register to Coolano" class="btn btn-info btn-block">
+                            <input type="submit" id="reset_password" name="reset_password" value="Reset your password" class="btn btn-info btn-block">
+                        </form>
+                        <div class = "status {!= status !}">
+                            {!= message !}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .status
+        {
+            color:white;
+            margin-top: 10px;
+            padding-left:10px;
+            padding-top:4px;
+            min-height:2em;
+        }
+        .status.success
+        {
+            background-color:green;
+        }
+        .status.error
+        {
+            background-color:red;
+        }
+        #container1 {
+            background-color: #e2dada;
+        }
+        .centered-form {
+            margin-top: 120px;
+            margin-bottom: 120px;
+        }
+        .centered-form .panel {
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: rgba(0, 0, 0, 0.3) 20px 20px 20px;
+        }
+    </style>
+
+</div>

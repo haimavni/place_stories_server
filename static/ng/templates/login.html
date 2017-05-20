@@ -1,0 +1,58 @@
+<div class="row centered-form">
+    <div class="col-md-10 col-md-offset-1">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title text-center">{{T.please_login}}</h3>
+            </div>
+            <div class="panel-body">
+                <form role="form">
+                    <div class="form-group">
+                        <input type="email" name="email" id="email" class="form-control input-sm lowercase"  
+                               ng-model="user_email" placeholder="{{T.email_address}}">
+                    </div>
+                    <div class="form-group">
+                        <input type="password" name="password" id="password" class="form-control input-sm" 
+                                ng-model="password" ng-attr-placeholder="{{T.password}}">
+                    </div>
+                    <button id="login" name="login" class="btn btn-primary btn-block" ng-click="do_login()">{{T.login}}</button>
+                    <button id="register" name="register" class="btn btn-info btn-block">{{T.register}}</button>
+                    <button id="reset_password" name="reset_password" class="btn btn-info btn-block">{{T.reset_password}}</button>
+                </form>
+                <div class = "status {!= status !}">
+                    {!= message !}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .status
+    {
+        color:white;
+        margin-top: 10px;
+        padding-left:10px;
+        padding-top:4px;
+        min-height:2em;
+    }
+    .status.success
+    {
+        background-color:green;
+    }
+    .status.error
+    {
+        background-color:red;
+    }
+    #container1 {
+        background-color: #e2dada;
+    }
+    .centered-form {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+    .centered-form .panel {
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: rgba(0, 0, 0, 0.3) 20px 20px 20px;
+    }
+</style>
+
