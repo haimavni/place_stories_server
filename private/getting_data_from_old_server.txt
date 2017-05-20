@@ -1,0 +1,11 @@
+1. Use remote desktop to connect to givat-brenner.co.il
+2. login: name is "mazkir" and password is 9443111
+3. Press "start" -> programs -> microsoft sql server -> import and export database
+4. select Database "GBS_DB" and Next
+5. select destination: microsoft excell 97-2000
+6. browse to select location. d:\HaimFiles is a good option
+7. Use filezilla to download. place the file in a folder in the folder shared with ubuntu
+8. use "XLS to CSV Converter" which is located on the shared folder to extract csv files.
+9. delete unnecessary csvs - the ones burried under old_db.
+10. now run the port_old_db controller (make sure the files are where it looks for them)
+

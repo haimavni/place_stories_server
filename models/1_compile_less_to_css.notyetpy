@@ -1,0 +1,40 @@
+"""
+Compiles all 'LESS' stylesheets including bootstrap source
+into a CSS file. Uses the Node.js Less compiler under
+private/node.js/.
+"""
+import os
+import subprocess
+
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+COMPILER = '{root}/private/node.js/bin/node {root}/private/node.js/node_modules/less/bin/lessc --yui-compress '.format(root=PROJECT_ROOT)
+COMPILER = '/usr/bin/lessc --compress '
+
+# (Input file, Output file, (Additional Dependency files,)) tuples to compile
+COMPILE_SOURCES = (
+    ('/static/ng/css/main.less', '/static/ng/css/main.css', (
+            '/static/ng/css/parts/config.less',
+            '/static/ng/css/parts/top-nav.less',
+            '/static/ng/css/parts/footer.less',
+            '/static/ng/css/parts/search-panel.less',
+            '/static/ng/css/parts/dashboard.less',
+            '/static/ng/css/parts/search-result.less',        
+        )
+    ),    
+)
+
+def _compile_less_to_css(compiler, root, sources):
+    for (input, output, deps) in sources:
+        deps = (input,) + deps
+        input = root + input
+        output = root + output
+        last_compiled_timestamp = os.path.getmtime(output) if os.path.isfile(output) else -1
+        
+        for dependency in deps:
+            if os.path.getmtime(root + dependency) > last_compiled_timestamp:
+                subprocess.check_call('{} {} > {}'.format(compiler, input, output), shell=True)
+                break
+
+_compile_less_to_css(COMPILER, PROJECT_ROOT, COMPILE_SOURCES)
+
+

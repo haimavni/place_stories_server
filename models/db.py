@@ -1,0 +1,138 @@
+# -*- coding: utf-8 -*-
+
+#########################################################################
+## This scaffolding model makes your app work on Google App Engine too
+## File is released under public domain and you can use without limitations
+#########################################################################
+
+## if SSL/HTTPS is properly configured and you want all HTTP requests to
+## be redirected to HTTPS, uncomment the line below:
+# request.requires_https()
+
+## app configuration made easy. Look inside private/appconfig.ini
+from gluon.contrib.appconfig import AppConfig
+import os
+
+## once in production, remove reload=True to gain full speed
+myconf = AppConfig(reload=True)
+
+def __open_db():
+
+    def get_dbname(): #database name depends on folder such as dev, test, www etc.
+        dbname = request.application
+        realpath = os.path.realpath('.')
+        lst = realpath.split('/')
+        return lst[-2]
+
+    dbname = get_dbname()
+    adapter = 'psycopg2:'
+    _debugging = False ###request.function not in ('whats_up', 'log_file_data')
+    try:
+        db = DAL('postgres:{ad}//coolano:V3geHanu@localhost/{dbn}'.format(ad=adapter, dbn=dbname), 
+                 pool_size=10,
+                 debug=_debugging,
+                 lazy_tables=False) #it causes an exeption!
+    except Exception, e:
+        comment('Failed to open db {}. Error: {}.'.format(dbname, e))
+        raise
+    return db
+
+db = __open_db()  
+
+## by default give a view/generic.extension to all actions from localhost
+## none otherwise. a pattern can be 'controller/function.extension'
+response.generic_patterns = ['*'] if request.is_local else []
+## choose a style for forms
+response.formstyle = myconf.take('forms.formstyle')  # or 'bootstrap3_stacked' or 'bootstrap2' or other
+response.form_label_separator = myconf.take('forms.separator')
+
+
+## (optional) optimize handling of static files
+# response.optimize_css = 'concat,minify,inline'
+# response.optimize_js = 'concat,minify,inline'
+## (optional) static assets folder versioning
+# response.static_version = '0.0.0'
+#########################################################################
+## Here is sample code if you need for
+## - email capabilities
+## - authentication (registration, login, logout, ... )
+## - authorization (role based authorization)
+## - services (xml, csv, json, xmlrpc, jsonrpc, amf, rss)
+## - old style crud actions
+## (more options discussed in gluon/tools.py)
+#########################################################################
+
+from gluon.tools import Auth, Service, PluginManager
+from my_auth import MyAuth
+
+auth = MyAuth(db)
+service = Service()
+plugins = PluginManager()
+
+## create all tables needed by auth if not custom tables
+#todo: the lines below cause "auth user table redefined" error on the server but not on the development system. do not use it for now
+auth.settings.extra_fields['auth_user']= [Field('skype'), Field('facebook')]
+auth.define_tables(username=False, signature=False)
+
+## configure email
+mail = auth.settings.mailer
+mail.settings.server = 'logging' if request.is_local else myconf.take('smtp.server')
+mail.settings.sender = myconf.take('smtp.sender')
+mail.settings.login = myconf.take('smtp.login')
+
+## configure auth policy
+auth.settings.registration_requires_verification = True
+auth.settings.registration_requires_approval = False
+auth.settings.reset_password_requires_verification = True
+
+#########################################################################
+## Define your tables below (or better in another model file) for example
+##
+## >>> db.define_table('mytable',Field('myfield','string'))
+##
+## Fields can be 'string','text','password','integer','double','boolean'
+##       'date','time','datetime','blob','upload', 'reference TABLENAME'
+## There is an implicit 'id integer autoincrement' field
+## Consult manual for more options, validators, etc.
+##
+## More API examples for controllers:
+##
+## >>> db.mytable.insert(myfield='value')
+## >>> rows=db(db.mytable.myfield=='value').select(db.mytable.ALL)
+## >>> for row in rows: print row.id, row.myfield
+#########################################################################
+
+## after defining tables, uncomment below to enable auditing
+# auth.enable_record_versioning(db)
+
+membership_consts = ['ADMIN', 'DEVELOPER', 'EDITOR', 'COMMENTATOR', 'PHOTO_UPLOADER', 'ACCESS_MANAGER', 'CHATTER', 'CHAT_MODERATOR', 'TEXT_AUDITOR', 'DATA_AUDITOR']
+
+def __calc_membership_consts():
+
+    def calc_membership_const(const_name):
+        display_name = ' '.join([z.capitalize() for z in const_name.split('_')])
+        const_id = auth.id_group(const_name) or auth.add_group(const_name, display_name)
+        globals()[const_name] = const_id
+
+    for name in membership_consts:
+        calc_membership_const(name)
+
+__calc_membership_consts() 
+
+def no_admin():
+    return db(db.auth_user.email=='admin@gbs.com').isempty()
+
+from admin_support.access_manager import register_new_user
+try:
+    if no_admin():
+        admin_id = register_new_user('admin@gbs.com', '931632', 'admin', 'admin')
+        auth.login_bare('admin@gbs.com', '931632')
+        auth.set_access_manager(ACCESS_MANAGER, admin_id)
+except Exception, e:
+    pass
+
+base_app_dir = 'applications/' + request.application + '/'
+response.delimiters = ('{!', '!}')
+response.controller = 'none'
+
+BASE_URL = (request.env.http_origin or request.env.http_host) + '/' + request.application + '/'

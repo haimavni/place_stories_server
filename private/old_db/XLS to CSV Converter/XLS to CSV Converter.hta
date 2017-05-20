@@ -1,0 +1,638 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+  <title>XLS To CSV Converter</title>
+  <meta name="author" content="Christopher West" />
+  <meta name="description" content="Converts XLS and XLSX files into CSV files." />
+  <HTA:APPLICATION ID="hta" APPLICATIONNAME="XLS To CSV Converter" VERSION="1.1.0" INNERBORDER="no" MINIMIZEBUTTON="no" MAXIMIZEBUTTON="no" SCROLL="no">
+  <style type="text/css">
+  * {
+    font-family:'Trebuchet MS';
+  }
+  html, body {
+    height:100%;
+    width:100%;
+  }
+  body {
+    background-color:#EEE;
+    border:none;
+    margin:0;
+    overflow-x:hidden;
+    overflow-y:auto;
+    padding:0;
+  }
+  body.masked {
+    overflow-y:hidden;
+  }
+  h1 {
+    margin:0;
+    text-align:center;
+    filter:progid:DXImageTransform.Microsoft.DropShadow(OffX=5, OffY=5, Color=#99CCFF);
+    zoom: 1;
+  }
+  code {
+    background-color:#DDD;
+    border:1px solid #CCC;
+    border-radius:5px;
+    padding:0 5px;
+    white-space:nowrap;
+  }
+  #mask {
+    display:none;
+    background-color:#6CF;
+    filter:progid:DXImageTransform.Microsoft.Alpha(opacity=50);
+    height:100%;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    z-index:1;
+  }
+  #maskContent {
+    display:none;
+    position:fixed;
+    height:100%;
+    left:0;
+    top:0;
+    width:100%;
+    z-index:2;
+  }
+  #divConsole {
+    position:fixed;
+    left:10px;
+    right:10px;
+    top:10px;
+    bottom:2.75em;
+    border:1px solid #5BE;
+    border-radius:5px;
+    background-color:#FFF;
+    overflow-y:scroll;
+  }
+  #divConsole div {
+    font-family:Courier;
+    font-size:10pt;
+  }
+  #divConsole .even {
+    background-color:#EEE;
+  }
+  #divConsole .odd {
+    background-color:#DDD;
+  }
+  #maskContent div.buttons {
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:10px;
+    text-align:center;
+  }
+  body.masked #mask, body.masked #maskContent {
+    display:block;
+  }
+  #bodyWrapper {
+    padding:10px;
+  }
+  body.masked #bodyWrapper {
+    filter:progid:DXImageTransform.Microsoft.Blur(pixelradius=4);
+    zoom:1;
+  }
+  .textbox {
+    font-family:Courier;
+    padding:0;
+  }
+  .button {
+    border:3px solid #BBB;
+    border-top-color:#E0E0E0;
+    border-left-color:#E0E0E0;
+    border-radius:5px;
+    filter:progid:DXImageTransform.Microsoft.Gradient(startColorStr=#EEEEEE,endColorStr=#CCCCCC);
+    zoom:1;
+  }
+  td {
+    border-top:1px solid #DDD;
+    padding:5px 0;
+  }
+  td.label {
+    vertical-align:top;
+    width:1px;
+  }
+  td.label label {
+    display:block;
+    text-align:right;
+    white-space:nowrap;
+  }
+  td.content {
+    width:99%;
+  }
+  td.content .textbox {
+    width:100%;
+  }
+  td.content div.hint {
+    background-color:#EEE;
+    border:1px solid #999;
+    border-color:#BBB;
+    border-radius:5px;
+    font-size:90%;
+    margin:5px;
+    padding:5px;
+  }
+  td.extra {
+    width:1px;
+  }
+  td.options {
+    padding-top:10px;
+    text-align:center;
+  }
+  </style>
+<script language="VBScript">
+Function vbAlert(prompt, title, options)
+  vbAlert = MsgBox(prompt, options, title)
+End Function
+</script>
+<script type="text/JavaScript">
+// Use VBScript's MsgBox for alert.
+vbOKOnly = 0;
+vbOKCancel = 1;
+vbAbortRetryIgnore = 2;
+vbYesNoCancel = 3;
+vbYesNo = 4;
+vbRetryCancel = 5;
+vbCritical = 16;
+vbQuestion = 32;
+vbExclamation = 48;
+vbInformation = 64;
+vbDefaultButton1 = 0;
+vbDefaultButton2 = 256;
+vbDefaultButton3 = 512;
+vbDefaultButton4 = 768;
+vbOK = 1;
+vbCancel = 2;
+vbAbort = 3;
+vbRetry = 4;
+vbIgnore = 5;
+vbYes = 6;
+vbNo = 7;
+function alert(prompt, title, options) {
+  return vbAlert(
+    prompt + '',
+    (title == null ? document.title : title) + '',
+    options == null ? vbExclamation : options
+  );
+}
+
+// Used for file system access (reading and writing to files).
+var fso = new ActiveXObject("Scripting.FileSystemObject");
+
+// Used for browsing the file system for a folder by browseForFolder().
+var shellApp = new ActiveXObject("Shell.Application");
+
+// http://msdn.microsoft.com/en-us/library/windows/desktop/bb773205(v=vs.85).aspx
+// Constants that may be used in the 3rd parameter of shellApp.BrowseForFolder:
+var BIF_RETURNONLYFSDIRS = 0x1;
+var BIF_DONTGOBELOWDOMAIN = 0x2;
+var BIF_STATUSTEXT = 0x4;
+var BIF_RETURNFSANCESTORS = 0x8;
+var BIF_EDITBOX = 0x10;
+var BIF_VALIDATE = 0x20;
+var BIF_NEWDIALOGSTYLE = 0x40;
+var BIF_BROWSEINCLUDEURLS = 0x80;
+var BIF_UAHINT = 0x100;
+var BIF_NONEWFOLDERBUTTON = 0x200;
+var BIF_NOTRANSLATETARGETS = 0x400;
+var BIF_BROWSEFORCOMPUTER = 0x1000;
+var BIF_BROWSEFORPRINTER = 0x2000;
+var BIF_BROWSEINCLUDEFILES = 0x4000;
+var BIF_SHAREABLE = 0x8000;
+var BIF_BROWSEFILEJUNCTIONS = 0x10000;
+
+var xlNoChange = 1;
+var xlCSV = 6;
+var xlText = -4158;
+
+/**
+ * Regular expression to be used for verifying that the naming schema is valid.
+ * @type {RegExp}
+ */
+var REGEXP_NAMING_SCHEMA = /<(WORKBOOK|SHEET|SHEET_NUMBER)>|[\\\/:\*\?"<>\|]/g;
+
+/**
+ * Regular expression used to collect all of the sheet filters.
+ * @type {RegExp}
+ */
+var REGEXP_SHEET_FILTERS = /^(?:\/(.+)\/([gim]*)|.+)$/gm;
+
+/**
+ * Regular expression for matching filenames of the workbooks to be opened:
+ * The first matching group captures the filename without the extension.
+ * @type {RegExp}
+ */
+var REGEXP_WORKBOOK = /([^\\\/]+)\.xlsx?$/i;
+
+// Retrieves an element by ID.
+function $id(id) {
+  return document.getElementById(id);
+}
+
+(function(_, g, u) {
+  typeOf = function(o, p) {
+    o = o === g
+      ? "global"
+      : o == u
+        ? o === u
+          ? "undefined"
+          : "null"
+        : _.toString.call(o).slice(8, -1);
+    return p ? p === o : o;
+  };
+})({}, this);
+
+// Function to add a number's (ordinal).
+(function(o) {
+  Number.getOrdinalFor = function(intNum, includeNumber) {
+    return (includeNumber ? intNum : "")
+      + (o[((intNum = Math.abs(intNum % 100)) - 20) % 10] || o[intNum] || "th");
+  };
+})([,"st","nd","rd"]);
+
+// Opens a dialog box which allows the user to browse for a folder.
+function browseForFolder() {
+  try {
+    // Let the user select a folder.  Documentation for this function is here:
+    // http://msdn.microsoft.com/en-us/library/windows/desktop/bb774065(v=vs.85).aspx
+    var folder = shellApp.BrowseForFolder(
+      0, // Hwnd
+      'Select the desired folder:', // sTitle
+      BIF_RETURNONLYFSDIRS | BIF_UAHINT | BIF_NONEWFOLDERBUTTON // iOptions
+    );
+
+    // If the user selected a user...
+    if(folder) {
+      var folderPath = folder.Self.Path;
+      $id('txtFolder').value = folderPath;
+    }
+  }
+  catch(e) {
+    alert('The following error occurred:\r\n' + e.message, 'Error');
+  }
+}
+
+// Takes user to my website.
+function showAbout() {
+  var hta = $id('hta');
+  var appName = hta.applicationName;
+  var version = hta.version;
+  var message = appName + ' v' + version + '\n\n' +
+    'Created by Christopher West\n' + 'Copyright \u00A9 2013\n\n' +
+    'Would you like to visit my site?';
+  var title = 'About This Application';
+  var response = alert(message, title, vbYesNo + vbInformation);
+  if(response == vbYes) {
+    (new ActiveXObject("WScript.Shell")).Run('http://cwestblog.com/');
+  }
+}
+
+// Closes this window.
+function closeWindow() {
+  window.close();
+}
+
+// Adds the mask to the page, showing the mask content.
+function addMask() {
+  document.body.className = 'masked';
+}
+
+// Removes the mask from the page, hiding the mask content.
+function removeMask() {
+  document.body.className = '';
+}
+
+// Opens the console, clearing out the old data.
+function openConsole() {
+  $id('divConsole').innerHTML = '';
+  addMask();
+  return logInConsole;
+}
+
+function logInConsole(msg) {
+  var divConsole = $id('divConsole');
+  var div = document.createElement('DIV')
+  div.className = divConsole.getElementsByTagName('DIV').length % 2
+    ? 'even'
+    : 'odd';
+  div.innerText = msg;
+  divConsole.appendChild(div);
+}
+
+// Close the console by removing the mask.
+function closeConsole() {
+  removeMask();
+}
+
+/**
+ * Verify that all of the inputs are good.
+ * @returns {?Object}
+ *     Returns an object literal with all of the input data if all of the inputs
+ *     are good.  Otherwise nothing is returned.
+ */
+function verifyInputs() {
+  var errors = [];
+
+  // Make sure the folder was selected.
+  var path = $id('txtFolder').value;
+  if(!path) {
+    errors.push('Folder - No folder was selected.');
+  }
+
+  // Make sure the naming schema is given and that it is valid.
+  var namingSchema = $id('txtNamingSchema').value;
+  if(!namingSchema) {
+    errors.push('CSV Naming Schema - No naming schema was given.');
+  }
+  else {
+    namingSchema.replace(REGEXP_NAMING_SCHEMA, function(match, id, index) {
+      if(!id) {
+        errors.push('CSV Naming Schema - The ' + Number.getOrdinalFor(index + 1, true) +
+          ' character is ' + match + ' which is not allowed in filenames.'
+        );
+      }
+    });
+  }
+
+  // Get all of the sheet filters, making sure the ones that are regular
+  // expressions are actually valid.
+  var filters = [];
+  var strFilters = $id('txtSheetFilters').value;
+  strFilters.replace(REGEXP_SHEET_FILTERS, function(match, pattern, flags) {
+    if(pattern) {
+      try {
+        filters.push(new RegExp(pattern, flags));
+      }
+      catch(e) {
+        errors.push('Sheet Filters - "' + match +
+          '" is an invalid sheet filter RegExp because of the following:  ' +
+          e.message
+        );
+      }
+    }
+    else {
+      filters.push(match);
+    }
+  });
+
+  if(!errors.length) {
+    return {
+      path: path,
+      namingSchema: namingSchema,
+      filters: filters,
+      noLineFeeds: $id('chkNoLineFeeds').checked
+    };
+  }
+
+  alert('The following error' + (1 in errors ? 's' : '') +
+      ' occurred:\n- ' + errors.join('\n- '),
+    'Error'
+  );
+}
+
+// Converts the workbooks into CSVs.
+function startConverting() {
+  // If one or more of the inputs is missing or invalid, don't go any further.
+  var inputs = verifyInputs();
+  if(!inputs) {
+    return;
+  }
+  var filters = inputs.filters;
+
+  // Fire up the console.
+  var log = openConsole();
+
+  try {
+    // Create an instance of Excel, but don't allow the content
+    // area to be repainted.
+    log('Starting up Excel...');
+    var xlApp = new ActiveXObject("Excel.Application");
+    xlApp.Visible = false;
+    xlApp.ScreenUpdating = false;
+    xlApp.DisplayAlerts = false;
+    log('Opened, hid and silenced Excel.');
+
+    // Initialize the counts.
+    var fileCount = 0, csvCount = 0;
+
+    // Reference the containing folder.
+    log('About to verify the existence of "' + inputs.path + '".');
+    var fldr = fso.GetFolder(inputs.path);
+
+    var delimiter = !$id('radDelimComma').checked
+      ? $id('radDelimTab').checked
+        ? '\t'
+        : ';'
+      : ',';
+    var outputType = delimiter == '\t' ? 'TSV' : 'CSV';
+
+    var DecimalSeparator = xlApp.DecimalSeparator;
+    var ThousandsSeparator = xlApp.ThousandsSeparator;
+    var UseSystemSeparators = xlApp.UseSystemSeparators;
+
+    try {
+
+      if(delimiter != '\t') {
+        xlApp.DecimalSeparator = delimiter == ';' ? ',' : '.';
+        xlApp.ThousandsSeparator = delimiter == ';' ? '.' : ',';
+        xlApp.UseSystemSeparators = false;
+      }
+
+      // Loop through all of the xls and xlsx files in this folder.
+      for(var e = new Enumerator(fldr.Files); !e.atEnd(); e.moveNext()) {
+        var aFile = e.item();
+        if(REGEXP_WORKBOOK.test(aFile.Name)) {
+          log('Opening "' + aFile.Path + '"...');
+          
+          // Open the workbook.
+          var wb = xlApp.Workbooks.Open(aFile.Path);
+          log('Successfully opened the file.');
+          
+          // Save each worksheet as a CSV file.
+          var sheetNum = 0;
+          for(var sheetIndex = 1, sheetCount = wb.Sheets.Count; sheetIndex <= sheetCount; sheetIndex++) {
+            var ws = wb.Sheets.Item(sheetIndex);
+            var wsName = ws.Name;
+
+            // If this worksheet isn't visible don't use it nor even count it.
+            if(!ws.Visible) {
+              continue;
+            }
+
+            // Increment the sheet number so that it can be used in the file name.
+            sheetNum++;
+
+
+            // If filters were specified, filter out sheets that don't match them.
+            var keepGoing = !filters.length, filter;
+            for(var i = 0; !keepGoing && i < filters.length; i++) {
+              keepGoing = keepGoing ||
+                (typeOf(filter = filters[i], 'RegExp')
+                  ? filter.test(wsName)
+                  : filter == wsName
+                );
+            }
+            if(!keepGoing) {
+              log('Skipping "' + wsName + '" (sheet #' + sheetNum +
+                ") because it didn't pass the filters."); 
+              continue;
+            }
+            
+            // If no line feeds should appear, remove them all.
+            if(inputs.noLineFeeds) {
+              ws.UsedRange.Replace("\n", "");
+            }
+
+            // Save the file using the naming schema.
+            var csvPath = aFile.Path.replace(REGEXP_WORKBOOK, function(filename, workbookName) {
+              return inputs.namingSchema.replace(REGEXP_NAMING_SCHEMA, function(match, part) {
+                return part != 'WORKBOOK'
+                  ? part != 'SHEET'
+                    ? sheetNum
+                    : wsName
+                  : workbookName;
+              });
+            });
+
+            log('New ' + outputType + ' will be saved at "' + csvPath + '"...');
+            ws.Activate();
+            wb.SaveAs(
+              csvPath, // Filename
+              delimiter == '\t' ? xlText : xlCSV, // FileFormat
+              null, // Password
+              null, // WriteResPassword
+              null, // ReadOnlyRecommend
+              false, // CreateBackup
+              xlNoChange, // AccessMode
+              null, // ConflictResolution
+              null, // AddToMru
+              null, // TextCodepage
+              null, // TextVisualLayout
+              true // Local
+            );
+            log('Saved the ' + outputType + ' successfully.');
+            csvCount++;  // Increment the number of CSV's.
+          }
+        
+          // Close the workbook.
+          wb.Close();
+          log('Closed the workbook.');
+
+          // Increment the number of files.
+          fileCount++;
+        }
+      }
+    }
+    catch(e) {
+      throw e;
+    }
+    finally {
+      xlApp.DecimalSeparator = DecimalSeparator;
+      xlApp.ThousandsSeparator = ThousandsSeparator;
+      xlApp.UseSystemSeparators = UseSystemSeparators;
+    }
+    
+    // Allow alerts to be displayed, and the screen to be updated again.
+    xlApp.DisplayAlerts = true;
+    xlApp.ScreenUpdating = true;
+
+    // Close Excel.
+    xlApp.Quit();
+    
+    var msg = "The results are as follows:\nFiles converted:  "
+      + fileCount + "\n" + outputType + "'s created:  " + csvCount;
+    var title = "Conversion Process Complete";
+    alert(msg, title, vbInformation);
+  }
+  catch(e) {
+    // If the Excel workbook is open, close it.
+    try{ wb.Close(false); }catch(e2){}
+    
+    // If Excel is open, change the settings back to normal and close it.
+    try{
+      xlApp.DisplayAlerts = true;
+      xlApp.ScreenUpdating = true;
+      xlApp.Quit();
+    } catch(e2){}
+    
+    // Print the error message.
+    var msg = "The following error caused this script to fail:\n"
+      + e.message + '\n' + e.lineNumber;
+    var title = "Critical Error Occurred";
+    alert(msg, title, vbCritical);
+  }
+}
+
+// Make the window the right size.
+window.resizeTo(1000, 765);
+
+// Once the page loads, bind all of button click events.
+window.onload = function() {
+  $id('btnBrowseFolder').onclick = browseForFolder;
+  $id('btnAboutThisApp').onclick = showAbout;
+  $id('btnClose').onclick = closeWindow;
+  $id('btnStart').onclick = startConverting;
+  $id('btnCloseConsole').onclick = closeConsole;
+};
+</script>
+</head>
+<body>
+  <div id="mask"></div>
+  <div id="maskContent">
+    <div id="divConsole"></div>
+    <div class="buttons"><input type="button" id="btnCloseConsole" class="button" value="Close the Console" /></div>
+  </div>
+  <div id="bodyWrapper">
+    <h1>XLS To CSV Converter</h1>
+    <table>
+      <tr>
+        <td class="label"><label>Folder:</label></td>
+        <td class="content"><input type="text" id="txtFolder" class="textbox readonly" readonly="readonly" /></td>
+        <td class="extra"><input type="button" id="btnBrowseFolder" class="button" value="Browse for Folder" /></td>
+      </tr>
+      <tr class="option">
+        <td class="label"><label for="txtNamingSchema">CSV Naming Schema:</label></td>
+        <td class="content" colspan="2">
+          <input type="text" id="txtNamingSchema" class="textbox" value="&lt;WORKBOOK&gt; - &lt;SHEET&gt;.csv" />
+          <div class="hint">You can add in the following strings to include information from the origin workbook or worksheet:
+            <ul>
+              <li><code>&lt;WORKBOOK&gt;</code> - the name of the workbook</li>
+              <li><code>&lt;SHEET&gt;</code> - the name of the worksheet (tab)</li>
+              <li><code>&lt;SHEET_NUMBER&gt;</code> - the number of the worksheet (tab)</li>
+            </ul>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td class="label"><label for="txtSheetFilters">Sheet Filters:</label></td>
+        <td class="content" colspan="2">
+          <textarea id="txtSheetFilters" class="textbox" rows="5"></textarea>
+          <div class="hint">Use this field if you only want to include certain sheets in the workbooks.  Enter the names of the sheets that you want to include from each workbook.  Only enter one sheet name on each line.  Each name will be case sensitive.  You may also add JavaScript regular expressions (eg.  <code>/Sheet #[1-3]$/i</code>).</div>
+        </td>
+      </tr>
+      <tr>
+        <td class="label"><label>Linefeeds:</label></td>
+        <td class="content" colspan="2"><input type="checkbox" id="chkNoLineFeeds" /> <label for="chkNoLineFeeds">Would you like to remove linefeed characters from all cells?</label></td>
+      </tr>
+      <tr>
+        <td class="label"><label>Delimiters:</label></td>
+        <td class="content" colspan="2">
+          <input type="radio" id="radDelimComma" name="delimiter" value="tab" checked="checked" /><label for="radDelimComma">Comma</label>
+          <input type="radio" id="radDelimSemiColon" name="delimiter" value="tab" /><label for="radDelimSemiColon">Semi-colon</label>
+          <input type="radio" id="radDelimTab" name="delimiter" value="tab" /><label for="radDelimTab">Tab</label>
+        </td>
+      </tr>
+      <tr>
+        <td class="options" colspan="3">
+          <input type="button" id="btnStart" class="button" value="Start XLS Conversion" />
+          <input type="button" id="btnAboutThisApp" class="button" value="About This App" />
+          <input type="button" id="btnClose" class="button" value="Close" />
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>

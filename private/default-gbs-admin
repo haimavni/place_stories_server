@@ -1,0 +1,39 @@
+<VirtualHost *:443>
+    SSLEngine on
+    SSLCertificateFile /etc/apache2/ssl/self_signed.cert
+    SSLCertificateKeyFile /etc/apache2/ssl/self_signed.key
+
+    ServerName gbs_dev.coolano.biz
+    WSGIProcessGroup web2py_gbs_dev_adm
+    WSGIScriptAlias / /srv/gbs_dev/web2py/wsgihandler.py
+    WSGIPassAuthorization On
+
+    WSGIDaemonProcess web2py_gbs_adm user=www-data group=www-data \
+        home=/srv/gbs_dev/web2py/ \
+        maximum-requests=100 \
+        threads=15
+    <Directory /srv/gbs_dev/web2py>
+        AllowOverride None
+        Order Allow,Deny
+        Deny from all
+        <Files wsgihandler.py>
+            Allow from all
+        </Files>
+    </Directory>
+
+    AliasMatch ^/([^/]+)/static(?:/_[\d]+.[\d]+.[\d]+)?/(.*) \
+        /srv/gbs_dev/web2py/applications/$1/static/$2
+
+    <Directory /srv/gbs_dev/web2py/applications/*/static/>
+        Options -Indexes
+        ExpiresActive On
+        ExpiresDefault "access plus 1 hour"
+        Order Allow,Deny
+        Allow from all
+    </Directory>
+
+    CustomLog /var/log/apache2/access.adm.test.log common
+    ErrorLog /var/log/apache2/error.adm.g.log
+</VirtualHost>
+
+

@@ -1,0 +1,148 @@
+$ apt-get install python2.7
+$ apt-get install postgresql postgresql-contrib
+$ apt install apache2
+$ apt-get install python-dev -y
+    * Edit /etc/postgresql/9.5/main/pg_hba.conf to set method to trust for local
+    * Edit /etc/postgresql/9.5/main/postgresql.conf to remove "ssl=true" - it makes server 
+$ passwd postgres
+$ su postgres
+$ createuser -P coolanof
+    create user with password "V3geHanu".
+
+$ apt-get install python-psycopg2  ### may be not needed - use pip install psycopg2
+
+$ apt-get install fossil
+
+if there are complaints about locale:
+    Just add the following to your .bashrc file (assuming you're using bash)
+    export LC_ALL="en_US.UTF-8"
+
+copy the FOSSIL folder to /srv
+copy cgi-bin folder from gbs/private to /srv
+user fossil remote-url command to set the server repository
+example:
+haim@haim-VirtualBox:~/fossil_projects/gbs_dev/gbs/static$ fossil remote-url
+http://haim@dev.coolano.biz/cgi-bin/gbs.cgi
+
+in the web2py directory, generate link to logging.conf:
+    cd ../web2py
+    ln -T --symbolic ../coolano/private/logging.conf logging.conf
+in /usr/lib/python2.7 replace logging directory by a link to coolano/private/logging
+## replace "coolano" by the relevant application
+
+in /etc/apache2/sites-enabled create symbolic links to the apache config files (default-...)
+
+INDEX tables:
+
+su postgres
+
+while in coolano/logs, type:
+
+psql -d coolanoxxx -f create_indexes.sql    where xxx is dev, test, www or empty
+
+In /etc/systemd/system
+    ln -T --symbolic /srv/dev/coolano/private/messaging.service messaging.service
+    ln -T --symbolic /srv/dev/coolano/private/web2py-scheduler-dev.service web2py-scheduler-dev.service
+    ln -T --symbolic /srv/test/coolano/private/web2py-scheduler-test.service web2py-scheduler-test.service
+    ln -T --symbolic /srv/www/coolano/private/web2py-scheduler-www.service web2py-scheduler-www.service
+On the development system:
+    ln -T --symbolic /home/haim/fossil_projects/coolano/private/web2py-scheduler.service web2py-scheduler.service
+    
+To start service with system:
+$ systemctl enable messaging.service
+$ systemctl enable web2py-schedulerxxx.service where xxx is for all versions: dev, test and www on server, empty locally
+
+Install memcached:
+$ apt-get update
+$ apt-get install memcached
+
+apt-get install pip
+
+Virtual Environment (use this rather than whatever is done below for cv)
+pip install virtualenv
+
+cd /srv/www   #or whatever app folder instead of www
+virtualenv --no-site-packages venv
+cd /srv
+source /srv/www/venv/bin/activate                               #replace www by dev and test for these versions
+pip install -r dev/coolano/private/requirements.txt
+deactivate
+
+Edit /srv/www/web2py/wsgihandler.py, add to top:
+----------------------------------------------
+# Use virtualenv
+activate_this = '/srv/www/venv/bin/activate_this.py'
+execfile(activate_this, dict(__file__=activate_this))
+import sys
+sys.path.insert(0, '/srv/www/web2py')
+
+
+Install Computer Vision from http://www.pyimagesearch.com/2015/06/22/install-opencv-3-0-and-python-2-7-on-ubuntu/
+-----------------------------------------------------------------------------------------------------------------
+Step 1
+$ apt-get update
+$ apt-get upgrade
+Step 2
+$ apt-get install build-essential cmake git pkg-config
+Step 3
+$ apt-get install libjpeg8-dev libtiff4-dev libjasper-dev libpng12-dev
+Step 4
+$ apt-get install libgtk2.0-dev
+Step 5
+$ apt-get install libavcodec-dev libavformat-dev libswscale-dev libv4l-dev
+Step 6
+$ apt-get install libatlas-base-dev gfortran
+Step 7
+$ wget https://bootstrap.pypa.io/get-pip.py
+$ python get-pip.py
+Step 8
+$ pip install virtualenv virtualenvwrapper
+$ rm -rf ~/.cache/pip
+    Now update ~/.bashrc:
+export WORKON_HOME=$HOME/.virtualenvs
+$ source /usr/local/bin/virtualenvwrapper.sh
+$ mkvirtualenv cv
+Step 9
+$ apt-get install python2.7-dev
+$ pip install numpy
+Step 10
+$ cd ~
+$ git clone https://github.com/Itseez/opencv.git
+$ cd opencv
+$ git checkout 3.1.0
+
+$ cd ~/opencv
+$ mkdir build
+$ cd build
+$ cmake -D CMAKE_BUILD_TYPE=RELEASE \
+    -D CMAKE_INSTALL_PREFIX=/usr/local \
+    -D INSTALL_C_EXAMPLES=OFF \
+    -D INSTALL_PYTHON_EXAMPLES=ON \
+    -D OPENCV_EXTRA_MODULES_PATH=~/opencv_contrib/modules \
+    -D BUILD_EXAMPLES=ON ..
+
+$ make -j4
+
+$ make install
+$ ldconfig
+
+    the build folder may now be removed
+Step 11
+If you’ve reached this step without an error, OpenCV should now be installed in  /usr/local/lib/python2.7/site-packages
+$ cd ~/.virtualenvs/cv/lib/python2.7/site-packages/
+$ ln -s /usr/local/lib/python2.7/site-packages/cv2.so cv2.so
+
+Step 12 - verify
+$ workon cv
+$ python
+>>> import cv2
+>>> cv2.__version__
+'3.1.0'
+
+
+
+
+
+
+
+

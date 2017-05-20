@@ -1,0 +1,166 @@
+Installation of Validator server
+
+Preparations on the building machine
+	* If the installation is offline, make a CD with Ubuntu Server distribution
+	* In the building machine:
+		o cd to the relevant validator directory
+		o type bash pack.bash. After a successful invocation of the script, directory ~/distribution contains all the necessary files to install Validator on a new server.
+        o copy ~/distribution to portable media - CD, USB drive etc.
+
+Basic OS Installation 
+    Install Ubuntu server amd64. Accept all defaults.
+    Preinstall only SSH and postreSQL..
+
+    sudo passwd    #allow login as root
+    type "su". Enter the password you selected above to become root
+
+    addgroup developers
+    adduser <yourself> developers
+
+For some installations to work:    
+    sudo apt-get update; sudo apt-get install python-dev -y
+
+If the server is running inside VirtualBox
+    * In the virtualbox settings ensure network is "bridged"
+    * Inside the server, in a terminal, type ifconfig. write down the IP.
+    * Enable sharing with the host by installing host additions:
+        sudo apt-get install build-essential linux-headers-`uname -r`
+                if the command fails, type `uname -r` and replace this part of the command with the result
+        In the virtualbox manager, enable sharing and select the shared directory in the host
+        sudo mount /dev/cdrom /mnt
+                the original doc had "cdrom1". if fails, see what's in /dev
+        sudo mkdir /shared
+        sudo bash /mnt/VBoxLinuxAdditions.run
+                do not be intimidated by failure message - it refers to window features that we do not need.
+                for extra 67MB the missing libraries might be installed:
+                    sudo apt-get install xserver-xorg xserver-xorg-core
+                but it does not seem necessary.
+  
+If this is a virtual machine, you may want to stop it now, make a copy of the VDI file for experimenting later and then restart the machine and continue.
+
+Copy distribution files to the server:
+    * Use winscp or CD to copy the distribution directory from your distribution media to /srv. You should now have the distribution files in /srv/distribution
+    * cd /srv/distribution
+
+Apache installation
+    * type "apt-get install apache2-mpm-worker"
+    * type "./install_wsgi.bash"
+
+Postgresql installation
+    * If postgresql is not installed yet, type "apt-get install postgresql postgresql-client"
+    * Edit /etc/postgresql/9.5/main/pg_hba.conf to set method to trust for local
+    * Edit /etc/postgresql/9.5/main/postgresql.conf to remove "ssl=true" - it makes server start fail 
+    * passwd postgres
+    * su postgres
+    * createuser -P coolano
+        create user  with password "V3geHanu".
+    * createdb validator
+
+    to alter password, if needed:  inside psql type: ALTER USER validator WITH PASSWORD '<newpassword>';
+
+    * apt-get install python-psycopg2
+
+If the server is the development server:
+    * apt-get install mercurial
+    * apt-get install fossil
+    * apt-get install python-tk python-pmw python-imaging python-imaging-tk
+
+Install docutils Python library (for Wiki to work)
+    cd /srv/distribution
+    type "./installation_scripts/install_docutils.bash"
+
+Web2py and Validator installation
+    * cd /srv/distribution
+    * type "installation_scripts/install_validator.bash"
+
+Restart the Apache server:
+    * /etc/init.d/apache2 restart
+
+	* To view apache errors: tail -f  /var/log/apache2/error.log
+
+Access the site from a browser:
+    o Enter the IP address you detected earlier, e.g. "10.0.0.11/validator".
+    o If it does not work, "Houston, we have a problem".
+
+After copying a VDI file to a new host:
+    edit file /etc/udev/rules.d/70-persistent-net
+    remove the two lines there, save and restart
+
+---------------------the comments below are not part of the installation------------------
+
+Installation of postgresql
+
+    createuser -P                                           #to create user with password!
+    ssh -L 5433:localhost:5432 senseforge.net               #SSH tunnel
+    The server name is then, in pgadmin III or psql, localhost and the port is 5433! 
+    The command line is " psql --host localhost --port 5433"
+    change password: ALTER ROLE name SET PASSWORD TO value
+    
+    To grant permissions:  GRANT READ ... on TO ... 
+sudo lvdisplay #to see all logical volumes. if srv is selected, to mount it:
+sudo mount /dev/lenny/srv ./mnt   #mnt must be empty. 
+
+to make directories sticky:
+chmod g+s .
+umask a=rx,ug+w
+
+to create a branch in fossil, use fossil ci --branch NEW-NAME. Do it when you
+have uncommitted changes.
+
+in the web2py directory, generate link to logging.conf:
+    cd ../web2py
+    ln -T --symbolic ../coolano/private/logging.conf logging.conf
+in /usr/lib/python2.7 replace logging directory by a link to coolano/private/logging
+
+----------------before Ubuntu 16.04-------------------
+copy web2py-scheduler.conf from private to /etc/init
+
+
+in /etc/init
+    ln -T --symbolic ../coolano/private/messaging.conf messaging.conf
+    ln -T --symbolic ../coolano/private/web2py-scheduler.conf web2py-scheduler.conf
+
+----------------------Ubuntu 16.04-------------------
+In Ubuntu 16.04 changed to systemd:
+
+In /etc/systemd/system
+    ln -T --symbolic /srv/dev/coolano/private/messaging.service messaging.service
+    ln -T --symbolic /srv/dev/coolano/private/web2py-scheduler-dev.service web2py-scheduler-dev.service
+    ln -T --symbolic /srv/test/coolano/private/web2py-scheduler-test.service web2py-scheduler-test.service
+    ln -T --symbolic /srv/www/coolano/private/web2py-scheduler-www.service web2py-scheduler-www.service
+On the development system:
+    ln -T --symbolic /home/haim/fossil_projects/coolano/private/web2py-scheduler.service web2py-scheduler.service
+    
+To start service with system:
+sudo systemctl enable messaging.service
+sudo systemctl enable web2py-schedulerxxx.service where xxx is for all versions: dev, test and www on server, empty locally
+	
+ 
+More to come...
+----------------end Ubuntu 16.04-------------------
+
+INDEX tables:
+
+su postgres
+
+while in coolano/logs, type:
+
+psql -d coolanoxxx -f create_indexes.sql    where xxx is dev, test, www or empty
+
+To install lessc, the less to css compiler on ubuntu 14.04:
+sudo apt-get install node-less
+(or type "lessc" in terminal and get installation instruction)
+
+sudo apt-get autoremove node-less
+sudo npm install -g less
+
+because of some inconsistency in nodejs distribution, need to create a symbolic link to nodejs named node:
+ln -s /usr/bin/nodejs /usr/bin/node
+
+Install memcached:
+sudo apt-get update
+sudo apt-get install memcached
+
+install bower:
+
+sudo npm install -g bower

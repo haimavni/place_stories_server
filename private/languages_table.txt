@@ -1,0 +1,184 @@
+#source: http://www-01.sil.org/iso639-3/codes.asp?order=639_1&letter=%25
+
+ab	abk	abk	Abkhazian	
+ae	ave	ave	Avestan	
+af	afr	afr	Afrikaans
+ak	aka	aka	Akan	
+am	amh	amh	Amharic	
+an	arg	arg	Aragonese	
+ar	ara	ara	Arabic	
+as	asm	asm	Assamese	
+av	ava	ava	Avaric	
+ay	aym	aym	Aymara	
+az	aze	aze	Azerbaijani	
+ba	bak	bak	Bashkir	
+be	bel	bel	Belarusian	
+bg	bul	bul	Bulgarian	
+bi	bis	bis	Bislama	
+bm	bam	bam	Bambara	
+bn	ben	ben	Bengali	
+bo	bod / tib* 	bod	Tibetan	
+br	bre	bre	Breton	
+bs	bos	bos	Bosnian	
+ca	cat	cat	Catalan	
+ce	che	che	Chechen	
+ch	cha	cha	Chamorro	
+co	cos	cos	Corsican	
+cr	cre	cre	Cree	
+cs	ces / cze* 	ces	Czech	
+cu	chu	chu	Church Slavic	
+cv	chv	chv	Chuvash	
+cy	cym / wel* 	cym	Welsh	
+da	dan	dan	Danish	
+de	deu / ger* 	deu	German	
+dv	div	div	Dhivehi	
+dz	dzo	dzo	Dzongkha	
+ee	ewe	ewe	Ewe	
+el	ell / gre* 	ell	Greek	
+en	eng	eng	English	
+eo	epo	epo	Esperanto	
+es	spa	spa	Spanish	
+et	est	est	Estonian	
+eu	eus / baq* 	eus	Basque	
+fa	fas / per* 	fas	Persian	
+ff	ful	ful	Fulah	
+fi	fin	fin	Finnish	
+fj	fij	fij	Fijian	
+fo	fao	fao	Faroese	
+fr	fra / fre* 	fra	French	
+fy	fry	fry	Western Frisian	
+ga	gle	gle	Irish	
+gd	gla	gla	Scottish Gaelic	
+gl	glg	glg	Galician	
+gn	grn	grn	Guarani	
+gu	guj	guj	Gujarati	
+gv	glv	glv	Manx	
+ha	hau	hau	Hausa	
+he	heb / iv* he Hebrew	
+hi	hin	hin	Hindi	
+ho	hmo	hmo	Hiri Motu	
+hr	hrv	hrv	Croatian	
+ht	hat	hat	Haitian	
+hu	hun	hun	Hungarian	
+hy	hye / arm* 	hye	Armenian	
+hz	her	her	Herero	
+ia	ina	ina	Interlingua	
+id	ind	ind	Indonesian	
+ie	ile	ile	Interlingue	
+ig	ibo	ibo	Igbo	
+ii	iii	iii	Sichuan Yi	
+ik	ipk	ipk	Inupiaq	
+io	ido	ido	Ido	
+is	isl / ice* 	isl	Icelandic	
+it	ita	ita	Italian	
+iu	iku	iku	Inuktitut	
+ja	jpn	jpn	Japanese	
+jv	jav	jav	Javanese	
+ka	kat / geo* 	kat	Georgian	
+kg	kon	kon	Kongo	
+ki	kik	kik	Kikuyu	
+kj	kua	kua	Kuanyama	
+kk	kaz	kaz	Kazakh	
+kl	kal	kal	Kalaallisut	
+km	khm	khm	Central Khmer	
+kn	kan	kan	Kannada	
+ko	kor	kor	Korean	
+kr	kau	kau	Kanuri	
+ks	kas	kas	Kashmiri	
+ku	kur	kur	Kurdish	
+kv	kom	kom	Komi	
+kw	cor	cor	Cornish	
+ky	kir	kir	Kirghiz	
+la	lat	lat	Latin	
+lb	ltz	ltz	Luxembourgish	
+lg	lug	lug	Ganda	
+li	lim	lim	Limburgan	
+ln	lin	lin	Lingala	
+lo	lao	lao	Lao	
+lt	lit	lit	Lithuanian	
+lu	lub	lub	Luba-Katanga	
+lv	lav	lav	Latvian	
+mg	mlg	mlg	Malagasy	
+mh	mah	mah	Marshallese	
+mi	mri / mao* 	mri	Maori	
+mk	mkd / mac* 	mkd	Macedonian	
+ml	mal	mal	Malayalam	
+mn	mon	mon	Mongolian	
+mr	mar	mar	Marathi	
+ms	msa / may* 	msa	Malay
+mt	mlt	mlt	Maltese	
+my	mya / bur* 	mya	Burmese	
+na	nau	nau	Nauru	
+nb	nob	nob	Norwegian Bokm?l	
+nd	nde	nde	North Ndebele	
+ne	nep	nep	Nepali
+ng	ndo	ndo	Ndonga	
+nl	nld / dut* 	nld	Dutch	
+nn	nno	nno	Norwegian Nynorsk	
+no	nor	nor	Norwegian	
+nr	nbl	nbl	South Ndebele	
+nv	nav	nav	Navajo	
+ny	nya	nya	Nyanja	
+oc	oci	oci	Occitan	
+oj	oji	oji	Ojibwa	
+om	orm	orm	Oromo	
+or	ori	ori	Oriya
+os	oss	oss	Ossetian	
+pa	pan	pan	Panjabi	
+pi	pli	pli	Pali	
+pl	pol	pol	Polish	
+ps	pus	pus	Pushto	
+pt	por	por	Portuguese	
+qu	que	que	Quechua	
+rm	roh	roh	Romansh	
+rn	run	run	Rundi	
+ro	ron / rum* 	ron	Romanian	
+ru	rus	rus	Russian	
+rw	kin	kin	Kinyarwanda	
+sa	san	san	Sanskrit	
+sc	srd	srd	Sardinian	
+sd	snd	snd	Sindhi	
+se	sme	sme	Northern Sami	
+sg	sag	sag	Sango	
+si	sin	sin	Sinhala	
+sk	slk / slo* 	slk	Slovak	
+sl	slv	slv	Slovenian	
+sm	smo	smo	Samoan	
+sn	sna	sna	Shona	
+so	som	som	Somali	
+sq	sqi / alb* 	sqi	Albanian	
+sr	srp	srp	Serbian	
+ss	ssw	ssw	Swati	
+st	sot	sot	Southern Sotho	
+su	sun	sun	Sundanese	
+sv	swe	swe	Swedish	
+sw	swa	swa	Swahili
+ta	tam	tam	Tamil	
+te	tel	tel	Telugu	
+tg	tgk	tgk	Tajik	
+th	tha	tha	Thai	
+ti	tir	tir	Tigrinya	
+tk	tuk	tuk	Turkmen	
+tl	tgl	tgl	Tagalog	
+tn	tsn	tsn	Tswana	
+to	ton	ton	Tonga	
+tr	tur	tur	Turkish	
+ts	tso	tso	Tsonga	
+tt	tat	tat	Tatar	
+tw	twi	twi	Twi	
+ty	tah	tah	Tahitian	
+ug	uig	uig	Uighur	
+uk	ukr	ukr	Ukrainian	
+ur	urd	urd	Urdu	
+uz	uzb	uzb	Uzbek	
+ve	ven	ven	Venda	
+vi	vie	vie	Vietnamese	
+vo	vol	vol	Volap?k	
+wa	wln	wln	Walloon	
+wo	wol	wol	Wolof	
+xh	xho	xho	Xhosa	
+yi	yid	yid	Yiddish	
+yo	yor	yor	Yoruba	
+za	zha	zha	Zhuang	
+zh	zho / chi* 	zho	Chinese	
+zu	zul	zul	Zulu	

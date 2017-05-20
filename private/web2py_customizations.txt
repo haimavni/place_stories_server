@@ -1,0 +1,124 @@
+Only in web2py/applications: coolano
+Only in web2py: deposit
+diff -r -x '*.pyc' -U 3 web2py-2.13.4-original/gluon/myregex.py web2py/gluon/myregex.py
+--- web2py-2.13.4-original/gluon/myregex.py	2015-12-26 04:58:52.000000000 +0200
++++ web2py/gluon/myregex.py	2016-02-14 12:19:39.668635365 +0200
+@@ -21,7 +21,8 @@
+ # pattern to find exposed functions in controller
+ 
+ regex_expose = re.compile(
+-    '^def\s+(?P<name>_?[a-zA-Z0-9]\w*)\( *\)\s*:',
++    ###haim'^def\s+(?P<name>_?[a-zA-Z0-9]\w*)\( *\)\s*:',
++    '^def\s+(?P<name>_?[a-zA-Z0-9]\w*)\( *(?:vars)?\)\s*:',
+     flags=re.M)
+ 
+ regex_longcomments = re.compile('(""".*?"""|'+"'''.*?''')", re.DOTALL)
+diff -r -x '*.pyc' -U 3 web2py-2.13.4-original/gluon/scheduler.py web2py/gluon/scheduler.py
+--- web2py-2.13.4-original/gluon/scheduler.py	2015-12-26 04:58:52.000000000 +0200
++++ web2py/gluon/scheduler.py	2016-02-17 11:35:07.346800142 +0200
+@@ -804,6 +804,7 @@
+         task = grabbed.select(limitby=(0, 1), orderby=st.next_run_time).first()
+         if task:
+             task.update_record(status=RUNNING, last_run_time=now)
++            self.on_update_task_status(task.id, data=dict(status=RUNNING, last_run_time=str(now)[:19]))
+             # noone will touch my task!
+             db.commit()
+             logger.debug('   work to do %s', task.id)
+@@ -879,6 +880,10 @@
+                 db.rollback()
+                 logger.error('    error storing result')
+                 time.sleep(0.5)
++                
++    def on_update_task_status(self, task_id, data):
++        #override in order, for example, to send message to the client
++        pass
+ 
+     def report_task(self, task, task_report):
+         """Takes care of storing the result according to preferences
+@@ -917,6 +922,8 @@
+                      times_failed=0
+                      )
+             db(st.id == task.task_id).update(**d)
++            d['next_run_time'] = str(d['next_run_time'])[:19]
++            self.on_update_task_status(task.task_id, d)
+             if status == COMPLETED:
+                 self.update_dependencies(db, task.task_id)
+         else:
+@@ -927,11 +934,22 @@
+                       and task.times_failed < task.retry_failed
+                       and QUEUED or task.retry_failed == -1
+                       and QUEUED or st_mapping)
++            d = dict(status=status,
++                     times_failed=db.scheduler_task.times_failed + 1,
++                     next_run_time=task.next_run_time,                     
++                     )   
+             db(st.id == task.task_id).update(
++                status=status,
+                 times_failed=db.scheduler_task.times_failed + 1,
+-                next_run_time=task.next_run_time,
+-                status=status
++                next_run_time=task.next_run_time)
++            rec = db(st.id == task.task_id).select().first()
++            data = dict(
++                failed=True,
++                status=status,
++                times_failed=rec.times_failed,
++                next_run_time=str(rec.next_run_time)[:19]
+             )
++            self.on_update_task_status(task.task_id, data)
+         logger.info('task completed (%s)', task_report.status)
+ 
+     def update_dependencies(self, db, task_id):
+@@ -1022,10 +1040,10 @@
+                         ((sw.last_heartbeat < departure) & (sw.status != ACTIVE))
+                     )
+                     dead_workers_name = dead_workers._select(sw.worker_name)
+-                    db(
+-                        (st.assigned_worker_name.belongs(dead_workers_name)) &
+-                        (st.status == RUNNING)
+-                        ).update(assigned_worker_name='', status=QUEUED)
++                    q = (st.assigned_worker_name.belongs(dead_workers_name)) & (st.status == RUNNING)
++                    for tsk in db(q).select():
++                        self.on_update_task_status(tsk.id, data=dict(assigned_worker_name='', status=QUEUED))
++                    db(q).update(assigned_worker_name='', status=QUEUED)
+                     dead_workers.delete()
+                     try:
+                         self.is_a_ticker = self.being_a_ticker()
+@@ -1100,10 +1118,10 @@
+                         {'name': w.worker_name, 'c': 0})
+         # set queued tasks that expired between "runs" (i.e., you turned off
+         # the scheduler): then it wasn't expired, but now it is
+-        db(
+-            (st.status.belongs((QUEUED, ASSIGNED))) &
+-            (st.stop_time < now)
+-        ).update(status=EXPIRED)
++        q = (st.status.belongs((QUEUED, ASSIGNED))) & (st.stop_time < now)
++        for tsk in db(q).select():
++            self.on_update_task_status(tsk.id, data=dict(status=EXPIRED))
++        db(q).update(status=EXPIRED)
+ 
+         # calculate dependencies
+         deps_with_no_deps = db(
+@@ -1180,6 +1198,7 @@
+                         (st.id == task.id) &
+                         (st.status.belongs((QUEUED, ASSIGNED)))
+                         ).update(**d)
++                    self.on_update_task_status(task.id, d)
+                     wkgroups[gname]['workers'][myw]['c'] += 1
+             db.commit()
+         # I didn't report tasks but I'm working nonetheless!!!!
+diff -r -x '*.pyc' -U 3 web2py-2.13.4-original/gluon/serializers.py web2py/gluon/serializers.py
+--- web2py-2.13.4-original/gluon/serializers.py	2015-12-26 04:58:52.000000000 +0200
++++ web2py/gluon/serializers.py	2016-02-14 12:29:36.350828329 +0200
+@@ -107,7 +107,8 @@
+     elif hasattr(o, 'as_dict') and callable(o.as_dict):
+         return o.as_dict()
+     else:
+-        raise TypeError(repr(o) + " is not JSON serializable")
++        return str(o)
++        ###haim raise TypeError(repr(o) + " is not JSON serializable")
+ 
+ 
+ def xml_rec(value, key, quote=True):
+Only in web2py: logging.conf
+
