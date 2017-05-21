@@ -13,6 +13,40 @@ from photos import get_slides_from_photo_list
 def member_list(vars):
     return dict(member_list=get_member_names(vars.visible_only, vars.gender))
 
+@serve_json
+def get_member_details(vars):
+    if not vars.member_id:
+        raise User_Error(T('Member does not exist yet!'))
+    mem_id = int(vars.member_id)
+    if vars.shift == 'next':
+        mem_id += 1
+    elif vars.shift == 'prev':
+        mem_id -= 1
+    #member_info = Storage(member_info.as_dict())
+    member_info = get_member_rec(mem_id)
+    if not member_info:
+        raise User_Error(T('You reached the end of the list'))
+    sm = stories_manager.Stories()
+    story_info = sm.get_story(member_info.story_id) or Storage(display_version='New Story', story_versions=[], story_text='', story_id=None)
+    family_connections = get_family_connections(member_info)
+    slides = get_member_slides(mem_id)
+    images = get_member_images(mem_id)
+    return dict(member_info=member_info, story_info=story_info, family_connections=family_connections, images=images, slides=slides,
+                dummy_face_path=request.application + '/static/images/dummy_face.png')
+
+@serve_json
+def save_member_details(vars):
+    member_info = vars.member_info
+    new_member = not member_info.id
+    result = insert_or_update(db.TblMembers, **member_info)
+    if isinstance(result, dict):
+        return dict(errors=result['errors'])
+    mem_id = result
+    member_rec = get_member_rec(mem_id)
+    member_rec = json_to_storage(member_rec)
+    ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL_USERS', member_rec=member_rec, new_member=new_member);
+
+    return dict(success=T('Data saved successfuly'))
 
 def get_member_names(visible_only=None, gender=None):
     q = (db.TblMembers.id > 0)

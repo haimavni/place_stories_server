@@ -33,7 +33,7 @@ def get_item_list(vars):
 
 @serve_json
 def member_names_json(vars):
-    response.headers['Access-Control-Allow-Origin'] = '*'
+    ###response.headers['Access-Control-Allow-Origin'] = '*'
     return dict(member_list=get_member_names(vars.visible_only, vars.gender))
 
 @serve_json
