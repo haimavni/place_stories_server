@@ -97,12 +97,16 @@ def member_display_name(rec=None, member_id=None, full=True):
         return ''
     if not rec.first_name:
         return older_display_name(rec, full)
-    s = rec.first_name
-    if full and rec.former_first_name:
-        s += ' ({})'.format(rec.former_first_name)
-    s += ' ' + rec.last_name
-    if full and rec.former_last_name:
-        s += ' ({})'.format(rec.former_last_name)
+    s = rec.first_name + ' ' + rec.last_name
+    if full and (rec.former_first_name or rec.former_last_name):
+        s += ' ('
+        if rec.former_first_name:
+            s += rec.former_first_name
+        if rec.former_last_name:
+            if rec.former_first_name:
+                s += ' '
+            s += rec.former_last_name
+        s += ')'     
     if rec.NickName:
         s += ' - {}'.format(rec.NickName)
     return s
