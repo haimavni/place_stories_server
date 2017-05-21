@@ -8,7 +8,6 @@ import os
 from dal_utils import insert_or_update
 from photos import get_slides_from_photo_list
 
-
 @serve_json
 def member_list(vars):
     return dict(member_list=get_member_names(vars.visible_only, vars.gender))

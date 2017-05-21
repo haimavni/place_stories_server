@@ -27,7 +27,8 @@ class Stories:
         for i, sv in enumerate(story_versions):
             if not sv:
                 continue
-            sv.email = db(db.auth_user.id==sv.author_id).select(db.auth_user.email).first().email
+            tmp = db(db.auth_user.id==sv.author_id).select(db.auth_user.email).first()
+            sv.email = tmp.email if tmp else ''
             sv.display_version = get_display_version(i, sv)
         if to_story_version is None:
             story_text = story
