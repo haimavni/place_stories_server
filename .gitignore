@@ -16,3 +16,6 @@ pip-delete-this-directory.txt
 .venv
 venv/
 ENV/
+static/gb_photos
+sessions/
+host_address.txt

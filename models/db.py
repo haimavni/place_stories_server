@@ -47,7 +47,7 @@ response.generic_patterns = ['*'] if request.is_local else []
 ## choose a style for forms
 response.formstyle = myconf.take('forms.formstyle')  # or 'bootstrap3_stacked' or 'bootstrap2' or other
 response.form_label_separator = myconf.take('forms.separator')
-
+response.headers['Access-Control-Allow-Origin'] = '*'
 
 ## (optional) optimize handling of static files
 # response.optimize_css = 'concat,minify,inline'

@@ -172,6 +172,7 @@ db.define_table('TblMembers',
                 Field('Professions', type='string'),
                 Field('StatusID', type='integer'),
                 Field('Status_id', type='integer'),
+                Field('facePhotoURL', type='string')
 )
 
 db.define_table('TblObjects',
