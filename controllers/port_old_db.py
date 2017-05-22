@@ -1,6 +1,6 @@
 from porting.create_old_db_mappings import table_fields, csv_name_to_table_name, get_records, csv_name_to_table_name
 from glob import glob
-
+import re
 
 def port_old_db():
     folder = request.vars.folder or 'gbs-bkp-aug16'
@@ -139,6 +139,19 @@ def fix_photo_location_case():
             n_fixed += 1
     return '{} missing, {} fixed'.format(n_missing, n_fixed)
 
+def guess_names():
+    lst = db(db.TblMembers).select()
+    n_fixed = 0
+    for rec in lst:
+        if rec.first_name:
+            continue
+        name = rec.Name
+        name = re.sub(r'\(.*\)', '', name)
+        parts = name.split()
+        rec.update_record(first_name = parts[0], last_name = ' '.join(parts[1:]))
+        n_fixed += 1
+    return '{} names were guessed'.format(n_fixed)        
+
 def index():
     try:
         comment('starting port old db')
@@ -151,6 +164,7 @@ def index():
         consolidate_stories()
         comment('start name stories')
         name_stories()
+        guess_names()
         comment('Porting done')
     except Exception, e:
         log_exception('Porting old db failed')

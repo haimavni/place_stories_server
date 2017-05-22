@@ -194,14 +194,23 @@ def get_family_connections(member_info):
         children=get_children(member_info.id),
     )
 
+def image_url(rec):
+    #for development need full http address
+    return 'http://' + request.env.http_host + '/' + request.application + '/static/gb_photos/' + rec.TblPhotos.LocationInDisk
+
 def get_member_images(member_id):
     lst = db((db.TblMemberPhotos.Member_id==member_id) & \
              (db.TblPhotos.id==db.TblMemberPhotos.Photo_id) & \
              (db.TblPhotos.width>0)).select()
-    return [dict(id=rec.TblPhotos.id, path=request.application + '/static/gb_photos/' + rec.TblPhotos.LocationInDisk) for rec in lst]
+    return [dict(id=rec.TblPhotos.id, path=image_url(rec)) for rec in lst]
 
 def get_member_slides(member_id):
     q = (db.TblMemberPhotos.Member_id==member_id) & \
         (db.TblPhotos.id==db.TblMemberPhotos.Photo_id)
     return get_slides_from_photo_list(q)
 
+def get_portrait_candidates(member_id):
+    q = (db.TblMemberPhotos.Member_id==member_id) & \
+        (db.TblMemberPhotos.r > 10)
+    lst = db(q).select(orderby=~db.TblMemberPhotos.r)
+    return lst
