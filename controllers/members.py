@@ -30,8 +30,14 @@ def get_member_details(vars):
     family_connections = get_family_connections(member_info)
     slides = get_member_slides(mem_id)
     images = get_member_images(mem_id)
-    return dict(member_info=member_info, story_info=story_info, family_connections=family_connections, images=images, slides=slides,
-                dummy_face_path=request.application + '/static/images/dummy_face.png')
+    if member_info.gender == 'F':
+        spouses = 'husband' + ('s' if len(family_connections.spouses) > 1 else '')
+    else:
+        spouses = 'wife' + ('s' if len(family_connections.spouses) > 1 else '')
+    return dict(member_info=member_info, story_info=story_info, family_connections=family_connections, 
+                images=images, slides=slides, #todo: duplicate?
+                spouses = spouses,
+                facePhotoURL = member_info.facePhotoURL or request.application + '/static/images/dummy_face.png')
 
 @serve_json
 def save_member_details(vars):
