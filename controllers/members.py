@@ -149,7 +149,7 @@ def get_parents(member_id):
 def get_siblings(member_id):
     parents = get_parents(member_id)
     if not parents:
-        return None
+        return []
     pa, ma = parents.pa, parents.ma
     q = db.TblMembers.id!=member_id
     if pa:
@@ -173,7 +173,7 @@ def get_children(member_id):
     elif member_rec.gender=='M':
         q = db.TblMembers.father_id==member_id
     else:
-        return None #error!
+        return [] #error!
     lst = db(q).select(db.TblMembers.id)
     lst = [get_member_rec(rec.id) for rec in lst]
     return lst
@@ -193,12 +193,14 @@ def get_spouses(member_id):
     return [get_member_rec(m_id) for m_id in spouses]
 
 def get_family_connections(member_info):
-    return Storage(
+    result = Storage(
         parents=get_parents(member_info.id),
         siblings=get_siblings(member_info.id),
         spouses=get_spouses(member_info.id),
-        children=get_children(member_info.id),
+        children=get_children(member_info.id)
     )
+    result.hasFamilyConnections = len(result.parents) > 0 or len(result.siblings) > 0 or len(result.spouses) > 0 or len(result.children) > 0
+    return result
 
 def image_url(rec):
     #for development need full http address

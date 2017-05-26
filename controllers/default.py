@@ -139,9 +139,22 @@ def verify_email():
     auth.verify_email()
 
 @serve_json
+def check_if_logged_in(vars):
+    return dict(is_logged_in = auth.is_logged_in())
+
+@serve_json
 def login(vars):
     result = auth.login_bare(vars.user_email, vars.password)
-    return dict() if result else dict(error=T('Wrong email or wrong password!'))
+    if not result:
+        raise User_Error('login_failed')
+    user = Storage()
+    for k in ['email', 'facebook', 'first_name', 'last_name', 'id', 'skype']:
+        v = result[k]
+        if v:
+            user[k] = v
+        
+    user.privileges = auth.get_privileges()
+    return dict(user=user)
 
 @serve_json
 def logout(vars):

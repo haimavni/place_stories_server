@@ -61,5 +61,21 @@ class MyAuth(Auth):
         db = self.db
         user = db(db.auth_user.id==user_id).select().first()
         return user.first_name + ' ' + user.last_name
+    
+    def get_privileges(self):
+        if not self.user:
+            return
+        user_groups = self.user_groups = {}
+        table_group = self.table_group()
+        table_membership = self.table_membership()
+        memberships = self.db(
+            table_membership.user_id == self.user.id).select()
+        privileges = Storage()
+        for membership in memberships:
+            group = table_group(membership.group_id)
+            if group:
+                privileges[group.role] = True
+        return privileges
+    
         
         
