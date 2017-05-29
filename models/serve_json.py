@@ -12,7 +12,12 @@ def serve_json(func):
 
     def f():
         t0 = datetime.datetime.now()
-        vars = request.vars
+        s = request.body.read()
+        if len(s) > 0:
+            y = simplejson.loads(s)
+            vars = json_to_storage(y)
+        else:
+            vars = request.vars
         for k in vars:
             s = vars[k]
             if isinstance(s, str) and (s.startswith('{') or s.startswith('[')):

@@ -238,12 +238,12 @@ def resize_face(vars):
         (db.TblMemberPhotos.x==face.x) & \
         (db.TblMemberPhotos.y==face.y)
     if face.r > 0:
-        db(q).update(r=face.r)
+        db(q).update(r=face.r, Member_id=face.member_id)
     else:
         db(q).delete()
 
 @serve_json
-def identify_face(vars):
+def identify_face(vars): #now obsolete. call resize_face for the same purpose.
     face = vars.face
     person = vars.person
     photo_id = face.photo_id

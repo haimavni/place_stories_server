@@ -140,7 +140,7 @@ def verify_email():
 
 @serve_json
 def check_if_logged_in(vars):
-    return dict(is_logged_in = auth.is_logged_in())
+    return dict(is_logged_in = auth.is_logged_in() or True)  ###temporary for dev!!!
 
 @serve_json
 def login(vars):
