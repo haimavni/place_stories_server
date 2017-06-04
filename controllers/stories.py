@@ -239,23 +239,13 @@ def resize_face(vars):
         (db.TblMemberPhotos.y==face.y)
     if face.r > 0:
         db(q).update(r=face.r, Member_id=face.member_id)
+        member_name = member_display_name(member_id=face.member_id)
+        return dict(member_name=member_name)
     else:
-        db(q).delete()
-
-@serve_json
-def identify_face(vars): #now obsolete. call resize_face for the same purpose.
-    face = vars.face
-    person = vars.person
-    photo_id = face.photo_id
-    member_id = person.id
-    x = face.x
-    y = face.y
-    q = (db.TblMemberPhotos.Photo_id==photo_id) & \
-        (db.TblMemberPhotos.x==x) & \
-        (db.TblMemberPhotos.y==y)
-    db(q).update(Member_id=member_id)
-    return dict()
-    
+        n = db(q).delete()
+        good = n == 1
+        return dict(delete_ok=good)
+ 
 #------------------------Support functions------------------------------
 
 def get_face_list(photo_id):

@@ -66,7 +66,7 @@ def fix_photo_location_case():
 
 def photos_folder():
     request = inject('request')
-    return request.application + '/static/gb_photos/'
+    return '/' + request.application + '/static/gb_photos/'
 
 def get_slides_from_photo_list(q):
     db = inject('db')
