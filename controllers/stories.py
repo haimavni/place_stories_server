@@ -204,8 +204,9 @@ def get_faces(vars):
     faces = []
     candidates = []
     for rec in lst:
-        if rec.x == None: #found old record which has a memeber but no location
+        if rec.r == None: #found old record which has a memeber but no location
             if not rec.Member_id:
+                db(db.TblMemberPhotos.id==rec.id).delete()
                 continue
             name = member_display_name(member_id=rec.Member_id)
             candidate = dict(member_id=rec.Member_id, name=name)
@@ -237,14 +238,24 @@ def resize_face(vars):
     q = (db.TblMemberPhotos.Photo_id==face.photo_id) & \
         (db.TblMemberPhotos.x==face.x) & \
         (db.TblMemberPhotos.y==face.y)
-    if face.r > 0:
-        db(q).update(r=face.r, Member_id=face.member_id)
-        member_name = member_display_name(member_id=face.member_id)
-        return dict(member_name=member_name)
-    else:
-        n = db(q).delete()
-        good = n == 1
-        return dict(delete_ok=good)
+    assert(face.r > 0)
+    if vars.resizing:
+        db(q).update(r=face.r)
+        return dict()
+    assert(face.member_id > 0)
+    db(q).update(Member_id=face.member_id)
+    member_name = member_display_name(member_id=face.member_id)
+    return dict(member_name=member_name)
+
+@serve_json
+def remove_face(vars):
+    face = vars.face;
+    if not face.member_id:
+        return dict()
+    q = (db.TblMemberPhotos.Photo_id==face.photo_id) & \
+        (db.TblMemberPhotos.Member_id==face.member_id)
+    good = db(q).delete() == 1
+    return dict(face_deleted=good)
  
 #------------------------Support functions------------------------------
 
