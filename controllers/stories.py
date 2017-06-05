@@ -82,17 +82,28 @@ def get_member_info(vars):
 
 @serve_json
 def save_member_info(vars):
+    story_info = vars.story_info
+    if story_info:
+        story_id = save_story_info(story_info, used_for=STORY4MEMBER)
+    else:
+        story_id = None
+    member_id = None
     member_info = vars.member_info
-    new_member = not member_info.id
-    result = insert_or_update(db.TblMembers, **member_info)
-    if isinstance(result, dict):
-        return dict(errors=result['errors'])
-    mem_id = result
-    member_rec = get_member_rec(mem_id)
-    member_rec = json_to_storage(member_rec)
-    ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL_USERS', member_rec=member_rec, new_member=new_member);
-
-    return dict(success=T('Data saved successfuly'))
+    if member_info:
+        new_member = not member_info.id
+        if story_id:
+            member_info.story_id = story_id
+        result = insert_or_update(db.TblMembers, **member_info)
+        if isinstance(result, dict):
+            return dict(errors=result['errors'])
+        member_id = result
+        member_rec = get_member_rec(member_id)
+        member_rec = json_to_storage(member_rec)
+        ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL_USERS', member_rec=member_rec, new_member=new_member)
+    result = Storage(story_id=story_id)
+    if member_id:
+        result.member_id = member_id;
+    return result
 
 @serve_json
 def get_term_info(vars):
@@ -258,6 +269,16 @@ def remove_face(vars):
     return dict(face_deleted=good)
  
 #------------------------Support functions------------------------------
+
+def save_story_info(story_info, used_for):
+    story_text = story_info.story_text.replace('~1', '&').replace('~2', ';')
+    story_id = story_info.story_id
+    sm = stories_manager.Stories()
+    if story_id:
+        sm.update_story(story_id, story_text)
+    else:
+        story_id = sm.add_story(story_text, used_for=used_for)
+    return story_id
 
 def get_face_list(photo_id):
     lst = db(TblMemberPhotos.Photo_id==photo_id).select()
