@@ -87,7 +87,7 @@ def save_member_info(vars):
         story_id = save_story_info(story_info, used_for=STORY4MEMBER)
     else:
         story_id = None
-    member_id = None
+    member_id = vars.member_id
     member_info = vars.member_info
     if member_info:
         new_member = not member_info.id
@@ -100,6 +100,8 @@ def save_member_info(vars):
         member_rec = get_member_rec(member_id)
         member_rec = json_to_storage(member_rec)
         ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL_USERS', member_rec=member_rec, new_member=new_member)
+    elif story_id:
+        db(db.TblMembers.id==member_id).update(story_id=story_id)
     result = Storage(story_id=story_id)
     if member_id:
         result.member_id = member_id;
@@ -164,7 +166,7 @@ def upload(vars):
                             height=0,
                             photo_missing=False
                             )
-    return dict(success=T('Files were uploaded successfuly'))
+    return dict(success=T('Files were uploaded succiessfuly'))
 
 @serve_json
 def read_chatroom(vars):
