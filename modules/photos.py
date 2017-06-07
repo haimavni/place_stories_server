@@ -82,7 +82,15 @@ def get_slides_from_photo_list(q):
     return slides
 
 def save_resized_image(img_src, w, h, folder):
-    from PIL import Image
     img = Image.open('/static/gb_photos/originals/' + img_src)
     new_img = img.resize((w,h))
-    new_img.save('/static/gb_photos/{f}/{i}'.format(f=folder, i=img_src), "JPEG", optimize=True)    
+    new_img.save('/static/gb_photos/{f}/{i}'.format(f=folder, i=img_src), "JPEG", optimize=True)
+
+def crop(input_path, output_path, face):
+    from PIL import Image
+    img = Image.open(input_path)
+    area = (face.x, face.y, face.r * 2, face.r * 2)
+    cropped_img = img.crop(area)
+    cropped_img.save(output_path)
+    return photo_blob
+    
