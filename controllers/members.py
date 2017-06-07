@@ -83,10 +83,12 @@ def get_member_names(visible_only=None, gender=None):
         q &= (db.TblMembers.gender == gender)
 
     lst = db(q).select()
+    face_photo_url = 'http://' + request.env.http_host + '/' + request.application + '/static/gb_photos/profile_photos/PP-'
     arr = [Storage(id=rec.id,
                    name=member_display_name(rec, full=True),
                    gender=rec.gender,
-                   facePhotoURL=rec.facePhotoURL or 'http://' + request.env.http_host  + "/gbs/static/images/dummy_face.png") for rec in lst]
+                   has_profile_photo=rec.has_profile_photo,
+                   facePhotoURL=face_photo_url + str(rec.id) + ".jpg" if rec.has_profile_photo else 'http://' + request.env.http_host  + "/gbs/static/images/dummy_face.png") for rec in lst]
     return arr
 
 def older_display_name(rec, full):

@@ -443,11 +443,9 @@ def save_profile_photo(face):
     base_path = 'applications/' + request.application + '/static/gb_photos/'
     input_path = base_path + rec.LocationInDisk
     output_path = base_path + 'profile_photos/'
-    if not os.path.isdir(output_path):
-        os.makedirs(output_path)
-    output_path = output_path + "PP-{}.jpg".format(face.member_id)
+    output_path += "PP-{}.jpg".format(face.member_id)
     crop(input_path, output_path, face)
-    db(db.TblMembers.Member_id==face.member_id).update(has_profile_photo=True)
+    db(db.TblMembers.id==face.member_id).update(has_profile_photo=True)
 
 def test_stories():
     sm = stories_manager.Stories()

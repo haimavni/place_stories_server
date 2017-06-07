@@ -1,4 +1,5 @@
 from PIL import Image
+import PIL
 try:
     import cv2
 except:
@@ -62,7 +63,6 @@ def fix_photo_location_case():
         low_location = rec.LocationInDisk.lower()
         if low_location != rec.LocationInDisk:
             rec.update_record(LocationInDisk=low_location)
-    
 
 def photos_folder():
     request = inject('request')
@@ -88,9 +88,9 @@ def save_resized_image(img_src, w, h, folder):
 
 def crop(input_path, output_path, face):
     from PIL import Image
+    path = os.getcwd()
     img = Image.open(input_path)
-    area = (face.x, face.y, face.r * 2, face.r * 2)
+    area = (face.x - face.r, face.y - face.r, face.x + face.r, face.y + face.r)
     cropped_img = img.crop(area)
-    cropped_img.save(output_path)
-    return photo_blob
-    
+    resized_img = cropped_img.resize((100, 100), PIL.Image.NEAREST)
+    resized_img.save(output_path)
