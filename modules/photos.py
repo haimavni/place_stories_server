@@ -1,9 +1,5 @@
-from PIL import Image
 import PIL
-try:
-    import cv2
-except:
-    cv2 = None
+from PIL import Image
 from gluon.storage import Storage
 from injections import inject
 import os
@@ -11,22 +7,7 @@ import os
 def get_image_info(image_path):
     img = Image.open(image_path)
     width, height = img.size
-    if cv2:
-        request = inject('request')
-        casc_path = 'applications/' + request.application + '/static/haarcascades/haarcascade_frontalface_default.xml'
-        faceCascade = cv2.CascadeClassifier(casc_path)
-        # Read the image
-        image = cv2.imread(image_path)
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)    
-        faces = faceCascade.detectMultiScale(
-            gray,
-            scaleFactor=1.1,
-            minNeighbors=5,
-            minSize=(30, 30),
-            flags = cv2.CASCADE_SCALE_IMAGE
-        ) 
-    else:
-        faces = []
+    faces = []
     return Storage(width=width, height=height, faces=faces)
 
 
@@ -83,14 +64,13 @@ def get_slides_from_photo_list(q):
 
 def save_resized_image(img_src, w, h, folder):
     img = Image.open('/static/gb_photos/originals/' + img_src)
-    new_img = img.resize((w,h))
+    new_img = img.resize((w,h), Image.LANCZOS)
     new_img.save('/static/gb_photos/{f}/{i}'.format(f=folder, i=img_src), "JPEG", optimize=True)
 
 def crop(input_path, output_path, face):
-    from PIL import Image
     path = os.getcwd()
     img = Image.open(input_path)
     area = (face.x - face.r, face.y - face.r, face.x + face.r, face.y + face.r)
     cropped_img = img.crop(area)
-    resized_img = cropped_img.resize((100, 100), PIL.Image.NEAREST)
+    resized_img = cropped_img.resize((100, 100), Image.LANCZOS)
     resized_img.save(output_path)
