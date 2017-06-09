@@ -16,6 +16,27 @@ def member_list(vars):
 def get_member_details(vars):
     if not vars.member_id:
         raise User_Error(T('Member does not exist yet!'))
+    if vars.member_id == "new":
+        new_member = dict(
+            member_info=Storage(
+                first_name="",
+                last_name="",
+                former_first_name="",
+                former_last_name="",
+                full_name="members.new-member"),
+            story_info = Storage(display_version='New Story', story_versions=[], story_text='', story_id=None),
+            family_connections =  Storage(
+                parents=dict(pa=None, ma=None),
+                siblings=[],
+                spouses=[],
+                children=[]
+            ),
+            images = [],
+            slides=[],
+            spouses=[],
+            facePhotoURL = request.application + '/static/images/dummy_face.png'
+        )
+        return new_member
     mem_id = int(vars.member_id)
     if vars.shift == 'next':
         mem_id += 1
@@ -42,7 +63,7 @@ def get_member_details(vars):
 @serve_json
 def save_member_details(vars):
     member_info = vars.member_info
-    new_member = not member_info.id
+    new_member = member_info.id == "new" or not member_info.id
     result = insert_or_update(db.TblMembers, **member_info)
     if isinstance(result, dict):
         return dict(errors=result['errors'])
