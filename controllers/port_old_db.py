@@ -3,7 +3,7 @@ from glob import glob
 import re
 
 def port_old_db():
-    folder = request.vars.folder or 'gbs-bkp-aug16'
+    folder = request.vars.folder or 'gbs-bkp-jun17'
     path = base_app_dir + 'private/{}/'.format(folder)
     lst = glob(path + '*.csv')
     for csv_name in lst:
@@ -37,6 +37,9 @@ map_dblink_to_table_name = dict(
     ConnectionTypeID='TblFamilyConnectionTypes',
     InventedByMemberID='TblMembers'
 )
+def convert_to_camel(name):
+    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
 
 def convert_IDrefs():
     for tbl in sorted(dblinks):

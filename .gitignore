@@ -19,4 +19,5 @@ venv/
 ENV/
 static/gb_photos
 sessions/
+private/junk/
 host_address.txt

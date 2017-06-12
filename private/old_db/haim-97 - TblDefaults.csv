@@ -1,2 +1,0 @@
-ID,AdminMaxResultsInPage,UserMaxResultsInPage,PhotosInMember,PhotosInEvent,NormalPhotoWidth,ThumbnailPhotoWidth,AdminThumbnailPhotoHeight,UserMaxRandomEventsInMainPage,PageHitsCountingStatus,CommentsEmailName,CommentsEmailAddress,IdentifyEmailName,IdentifyEmailAddress,MailHost,MailPort,MailFromAddress,MailFromName,UserMaxPhotosInUnidentifiedPage,AdminHrefInitialAddress
-1,20,10,4,4,300,100,50,12,3,אליעזר,cordi995@bezeqint.net,אליעזר,cordi995@bezeqint.net,mail.fiberspeed.net,25,gbs@givat-brenner.co.il,אתר סיפורי גבעת ברנר,40,http://www.givat-brenner.co.il/
