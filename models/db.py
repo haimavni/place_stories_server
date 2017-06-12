@@ -25,8 +25,9 @@ def __open_db():
         #return lst[-2]
 
     #dbname = get_dbname()
-    ##dbname = request.application
-    dbname = "gbs_dev"
+    dbname = request.application
+    if db_name == "gbs":
+        dbname = "gbs_dev"
     adapter = 'psycopg2:'
     _debugging = False ###request.function not in ('whats_up', 'log_file_data')
     try:
