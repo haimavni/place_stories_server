@@ -258,7 +258,18 @@ def resize_face(vars):
     assert(face.member_id > 0)
     if vars.make_profile_photo:
         save_profile_photo(face)
+    #delete old links which have no location / radius:
+    q1 = (db.TblMemberPhotos.Photo_id==face.photo_id) & \
+         (db.TblMemberPhotos.Member_id==face.member_id)
+    q2 = q1 &  (db.TblMemberPhotos.r == 0)
+    obsolete = db(q2).delete()
+    lst = db(q1).select()
+    if len(lst) > 1:
+        for rec in lst[:-1]:
+            db(db.TblMemberPhotos.id==rec.id).delete()
+    #update the link that has location / radius:
     db(q).update(Member_id=face.member_id)
+    changed = db(q & (db.TblMemberPhotos.Member_id != face.member_id)).delete() #
     member_name = member_display_name(member_id=face.member_id)
     return dict(member_name=member_name)
 

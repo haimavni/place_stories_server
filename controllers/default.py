@@ -19,6 +19,7 @@ def index():
     if you need a simple wiki simply replace the two lines below with:
     return auth.wiki()
     """
+    redirect("/gbs/static/aurelia/index.html")
     response.flash = T("Hello World")
     return dict(message=T('Welcome to web2py!'))
 
