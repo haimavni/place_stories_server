@@ -172,7 +172,8 @@ db.define_table('TblMembers',
                 Field('Professions', type='string'),
                 Field('StatusID', type='integer'),
                 Field('Status_id', type='integer'),
-                Field('facePhotoURL', type='string')
+                Field('facePhotoURL', type='string'),
+                Field('has_profile_photo', type='boolean', default=False)
 )
 
 db.define_table('TblObjects',
@@ -273,6 +274,17 @@ def write_indexing_sql_scripts():
                 drop_cmd = 'DROP INDEX {};'.format(tcc[0])
                 f.write(create_cmd + '\n')
                 g.write(drop_cmd + '\n')
+
+db.define_table('TblHelpMessages',
+                Field('Name', type='string', default=""),
+                Field('content', type='text', default="")
+)
+
+db.define_table('TblHelpGotit',
+                Field('help_message_id', type=db.TblHelpMessages),
+                Field('member_id', type=db.TblMembers),
+                Field('Gotit', type='boolean', default=False)
+)
 
 write_indexing_sql_scripts()                
 

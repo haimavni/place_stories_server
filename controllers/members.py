@@ -16,6 +16,27 @@ def member_list(vars):
 def get_member_details(vars):
     if not vars.member_id:
         raise User_Error(T('Member does not exist yet!'))
+    if vars.member_id == "new":
+        new_member = dict(
+            member_info=Storage(
+                first_name="",
+                last_name="",
+                former_first_name="",
+                former_last_name="",
+                full_name="members.new-member"),
+            story_info = Storage(display_version='New Story', story_versions=[], story_text='', story_id=None),
+            family_connections =  Storage(
+                parents=dict(pa=None, ma=None),
+                siblings=[],
+                spouses=[],
+                children=[]
+            ),
+            images = [],
+            slides=[],
+            spouses=[],
+            facePhotoURL = request.application + '/static/images/dummy_face.png'
+        )
+        return new_member
     mem_id = int(vars.member_id)
     if vars.shift == 'next':
         mem_id += 1
@@ -42,7 +63,7 @@ def get_member_details(vars):
 @serve_json
 def save_member_details(vars):
     member_info = vars.member_info
-    new_member = not member_info.id
+    new_member = member_info.id == "new" or not member_info.id
     result = insert_or_update(db.TblMembers, **member_info)
     if isinstance(result, dict):
         return dict(errors=result['errors'])
@@ -83,10 +104,12 @@ def get_member_names(visible_only=None, gender=None):
         q &= (db.TblMembers.gender == gender)
 
     lst = db(q).select()
+    face_photo_url = 'http://' + request.env.http_host + '/' + request.application + '/static/gb_photos/profile_photos/PP-'
     arr = [Storage(id=rec.id,
                    name=member_display_name(rec, full=True),
                    gender=rec.gender,
-                   facePhotoURL=rec.facePhotoURL or 'http://' + request.env.http_host  + "/gbs/static/images/dummy_face.png") for rec in lst]
+                   has_profile_photo=rec.has_profile_photo,
+                   facePhotoURL=face_photo_url + str(rec.id) + ".jpg" if rec.has_profile_photo else 'http://' + request.env.http_host  + "/gbs/static/images/dummy_face.png") for rec in lst]
     return arr
 
 def older_display_name(rec, full):

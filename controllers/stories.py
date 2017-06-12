@@ -6,7 +6,7 @@ from http_utils import json_to_storage
 import datetime
 import os
 from dal_utils import insert_or_update
-from photos import get_slides_from_photo_list
+from photos import get_slides_from_photo_list, crop
 
 def index():
     response.view = 'stories/main.html'
@@ -256,6 +256,8 @@ def resize_face(vars):
         db(q).update(r=face.r)
         return dict()
     assert(face.member_id > 0)
+    if vars.make_profile_photo:
+        save_profile_photo(face)
     db(q).update(Member_id=face.member_id)
     member_name = member_display_name(member_id=face.member_id)
     return dict(member_name=member_name)
@@ -435,6 +437,15 @@ def get_member_slides(member_id):
 def get_photo_rec(photo_id):
     rec = db(db.TblPhotos.id==photo_id).select().first()
     return rec
+
+def save_profile_photo(face):
+    rec = get_photo_rec(face.photo_id)
+    base_path = 'applications/' + request.application + '/static/gb_photos/'
+    input_path = base_path + rec.LocationInDisk
+    output_path = base_path + 'profile_photos/'
+    output_path += "PP-{}.jpg".format(face.member_id)
+    crop(input_path, output_path, face)
+    db(db.TblMembers.id==face.member_id).update(has_profile_photo=True)
 
 def test_stories():
     sm = stories_manager.Stories()
