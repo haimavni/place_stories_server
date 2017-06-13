@@ -1,3 +1,6 @@
+
+# -*- coding: utf-8 -*-
+
 from porting.create_old_db_mappings import table_fields, csv_name_to_table_name, get_records, csv_name_to_table_name
 from glob import glob
 import re
