@@ -21,7 +21,7 @@ def __open_db():
     adapter = 'psycopg2:'
     _debugging = False ###request.function not in ('whats_up', 'log_file_data')
     try:
-        db = DAL('postgres:{ad}//coolano:V3geHanu@localhost/{dbn}'.format(ad=adapter, dbn=dbname), 
+        db = DAL('postgres:{ad}//gbs:V3geHanu@localhost/{dbn}'.format(ad=adapter, dbn=dbname), 
                  pool_size=10,
                  debug=_debugging,
                  lazy_tables=False) #it causes an exeption!
