@@ -12,14 +12,16 @@ def get_image_info(image_path):
 
 
 def scan_all_unscanned_photos():
-    db, request = inject('db', 'request')
+    db, request, comment = inject('db', 'request', 'comment')
     q = (db.TblPhotos.width == 0) & (db.TblPhotos.photo_missing == False)
     to_scan = db(q).count()
     chunk = 100
     folder = request.application + '/static/gb_photos/'
     while True:
+        comment('Started chunk of photos')
         lst = db(q).select(limitby=(0, chunk))
         if len(lst) == 0:
+            comment('No unscanned photos were found!')
             return dict(message='No unscanned photos were found!', to_scan=to_scan)
         for rec in lst:
             fname = folder + rec.LocationInDisk
