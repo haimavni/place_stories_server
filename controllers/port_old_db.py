@@ -174,4 +174,5 @@ def index():
         comment('Porting done')
     except Exception, e:
         log_exception('Porting old db failed')
+    db.commit()
     return "Old db was converted and modified"
