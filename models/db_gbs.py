@@ -205,7 +205,7 @@ db.define_table('TblPhotos',
                 Field('height', type='integer', default=0),
                 Field('uploader', type=db.auth_user),
                 Field('upload_date', type='datetime'),
-                Field('photo_missing', type='boolean')
+                Field('photo_missing', type='boolean', default=False)
 )
 
 db.define_table('TblStatuses',

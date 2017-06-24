@@ -1,0 +1,10 @@
+[Unit]
+Description=Web2py Scheduler service local development system
+
+[Service]
+ExecStart=/usr/bin/python /home/haim/aurelia-gbs/server/web2py/web2py.py -K gbs,gbs,gbs,gbs,gbs,gbs 
+Type=simple
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

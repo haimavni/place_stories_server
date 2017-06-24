@@ -1,0 +1,10 @@
+[Unit]
+Description=Tornado Messaging
+
+[Service]
+ExecStart=/usr/bin/python /home/www-data/web2py/gluon/contrib/websocket_messaging.py -k mykey -p 8888
+Type=simple
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

@@ -16,9 +16,9 @@ def scan_all_unscanned_photos():
     q = (db.TblPhotos.width == 0) & (db.TblPhotos.photo_missing == False)
     to_scan = db(q).count()
     chunk = 100
-    folder = request.application + '/static/gb_photos/'
+    folder = 'applications/' + request.application + '/static/gb_photos/'
     while True:
-        comment('Started chunk of photos')
+        comment('started scanning chunk of photos')
         lst = db(q).select(limitby=(0, chunk))
         if len(lst) == 0:
             comment('No unscanned photos were found!')

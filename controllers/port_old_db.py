@@ -4,6 +4,7 @@
 from porting.create_old_db_mappings import table_fields, csv_name_to_table_name, get_records, csv_name_to_table_name
 from glob import glob
 import re
+from photos import scan_all_unscanned_photos
 
 def port_old_db():
     folder = request.vars.folder or 'gbs-bkp-jun17'
@@ -156,7 +157,10 @@ def guess_names():
         parts = name.split()
         rec.update_record(first_name = parts[0], last_name = ' '.join(parts[1:]))
         n_fixed += 1
-    return '{} names were guessed'.format(n_fixed)        
+    return '{} names were guessed'.format(n_fixed)
+
+def scan_photos():
+    scan_all_unscanned_photos()     
 
 def index():
     try:
@@ -171,6 +175,8 @@ def index():
         comment('start name stories')
         name_stories()
         guess_names()
+        comment("start scan photos")
+        scan_photos()
         comment('Porting done')
     except Exception, e:
         log_exception('Porting old db failed')

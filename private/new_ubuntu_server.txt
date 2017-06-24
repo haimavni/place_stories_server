@@ -52,7 +52,7 @@ Postgresql installation
     * Edit /etc/postgresql/9.5/main/postgresql.conf to remove "ssl=true" - it makes server start fail 
     * passwd postgres
     * su postgres
-    * createuser -P coolano
+    * createuser -P lifestone
         create user  with password "V3geHanu".
     * createdb validator
 
@@ -109,27 +109,27 @@ have uncommitted changes.
 
 in the web2py directory, generate link to logging.conf:
     cd ../web2py
-    ln -T --symbolic ../coolano/private/logging.conf logging.conf
-in /usr/lib/python2.7 replace logging directory by a link to coolano/private/logging
+    ln -T --symbolic ../gbs/private/logging.conf logging.conf
+in /usr/lib/python2.7 replace logging directory by a link to place_stories_server/private/logging
 
 ----------------before Ubuntu 16.04-------------------
 copy web2py-scheduler.conf from private to /etc/init
 
 
 in /etc/init
-    ln -T --symbolic ../coolano/private/messaging.conf messaging.conf
-    ln -T --symbolic ../coolano/private/web2py-scheduler.conf web2py-scheduler.conf
+    ln -T --symbolic ../place_stories_server/private/messaging.conf messaging.conf
+    ln -T --symbolic ../place_stories_server/private/web2py-scheduler.conf web2py-scheduler.conf
 
 ----------------------Ubuntu 16.04-------------------
 In Ubuntu 16.04 changed to systemd:
 
 In /etc/systemd/system
-    ln -T --symbolic /srv/dev/coolano/private/messaging.service messaging.service
-    ln -T --symbolic /srv/dev/coolano/private/web2py-scheduler-dev.service web2py-scheduler-dev.service
-    ln -T --symbolic /srv/test/coolano/private/web2py-scheduler-test.service web2py-scheduler-test.service
-    ln -T --symbolic /srv/www/coolano/private/web2py-scheduler-www.service web2py-scheduler-www.service
+    ln -T --symbolic /home/www-data/place_stories_server/private/messaging.service messaging.service
+    ln -T --symbolic /home/www-data/place_stories_server/private/web2py-scheduler-dev.service web2py-scheduler-dev.service
+    ln -T --symbolic /srv/test/place_stories_server/private/web2py-scheduler-test.service web2py-scheduler-test.service
+    ln -T --symbolic /srv/www/place_stories_server/private/web2py-scheduler-www.service web2py-scheduler-www.service
 On the development system:
-    ln -T --symbolic /home/haim/fossil_projects/coolano/private/web2py-scheduler.service web2py-scheduler.service
+    ln -T --symbolic /home/haim/aurelia-gbs/server/place_stories_server/private/web2py-scheduler.service web2py-scheduler.service
     
 To start service with system:
 sudo systemctl enable messaging.service
@@ -143,7 +143,7 @@ INDEX tables:
 
 su postgres
 
-while in coolano/logs, type:
+while in place_stories_server/logs, type:
 
 psql -d coolanoxxx -f create_indexes.sql    where xxx is dev, test, www or empty
 
