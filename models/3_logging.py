@@ -4,6 +4,7 @@ logger.setLevel(logging.DEBUG)
 _debugging = request.function not in ('whats_up', 'log_file_data')
 if _debugging:
     logger.debug("\n        NEW REQUEST {}".format(request.function))
+import datetime
 ###logging.disable(logging.DEBUG)
 
 def roll_over(base_name, max_number):
@@ -19,14 +20,15 @@ def roll_over(base_name, max_number):
         os.remove(dfn)
     os.rename(base_name, dfn)
 
-def my_log(s, file_name="log_all.log"):
+def my_log(s, file_name="log_all"):
     size_limit = 400000
     fname = '{}{}.log'.format(log_path(), file_name)
     file_size = os.path.getsize(fname) if os.path.exists(fname) else 0
     if file_size + len(s) > size_limit:
         roll_over(fname, 10)
+    s1 = "{ts}: {s}\n\n".format(ts=datetime.datetime.now(), s=s)
     with open(fname, 'a') as f:
-        f.write(s)
+        f.write(s1)
 
 def log_exception_only(p, file_name='exceptions'):
     import traceback

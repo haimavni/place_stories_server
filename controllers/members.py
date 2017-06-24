@@ -6,7 +6,7 @@ from http_utils import json_to_storage
 import datetime
 import os
 from dal_utils import insert_or_update
-from photos import get_slides_from_photo_list
+from photos import get_slides_from_photo_list, photos_folder
 
 @serve_json
 def member_list(vars):
@@ -104,7 +104,7 @@ def get_member_names(visible_only=None, gender=None):
         q &= (db.TblMembers.gender == gender)
 
     lst = db(q).select()
-    face_photo_url = 'http://' + request.env.http_host + '/' + request.application + '/static/gb_photos/profile_photos/PP-'
+    face_photo_url = 'http://' + request.env.http_host + '/' + photos_folder('profile_photos') +'PP-'
     arr = [Storage(id=rec.id,
                    name=member_display_name(rec, full=True),
                    gender=rec.gender,
@@ -227,7 +227,7 @@ def get_family_connections(member_info):
 
 def image_url(rec):
     #for development need full http address
-    return 'http://' + request.env.http_host + '/' + request.application + '/static/gb_photos/' + rec.TblPhotos.LocationInDisk
+    return 'http://' + request.env.http_host + '/' + photos_folder() + rec.TblPhotos.LocationInDisk
 
 def get_member_images(member_id):
     lst = db((db.TblMemberPhotos.Member_id==member_id) & \

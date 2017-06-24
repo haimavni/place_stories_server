@@ -177,6 +177,9 @@ def index():
         guess_names()
         comment("start scan photos")
         scan_photos()
+        comment('start fixing photo location case')
+        db.commit()
+        fix_photo_location_case()
         comment('Porting done')
     except Exception, e:
         log_exception('Porting old db failed')

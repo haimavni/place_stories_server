@@ -3,6 +3,7 @@ from PIL import Image
 from gluon.storage import Storage
 from injections import inject
 import os
+from distutils import dir_util
 
 def get_image_info(image_path):
     img = Image.open(image_path)
@@ -16,7 +17,7 @@ def scan_all_unscanned_photos():
     q = (db.TblPhotos.width == 0) & (db.TblPhotos.photo_missing == False)
     to_scan = db(q).count()
     chunk = 100
-    folder = 'applications/' + request.application + '/static/gb_photos/'
+    folder = 'applications/' + photos_folder()
     while True:
         comment('started scanning chunk of photos')
         lst = db(q).select(limitby=(0, chunk))
@@ -40,16 +41,11 @@ def scan_all_unscanned_photos():
         total = db(db.TblPhotos).count()
     return dict(done=done, total=total, missing=missing, to_scan=to_scan)
 
-def fix_photo_location_case():
-    db = inject('db')
-    for rec in db(db.TblPhotos).select():
-        low_location = rec.LocationInDisk.lower()
-        if low_location != rec.LocationInDisk:
-            rec.update_record(LocationInDisk=low_location)
-
-def photos_folder():
+def photos_folder(what="orig"): 
+    #what may be orig, squares,images or profile_photos. (images is for customer-specific images such as logo)
+    #app appears twice: one to reach static, the other is to separate different customers
     request = inject('request')
-    return '/' + request.application + '/static/gb_photos/'
+    return '{app}/static/gb_photos/{app}/photos/{what}/'.format(app=request.application, what=what)
 
 def get_slides_from_photo_list(q):
     db = inject('db')
@@ -64,15 +60,30 @@ def get_slides_from_photo_list(q):
     slides = [dict(photo_id=rec.id, src=folder + rec.LocationInDisk, width=rec.width, height=rec.height, title=rec.Description) for rec in lst]
     return slides
 
-def save_resized_image(img_src, w, h, folder):
-    img = Image.open('/static/gb_photos/originals/' + img_src)
-    new_img = img.resize((w,h), Image.LANCZOS)
-    new_img.save('/static/gb_photos/{f}/{i}'.format(f=folder, i=img_src), "JPEG", optimize=True)
-
-def crop(input_path, output_path, face):
-    path = os.getcwd()
+def crop(input_path, output_path, face, size=100):
     img = Image.open(input_path)
     area = (face.x - face.r, face.y - face.r, face.x + face.r, face.y + face.r)
     cropped_img = img.crop(area)
-    resized_img = cropped_img.resize((100, 100), Image.LANCZOS)
+    resized_img = cropped_img.resize((size, size), Image.LANCZOS)
     resized_img.save(output_path)
+
+def crop_square(img_src, width, height, side_size):
+    if width > hight:
+        x = (width - height) / 2
+        x1 = x + width
+        y = 0,
+        y1 = height
+    else:
+        y = (height - width) / 2
+        y1 = y + height
+        x = 0
+        x1 = width
+    input_path = photos_folder() + img_src
+    output_path = photos_folder("squares") + os.path.dirname(image_src)
+    dir_util.mkpath(output_path)
+    img = Image.open(photos_folder() + img_src)
+    area = (x, y, x1, y1)
+    cropped_img = img.crop(area)
+    resized_img = cropped_img.resize((side_size, side_size), Image.LANCZOS)
+    resized_img.save(output_path)
+
