@@ -48,6 +48,7 @@ def term_names_json(vars):
 def event_names_json(vars):
     return dict(event_list=get_event_names())
 
+'''
 @serve_json
 def get_member_info(vars):
     if not vars.member_id:
@@ -106,6 +107,7 @@ def save_member_info(vars):
     if member_id:
         result.member_id = member_id;
     return result
+'''
 
 @serve_json
 def get_term_info(vars):
@@ -271,6 +273,28 @@ def resize_face(vars):
     #update the link that has location / radius:
     db(q).update(Member_id=face.member_id)
     changed = db(q & (db.TblMemberPhotos.Member_id != face.member_id)).delete() #
+    member_name = member_display_name(member_id=face.member_id)
+    return dict(member_name=member_name)
+
+@serve_json
+def save_face(vars):
+    face = vars.face    
+    assert(face.member_id > 0)
+    if vars.make_profile_photo:
+        save_profile_photo(face)
+    q = (db.TblMemberPhotos.Photo_id==face.photo_id) & \
+        (db.TblMemberPhotos.Member_id==face.member_id)
+    data = dict(
+        Photo_id=face.photo_id,
+        r=face.r,
+        x=face.x,
+        y=face.y
+    )
+    rec = db(q).select().first()
+    if rec:
+        rec.update_record(**data)
+    else:
+       db.TblMemberPhotos.insert(**data) 
     member_name = member_display_name(member_id=face.member_id)
     return dict(member_name=member_name)
 

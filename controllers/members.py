@@ -6,7 +6,7 @@ from http_utils import json_to_storage
 import datetime
 import os
 from dal_utils import insert_or_update
-from photos import get_slides_from_photo_list, photos_folder
+from photos import get_slides_from_photo_list, photos_folder, crop
 
 @serve_json
 def member_list(vars):
@@ -50,13 +50,14 @@ def get_member_details(vars):
     story_info = sm.get_story(member_info.story_id) or Storage(display_version='New Story', story_versions=[], story_text='', story_id=None)
     family_connections = get_family_connections(member_info)
     slides = get_member_slides(mem_id)
-    images = get_member_images(mem_id)
+    ##images = get_member_images(mem_id)
     if member_info.gender == 'F':
         spouses = 'husband' + ('s' if len(family_connections.spouses) > 1 else '')
     else:
         spouses = 'wife' + ('s' if len(family_connections.spouses) > 1 else '')
     return dict(member_info=member_info, story_info=story_info, family_connections=family_connections, 
-                images=images, slides=slides, #todo: duplicate?
+                ##images=images,
+                slides=slides, #todo: duplicate?
                 spouses = spouses,
                 facePhotoURL = member_info.facePhotoURL or request.application + '/static/images/dummy_face.png')
 
@@ -73,6 +74,33 @@ def save_member_details(vars):
     ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL_USERS', member_rec=member_rec, new_member=new_member);
 
     return dict(success=T('Data saved successfuly'))
+
+@serve_json
+def save_member_info(vars):
+    story_info = vars.story_info
+    if story_info:
+        story_id = save_story_info(story_info, used_for=STORY4MEMBER)
+    else:
+        story_id = None
+    member_id = vars.member_id
+    member_info = vars.member_info
+    if member_info:
+        new_member = not member_info.id
+        if story_id:
+            member_info.story_id = story_id
+        result = insert_or_update(db.TblMembers, **member_info)
+        if isinstance(result, dict):
+            return dict(errors=result['errors'])
+        member_id = result
+        member_rec = get_member_rec(member_id)
+        member_rec = json_to_storage(member_rec)
+        ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL_USERS', member_rec=member_rec, new_member=new_member)
+    elif story_id:
+        db(db.TblMembers.id==member_id).update(story_id=story_id)
+    result = Storage(story_id=story_id)
+    if member_id:
+        result.member_id = member_id;
+    return result
 
 def get_member_names(visible_only=None, gender=None):
     q = (db.TblMembers.id > 0)
@@ -245,3 +273,71 @@ def get_portrait_candidates(member_id):
         (db.TblMemberPhotos.r > 10)
     lst = db(q).select(orderby=~db.TblMemberPhotos.r)
     return lst
+
+@serve_json
+def get_faces(vars):
+    photo_id = vars.photo_id;
+    lst = db(db.TblMemberPhotos.Photo_id==photo_id).select()
+    faces = []
+    candidates = []
+    for rec in lst:
+        if rec.r == None: #found old record which has a memeber but no location
+            if not rec.Member_id:
+                db(db.TblMemberPhotos.id==rec.id).delete()
+                continue
+            name = member_display_name(member_id=rec.Member_id)
+            candidate = dict(member_id=rec.Member_id, name=name)
+            candidates.append(candidate)
+        else:
+            face = Storage(x = rec.x, y=rec.y, r=rec.r or 20, photo_id=rec.Photo_id)
+            if rec.Member_id:
+                face.member_id = rec.Member_id
+                face.name = member_display_name(member_id=rec.Member_id)
+            faces.append(face)
+    return dict(faces=faces, candidates=candidates)
+
+@serve_json
+def save_face(vars):
+    face = vars.face    
+    assert(face.member_id > 0)
+    if vars.make_profile_photo:
+        save_profile_photo(face)
+    q = (db.TblMemberPhotos.Photo_id==face.photo_id) & \
+        (db.TblMemberPhotos.Member_id==face.member_id)
+    data = dict(
+        Photo_id=face.photo_id,
+        r=face.r,
+        x=face.x,
+        y=face.y
+    )
+    rec = db(q).select().first()
+    if rec:
+        rec.update_record(**data)
+    else:
+       db.TblMemberPhotos.insert(**data) 
+    member_name = member_display_name(member_id=face.member_id)
+    return dict(member_name=member_name)
+    
+@serve_json
+def remove_face(vars):
+    face = vars.face;
+    if not face.member_id:
+        return dict()
+    q = (db.TblMemberPhotos.Photo_id==face.photo_id) & \
+        (db.TblMemberPhotos.Member_id==face.member_id)
+    good = db(q).delete() == 1
+    return dict(face_deleted=good)
+ 
+def save_profile_photo(face):
+    rec = get_photo_rec(face.photo_id)
+    input_path = 'applications/' + photos_folder() + rec.LocationInDisk
+    output_path = 'applications/' + photos_folder("profile_photos") + "PP-{}.jpg".format(face.member_id)
+    crop(input_path, output_path, face)
+    db(db.TblMembers.id==face.member_id).update(has_profile_photo=True)
+    
+def get_photo_rec(photo_id):
+    rec = db(db.TblPhotos.id==photo_id).select().first()
+    return rec
+
+    
+
