@@ -339,5 +339,15 @@ def get_photo_rec(photo_id):
     rec = db(db.TblPhotos.id==photo_id).select().first()
     return rec
 
+def save_story_info(story_info, used_for):
+    story_text = story_info.story_text.replace('~1', '&').replace('~2', ';')
+    story_id = story_info.story_id
+    sm = stories_manager.Stories()
+    if story_id:
+        sm.update_story(story_id, story_text)
+    else:
+        story_id = sm.add_story(story_text, used_for=used_for)
+    return story_id
+
     
 
