@@ -102,6 +102,10 @@ def save_member_info(vars):
         result.member_id = member_id;
     return result
 
+@serve_json
+def upload_photos(vars):
+    pass    
+
 def get_member_names(visible_only=None, gender=None):
     q = (db.TblMembers.id > 0)
     if visible_only:
