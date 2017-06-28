@@ -41,6 +41,7 @@ while in coolano/logs, type:
 psql -d coolanoxxx -f create_indexes.sql    where xxx is dev, test, www or empty
 
 In /etc/systemd/system
+    cp /home/www-data/place_stories_server/private/messaging.service ./
     ln -T --symbolic /srv/dev/coolano/private/messaging.service messaging.service
     ln -T --symbolic /srv/dev/coolano/private/web2py-scheduler-dev.service web2py-scheduler-dev.service
     ln -T --symbolic /srv/test/coolano/private/web2py-scheduler-test.service web2py-scheduler-test.service
@@ -49,7 +50,7 @@ On the development system:
     ln -T --symbolic /home/haim/fossil_projects/coolano/private/web2py-scheduler.service web2py-scheduler.service
     
 To start service with system:
-$ systemctl enable messaging.service
+$ 
 $ systemctl enable web2py-schedulerxxx.service where xxx is for all versions: dev, test and www on server, empty locally
 
 Install memcached:
