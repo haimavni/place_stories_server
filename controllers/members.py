@@ -104,7 +104,7 @@ def save_member_info(vars):
 
 @serve_json
 def upload_photos(vars):
-    pass    
+    return dict()    
 
 def get_member_names(visible_only=None, gender=None):
     q = (db.TblMembers.id > 0)

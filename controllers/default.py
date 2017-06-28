@@ -69,7 +69,7 @@ def get_tornado_host(vars):
 @serve_json
 def read_privileges(vars):
     if not auth.current_user():
-        return dict()
+        return dict(user_id=0, privileges={})
     ###emails_suspended = rec.emails_suspended if rec else False
     privileges = dict()
     for const_name in membership_consts:
