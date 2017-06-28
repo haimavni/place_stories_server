@@ -6,7 +6,7 @@ from http_utils import json_to_storage
 import datetime
 import os
 from dal_utils import insert_or_update
-from photos import get_slides_from_photo_list, crop
+from photos import get_slides_from_photo_list, crop, photos_folder
 
 def index():
     response.view = 'stories/main.html'
@@ -48,6 +48,7 @@ def term_names_json(vars):
 def event_names_json(vars):
     return dict(event_list=get_event_names())
 
+'''
 @serve_json
 def get_member_info(vars):
     if not vars.member_id:
@@ -106,6 +107,7 @@ def save_member_info(vars):
     if member_id:
         result.member_id = member_id;
     return result
+'''
 
 @serve_json
 def get_term_info(vars):
@@ -141,7 +143,7 @@ def save_story(vars):
 @serve_json
 def get_photo_info(vars):
     rec = get_photo_rec(vars.photo_id)
-    rec.photo_url = 'gbs/static/gb_photos/' + rec.LocationInDisk
+    rec.photo_url = photos_folder() + rec.LocationInDisk
     sm = stories_manager.Stories()
     story_info = sm.get_story(rec.story_id)
     rec.name = rec.Name or story_info.name
@@ -151,7 +153,8 @@ def get_photo_info(vars):
 def upload(vars):
     today = datetime.date.today()
     month = str(today)[:-3]
-    path = 'applications/' + request.application + '/static/gb_photos/' + month + '/'
+
+    path = photos_folder() + month + '/'
     if not os.path.isdir(path):
         os.makedirs(path)
     for fn in vars:
@@ -166,7 +169,7 @@ def upload(vars):
                             height=0,
                             photo_missing=False
                             )
-    return dict(success=T('Files were uploaded succiessfuly'))
+    return dict(success='files-loaded-successfuly')
 
 @serve_json
 def read_chatroom(vars):
@@ -270,6 +273,28 @@ def resize_face(vars):
     #update the link that has location / radius:
     db(q).update(Member_id=face.member_id)
     changed = db(q & (db.TblMemberPhotos.Member_id != face.member_id)).delete() #
+    member_name = member_display_name(member_id=face.member_id)
+    return dict(member_name=member_name)
+
+@serve_json
+def save_face(vars):
+    face = vars.face    
+    assert(face.member_id > 0)
+    if vars.make_profile_photo:
+        save_profile_photo(face)
+    q = (db.TblMemberPhotos.Photo_id==face.photo_id) & \
+        (db.TblMemberPhotos.Member_id==face.member_id)
+    data = dict(
+        Photo_id=face.photo_id,
+        r=face.r,
+        x=face.x,
+        y=face.y
+    )
+    rec = db(q).select().first()
+    if rec:
+        rec.update_record(**data)
+    else:
+       db.TblMemberPhotos.insert(**data) 
     member_name = member_display_name(member_id=face.member_id)
     return dict(member_name=member_name)
 
@@ -435,10 +460,11 @@ def get_family_connections(member_info):
     )
 
 def get_member_images(member_id):
+    folder = photos_folder()
     lst = db((db.TblMemberPhotos.Member_id==member_id) & \
              (db.TblPhotos.id==db.TblMemberPhotos.Photo_id) & \
              (db.TblPhotos.width>0)).select()
-    return [dict(id=rec.TblPhotos.id, path=request.application + '/static/gb_photos/' + rec.TblPhotos.LocationInDisk) for rec in lst]
+    return [dict(id=rec.TblPhotos.id, path=photos_folder + rec.TblPhotos.LocationInDisk) for rec in lst]
 
 def get_member_slides(member_id):
     q = (db.TblMemberPhotos.Member_id==member_id) & \
@@ -451,10 +477,8 @@ def get_photo_rec(photo_id):
 
 def save_profile_photo(face):
     rec = get_photo_rec(face.photo_id)
-    base_path = 'applications/' + request.application + '/static/gb_photos/'
-    input_path = base_path + rec.LocationInDisk
-    output_path = base_path + 'profile_photos/'
-    output_path += "PP-{}.jpg".format(face.member_id)
+    input_path = 'applications/' + photos_folder() + rec.LocationInDisk
+    output_path = 'applications/' + photos_folder("profile_photos") + "PP-{}.jpg".format(face.member_id)
     crop(input_path, output_path, face)
     db(db.TblMembers.id==face.member_id).update(has_profile_photo=True)
 

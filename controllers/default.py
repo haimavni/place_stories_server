@@ -20,8 +20,6 @@ def index():
     return auth.wiki()
     """
     redirect("/gbs/static/aurelia/index.html")
-    response.flash = T("Hello World")
-    return dict(message=T('Welcome to web2py!'))
 
 
 def user():
@@ -71,7 +69,7 @@ def get_tornado_host(vars):
 @serve_json
 def read_privileges(vars):
     if not auth.current_user():
-        return dict()
+        return dict(user_id=0, privileges={})
     ###emails_suspended = rec.emails_suspended if rec else False
     privileges = dict()
     for const_name in membership_consts:
@@ -141,7 +139,7 @@ def verify_email():
 
 @serve_json
 def check_if_logged_in(vars):
-    return dict(is_logged_in = auth.is_logged_in() or True)  ###temporary for dev!!!
+    return dict(is_logged_in = auth.is_logged_in())  ###temporary for dev!!!
 
 @serve_json
 def login(vars):
