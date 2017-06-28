@@ -104,7 +104,25 @@ def save_member_info(vars):
 
 @serve_json
 def upload_photos(vars):
-    return dict()    
+    today = datetime.date.today()
+    month = str(today)[:-3]
+
+    path = photos_folder() + month + '/'
+    if not os.path.isdir(path):
+        os.makedirs(path)
+    for fn in vars:
+        fil = vars[fn]
+        file_location = month + '/' + fil.filename
+        with open(path + fil.filename, 'wb') as f:
+            f.write(fil.value)
+        db.TblPhotos.insert(LocationInDisk=file_location, 
+                            uploader=auth.current_user(),
+                            upload_date=datetime.datetime.now(),
+                            width=0,
+                            height=0,
+                            photo_missing=False
+                            )
+    return dict(success='files-loaded-successfuly')
 
 def get_member_names(visible_only=None, gender=None):
     q = (db.TblMembers.id > 0)
