@@ -17,7 +17,7 @@ def scan_all_unscanned_photos():
     q = (db.TblPhotos.width == 0) & (db.TblPhotos.photo_missing == False)
     to_scan = db(q).count()
     chunk = 100
-    folder = 'applications/' + photos_folder()
+    folder = photos_folder()
     while True:
         comment('started scanning chunk of photos')
         lst = db(q).select(limitby=(0, chunk))
@@ -46,6 +46,11 @@ def photos_folder(what="orig"):
     #app appears twice: one to reach static, the other is to separate different customers
     request = inject('request')
     return '{app}/static/gb_photos/{app}/photos/{what}/'.format(app=request.application, what=what)
+
+def local_photos_folder(what="orig"): 
+    #what may be orig, squares,images or profile_photos. (images is for customer-specific images such as logo)
+    request = inject('request')
+    return '/gb_photos/{app}/photos/{what}/'.format(app=request.application, what=what)
 
 def get_slides_from_photo_list(q):
     db = inject('db')

@@ -6,7 +6,7 @@ from http_utils import json_to_storage
 import datetime
 import os
 from dal_utils import insert_or_update
-from photos import get_slides_from_photo_list, photos_folder, crop
+from photos import get_slides_from_photo_list, photos_folder, local_photos_folder, crop
 
 @serve_json
 def member_list(vars):
@@ -42,7 +42,6 @@ def get_member_details(vars):
         mem_id += 1
     elif vars.shift == 'prev':
         mem_id -= 1
-    #member_info = Storage(member_info.as_dict())
     member_info = get_member_rec(mem_id)
     if not member_info:
         raise User_Error(T('You reached the end of the list'))
@@ -50,7 +49,6 @@ def get_member_details(vars):
     story_info = sm.get_story(member_info.story_id) or Storage(display_version='New Story', story_versions=[], story_text='', story_id=None)
     family_connections = get_family_connections(member_info)
     slides = get_member_slides(mem_id)
-    ##images = get_member_images(mem_id)
     if member_info.gender == 'F':
         spouses = 'husband' + ('s' if len(family_connections.spouses) > 1 else '')
     else:
@@ -107,14 +105,14 @@ def upload_photos(vars):
     today = datetime.date.today()
     month = str(today)[:-3]
 
-    path = photos_folder() + month + '/'
+    path = local_photos_folder() + month + '/'
     if not os.path.isdir(path):
         os.makedirs(path)
     for fn in vars:
         fil = vars[fn]
-        file_location = month + '/' + fil.filename
-        with open(path + fil.filename, 'wb') as f:
-            f.write(fil.value)
+        file_location = month + '/' + fil.name
+        with open(path + fil.name, 'wb') as f:
+            f.write(fil.BINvalue)
         db.TblPhotos.insert(LocationInDisk=file_location, 
                             uploader=auth.current_user(),
                             upload_date=datetime.datetime.now(),
@@ -277,13 +275,7 @@ def get_family_connections(member_info):
 
 def image_url(rec):
     #for development need full http address
-    return 'http://' + request.env.http_host + '/' + photos_folder() + rec.TblPhotos.LocationInDisk
-
-def get_member_images(member_id):
-    lst = db((db.TblMemberPhotos.Member_id==member_id) & \
-             (db.TblPhotos.id==db.TblMemberPhotos.Photo_id) & \
-             (db.TblPhotos.width>0)).select()
-    return [dict(id=rec.TblPhotos.id, path=image_url(rec)) for rec in lst]
+    return 'http://' + request.env.http_host + '/gbs/static/' + photos_folder() + rec.TblPhotos.LocationInDisk
 
 def get_member_slides(member_id):
     q = (db.TblMemberPhotos.Member_id==member_id) & \
@@ -336,7 +328,7 @@ def save_face(vars):
     if rec:
         rec.update_record(**data)
     else:
-       db.TblMemberPhotos.insert(**data) 
+        db.TblMemberPhotos.insert(**data) 
     member_name = member_display_name(member_id=face.member_id)
     return dict(member_name=member_name)
     
@@ -352,8 +344,8 @@ def remove_face(vars):
  
 def save_profile_photo(face):
     rec = get_photo_rec(face.photo_id)
-    input_path = 'applications/' + photos_folder() + rec.LocationInDisk
-    output_path = 'applications/' + photos_folder("profile_photos") + "PP-{}.jpg".format(face.member_id)
+    input_path = local_photos_folder() + rec.LocationInDisk
+    output_path = local_photos_folder("profile_photos") + "PP-{}.jpg".format(face.member_id)
     crop(input_path, output_path, face)
     db(db.TblMembers.id==face.member_id).update(has_profile_photo=True)
     
