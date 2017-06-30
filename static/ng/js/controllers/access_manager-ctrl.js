@@ -45,13 +45,16 @@ function($scope, $rootScope, $timeout, $log, ngDialog, callServerService, messag
                 cls = 'fa-group';
                 break;
             case 'CHAT_MODERATOR':
-                cls = 'fa-group fa-pencil';
+                cls = 'fa-anchor';
                 break;
             case 'TEXT_AUDITOR':
-                cls = 'fa-group';
+                cls = 'fa-shield';
                 break;
             case 'DATA_AUDITOR':
-                cls = 'fa-group';
+                cls = 'fa-thumbs-up';
+                break;
+            case 'HELP_AUTHOR':
+                cls = 'fa-life-saver fa-pencil';
                 break;
         }
         if (r.active)

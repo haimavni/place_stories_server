@@ -4,6 +4,7 @@ from gluon.storage import Storage
 from injections import inject
 import os
 from distutils import dir_util
+import zlib
 
 def get_image_info(image_path):
     img = Image.open(image_path)
@@ -11,13 +12,13 @@ def get_image_info(image_path):
     faces = []
     return Storage(width=width, height=height, faces=faces)
 
-
 def scan_all_unscanned_photos():
     db, request, comment = inject('db', 'request', 'comment')
-    q = (db.TblPhotos.width == 0) & (db.TblPhotos.photo_missing == False)
+    q = (db.TblPhotos.crc==None) & (db.TblPhotos.photo_missing == False)
     to_scan = db(q).count()
+    failed_crops = 0
     chunk = 100
-    folder = photos_folder()
+    folder = local_photos_folder()
     while True:
         comment('started scanning chunk of photos')
         lst = db(q).select(limitby=(0, chunk))
@@ -31,7 +32,12 @@ def scan_all_unscanned_photos():
                 continue
             inf = get_image_info(fname)
             width, height, faces = inf.width, inf.height, inf.faces
-            rec.update_record(width=width, height=height)
+            with open(fname, 'r') as f:
+                blob = f.read()
+            crc = zlib.crc32(blob)
+            rec.update_record(width=width, height=height, crc=crc)
+            if not crop_square(fname, width, height, 256):
+                failed_crops += 1
             for face in faces:
                 x, y, w, h = face
                 db.TblMemberPhotos.insert(Photo_id=rec.id, x=x, y=y, w=w, h=h) # for older records, merge with record photo_id-member_id
@@ -39,7 +45,7 @@ def scan_all_unscanned_photos():
         missing = db(db.TblPhotos.photo_missing==True).count()
         done = db(db.TblPhotos.width>0).count()
         total = db(db.TblPhotos).count()
-    return dict(done=done, total=total, missing=missing, to_scan=to_scan)
+    return dict(done=done, total=total, missing=missing, to_scan=to_scan, failed_crops=failed_crops)
 
 def photos_folder(what="orig"): 
     #what may be orig, squares,images or profile_photos. (images is for customer-specific images such as logo)
@@ -73,22 +79,28 @@ def crop(input_path, output_path, face, size=100):
     resized_img.save(output_path)
 
 def crop_square(img_src, width, height, side_size):
-    if width > hight:
+    if width > height:
         x = (width - height) / 2
-        x1 = x + width
-        y = 0,
+        x1 = width - x
+        y = 0
         y1 = height
     else:
         y = (height - width) / 2
-        y1 = y + height
+        y1 = height - y
         x = 0
         x1 = width
-    input_path = photos_folder() + img_src
-    output_path = photos_folder("squares") + os.path.dirname(image_src)
-    dir_util.mkpath(output_path)
-    img = Image.open(photos_folder() + img_src)
+    input_path = img_src
+    path, fname = os.path.split(input_path)
+    path = path.replace('orig', 'squares')
+    dir_util.mkpath(path)
+    output_path = path  + '/' +fname
+    img = Image.open(input_path)
     area = (x, y, x1, y1)
-    cropped_img = img.crop(area)
-    resized_img = cropped_img.resize((side_size, side_size), Image.LANCZOS)
-    resized_img.save(output_path)
+    try:
+        cropped_img = img.crop(area)
+        resized_img = cropped_img.resize((side_size, side_size), Image.LANCZOS)
+        resized_img.save(output_path)
+    except:
+        return False
+    return True
 

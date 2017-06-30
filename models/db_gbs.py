@@ -1,5 +1,3 @@
-from dal_utils import IS_FUZZY_DATE, represent_fuzzy_date
-
 STORY4MEMBER = 1
 STORY4EVENT = 2
 STORY4PHOTO = 3
@@ -139,12 +137,10 @@ db.define_table('TblMembers',
                 Field('former_last_name', type='string'),
                 Field('DateOfAlia', type='string'),
                 Field('alia_date', type='date'),
-                Field('alia_date_accuracy', type='string', length=1),  #D, M or Y - day, month or year
+                Field('alia_date_accuracy', type='string', length=1),  #D, M, Y or C - day, month, year or decade
                 Field('DateOfBirth', type='string'),
-                Field('birth_date', type='date', 
-                      requires=[IS_FUZZY_DATE()],
-                      represent=lambda v: represent_fuzzy_date(v)
-                      ),
+                Field('birth_date', type='date'), 
+                Field('birth_date_accuracy', type='string'),
                 Field('date_of_death', type='date'),
                 Field('date_of_death_accuracy', type='string', length=1),
                 Field('DateOfMember', type='string'),
@@ -192,10 +188,12 @@ db.define_table('TblPhotos',
                 Field('KeyWords', type='string'),
                 Field('LocationInDisk', type='string'),
                 Field('Name', type='string'),
-                Field('ObjectID', type='integer'),
+                Field('ObjectID', type='integer'), #obsolete, to be replaced by the following line
                 Field('Object_id', type='integer'),
                 Field('PageHits', type='integer'),
                 Field('PhotoDate', type='string'),
+                Field('photo_date', type='date'),
+                Field('photo_date_accuracy', type='string'),
                 Field('PhotoRank', type='integer'),
                 Field('Photographer', type='string'),
                 Field('Recognized', type='boolean'),
@@ -205,7 +203,8 @@ db.define_table('TblPhotos',
                 Field('height', type='integer', default=0),
                 Field('uploader', type=db.auth_user),
                 Field('upload_date', type='datetime'),
-                Field('photo_missing', type='boolean', default=False)
+                Field('photo_missing', type='boolean', default=False),
+                Field('crc', type='integer')
 )
 
 db.define_table('TblStatuses',

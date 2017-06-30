@@ -160,7 +160,7 @@ def guess_names():
     return '{} names were guessed'.format(n_fixed)
 
 def scan_photos():
-    scan_all_unscanned_photos()     
+    return scan_all_unscanned_photos()     
 
 def index():
     try:
