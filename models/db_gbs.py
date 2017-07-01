@@ -179,6 +179,10 @@ db.define_table('TblObjects',
                 Field('Priority', type='integer'),
 )
 
+db.define_table('TblPhotographers',
+                Field('name', type='string')
+)
+
 db.define_table('TblPhotos',
                 Field('ArchiveNum', type='string'),
                 Field('Description', type='text'),
@@ -195,7 +199,8 @@ db.define_table('TblPhotos',
                 Field('photo_date', type='date'),
                 Field('photo_date_accuracy', type='string'),
                 Field('PhotoRank', type='integer'),
-                Field('Photographer', type='string'),
+                Field('Photographer', type='string'), #obsolete
+                Field('photographer_id', type=db.TblPhotographers),
                 Field('Recognized', type='boolean'),
                 Field('StatusID', type='integer'),
                 Field('Status_id', type='integer'),

@@ -160,7 +160,68 @@ def guess_names():
     return '{} names were guessed'.format(n_fixed)
 
 def scan_photos():
-    return scan_all_unscanned_photos()     
+    return scan_all_unscanned_photos()
+
+def collect_photographers():
+    lst = db(db.TblPhotos.width>0).select()
+    for rec in lst:
+        if not rec.Photographer:
+            continue
+        p = db(db.TblPhotographers.name==rec.Photographer).select().first()
+        if p:
+            i = p.id
+        else:
+            i = db.TblPhotographers.insert(name=rec.Photographer)
+        rec.update_record(photographer_id=i)
+    db.commit()
+    
+def find_duplicate_photos():
+    dic = {}
+    dups = {}
+    lst = db(db.TblPhotos.width>0).select()
+    for rec in lst:
+        if rec.crc in dic:
+            dic[rec.crc].append(rec.id)
+            dups[rec.crc] = dic[rec.crc]
+        else:
+            dic[rec.crc] = [rec.id]
+    z = len(dups)
+    if z > 0:
+        y = z
+        
+def string_date_to_date(s):
+    p = "שנות ה"
+    if s:
+        if p in s:
+            m = re.search(r'(\d{1,2})', s)
+            if m:
+                y = m.groups()[0]
+                if len(y) < 2:
+                    y += '0'
+                y = 1900 + int(y)
+                accuracy = 'C' #decade
+            else:
+                y = 1928
+                accuracy = 'X'
+        else:
+            m = re.search(r'(\d{4})', s)
+            if m:
+                y = int(m.groups()[0])
+                accuracy = 'Y'
+            else:
+                y = 1928
+                accuracy = 'X'
+    else:
+        y = 1928 #just to have someting there for sorting to kind of work
+        accuracy = 'X' # fabricated date
+    return (datetime.date(year=y, month=1, day=1), accuracy)
+ 
+def port_photos_date():
+    lst = db((db.TblPhotos.width>0) & (db.TblPhotos.photo_date==None)).select(db.TblPhotos.id, db.TblPhotos.PhotoDate, db.TblPhotos.photo_date, db.TblPhotos.photo_date_accuracy)
+    for rec in lst:
+        date, accuracy = string_date_to_date(rec.PhotoDate)
+        db(db.TblPhotos.id==rec.id).update(photo_date=date, photo_date_accuracy=accuracy)
+    db.commit()
 
 def index():
     try:

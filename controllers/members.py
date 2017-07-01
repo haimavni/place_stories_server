@@ -7,6 +7,7 @@ import datetime
 import os
 from dal_utils import insert_or_update
 from photos import get_slides_from_photo_list, photos_folder, local_photos_folder, crop
+import random
 
 @serve_json
 def member_list(vars):
@@ -341,7 +342,40 @@ def remove_face(vars):
         (db.TblMemberPhotos.Member_id==face.member_id)
     good = db(q).delete() == 1
     return dict(face_deleted=good)
- 
+
+@serve_json
+def get_photos_list(vars):
+    q = (db.TblPhotos.width > 0)
+    if vars.uploader:
+        q &= db.TblPhotos.uploader==vars.uploader
+    if vars.uploaded_since:
+        upload_date = datetime.datetime.now() - datetime.timedelta(days=vars.uploaded_since)
+        q &= db.TblPhotos.upload_date > upload_date
+    if vars.after:
+        q &= db.TblPhotos.photo_date > vars.after
+    if vars.before:
+        q &= db.TblPhotos.photo_date < vars.before
+    if vars.photographer_id:
+        q &= db.TblPhotos.photographer_id == photographer_id
+    if vars.keywords:
+        keywords = vars.keywords.split()
+        for kw in keywords:
+            q &= db.TblPhotos.KeyWords.like(kw)
+    ###q &= db.TblPhotos.photographer_id==db.TblPhotographers.id
+    lst = db(q).select(db.TblPhotos.KeyWords, db.TblPhotos.photo_date, db.TblPhotos.photo_date_accuracy, db.TblPhotos.LocationInDisk) ###, db.TblPhotographers.id) ##, db.TblPhotographers.id)
+    if len(lst) > 1000:
+        lst1 = random.sample(lst, 1000)
+        lst = lst1
+    result = []
+    for r in lst:
+        dic = dict(
+            keywords = r.KeyWords,
+            src = photos_folder('squares') + r.LocationInDisk
+        )
+        result.append(dic)
+    return dict(photo_list=result)
+        
+
 def save_profile_photo(face):
     rec = get_photo_rec(face.photo_id)
     input_path = local_photos_folder() + rec.LocationInDisk
