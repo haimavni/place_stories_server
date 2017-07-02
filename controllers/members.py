@@ -344,7 +344,7 @@ def remove_face(vars):
     return dict(face_deleted=good)
 
 @serve_json
-def get_photos_list(vars):
+def get_photo_list(vars):
     q = (db.TblPhotos.width > 0)
     if vars.uploader:
         q &= db.TblPhotos.uploader==vars.uploader
@@ -370,7 +370,7 @@ def get_photos_list(vars):
     for r in lst:
         dic = dict(
             keywords = r.KeyWords,
-            src = photos_folder('squares') + r.LocationInDisk
+            src = 'http://' + request.env.http_host + '/' + photos_folder('squares') + r.LocationInDisk
         )
         result.append(dic)
     return dict(photo_list=result)
@@ -396,6 +396,3 @@ def save_story_info(story_info, used_for):
     else:
         story_id = sm.add_story(story_text, used_for=used_for)
     return story_id
-
-    
-
