@@ -58,7 +58,7 @@ def get_member_details(vars):
                 ##images=images,
                 slides=slides, #todo: duplicate?
                 spouses = spouses,
-                facePhotoURL = member_info.facePhotoURL or request.application + '/static/images/dummy_face.png')
+                facePhotoURL = photos_folder('profile_photos') + member_info.facePhotoURL if  member_info.facePhotoURL else request.application + '/static/images/dummy_face.png')
 
 @serve_json
 def save_member_details(vars):
@@ -130,35 +130,11 @@ def get_member_names(visible_only=None, gender=None):
     if gender:
         q &= (db.TblMembers.gender == gender)
 
-    lst = db(q).select(db.TblMembers.first_name,
-                       db.TblMembers.last_name,
-                       db.TblMembers.former_first_name,
-                       db.TblMembers.former_last_name,
-                       db.TblMembers.NickName,
-                       db.TblMembers.gender,
-                       db.TblMembers.visible,
-                       db.TblMembers.facePhotoURL,
-                       orderby=[db.TblMembers.last_name, db.TblMembers.first_name])
-    arr = [Storage(id=rec.id,
-                   name=member_display_name(rec, full=True),
-                   gender=rec.gender,
-                   facePhotoURL=rec.facePhotoURL or 'http://' + request.env.http_host + "/gbs/static/images/dummy_face.png") for rec in lst]
-    return arr
-
-def get_member_names(visible_only=None, gender=None):
-    q = (db.TblMembers.id > 0)
-    if visible_only:
-        q &= (db.TblMembers.visible == True)
-    if gender:
-        q &= (db.TblMembers.gender == gender)
-
     lst = db(q).select()
-    face_photo_url = 'http://' + request.env.http_host + '/' + photos_folder('profile_photos') +'PP-'
     arr = [Storage(id=rec.id,
                    name=member_display_name(rec, full=True),
                    gender=rec.gender,
-                   has_profile_photo=rec.has_profile_photo,
-                   facePhotoURL=face_photo_url + str(rec.id) + ".jpg" if rec.has_profile_photo else 'http://' + request.env.http_host  + "/gbs/static/images/dummy_face.png") for rec in lst]
+                   facePhotoURL=photos_folder('profile_photos') + rec.facePhotoURL if rec.facePhotoURL else 'http://' + request.env.http_host  + "/gbs/static/images/dummy_face.png") for rec in lst]
     return arr
 
 def older_display_name(rec, full):
@@ -203,6 +179,8 @@ def get_member_rec(member_id, member_rec=None):
     rec = Storage(rec.as_dict())
     rec.full_name = member_display_name(rec, full=True)
     rec.name = member_display_name(rec, full=False)
+    if rec.facePhotoURL:
+        rec.facePhotoURL = photos_folder('profile_photos') + rec.facePhotoURL
     return rec
 
 def get_parents(member_id):
@@ -276,14 +254,14 @@ def get_family_connections(member_info):
 
 def image_url(rec):
     #for development need full http address
-    return 'http://' + request.env.http_host + '/gbs/static/' + photos_folder() + rec.TblPhotos.LocationInDisk
+    return photos_folder() + rec.TblPhotos.LocationInDisk
 
 def get_member_slides(member_id):
     q = (db.TblMemberPhotos.Member_id==member_id) & \
         (db.TblPhotos.id==db.TblMemberPhotos.Photo_id)
     return get_slides_from_photo_list(q)
 
-def get_portrait_candidates(member_id):
+def get_portrait_candidates(member_id): #todo: not in use
     q = (db.TblMemberPhotos.Member_id==member_id) & \
         (db.TblMemberPhotos.r > 10)
     lst = db(q).select(orderby=~db.TblMemberPhotos.r)
@@ -370,18 +348,18 @@ def get_photo_list(vars):
     for r in lst:
         dic = dict(
             keywords = r.KeyWords,
-            src = 'http://' + request.env.http_host + '/' + photos_folder('squares') + r.LocationInDisk
+            src = photos_folder('squares') + r.LocationInDisk
         )
         result.append(dic)
     return dict(photo_list=result)
         
-
 def save_profile_photo(face):
     rec = get_photo_rec(face.photo_id)
     input_path = local_photos_folder() + rec.LocationInDisk
-    output_path = local_photos_folder("profile_photos") + "PP-{}.jpg".format(face.member_id)
+    facePhotoURL = "PP-{}-{}.jpg".format(face.member_id, face.photo_id)
+    output_path = local_photos_folder("profile_photos") + facePhotoURL
     crop(input_path, output_path, face)
-    db(db.TblMembers.id==face.member_id).update(has_profile_photo=True)
+    db(db.TblMembers.id==face.member_id).update(facePhotoURL=facePhotoURL)
     
 def get_photo_rec(photo_id):
     rec = db(db.TblPhotos.id==photo_id).select().first()
