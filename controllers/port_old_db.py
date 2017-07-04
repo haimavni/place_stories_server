@@ -223,6 +223,24 @@ def port_photos_date():
         db(db.TblPhotos.id==rec.id).update(photo_date=date, photo_date_accuracy=accuracy)
     db.commit()
 
+def port_topics():
+    #collect keywords from photo list. later need to merge with event types...
+    lst = db(db.TblPhotos.width>0).select()
+    topic_collection = {}
+    for rec in lst:
+        s = rec.KeyWords
+        if not s:
+            continue
+        topics = s.split(',')
+        for topic in topics:
+            if topic in topic_collection:
+                idx = topic_collection[topic]
+            else:
+                topic_collection[topic] = idx = db.TblTopics.insert(name=topic)
+            db.TblPhotoTopics.insert(photo_id=rec.id, topic_id=idx)
+    db.commit()
+
+
 def index():
     try:
         comment('starting port old db')
@@ -241,6 +259,7 @@ def index():
         comment('start fixing photo location case')
         db.commit()
         fix_photo_location_case()
+        port_photos_date()
         comment('Porting done')
     except Exception, e:
         log_exception('Porting old db failed')

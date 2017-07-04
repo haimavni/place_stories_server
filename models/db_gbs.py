@@ -211,6 +211,16 @@ db.define_table('TblPhotos',
                 Field('crc', type='integer')
 )
 
+db.define_table('TblTopics',
+                Field('name', type='string'),
+                Field('description', type='string')
+)
+
+db.define_table('TblPhotoTopics',
+                Field('photo_id', type=db.TblPhotos),
+                Field('topic_id', type=db.TblTopics)
+)                
+
 db.define_table('TblStatuses',
                 Field('IIDD', type='integer'),
                 Field('Name', type='string'),

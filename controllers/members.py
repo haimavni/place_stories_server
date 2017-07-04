@@ -72,7 +72,7 @@ def save_member_details(vars):
     member_rec = json_to_storage(member_rec)
     ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL_USERS', member_rec=member_rec, new_member=new_member);
 
-    return dict(success=T('Data saved successfuly'))
+    return dict(success='saved-successfuly')
 
 @serve_json
 def save_member_info(vars):
@@ -274,7 +274,7 @@ def get_faces(vars):
     faces = []
     candidates = []
     for rec in lst:
-        if rec.r == None: #found old record which has a memeber but no location
+        if rec.r == None: #found old record which has a member but no location
             if not rec.Member_id:
                 db(db.TblMemberPhotos.id==rec.id).delete()
                 continue
@@ -299,6 +299,7 @@ def save_face(vars):
         (db.TblMemberPhotos.Member_id==face.member_id)
     data = dict(
         Photo_id=face.photo_id,
+        Member_id=face.member_id,
         r=face.r,
         x=face.x,
         y=face.y
@@ -321,13 +322,33 @@ def remove_face(vars):
     good = db(q).delete() == 1
     return dict(face_deleted=good)
 
-@serve_json
-def get_photo_list(vars):
+def get_photo_list_with_topics(vars):
+    first = True
+    for topic in vars.selected_topics:
+        q = make_query(vars) #if we do not regenerate it the query becomes accumulated and necessarily fails
+        q &= (db.TblPhotoTopics.photo_id==db.TblPhotos.id)
+        q &= (db.TblTopics.id==db.TblPhotoTopics.topic_id)
+        q &= (db.TblTopics.id==topic.id)
+        lst = db(q).select()
+        lst = [rec.TblPhotos for rec in lst]
+        bag1 = set(r.id for r in lst)
+        if first:
+            first = False
+            bag = bag1
+        else:
+            bag &= bag1
+    dic = {}
+    for r in lst:
+        dic[r.id] = r
+    result = [dic[id] for id in bag]
+    return result
+
+def make_query(vars):
     q = (db.TblPhotos.width > 0)
     if vars.uploader:
         q &= db.TblPhotos.uploader==vars.uploader
     if vars.uploaded_since:
-        upload_date = datetime.datetime.now() - datetime.timedelta(days=vars.uploaded_since)
+        upload_date = datetime.datetime.now() - datetime.timedelta(days=int(vars.uploaded_since))
         q &= db.TblPhotos.upload_date > upload_date
     if vars.after:
         q &= db.TblPhotos.photo_date > vars.after
@@ -335,23 +356,39 @@ def get_photo_list(vars):
         q &= db.TblPhotos.photo_date < vars.before
     if vars.photographer_id:
         q &= db.TblPhotos.photographer_id == photographer_id
-    if vars.keywords:
-        keywords = vars.keywords.split()
-        for kw in keywords:
-            q &= db.TblPhotos.KeyWords.like(kw)
-    ###q &= db.TblPhotos.photographer_id==db.TblPhotographers.id
-    lst = db(q).select(db.TblPhotos.KeyWords, db.TblPhotos.photo_date, db.TblPhotos.photo_date_accuracy, db.TblPhotos.LocationInDisk) ###, db.TblPhotographers.id) ##, db.TblPhotographers.id)
+    return q
+
+@serve_json
+def get_photo_list(vars):
+    if len(vars.selected_topics) > 0:
+        lst = get_photo_list_with_topics(vars)
+    else:
+        q = make_query(vars)
+        lst = db(q).select() ###, db.TblPhotographers.id) ##, db.TblPhotographers.id)
     if len(lst) > 1000:
         lst1 = random.sample(lst, 1000)
         lst = lst1
     result = []
-    for r in lst:
+    for rec in lst:
         dic = dict(
-            keywords = r.KeyWords,
-            src = photos_folder('squares') + r.LocationInDisk
+            keywords = rec.KeyWords or "",
+            description = rec.Description or "",
+            square_src = photos_folder('squares') + rec.LocationInDisk,
+            src=photos_folder('orig') + rec.LocationInDisk,
+            photo_id=rec.id,
+            width=rec.width,
+            height=rec.height
         )
         result.append(dic)
     return dict(photo_list=result)
+
+@serve_json
+def get_topic_list(vars):
+    params = vars.params
+
+    lst = db(db.TblTopics).select(orderby=db.TblTopics.name)
+    lst = [dict(name=rec.name, id=rec.id) for rec in lst if rec.name]
+    return dict(topic_list=lst)   
         
 def save_profile_photo(face):
     rec = get_photo_rec(face.photo_id)
