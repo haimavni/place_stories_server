@@ -5,6 +5,7 @@ from porting.create_old_db_mappings import table_fields, csv_name_to_table_name,
 from glob import glob
 import re
 from photos import scan_all_unscanned_photos
+import random
 
 def port_old_db():
     folder = request.vars.folder or 'gbs-bkp-jun17'
@@ -163,15 +164,17 @@ def scan_photos():
     return scan_all_unscanned_photos()
 
 def collect_photographers():
+    db.TblPhotographers.truncate('RESTART IDENTITY CASCADE')
     lst = db(db.TblPhotos.width>0).select()
     for rec in lst:
         if not rec.Photographer:
             continue
-        p = db(db.TblPhotographers.name==rec.Photographer).select().first()
+        name = rec.Photographer.strip()
+        p = db(db.TblPhotographers.name==name).select().first()
         if p:
             i = p.id
         else:
-            i = db.TblPhotographers.insert(name=rec.Photographer)
+            i = db.TblPhotographers.insert(name=name)
         rec.update_record(photographer_id=i)
     db.commit()
     
@@ -224,6 +227,8 @@ def port_photos_date():
     db.commit()
 
 def port_topics():
+    db.TblTopics.truncate('RESTART IDENTITY CASCADE')
+    db.TblPhotoTopics.truncate()
     #collect keywords from photo list. later need to merge with event types...
     lst = db(db.TblPhotos.width>0).select()
     topic_collection = {}
@@ -233,13 +238,19 @@ def port_topics():
             continue
         topics = s.split(',')
         for topic in topics:
+            topic = topic.strip()
             if topic in topic_collection:
                 idx = topic_collection[topic]
             else:
                 topic_collection[topic] = idx = db.TblTopics.insert(name=topic)
             db.TblPhotoTopics.insert(photo_id=rec.id, topic_id=idx)
     db.commit()
-
+    
+def create_random_photo_keys():
+    for rec in db(db.TblPhotos).select():
+        key = random.randint(1, 100)
+        rec.update_record(random_photo_key=key)
+    db.commit()
 
 def index():
     try:
@@ -258,8 +269,11 @@ def index():
         scan_photos()
         comment('start fixing photo location case')
         db.commit()
+        collect_photographers()
         fix_photo_location_case()
         port_photos_date()
+        port_topics()
+        create_random_photo_keys()
         comment('Porting done')
     except Exception, e:
         log_exception('Porting old db failed')

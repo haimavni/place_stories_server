@@ -1,5 +1,6 @@
 import stories_manager
 from gluon.storage import Storage
+from gluon.utils import web2py_uuid
 from my_cache import Cache
 import ws_messaging
 from http_utils import json_to_storage
@@ -111,10 +112,13 @@ def upload_photos(vars):
         os.makedirs(path)
     for fn in vars:
         fil = vars[fn]
-        file_location = month + '/' + fil.name
-        with open(path + fil.name, 'wb') as f:
+        original_file_name, ext = os.path.splitext(fil.name)
+        file_name = web2py_uuid() + ext
+        file_location = month + '/' + file_name
+        with open(path + file_name, 'wb') as f:
             f.write(fil.BINvalue)
-        db.TblPhotos.insert(LocationInDisk=file_location, 
+        db.TblPhotos.insert(LocationInDisk=file_location,
+                            original_file_name=original_file_name,
                             uploader=auth.current_user(),
                             upload_date=datetime.datetime.now(),
                             width=0,
@@ -345,17 +349,21 @@ def get_photo_list_with_topics(vars):
 
 def make_query(vars):
     q = (db.TblPhotos.width > 0)
-    if vars.uploader:
-        q &= db.TblPhotos.uploader==vars.uploader
-    if vars.uploaded_since:
-        upload_date = datetime.datetime.now() - datetime.timedelta(days=int(vars.uploaded_since))
-        q &= db.TblPhotos.upload_date > upload_date
-    if vars.after:
-        q &= db.TblPhotos.photo_date > vars.after
-    if vars.before:
-        q &= db.TblPhotos.photo_date < vars.before
-    if vars.photographer_id:
-        q &= db.TblPhotos.photographer_id == photographer_id
+    photographer_list = [p.id for p in vars.selected_photographers]
+    if len(photographer_list) > 0:
+        q &= db.TblPhotos.photographer_id.belongs(photographer_list)
+    if vars.from_date:
+        from_date, acc = fix_date(vars.from_date)
+        q &= (db.TblPhotos.photo_date >= from_date)
+    if vars.to_date:
+        to_date, acc = fix_date(vars.to_date)
+        q &= (db.TblPhotos.photo_date <= to_date)
+    #if vars.selected_uploader:
+        #q &= db.TblPhotos.uploader==vars.uploader
+    if vars.selected_days_since_upload:
+        days = vars.selected_days_since_upload.value
+        upload_date = datetime.datetime.now() - datetime.timedelta(days=days)
+        q &= db.TblPhotos.upload_date >= upload_date
     return q
 
 @serve_json
@@ -364,6 +372,12 @@ def get_photo_list(vars):
         lst = get_photo_list_with_topics(vars)
     else:
         q = make_query(vars)
+        n = db(q).count()
+        if n > 1000:
+            frac = 1000 * 100 / n
+            sample = random.sample(range(1, 101), frac)
+            ##q &= (db.TblPhotos.random_photo_key <= frac)
+            q &= (db.TblPhotos.random_photo_key.belongs(sample)) #we don't want to bore our uses so there are several collections
         lst = db(q).select() ###, db.TblPhotographers.id) ##, db.TblPhotographers.id)
     if len(lst) > 1000:
         lst1 = random.sample(lst, 1000)
@@ -384,11 +398,37 @@ def get_photo_list(vars):
 
 @serve_json
 def get_topic_list(vars):
-    params = vars.params
+    topic_list = db(db.TblTopics).select(orderby=db.TblTopics.name)
+    topic_list = [dict(name=rec.name, id=rec.id) for rec in topic_list if rec.name]
+    photographer_list = db(db.TblPhotographers).select(orderby=db.TblPhotographers.name)
+    photographer_list = [dict(name=rec.name, id=rec.id) for rec in photographer_list if rec.name]
+    return dict(topic_list=topic_list, photographer_list=photographer_list)   
 
-    lst = db(db.TblTopics).select(orderby=db.TblTopics.name)
-    lst = [dict(name=rec.name, id=rec.id) for rec in lst if rec.name]
-    return dict(topic_list=lst)   
+def fix_date(date_str):
+    if date_str.endswith('-'):
+        accuracy = 'C' #decade
+        d = 1
+        m = 1
+        y = int(date_str[:-1])
+    else:
+        lst = re.split(r'[/.-]', date_str)
+        lst = [int(s) for s in lst]
+        if len(lst) == 3:
+            if lst[2] > 1000:
+                d, m, y = lst
+            else:
+                y, m, d = lst
+            accuracy = 'D'
+        elif len(lst) == 2:
+            d = 1
+            m, y = lst
+            accuracy = 'M'
+        else:
+            d = 1
+            m = 1
+            y = int(lst[0])
+            accuracy = 'Y'
+    return (datetime.date(day=d, month=m, year=y), accuracy)
         
 def save_profile_photo(face):
     rec = get_photo_rec(face.photo_id)

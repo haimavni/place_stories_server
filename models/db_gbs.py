@@ -191,6 +191,7 @@ db.define_table('TblPhotos',
                 Field('KeyWords', type='string'),
                 Field('LocationInDisk', type='string'),
                 Field('Name', type='string'),
+                Field('original_file_name', type='string'),
                 Field('ObjectID', type='integer'), #obsolete, to be replaced by the following line
                 Field('Object_id', type='integer'),
                 Field('PageHits', type='integer'),
@@ -208,6 +209,7 @@ db.define_table('TblPhotos',
                 Field('uploader', type=db.auth_user),
                 Field('upload_date', type='datetime'),
                 Field('photo_missing', type='boolean', default=False),
+                Field('random_photo_key', type='integer'),
                 Field('crc', type='integer')
 )
 
