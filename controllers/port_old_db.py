@@ -279,3 +279,8 @@ def index():
         log_exception('Porting old db failed')
     db.commit()
     return "Old db was converted and modified"
+
+def rename_locations():
+    for rec in db(db.TblPhotos).select():
+        rec.update_record(photo_path="ported/" + rec.LocationInDisk)
+    

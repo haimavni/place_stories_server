@@ -7,8 +7,9 @@ from http_utils import json_to_storage
 import datetime
 import os
 from dal_utils import insert_or_update
-from photos import get_slides_from_photo_list, photos_folder, local_photos_folder, crop
+from photos import get_slides_from_photo_list, photos_folder, local_photos_folder, crop, save_uploaded_photo
 import random
+import zlib
 
 @serve_json
 def member_list(vars):
@@ -107,25 +108,34 @@ def upload_photos(vars):
     today = datetime.date.today()
     month = str(today)[:-3]
 
-    path = local_photos_folder() + month + '/'
+    path = local_photos_folder() + 'uploads/' + month + '/'
+    number_uploaded = 0
+    number_duplicates = 0
     if not os.path.isdir(path):
         os.makedirs(path)
     for fn in vars:
         fil = vars[fn]
+        crc = zlib.crc32(fil.BINvalue)
+        cnt = db(db.TblPhotos.crc==crc).count()
+        if cnt > 0:
+            number_duplicates += 1
+            continue
+        
         original_file_name, ext = os.path.splitext(fil.name)
         file_name = web2py_uuid() + ext
-        file_location = month + '/' + file_name
-        with open(path + file_name, 'wb') as f:
-            f.write(fil.BINvalue)
-        db.TblPhotos.insert(LocationInDisk=file_location,
+        result = save_uploaded_photo(file_name, fil.BINvalue, 'uploads/' + month + '/')
+        file_location = 'uploaded/' + month + '/' + file_name
+        db.TblPhotos.insert(photo_path=file_location,
                             original_file_name=original_file_name,
                             uploader=auth.current_user(),
                             upload_date=datetime.datetime.now(),
-                            width=0,
-                            height=0,
+                            width=result.width,
+                            height=result.height,
+                            crc=crc,
+                            oversize=result.oversize,
                             photo_missing=False
                             )
-    return dict(success='files-loaded-successfuly')
+    return dict(number_uploaded=number_uploaded, number_duplicates=number_duplicates)
 
 def get_member_names(visible_only=None, gender=None):
     q = (db.TblMembers.id > 0)
@@ -258,7 +268,7 @@ def get_family_connections(member_info):
 
 def image_url(rec):
     #for development need full http address
-    return photos_folder() + rec.TblPhotos.LocationInDisk
+    return photos_folder() + rec.TblPhotos.photo_path
 
 def get_member_slides(member_id):
     q = (db.TblMemberPhotos.Member_id==member_id) & \
@@ -298,7 +308,9 @@ def save_face(vars):
     face = vars.face    
     assert(face.member_id > 0)
     if vars.make_profile_photo:
-        save_profile_photo(face)
+        face_photo_url = save_profile_photo(face)
+    else:
+        face_photo_url = None
     q = (db.TblMemberPhotos.Photo_id==face.photo_id) & \
         (db.TblMemberPhotos.Member_id==face.member_id)
     data = dict(
@@ -314,7 +326,7 @@ def save_face(vars):
     else:
         db.TblMemberPhotos.insert(**data) 
     member_name = member_display_name(member_id=face.member_id)
-    return dict(member_name=member_name)
+    return dict(member_name=member_name, face_photo_url=face_photo_url)
     
 @serve_json
 def remove_face(vars):
@@ -349,9 +361,13 @@ def get_photo_list_with_topics(vars):
 
 def make_query(vars):
     q = (db.TblPhotos.width > 0)
-    photographer_list = [p.id for p in vars.selected_photographers]
-    if len(photographer_list) > 0:
-        q &= db.TblPhotos.photographer_id.belongs(photographer_list)
+    #photographer_list = [p.id for p in vars.selected_photographers]
+    #if len(photographer_list) > 0:
+        #q1 = (db.TblPhotos.photographer_id == photographer_list[0])
+        #for p in photographer_list[1:]:
+            #q1 |= dbTblPhotos.photographer_id == p
+        #q &= q1         
+        ### q &= db.TblPhotos.photographer_id.belongs(photographer_list) caused error
     if vars.from_date:
         from_date, acc = fix_date(vars.from_date)
         q &= (db.TblPhotos.photo_date >= from_date)
@@ -362,8 +378,9 @@ def make_query(vars):
         #q &= db.TblPhotos.uploader==vars.uploader
     if vars.selected_days_since_upload:
         days = vars.selected_days_since_upload.value
-        upload_date = datetime.datetime.now() - datetime.timedelta(days=days)
-        q &= db.TblPhotos.upload_date >= upload_date
+        if days:
+            upload_date = datetime.date.today() - datetime.timedelta(days=days)
+            q &= (db.TblPhotos.upload_date >= upload_date)
     return q
 
 @serve_json
@@ -387,8 +404,8 @@ def get_photo_list(vars):
         dic = dict(
             keywords = rec.KeyWords or "",
             description = rec.Description or "",
-            square_src = photos_folder('squares') + rec.LocationInDisk,
-            src=photos_folder('orig') + rec.LocationInDisk,
+            square_src = photos_folder('squares') + rec.photo_path,
+            src=photos_folder('orig') + rec.photo_path,
             photo_id=rec.id,
             width=rec.width,
             height=rec.height
@@ -400,9 +417,9 @@ def get_photo_list(vars):
 def get_topic_list(vars):
     topic_list = db(db.TblTopics).select(orderby=db.TblTopics.name)
     topic_list = [dict(name=rec.name, id=rec.id) for rec in topic_list if rec.name]
-    photographer_list = db(db.TblPhotographers).select(orderby=db.TblPhotographers.name)
-    photographer_list = [dict(name=rec.name, id=rec.id) for rec in photographer_list if rec.name]
-    return dict(topic_list=topic_list, photographer_list=photographer_list)   
+    #photographer_list = db(db.TblPhotographers).select(orderby=db.TblPhotographers.name)
+    #photographer_list = [dict(name=rec.name, id=rec.id) for rec in photographer_list if rec.name]
+    return dict(topic_list=topic_list) ###, photographer_list=photographer_list)   
 
 def fix_date(date_str):
     if date_str.endswith('-'):
@@ -432,12 +449,13 @@ def fix_date(date_str):
         
 def save_profile_photo(face):
     rec = get_photo_rec(face.photo_id)
-    input_path = local_photos_folder() + rec.LocationInDisk
+    input_path = local_photos_folder() + rec.photo_path
     facePhotoURL = "PP-{}-{}.jpg".format(face.member_id, face.photo_id)
     output_path = local_photos_folder("profile_photos") + facePhotoURL
     crop(input_path, output_path, face)
     db(db.TblMembers.id==face.member_id).update(facePhotoURL=facePhotoURL)
-    
+    return photos_folder("profile_photos") + facePhotoURL
+
 def get_photo_rec(photo_id):
     rec = db(db.TblPhotos.id==photo_id).select().first()
     return rec

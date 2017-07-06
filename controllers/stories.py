@@ -83,7 +83,7 @@ def save_story(vars):
 @serve_json
 def get_photo_info(vars):
     rec = get_photo_rec(vars.photo_id)
-    rec.photo_url = photos_folder() + rec.LocationInDisk
+    rec.photo_url = photos_folder() + rec.photo_path
     sm = stories_manager.Stories()
     story_info = sm.get_story(rec.story_id)
     rec.name = rec.Name or story_info.name
@@ -102,7 +102,7 @@ def upload(vars):
         file_location = month + '/' + fil.filename
         with open(path + fil.filename, 'wb') as f:
             f.write(fil.value)
-        db.TblPhotos.insert(LocationInDisk=file_location, 
+        db.TblPhotos.insert(photo_path=file_location, 
                             uploader=auth.current_user(),
                             upload_date=datetime.datetime.now(),
                             width=0,

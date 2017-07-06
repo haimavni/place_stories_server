@@ -178,9 +178,9 @@ db.define_table('TblObjects',
                 Field('Priority', type='integer'),
 )
 
-db.define_table('TblPhotographers',
-                Field('name', type='string')
-)
+#db.define_table('TblPhotographers',
+                #Field('name', type='string')
+#)
 
 db.define_table('TblPhotos',
                 Field('ArchiveNum', type='string'),
@@ -190,6 +190,7 @@ db.define_table('TblPhotos',
                 Field('IIDD', type='integer'),
                 Field('KeyWords', type='string'),
                 Field('LocationInDisk', type='string'),
+                Field('photo_path', type='string'),
                 Field('Name', type='string'),
                 Field('original_file_name', type='string'),
                 Field('ObjectID', type='integer'), #obsolete, to be replaced by the following line
@@ -200,7 +201,7 @@ db.define_table('TblPhotos',
                 Field('photo_date_accuracy', type='string'),
                 Field('PhotoRank', type='integer'),
                 Field('Photographer', type='string'), #obsolete
-                Field('photographer_id', type=db.TblPhotographers),
+                ###Field('photographer_id', db.TblPhotographers),
                 Field('Recognized', type='boolean'),
                 Field('StatusID', type='integer'),
                 Field('Status_id', type='integer'),
@@ -209,6 +210,7 @@ db.define_table('TblPhotos',
                 Field('uploader', type=db.auth_user),
                 Field('upload_date', type='datetime'),
                 Field('photo_missing', type='boolean', default=False),
+                Field('oversize', type='boolean', default=False), #If people want to download the full size they use this info
                 Field('random_photo_key', type='integer'),
                 Field('crc', type='integer')
 )

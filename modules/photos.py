@@ -5,6 +5,61 @@ from injections import inject
 import os
 from distutils import dir_util
 import zlib
+from cStringIO import StringIO
+
+MAX_WIDTH = 1200
+MAX_HEIGHT = 800
+
+def resized(width, height):
+    x = 1.0 * MAX_WIDTH / width
+    y = 1.0 * MAX_HEIGHT / height
+    r = x if x < y else y
+    return int(round(r * width)), int(round(r * height))
+
+def crop_to_square(img, width, height, side_size):
+    if width > height:
+        x = (width - height) / 2
+        x1 = width - x
+        y = 0
+        y1 = height
+    else:
+        y = (height - width) / 2
+        y1 = height - y
+        x = 0
+        x1 = width
+    area = (x, y, x1, y1)
+    try:
+        cropped_img = img.crop(area)
+        resized_img = cropped_img.resize((side_size, side_size), Image.LANCZOS)
+    except:
+        return None
+    return resized_img
+
+    
+def save_uploaded_photo(file_name, blob, path_tail):
+    stream = StringIO(blob)
+    img = Image.open(stream)
+    width, height = img.size
+    square_img = crop_to_square(img, width, height, 256)
+    if square_img:
+        path = local_photos_folder("squares") + path_tail
+        square_img.save(path + file_name)
+        got_square = True
+    else:
+        got_square = False
+    oversize = False
+    if height > MAX_HEIGHT or width > MAX_WIDTH:
+        oversize = True
+        path = local_photos_folder("oversize") + path_tail
+        dir_util.mkpath(path)
+        img.save(path + file_name)
+        width, height = resized(width, height)
+        img = img.resize((width, height), Image.LANCZOS)
+    path = local_photos_folder() + path_tail
+    img.save(path + file_name)
+    return Storage(oversize=oversize, got_square=got_square, width=width, height=height)
+
+
 
 def get_image_info(image_path):
     img = Image.open(image_path)
@@ -26,7 +81,7 @@ def scan_all_unscanned_photos():
             comment('No unscanned photos were found!')
             return dict(message='No unscanned photos were found!', to_scan=to_scan)
         for rec in lst:
-            fname = folder + rec.LocationInDisk
+            fname = folder + rec.photo_path
             if not os.path.exists(fname):
                 rec.update_record(photo_missing=True)
                 continue
@@ -68,7 +123,7 @@ def get_slides_from_photo_list(q):
     if 'TblPhotos' in lst[0]:
         lst = [rec.TblPhotos for rec in lst]
     folder = photos_folder()
-    slides = [dict(photo_id=rec.id, src=folder + rec.LocationInDisk, width=rec.width, height=rec.height, title=rec.Description) for rec in lst]
+    slides = [dict(photo_id=rec.id, src=folder + rec.photo_path, width=rec.width, height=rec.height, title=rec.Description) for rec in lst]
     return slides
 
 def crop(input_path, output_path, face, size=100):
