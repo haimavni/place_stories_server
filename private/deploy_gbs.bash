@@ -1,4 +1,5 @@
 pushd ~/aurelia-gbs/gbs
+rm index.html
 git pull
 rm -R -f scripts/*
 au build --env prod
