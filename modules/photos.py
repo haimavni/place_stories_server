@@ -43,6 +43,7 @@ def save_uploaded_photo(file_name, blob, path_tail):
     square_img = crop_to_square(img, width, height, 256)
     if square_img:
         path = local_photos_folder("squares") + path_tail
+        dir_util.mkpath(path)
         square_img.save(path + file_name)
         got_square = True
     else:
@@ -58,8 +59,6 @@ def save_uploaded_photo(file_name, blob, path_tail):
     path = local_photos_folder() + path_tail
     img.save(path + file_name)
     return Storage(oversize=oversize, got_square=got_square, width=width, height=height)
-
-
 
 def get_image_info(image_path):
     img = Image.open(image_path)
