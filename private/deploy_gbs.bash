@@ -1,8 +1,15 @@
-pushd ~/aurelia-gbs/server/place_stories_server/static/aurelia
-#mnt_gbs
-cp -a ./scripts ../../private/deployment_folder
-cp ./index.html  ../../private/deployment_folder
-cp ./favicon.ico  ../../private/deployment_folder
-cp -a ./locales  ../../private/deployment_folder
+pushd ~/aurelia-gbs/gbs
+git pull
+rm -R -f scripts/*
+au build --env prod
+rm -R -f ~/deployment_folder/*
+cp -a ./scripts ~/deployment_folder/
+cp ./index.html  ~/deployment_folder
+cp ./favicon.ico  ~/deployment_folder
+cp -a ./locales  ~/deployment_folder
+cp -a ./froala-style ~/deployment_folder
+cp -a ./images ~/deployment_folder
+
+sftp -b ../server/place_stories_server/private/deploy.batch haim@gbstories.org
 popd
 

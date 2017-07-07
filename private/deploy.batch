@@ -1,0 +1,6 @@
+lcd /home/haim/deployment_folder
+cd /home/haim/distrib_prev
+rm -R -f *
+cd ../distrib
+mv * ../distrib_prev
+put -R *

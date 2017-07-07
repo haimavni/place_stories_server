@@ -122,9 +122,10 @@ def upload_photos(vars):
             continue
         
         original_file_name, ext = os.path.splitext(fil.name)
-        file_name = web2py_uuid() + ext
+        file_name = '{crc:x}{ext}'.format(crc=crc, ext=ext)
         result = save_uploaded_photo(file_name, fil.BINvalue, 'uploads/' + month + '/')
-        file_location = 'uploaded/' + month + '/' + file_name
+        file_location = 'uploads/' + month + '/' + file_name
+        number_uploaded += 1
         db.TblPhotos.insert(photo_path=file_location,
                             original_file_name=original_file_name,
                             uploader=auth.current_user(),
