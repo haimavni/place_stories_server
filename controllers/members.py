@@ -122,7 +122,7 @@ def upload_photos(vars):
             continue
         
         original_file_name, ext = os.path.splitext(fil.name)
-        file_name = '{crc:x}{ext}'.format(crc=crc, ext=ext)
+        file_name = '{crc:x}{ext}'.format(crc=crc & 0xffffffff, ext=ext)
         result = save_uploaded_photo(file_name, fil.BINvalue, 'uploads/' + month + '/')
         file_location = 'uploads/' + month + '/' + file_name
         number_uploaded += 1
