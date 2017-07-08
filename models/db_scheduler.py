@@ -104,7 +104,7 @@ def schedule_scan_all_unscanned_photos():
 scheduler = MyScheduler(db, __tasks)
 
 permanent_tasks = dict(
-    scan_all_unscanned_photos=schedule_scan_all_unscanned_photos
+    ##scan_all_unscanned_photos=schedule_scan_all_unscanned_photos
 )
 
 def _verify_tasks_started():
