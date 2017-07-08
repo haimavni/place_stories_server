@@ -13,6 +13,6 @@ cp -a ./images ~/deployment_folder
 cp index-orig.html index.html
 rm index-orig.html
 
-sftp -b ../server/place_stories_server/private/deploy.batch haim@gbstories.org
+sftp -b ../server/place_stories_server/private/deploy.batch root@gbstories.org
 popd
 

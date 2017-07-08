@@ -1,6 +1,6 @@
 lcd /home/haim/deployment_folder
-cd /home/haim/distrib_prev
-rm -R -f *
-cd ../distrib
-mv * ../distrib_prev
+cd /home/www-data/place_stories_server/static
+rename aurelia aurelia_prev
+mkdir aurelia
+cd aurelia
 put -R *

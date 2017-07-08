@@ -2,7 +2,7 @@
 Description=Web2py Scheduler service www
 
 [Service]
-ExecStart=/usr/bin/python /home/www-data/web2py/web2py.py -K gbs_dev,gbs_dev,gbs_dev,gbs_dev,gbs_dev,gbs_dev 
+ExecStart=/usr/bin/python /home/www-data/web2py/web2py.py -K gbs,gbs,gbs,gbs,gbs,gbs 
 Type=simple
 Restart=always
 
