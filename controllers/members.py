@@ -194,8 +194,6 @@ def get_member_rec(member_id, member_rec=None):
     rec = Storage(rec.as_dict())
     rec.full_name = member_display_name(rec, full=True)
     rec.name = member_display_name(rec, full=False)
-    if rec.facePhotoURL:
-        rec.facePhotoURL = photos_folder('profile_photos') + rec.facePhotoURL
     return rec
 
 def get_parents(member_id):
