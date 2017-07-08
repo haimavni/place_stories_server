@@ -63,20 +63,6 @@ def get_member_details(vars):
                 facePhotoURL = photos_folder('profile_photos') + member_info.facePhotoURL if  member_info.facePhotoURL else request.application + '/static/images/dummy_face.png')
 
 @serve_json
-def save_member_details(vars):
-    member_info = vars.member_info
-    new_member = member_info.id == "new" or not member_info.id
-    result = insert_or_update(db.TblMembers, **member_info)
-    if isinstance(result, dict):
-        return dict(errors=result['errors'])
-    mem_id = result
-    member_rec = get_member_rec(mem_id)
-    member_rec = json_to_storage(member_rec)
-    ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL_USERS', member_rec=member_rec, new_member=new_member);
-
-    return dict(success='saved-successfuly')
-
-@serve_json
 def save_member_info(vars):
     story_info = vars.story_info
     if story_info:
@@ -111,6 +97,7 @@ def upload_photos(vars):
     path = local_photos_folder() + 'uploads/' + month + '/'
     number_uploaded = 0
     number_duplicates = 0
+    failed = []
     if not os.path.isdir(path):
         os.makedirs(path)
     for fn in vars:
@@ -123,7 +110,9 @@ def upload_photos(vars):
         
         original_file_name, ext = os.path.splitext(fil.name)
         file_name = '{crc:x}{ext}'.format(crc=crc & 0xffffffff, ext=ext)
-        result = save_uploaded_photo(file_name, fil.BINvalue, 'uploads/' + month + '/')
+        result = save_uploaded_photo(file_name, fil.BINvalue, 'uploads/' + month + '/', original_file_name)
+        if result.failed:
+            failed.append(original_file_name)
         file_location = 'uploads/' + month + '/' + file_name
         number_uploaded += 1
         db.TblPhotos.insert(photo_path=file_location,
@@ -136,7 +125,7 @@ def upload_photos(vars):
                             oversize=result.oversize,
                             photo_missing=False
                             )
-    return dict(number_uploaded=number_uploaded, number_duplicates=number_duplicates)
+    return dict(number_uploaded=number_uploaded, number_duplicates=number_duplicates, failed=failed)
 
 def get_member_names(visible_only=None, gender=None):
     q = (db.TblMembers.id > 0)
@@ -180,7 +169,7 @@ def member_display_name(rec=None, member_id=None, full=True):
         s += ' - {}'.format(rec.NickName)
     return s
 
-def get_member_rec(member_id, member_rec=None):
+def get_member_rec(member_id, member_rec=None, prepend_path=False):
     if member_rec:
         rec = member_rec #used when initially all members are loaded into the cache
     elif not member_id:
@@ -194,14 +183,16 @@ def get_member_rec(member_id, member_rec=None):
     rec = Storage(rec.as_dict())
     rec.full_name = member_display_name(rec, full=True)
     rec.name = member_display_name(rec, full=False)
+    if prepend_path and rec.facePhotoURL:
+        rec.facePhotoURL = photos_folder('profile_photos') + rec.facePhotoURL
     return rec
 
 def get_parents(member_id):
     member_rec = get_member_rec(member_id)
     pa = member_rec.father_id
     ma = member_rec.mother_id
-    pa_rec = get_member_rec(pa)
-    ma_rec = get_member_rec(ma)
+    pa_rec = get_member_rec(pa, prepend_path=True)
+    ma_rec = get_member_rec(ma, prepend_path=True)
     parents = Storage()
     if pa_rec:
         parents.pa = pa_rec
@@ -226,7 +217,7 @@ def get_siblings(member_id):
     else:
         lst2 = []
     lst = list(set(lst1 + lst2)) #make it unique
-    lst = [get_member_rec(id) for id in lst]
+    lst = [get_member_rec(id, prepend_path=True) for id in lst]
     return lst
 
 def get_children(member_id):
@@ -238,7 +229,7 @@ def get_children(member_id):
     else:
         return [] #error!
     lst = db(q).select(db.TblMembers.id)
-    lst = [get_member_rec(rec.id) for rec in lst]
+    lst = [get_member_rec(rec.id, prepend_path=True) for rec in lst]
     return lst
     ###return [Storage(rec.as_dict()) for rec in lst] more efficient but not as safe
 
@@ -253,7 +244,7 @@ def get_spouses(member_id):
         spouses = [] ##error
     spouses = [sp for sp in spouses if sp]  #to handle incomplete data
     spouses = list(set(spouses))
-    return [get_member_rec(m_id) for m_id in spouses]
+    return [get_member_rec(m_id, prepend_path=True) for m_id in spouses]
 
 def get_family_connections(member_info):
     result = Storage(

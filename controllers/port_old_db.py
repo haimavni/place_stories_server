@@ -4,7 +4,7 @@
 from porting.create_old_db_mappings import table_fields, csv_name_to_table_name, get_records, csv_name_to_table_name
 from glob import glob
 import re
-from photos import scan_all_unscanned_photos
+from photos import scan_all_unscanned_photos, fit_all_sizes
 import random
 
 def port_old_db():
@@ -251,6 +251,9 @@ def create_random_photo_keys():
         key = random.randint(1, 100)
         rec.update_record(random_photo_key=key)
     db.commit()
+    
+def fit_all_photo_sizes():
+    fit_all_sizes()
 
 def index():
     try:

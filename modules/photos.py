@@ -1,5 +1,5 @@
 import PIL
-from PIL import Image
+from PIL import Image, ImageFile
 from gluon.storage import Storage
 from injections import inject
 import os
@@ -9,6 +9,8 @@ from cStringIO import StringIO
 
 MAX_WIDTH = 1200
 MAX_HEIGHT = 800
+
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 def resized(width, height):
     x = 1.0 * MAX_WIDTH / width
@@ -34,31 +36,36 @@ def crop_to_square(img, width, height, side_size):
     except:
         return None
     return resized_img
-
-    
-def save_uploaded_photo(file_name, blob, path_tail):
-    stream = StringIO(blob)
-    img = Image.open(stream)
-    width, height = img.size
-    square_img = crop_to_square(img, width, height, 256)
-    if square_img:
-        path = local_photos_folder("squares") + path_tail
-        dir_util.mkpath(path)
-        square_img.save(path + file_name)
-        got_square = True
-    else:
-        got_square = False
-    oversize = False
-    if height > MAX_HEIGHT or width > MAX_WIDTH:
-        oversize = True
-        path = local_photos_folder("oversize") + path_tail
-        dir_util.mkpath(path)
+   
+def save_uploaded_photo(file_name, blob, path_tail, original_file_name):
+    log_exception = inject('log_exception')
+    failed = False
+    try:
+        stream = StringIO(blob)
+        img = Image.open(stream)
+        width, height = img.size
+        square_img = crop_to_square(img, width, height, 256)
+        if square_img:
+            path = local_photos_folder("squares") + path_tail
+            dir_util.mkpath(path)
+            square_img.save(path + file_name)
+            got_square = True
+        else:
+            got_square = False
+        oversize = False
+        if height > MAX_HEIGHT or width > MAX_WIDTH:
+            oversize = True
+            path = local_photos_folder("oversize") + path_tail
+            dir_util.mkpath(path)
+            img.save(path + file_name)
+            width, height = resized(width, height)
+            img = img.resize((width, height), Image.LANCZOS)
+        path = local_photos_folder() + path_tail
         img.save(path + file_name)
-        width, height = resized(width, height)
-        img = img.resize((width, height), Image.LANCZOS)
-    path = local_photos_folder() + path_tail
-    img.save(path + file_name)
-    return Storage(oversize=oversize, got_square=got_square, width=width, height=height)
+    except Exception, e:
+        log_exception("saving photo {} failed".format(original_file_name))
+        failed = True
+    return Storage(oversize=oversize, got_square=got_square, width=width, height=height, failed=failed)
 
 def get_image_info(image_path):
     img = Image.open(image_path)
@@ -66,6 +73,43 @@ def get_image_info(image_path):
     faces = []
     return Storage(width=width, height=height, faces=faces)
 
+def fit_size(rec):
+    db, log_exception = inject('db', 'log_exception')
+    fname = local_photos_folder() + rec.photo_path
+    try:
+        img = Image.open(fname)
+        oversize_file_name = local_photos_folder("oversize") + rec.photo_path
+        oversize_path, fname = os.path.split(oversize_file_name)
+        dir_util.mkpath(oversize_path)
+        img.save(oversize_file_name)
+        width, height = resized(rec.width, rec.height)
+        img = img.resize((width, height), Image.LANCZOS)
+        img.save(fname)
+        rec.update_record(width=width, height=height)
+    except Exception, e:
+        log_exception("resizing file {} failed.".format(rec.photo_path))
+        rec.update_record(photo_missing=True)
+        return False
+    return True
+    
+def fit_all_sizes():
+    db, request, comment = inject('db', 'request', 'comment')
+    comment('started fitting size for chunk of photos')
+    q = (db.TblPhotos.width > MAX_WIDTH) | (db.TblPhotos.height > MAX_HEIGHT)
+    q &= (db.TblPhotos.photo_missing != True)
+    chunk = 100
+    num_failed = 0
+    while True:
+        comment('started fitting size for chunk of photos')
+        if db(q).count() == 0:
+            break
+        lst = db(q).select(limitby=(0, chunk))
+        for rec in lst:
+            if not fit_size(rec):
+                num_failed += 1
+        db.commit()
+    return dict(num_failed=num_failed)
+        
 def scan_all_unscanned_photos():
     db, request, comment = inject('db', 'request', 'comment')
     q = (db.TblPhotos.crc==None) & (db.TblPhotos.photo_missing == False)
