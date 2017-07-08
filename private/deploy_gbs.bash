@@ -1,6 +1,6 @@
 pushd ~/aurelia-gbs/gbs
-rm index.html
 git pull
+cp index.html index-orig.html
 rm -R -f scripts/*
 au build --env prod
 rm -R -f ~/deployment_folder/*
@@ -10,6 +10,8 @@ cp ./favicon.ico  ~/deployment_folder
 cp -a ./locales  ~/deployment_folder
 cp -a ./froala-style ~/deployment_folder
 cp -a ./images ~/deployment_folder
+cp index-orig.html index.html
+rm index-orig.html
 
 sftp -b ../server/place_stories_server/private/deploy.batch haim@gbstories.org
 popd
