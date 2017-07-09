@@ -5,5 +5,5 @@ systemctl stop web2py-scheduler.service
 systemctl stop nginx
 systemctl stop emperor.uwsgi.service
 systemctl start nginx
-systemctl start emperor.uwsgi.servic
+systemctl start emperor.uwsgi.service
 systemctl start web2py-scheduler.service
