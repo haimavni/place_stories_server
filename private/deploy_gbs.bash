@@ -13,9 +13,10 @@ cp -a ./images ~/deployment_folder
 cp index-orig.html index.html
 rm index-orig.html
 
+ssh root@gbstories.org rm -R -f /home/www-data/place_stories_server/static/aurelia_prev/*
 sftp -b ../server/place_stories_server/private/deploy.batch root@gbstories.org
 
-ssh root@gbstories.org bash ../server/place_stories_server/private/update_gbs_server.bash
+ssh root@gbstories.org bash /home/www-data/place_stories_server/private/update_gbs_server.bash
 
 popd
 
