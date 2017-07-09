@@ -91,6 +91,7 @@ def save_member_info(vars):
 
 @serve_json
 def upload_photos(vars):
+    raise Exception('Tinofet')
     comment("start handling uploaded files")
     today = datetime.date.today()
     month = str(today)[:-3]
