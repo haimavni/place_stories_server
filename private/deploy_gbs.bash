@@ -14,5 +14,8 @@ cp index-orig.html index.html
 rm index-orig.html
 
 sftp -b ../server/place_stories_server/private/deploy.batch root@gbstories.org
+
+ssh root@gbstories.org bash ../server/place_stories_server/private/update_gbs_server.bash
+
 popd
 
