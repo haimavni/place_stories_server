@@ -38,8 +38,9 @@ def crop_to_square(img, width, height, side_size):
     return resized_img
    
 def save_uploaded_photo(file_name, blob, path_tail, original_file_name):
-    log_exception = inject('log_exception')
+    comment, log_exception = inject('comment', 'log_exception')
     failed = False
+    comment('start saving {}', original_file_name)
     try:
         stream = StringIO(blob)
         img = Image.open(stream)
@@ -100,7 +101,8 @@ def fit_all_sizes():
     chunk = 100
     num_failed = 0
     while True:
-        comment('started fitting size for chunk of photos')
+        n = db(q).count()
+        comment('started fitting size for chunk of photos. {} more to go.'.format(n))
         if db(q).count() == 0:
             break
         lst = db(q).select(limitby=(0, chunk))

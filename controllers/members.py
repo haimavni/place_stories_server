@@ -91,6 +91,7 @@ def save_member_info(vars):
 
 @serve_json
 def upload_photos(vars):
+    comment("start handling uploaded files")
     today = datetime.date.today()
     month = str(today)[:-3]
 
@@ -113,6 +114,7 @@ def upload_photos(vars):
         result = save_uploaded_photo(file_name, fil.BINvalue, 'uploads/' + month + '/', original_file_name)
         if result.failed:
             failed.append(original_file_name)
+            continue
         file_location = 'uploads/' + month + '/' + file_name
         number_uploaded += 1
         db.TblPhotos.insert(photo_path=file_location,
