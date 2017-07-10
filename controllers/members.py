@@ -34,7 +34,6 @@ def get_member_details(vars):
                 spouses=[],
                 children=[]
             ),
-            images = [],
             slides=[],
             spouses=[],
             facePhotoURL = request.application + '/static/images/dummy_face.png'
@@ -45,6 +44,7 @@ def get_member_details(vars):
         mem_id += 1
     elif vars.shift == 'prev':
         mem_id -= 1
+    member_stories = get_member_stories(mem_id)
     member_info = get_member_rec(mem_id)
     if not member_info:
         raise User_Error(T('You reached the end of the list'))
@@ -57,9 +57,8 @@ def get_member_details(vars):
     else:
         spouses = 'wife' + ('s' if len(family_connections.spouses) > 1 else '')
     return dict(member_info=member_info, story_info=story_info, family_connections=family_connections, 
-                ##images=images,
                 slides=slides, #todo: duplicate?
-                spouses = spouses,
+                member_stories=member_stories,
                 facePhotoURL = photos_folder('profile_photos') + member_info.facePhotoURL if  member_info.facePhotoURL else request.application + '/static/images/dummy_face.png')
 
 @serve_json
@@ -233,7 +232,6 @@ def get_children(member_id):
     lst = db(q).select(db.TblMembers.id)
     lst = [get_member_rec(rec.id, prepend_path=True) for rec in lst]
     return lst
-    ###return [Storage(rec.as_dict()) for rec in lst] more efficient but not as safe
 
 def get_spouses(member_id):
     children = get_children(member_id)
@@ -461,3 +459,23 @@ def save_story_info(story_info, used_for):
     else:
         story_id = sm.add_story(story_text, used_for=used_for)
     return story_id
+
+def get_member_stories(member_id):
+    q = (db.TblEventMembers.Member_id==member_id) & \
+        (db.TblEventMembers.Event_id==db.TblEvents.id) & \
+        (db.TblEvents.story_id==db.TblStories.id)
+    result = []
+    lst = db(q).select()
+    for rec in lst:
+        event = rec.TblEvents
+        story = rec.TblStories
+        dic = dict(
+            name = event.Name,
+            story_id = event.story_id,
+            story_text = story.story,
+            source = event.SSource
+        )
+        result.append(dic)
+    return result
+    
+
