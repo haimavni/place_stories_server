@@ -58,6 +58,7 @@ def get_member_details(vars):
         spouses = 'wife' + ('s' if len(family_connections.spouses) > 1 else '')
     return dict(member_info=member_info, story_info=story_info, family_connections=family_connections, 
                 slides=slides, #todo: duplicate?
+                spouses=spouses, #this is just the key for translation
                 member_stories=member_stories,
                 facePhotoURL = photos_folder('profile_photos') + member_info.facePhotoURL if  member_info.facePhotoURL else request.application + '/static/images/dummy_face.png')
 
