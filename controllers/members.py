@@ -334,7 +334,7 @@ def remove_face(vars):
 def get_photo_list_with_topics(vars):
     first = True
     for topic in vars.selected_topics:
-        q = make_query(vars) #if we do not regenerate it the query becomes accumulated and necessarily fails
+        q = make_photos_query(vars) #if we do not regenerate it the query becomes accumulated and necessarily fails
         q &= (db.TblPhotoTopics.photo_id==db.TblPhotos.id)
         q &= (db.TblTopics.id==db.TblPhotoTopics.topic_id)
         q &= (db.TblTopics.id==topic.id)
@@ -352,7 +352,7 @@ def get_photo_list_with_topics(vars):
     result = [dic[id] for id in bag]
     return result
 
-def make_query(vars):
+def make_photos_query(vars):
     q = (db.TblPhotos.width > 0)
     #photographer_list = [p.id for p in vars.selected_photographers]
     #if len(photographer_list) > 0:
@@ -381,7 +381,7 @@ def get_photo_list(vars):
     if len(vars.selected_topics) > 0:
         lst = get_photo_list_with_topics(vars)
     else:
-        q = make_query(vars)
+        q = make_photos_query(vars)
         n = db(q).count()
         if n > 1000:
             frac = 1000 * 100 / n
@@ -397,6 +397,8 @@ def get_photo_list(vars):
         dic = dict(
             keywords = rec.KeyWords or "",
             description = rec.Description or "",
+            name = rec.Name,
+            title='{}: {}'.format(rec.Name, rec.KeyWords),
             square_src = photos_folder('squares') + rec.photo_path,
             src=photos_folder('orig') + rec.photo_path,
             photo_id=rec.id,
