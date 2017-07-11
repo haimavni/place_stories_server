@@ -20,7 +20,9 @@ class EmailPhotosCollector:
     def handle_msg(self, msg_file):
         with open(msg_file) as f:
             msg = email.message_from_file(f)        
-        sender_email = msg['Return-Path'][1:-1]
+        s = msg['Return-Path'][1:-1]
+        m = re.search(r'(.*)<(.+)>', s)
+        sender_name, sender_email = m.groups()
         subject = msg['Subject']
         payload = msg.get_payload()
         photo_list = []
@@ -45,7 +47,7 @@ class EmailPhotosCollector:
                 m = item.get_payload()
                 text_html = m[1].get_payload()
                 break
-        return dict(sender_email=sender_email, text_html=text_html, photo_list=photo_list)
+        return dict(sender_email=sender_email, sender_name=sender_name, text_html=text_html, photo_list=photo_list)
     
 def test():
     email_photos_collector = EmailPhotosCollector(maildir='/home/haim/tmp/maildir/', output_folder='/home/haim/tmp/photos/') 

@@ -292,6 +292,8 @@ def get_faces(vars):
                 face.member_id = rec.Member_id
                 face.name = member_display_name(member_id=rec.Member_id)
             faces.append(face)
+    face_ids = set([face.member_id for face in faces])
+    candidates = [c for c in candidates if not c['member_id'] in face_ids]
     return dict(faces=faces, candidates=candidates)
 
 @serve_json
