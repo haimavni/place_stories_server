@@ -194,35 +194,96 @@ def find_duplicate_photos():
         
 def string_date_to_date(s):
     p = "שנות ה"
+    day = 1
+    mon = 1
+    year = 1800
+    raw_str = '1800'
     if s:
+        s = s.replace(' ', '')
+        m = re.search(r'(\d{4})\-(\d{4})', s)
+        if m:
+            return ('lifespan', m.group(1), m.group(2))
         if p in s:
             m = re.search(r'(\d{1,2})', s)
             if m:
-                y = m.groups()[0]
-                if len(y) < 2:
-                    y += '0'
-                y = 1900 + int(y)
-                accuracy = 'C' #decade
-            else:
-                y = 1928
-                accuracy = 'X'
+                year = m.groups()[0]
+                if len(year) < 2:
+                    year += '0'
+                year = 1900 + int(year)
+                raw_str = str(year) + '-'
         else:
-            m = re.search(r'(\d{4})', s)
+            m = re.search(r'(\d{1,2})[./](\d{1,2})[./](\d{4})', s)
             if m:
-                y = int(m.groups()[0])
-                accuracy = 'Y'
+                day, mon, year = m.groups()
+                day, mon, year = (int(day), int(mon), int(year))
+                raw_str = s
             else:
-                y = 1928
-                accuracy = 'X'
-    else:
-        y = 1928 #just to have someting there for sorting to kind of work
-        accuracy = 'X' # fabricated date
-    return (datetime.date(year=y, month=1, day=1), accuracy)
+                m = re.search(r'(\d{1,2})[./](\d{4})', s)
+                if m:
+                    mon, year = m.groups()
+                    mon, year = (int(mon), int(year))
+                    raw_str = s
+                else:
+                    m = re.search(r'(\d{4})', s)
+                    if m:
+                        year = int(m.groups()[0])
+                        raw_str = s
+  
+    return ('singledate', datetime.date(year=year, month=mon, day=day), raw_str)
+
+def dash_to_camel(s):
+    b = True
+    t = ""
+    for c in s:
+        if b:
+            c = c.upper()
+            b = False
+        if c == "_":
+            b = True
+            continue
+        t += c
+    return t
  
+def port_all_dates():
+    tbls = db.tables()
+    for tbl in tbls:
+        table = db[tbl]
+        flds = table.fields()
+        flds = [f for f in flds if f.endswith('_str')]
+        if not flds:
+            continue
+        fields = {}
+        for fld in flds:
+            date_field = fld[:-4]
+            old_date_field = dash_to_camel(date_field)
+            fields[old_date_field] = date_field
+        for rec in db(table).select():
+            data = {}
+            for f in fields:
+                if f.endswith('Death'):
+                    continue
+                old_date_value = rec[f]
+                kind, val1, val2 = string_date_to_date(old_date_value)
+                if kind == 'singledate':
+                    new_date_value, new_date_str = (val1, val2)
+                    k = fields[f]
+                    data[k] = new_date_value
+                    data[k + '_str'] = new_date_str
+                else:
+                    birth, death = val1, val2
+                    k = fields[f]
+                    data[k] = datetime.datetime(day=1, month=1, year=int(val1))
+                    data[k + '_str'] = val1
+                    k1 = k.replace('birth', 'death')
+                    data[k1] = datetime.datetime(day=1, month=1, year=int(val2))
+                    data[k1 + '_str'] = val2
+            rec.update_record(**data)
+    return 'port_all_dates done!'
+     
 def port_photos_date():
     lst = db((db.TblPhotos.width>0) & (db.TblPhotos.photo_date==None)).select(db.TblPhotos.id, db.TblPhotos.PhotoDate, db.TblPhotos.photo_date, db.TblPhotos.photo_date_accuracy)
     for rec in lst:
-        date, accuracy = string_date_to_date(rec.PhotoDate)
+        date, date_str = string_date_to_date(rec.PhotoDate)
         db(db.TblPhotos.id==rec.id).update(photo_date=date, photo_date_accuracy=accuracy)
     db.commit()
 

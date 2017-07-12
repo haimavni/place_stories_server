@@ -10,6 +10,7 @@ from dal_utils import insert_or_update
 from photos import get_slides_from_photo_list, photos_folder, local_photos_folder, crop, save_uploaded_photo
 import random
 import zlib
+import re
 
 @serve_json
 def member_list(vars):
@@ -75,6 +76,10 @@ def save_member_info(vars):
         new_member = not member_info.id
         if story_id:
             member_info.story_id = story_id
+        for k in member_info:
+            if k.startswith("date_of_") and k.endswith('_str'):
+                k1 = k[:-4]
+                member_info[k1] = date_of_partial_date(member_info[k])
         result = insert_or_update(db.TblMembers, **member_info)
         if isinstance(result, dict):
             return dict(errors=result['errors'])
@@ -209,17 +214,18 @@ def get_siblings(member_id):
     pa, ma = parents.pa, parents.ma
     q = db.TblMembers.id!=member_id
     if pa:
-        lst1 = db(q & (db.TblMembers.father_id==pa.id)).select() if pa else []
+        lst1 = db(q & (db.TblMembers.father_id==pa.id)).select(orderby=db.TblMembers.date_of_birth) if pa else []
         lst1 = [r.id for r in lst1]
     else:
         lst1 = []
     if ma:
-        lst2 = db(q & (db.TblMembers.mother_id==ma.id)).select() if ma else []
+        lst2 = db(q & (db.TblMembers.mother_id==ma.id)).select(orderby=db.TblMembers.date_of_birth) if ma else []
         lst2 = [r.id for r in lst2]
     else:
         lst2 = []
     lst = list(set(lst1 + lst2)) #make it unique
     lst = [get_member_rec(id, prepend_path=True) for id in lst]
+    lst = sorted(lst, key=lambda rec: rec.date_of_birth)
     return lst
 
 def get_children(member_id):
@@ -230,7 +236,7 @@ def get_children(member_id):
         q = db.TblMembers.father_id==member_id
     else:
         return [] #error!
-    lst = db(q).select(db.TblMembers.id)
+    lst = db(q).select(db.TblMembers.id, db.TblMembers.date_of_birth, orderby=db.TblMembers.date_of_birth)
     lst = [get_member_rec(rec.id, prepend_path=True) for rec in lst]
     return lst
 
@@ -244,7 +250,16 @@ def get_spouses(member_id):
     else:
         spouses = [] ##error
     spouses = [sp for sp in spouses if sp]  #to handle incomplete data
-    spouses = list(set(spouses))
+    visited = set([])
+    spouses1 = []
+    for sp_id in spouses:
+        if sp_id in visited:
+            continue
+        else:
+            visited |= set([sp_id])
+            spouses1.append(sp_id)
+    spouses = spouses1        
+    ###spouses = list(set(spouses))  ## nice but does no preserve order
     return [get_member_rec(m_id, prepend_path=True) for m_id in spouses]
 
 def get_family_connections(member_info):
@@ -352,6 +367,30 @@ def get_photo_list_with_topics(vars):
     result = [dic[id] for id in bag]
     return result
 
+def date_of_partial_date(s):
+    day = 1
+    mon = 1
+    year = None
+    if not s:
+        return None
+    m = re.search(r'(\d{1,2})[./](\d{1,2})[./](\d{4})', s)
+    if m:
+        day, mon, year = m.groups()
+        day, mon, year = (int(day), int(mon), int(year))
+    else:
+        m = re.search(r'(\d{1,2})[./](\d{4})', s)
+        if m:
+            mon, year = m.groups()
+            mon, year = (int(mon), int(year))
+        else:
+            m = re.search(r'(\d{4})', s)
+            if m:
+                year = int(m.groups()[0])
+            else:
+                raise User_Error("member.illgal-date")
+    return datetime.date(year=year, month=mon, day=day)
+    
+
 def make_photos_query(vars):
     q = (db.TblPhotos.width > 0)
     #photographer_list = [p.id for p in vars.selected_photographers]
@@ -362,10 +401,10 @@ def make_photos_query(vars):
         #q &= q1         
         ### q &= db.TblPhotos.photographer_id.belongs(photographer_list) caused error
     if vars.from_date:
-        from_date, acc = fix_date(vars.from_date)
+        from_date = fix_date(vars.from_date)
         q &= (db.TblPhotos.photo_date >= from_date)
     if vars.to_date:
-        to_date, acc = fix_date(vars.to_date)
+        to_date = fix_date(vars.to_date)
         q &= (db.TblPhotos.photo_date <= to_date)
     #if vars.selected_uploader:
         #q &= db.TblPhotos.uploader==vars.uploader
@@ -418,7 +457,6 @@ def get_topic_list(vars):
 
 def fix_date(date_str):
     if date_str.endswith('-'):
-        accuracy = 'C' #decade
         d = 1
         m = 1
         y = int(date_str[:-1])
@@ -430,17 +468,15 @@ def fix_date(date_str):
                 d, m, y = lst
             else:
                 y, m, d = lst
-            accuracy = 'D'
         elif len(lst) == 2:
             d = 1
             m, y = lst
-            accuracy = 'M'
         else:
             d = 1
             m = 1
             y = int(lst[0])
             accuracy = 'Y'
-    return (datetime.date(day=d, month=m, year=y), accuracy)
+    return datetime.date(day=d, month=m, year=y)
         
 def save_profile_photo(face):
     rec = get_photo_rec(face.photo_id)
