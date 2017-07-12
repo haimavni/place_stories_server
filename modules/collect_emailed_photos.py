@@ -22,13 +22,19 @@ class EmailPhotosCollector:
             msg = email.message_from_file(f)        
         s = msg['Return-Path'][1:-1]
         m = re.search(r'(.*)<(.+)>', s)
-        sender_name, sender_email = m.groups()
+        if m:
+            sender_name, sender_email = m.groups()
+        else:
+            sender_name, sender_email = "", s
         subject = msg['Subject']
         payload = msg.get_payload()
         photo_list = []
         item = payload.pop()
+        text_html = ""
         while True:
             disposition = item['Content-Disposition']
+            if not disposition:
+                break
             coding = item['Content-Transfer-Encoding']
             content_type = item['Content-Type']
             s = item.get_payload()
@@ -57,3 +63,27 @@ if __name__ == "__main__":
     # execute only if run as a script
     test()  
         
+        
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import smtplib
+
+def send_mail(subject, frm, to, msg):
+
+    message = MIMEMultipart("alternative")
+    message["Subject"] = subject
+    message["From"]    = frm
+    message["To"]      = to
+
+    message.attach(MIMEText(msg, "plain"))
+
+    try:
+        server = smtplib.SMTP("localhost")
+        server.sendmail(
+             message["From"],
+             message["To"],
+             message.as_string()
+         )
+        server.quit()
+    except smtplib.SMTPException:
+        print("e-mail send error")        
