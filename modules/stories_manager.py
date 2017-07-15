@@ -60,21 +60,26 @@ class Stories:
         )
         return story_info
 
-    def add_story(self, story, used_for):
-        story = storey.replace('~1', '&').replace('~2', ';').replace('\n', '').replace('>', '>\n')
-        db, auth = inject('db', 'auth' )
-        story_id = db.TblStories.insert(story=story, author_id=self.author_id, used_for=used_for, creation_date=datetime.datetime.now())
+    def add_story(self, story_info, used_for):
+        story_text = story_info.story_text
+        name = story_info.name
+        story_text = story_text.replace('~1', '&').replace('~2', ';').replace('\n', '').replace('>', '>\n')
+        db = inject('db')
+        story_id = db.TblStories.insert(story=story_text, author_id=self.author_id, 
+                                        name=name,
+                                        used_for=used_for, creation_date=datetime.datetime.now())
         return story_id
 
-    def update_story(self, story_id, updated_story):
-        updated_story = updated_story.replace('~1', '&').replace('~2', ';').replace('\n', '').replace('>', '>\n')
-        db, auth = inject('db', 'auth')
+    def update_story(self, story_id, story_info):
+        updated_story_text = story_info.story_text
+        updated_story_text = updated_story_text.replace('~1', '&').replace('~2', ';').replace('\n', '').replace('>', '>\n')
+        db = inject('db')
         rec = db(db.TblStories.id==story_id).select(db.TblStories.story).first()
-        db(db.TblStories.id==story_id).update(story=updated_story)
+        merger = mim.Merger()
+        delta = merger.diff_make(rec.story, updated_story_text)
+        db(db.TblStories.id==story_id).update(story=updated_story_text, name=story_info.name)
         if not rec.story:
             return
-        merger = mim.Merger()
-        delta = merger.diff_make(rec.story, updated_story)
         db.TblStoryVersions.insert(delta=delta, 
                                    story_id=story_id, 
                                    creation_date=datetime.datetime.now(),

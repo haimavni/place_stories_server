@@ -502,13 +502,12 @@ def get_photo_rec(photo_id):
     return rec
 
 def save_story_data(story_info, used_for, user_id):
-    story_text = story_info.story_text
     story_id = story_info.story_id
     sm = stories_manager.Stories(user_id)
     if story_id:
-        sm.update_story(story_id, story_text)
+        sm.update_story(story_id, story_info)
     else:
-        story_id = sm.add_story(story_text, used_for=used_for)
+        story_id = sm.add_story(story_info, used_for=used_for)
     return story_id
 
 def get_member_stories(member_id):
