@@ -57,6 +57,7 @@ def get_member_details(vars):
         spouses = 'husband' + ('s' if len(family_connections.spouses) > 1 else '')
     else:
         spouses = 'wife' + ('s' if len(family_connections.spouses) > 1 else '')
+    member_stories = [story_info] + member_stories;
     return dict(member_info=member_info, story_info=story_info, family_connections=family_connections, 
                 slides=slides, #todo: duplicate?
                 spouses=spouses, #this is just the key for translation
@@ -64,10 +65,18 @@ def get_member_details(vars):
                 facePhotoURL = photos_folder('profile_photos') + member_info.facePhotoURL if  member_info.facePhotoURL else request.application + '/static/images/dummy_face.png')
 
 @serve_json
+def save_story_info(vars):
+    user_id = vars.user_id
+    story_info = vars.story_info
+    story_id = save_story_data(story_info, used_for=STORY4MEMBER, user_id=user_id)
+    return dict(story_id=story_id)
+
+@serve_json
 def save_member_info(vars):
+    user_id = vars.user_id
     story_info = vars.story_info
     if story_info:
-        story_id = save_story_info(story_info, used_for=STORY4MEMBER)
+        story_id = save_story_data(story_info, used_for=STORY4MEMBER, user_id=user_id)
     else:
         story_id = None
     member_id = vars.member_id
@@ -96,6 +105,7 @@ def save_member_info(vars):
 
 @serve_json
 def upload_photos(vars):
+    user_id = vars.user_id or auth.current_user()
     comment("start handling uploaded files")
     today = datetime.date.today()
     month = str(today)[:-3]
@@ -124,7 +134,7 @@ def upload_photos(vars):
         number_uploaded += 1
         db.TblPhotos.insert(photo_path=file_location,
                             original_file_name=original_file_name,
-                            uploader=auth.current_user(),
+                            uploader=user_id,
                             upload_date=datetime.datetime.now(),
                             width=result.width,
                             height=result.height,
@@ -491,10 +501,10 @@ def get_photo_rec(photo_id):
     rec = db(db.TblPhotos.id==photo_id).select().first()
     return rec
 
-def save_story_info(story_info, used_for):
-    story_text = story_info.story_text.replace('~1', '&').replace('~2', ';')
+def save_story_data(story_info, used_for, user_id):
+    story_text = story_info.story_text
     story_id = story_info.story_id
-    sm = stories_manager.Stories()
+    sm = stories_manager.Stories(user_id)
     if story_id:
         sm.update_story(story_id, story_text)
     else:
@@ -511,10 +521,14 @@ def get_member_stories(member_id):
         event = rec.TblEvents
         story = rec.TblStories
         dic = dict(
-            name = event.Name,
-            story_id = event.story_id,
+            topic = event.Name,
+            name = story.name,
+            story_id = story.id,
             story_text = story.story,
-            source = event.SSource
+            source = event.SSource,
+            used_for=story.used_for, 
+            author_id=story.author_id,
+            creation_date=story.creation_date
         )
         result.append(dic)
     return result

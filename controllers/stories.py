@@ -71,7 +71,7 @@ def get_story_info(vars):
 @serve_json
 def save_story(vars):
     story_info = vars.story_info
-    story_text = story_info.story_text.replace('~1', '&').replace('~2', ';')
+    story_text = story_info.story_text
     story_id = story_info.story_id
     sm = stories_manager.Stories()
     if story_id:

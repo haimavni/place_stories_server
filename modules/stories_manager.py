@@ -11,6 +11,12 @@ def get_display_version(num, sv):
     
 
 class Stories:
+    
+    def __init__(self, author_id=None):
+        if not author_id:
+            auth = inject('auth')
+            author_id = auth.current_user()
+        self.author_id = author_id
 
     def get_story(self, story_id, from_story_version=None, to_story_version=None):
         db = inject('db')
@@ -55,22 +61,24 @@ class Stories:
         return story_info
 
     def add_story(self, story, used_for):
+        story = storey.replace('~1', '&').replace('~2', ';').replace('\n', '').replace('>', '>\n')
         db, auth = inject('db', 'auth' )
-        story_id = db.TblStories.insert(story=story, author_id=auth.current_user(), used_for=used_for, creation_date=datetime.datetime.now())
+        story_id = db.TblStories.insert(story=story, author_id=self.author_id, used_for=used_for, creation_date=datetime.datetime.now())
         return story_id
 
     def update_story(self, story_id, updated_story):
+        updated_story = updated_story.replace('~1', '&').replace('~2', ';').replace('\n', '').replace('>', '>\n')
         db, auth = inject('db', 'auth')
-        db(db.TblStories.id==story_id).update(story=updated_story)
-        merger = mim.Merger()
         rec = db(db.TblStories.id==story_id).select(db.TblStories.story).first()
+        db(db.TblStories.id==story_id).update(story=updated_story)
         if not rec.story:
             return
+        merger = mim.Merger()
         delta = merger.diff_make(rec.story, updated_story)
         db.TblStoryVersions.insert(delta=delta, 
                                    story_id=story_id, 
                                    creation_date=datetime.datetime.now(),
-                                   author_id=auth.current_user()
+                                   author_id=self.author_id
                                    )
 
 
