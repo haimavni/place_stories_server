@@ -37,6 +37,7 @@ def get_member_details(vars):
             ),
             slides=[],
             spouses=[],
+            member_stories = [],
             facePhotoURL = request.application + '/static/images/dummy_face.png'
         )
         return new_member
