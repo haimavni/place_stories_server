@@ -22,7 +22,7 @@ def member_list(vars):
 def create_parent(vars):
     gender = vars.gender
     child_name = vars.child_name
-    what = 'Father of ' if gender == 'M' else 'Mother of '
+    what = 'Pa ' if gender == 'M' else 'Ma '
     rec = new_member_rec(gender=gender, first_name=what + child_name)
     parent_id = db.TblMembers.insert(**rec.member_info)
     rec.member_info.id = parent_id
