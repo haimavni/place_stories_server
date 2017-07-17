@@ -70,6 +70,7 @@ def get_member_details(vars):
         raise User_Error('No one there')
     sm = stories_manager.Stories()
     story_info = sm.get_story(member_info.story_id) or Storage(display_version='New Story', topic="member.life-summary", story_versions=[], story_text='', story_id=None)
+    story_info.used_for = STORY4MEMBER
     family_connections = get_family_connections(member_info)
     slides = get_member_slides(mem_id)
     if member_info.gender == 'F':
@@ -449,7 +450,7 @@ def make_photos_query(vars):
 
 @serve_json
 def get_photo_list(vars):
-    if len(vars.selected_topics) > 0:
+    if vars.selected_topics and len(vars.selected_topics) > 0:
         lst = get_photo_list_with_topics(vars)
     else:
         q = make_photos_query(vars)
