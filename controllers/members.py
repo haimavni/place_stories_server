@@ -12,35 +12,53 @@ import random
 import zlib
 import re
 
+MAX_PHOTOS_COUNT = 1200
+
 @serve_json
 def member_list(vars):
     return dict(member_list=get_member_names(vars.visible_only, vars.gender))
+
+@serve_json
+def create_parent(vars):
+    gender = vars.gender
+    child_name = vars.child_name
+    what = 'Father of ' if gender == 'M' else 'Mother of '
+    rec = new_member_rec(gender=gender, first_name=what + child_name)
+    parent_id = db.TblMembers.insert(**rec.member_info)
+    rec.member_info.id = parent_id
+    return dict(member_id=parent_id, member=rec)
+    
+def new_member_rec(gender=None, first_name=""):
+    new_member = Storage(
+        member_info=Storage(
+            first_name=first_name,
+            last_name="",
+            former_first_name="",
+            former_last_name="",
+            gender=gender),
+        story_info = Storage(display_version='New Story', story_versions=[], story_text='', story_id=None),
+        family_connections =  Storage(
+            parents=dict(pa=None, ma=None),
+            siblings=[],
+            spouses=[],
+            children=[]
+        ),
+        slides=[],
+        spouses=[],
+        member_stories = [],
+        facePhotoURL = request.application + '/static/images/dummy_face.png',
+        name=first_name
+    )
+    return new_member
 
 @serve_json
 def get_member_details(vars):
     if not vars.member_id:
         raise User_Error(T('Member does not exist yet!'))
     if vars.member_id == "new":
-        new_member = dict(
-            member_info=Storage(
-                first_name="",
-                last_name="",
-                former_first_name="",
-                former_last_name="",
-                full_name="members.new-member"),
-            story_info = Storage(display_version='New Story', story_versions=[], story_text='', story_id=None),
-            family_connections =  Storage(
-                parents=dict(pa=None, ma=None),
-                siblings=[],
-                spouses=[],
-                children=[]
-            ),
-            slides=[],
-            spouses=[],
-            member_stories = [],
-            facePhotoURL = request.application + '/static/images/dummy_face.png'
-        )
-        return new_member
+        rec = new_member_rec()
+        rec.member_info.full_name="members.new-member"
+        return rec
     mem_id = int(vars.member_id)
     if vars.shift == 'next':
         mem_id += 1
@@ -49,9 +67,9 @@ def get_member_details(vars):
     member_stories = get_member_stories(mem_id)
     member_info = get_member_rec(mem_id)
     if not member_info:
-        raise User_Error(T('You reached the end of the list'))
+        raise User_Error('No one there')
     sm = stories_manager.Stories()
-    story_info = sm.get_story(member_info.story_id) or Storage(display_version='New Story', story_versions=[], story_text='', story_id=None)
+    story_info = sm.get_story(member_info.story_id) or Storage(display_version='New Story', topic="member.life-summary", story_versions=[], story_text='', story_id=None)
     family_connections = get_family_connections(member_info)
     slides = get_member_slides(mem_id)
     if member_info.gender == 'F':
@@ -86,10 +104,13 @@ def save_member_info(vars):
         new_member = not member_info.id
         if story_id:
             member_info.story_id = story_id
+        date_fields = []
         for k in member_info:
             if k.startswith("date_of_") and k.endswith('_str'):
-                k1 = k[:-4]
-                member_info[k1] = date_of_partial_date(member_info[k])
+                date_fields.append(k)
+        for df in date_fields:
+            k = df[:-4]
+            member_info[k] = date_of_partial_date(member_info[df])
         result = insert_or_update(db.TblMembers, **member_info)
         if isinstance(result, dict):
             return dict(errors=result['errors'])
@@ -433,14 +454,14 @@ def get_photo_list(vars):
     else:
         q = make_photos_query(vars)
         n = db(q).count()
-        if n > 1000:
-            frac = 1000 * 100 / n
+        if n > MAX_PHOTOS_COUNT:
+            frac = MAX_PHOTOS_COUNT * 100 / n
             sample = random.sample(range(1, 101), frac)
             ##q &= (db.TblPhotos.random_photo_key <= frac)
             q &= (db.TblPhotos.random_photo_key.belongs(sample)) #we don't want to bore our uses so there are several collections
         lst = db(q).select() ###, db.TblPhotographers.id) ##, db.TblPhotographers.id)
-    if len(lst) > 1000:
-        lst1 = random.sample(lst, 1000)
+    if len(lst) > MAX_PHOTOS_COUNT:
+        lst1 = random.sample(lst, MAX_PHOTOS_COUNT)
         lst = lst1
     result = []
     for rec in lst:
