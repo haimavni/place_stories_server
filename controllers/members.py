@@ -85,6 +85,12 @@ def get_member_details(vars):
                 facePhotoURL = photos_folder('profile_photos') + member_info.facePhotoURL if  member_info.facePhotoURL else request.application + '/static/images/dummy_face.png')
 
 @serve_json
+def get_member_photo_list(vars):
+    member_id = int(vars.member_id)
+    slides = get_member_slides(member_id)
+    return dict(photo_list=slides)
+
+@serve_json
 def save_story_info(vars):
     user_id = vars.user_id
     story_info = vars.story_info
@@ -433,6 +439,7 @@ def make_photos_query(vars):
             #q1 |= dbTblPhotos.photographer_id == p
         #q &= q1         
         ### q &= db.TblPhotos.photographer_id.belongs(photographer_list) caused error
+    
     if vars.from_date:
         from_date = fix_date(vars.from_date)
         q &= (db.TblPhotos.photo_date >= from_date)
