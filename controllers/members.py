@@ -98,6 +98,32 @@ def save_story_info(vars):
     return dict(story_id=story_id)
 
 @serve_json
+def get_random_member(vars):
+    lst = get_members_stats()
+    lst = sorted(lst, key=lambda rec: -rec.num_photos)
+    idx = random.randint(0, len(lst) / 5)
+    member_data=get_member_rec(lst[idx].member_id)
+    result = dict(face_photo_url=photos_folder('profile_photos') + member_data.facePhotoURL,
+                  name=member_data.full_name,
+                  year_of_birth=member_data.date_of_birth.year if member_data.date_of_birth else None,           
+                  year_of_death=member_data.date_of_death.year if member_data.date_of_death else None,
+                  place_of_birth=member_data.PlaceOfBirth,
+                  gender=member_data.gender,
+                  id=member_data.id
+                  )
+    return dict(member_data=result)
+    
+   
+def get_members_stats():
+    q = (db.TblMembers.id == db.TblMemberPhotos.Member_id) & \
+        (db.TblMembers.facePhotoURL != None) & (db.TblMembers.facePhotoURL != '')
+        ##(db.TblMembers.id == db.TblEventMembers.Member_id)
+    lst = db(q).select(db.TblMembers.id, db.TblMembers.id.count(), groupby=[db.TblMembers.id])
+    lst = [Storage(member_id=rec.TblMembers.id, num_photos=rec._extra['COUNT(TblMembers.id)']) for rec in lst]
+    return lst
+  
+
+@serve_json
 def save_member_info(vars):
     user_id = vars.user_id
     story_info = vars.story_info

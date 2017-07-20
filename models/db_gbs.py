@@ -226,10 +226,26 @@ db.define_table('TblPhotoTopics',
                 Field('topic_id', type=db.TblTopics)
 )                
 
+db.define_table('TblVideos',
+                Field('name', type='string'),
+                Field('type', type='string'),
+                Field('src', type='string'),
+                Field('topic_id', type=db.TblTopics),
+                Field('contributor', type=db.auth_user)
+                )
+
 db.define_table('TblStatuses',
                 Field('IIDD', type='integer'),
                 Field('Name', type='string'),
 )
+
+db.define_table('TblMessages',
+                Field('name', type='string'),
+                Field('timestamp', type='datetime'),
+                Field('content', type='text'),
+                Field('author', type=db.auth_user)
+)
+                              
 
 db.define_table('TblSuperAdmins',
                 Field('IIDD', type='integer'),
