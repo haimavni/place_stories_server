@@ -2,6 +2,7 @@ STORY4MEMBER = 1
 STORY4EVENT = 2
 STORY4PHOTO = 3
 STORY4TERM = 4
+STORY4MESSAGE = 5
 
 T.force('he')
 
@@ -10,7 +11,7 @@ db.define_table('TblStories',
                 Field('story', type='text'),
                 Field('creation_date', type='datetime'),
                 Field('author_id', type=db.auth_user),
-                Field('used_for', type='integer'),  #member, event, photo, term
+                Field('used_for', type='integer'),  #member, event, photo, term, message
                 Field('keywords', type='string'),  #to be calculated automatically using tfidf
                 Field('story_length', compute=lambda row: len(row.story))
 )
@@ -239,14 +240,6 @@ db.define_table('TblStatuses',
                 Field('IIDD', type='integer'),
                 Field('Name', type='string'),
 )
-
-db.define_table('TblMessages',
-                Field('name', type='string'),
-                Field('timestamp', type='datetime'),
-                Field('content', type='text'),
-                Field('author', type=db.auth_user)
-)
-                              
 
 db.define_table('TblSuperAdmins',
                 Field('IIDD', type='integer'),

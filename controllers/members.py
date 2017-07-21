@@ -128,7 +128,6 @@ def get_stories_sample(vars):
     lst1 = random.sample(lst, 10)
     return dict(stories_sample=lst1)
 
-
 @serve_json
 def save_member_info(vars):
     user_id = vars.user_id
@@ -525,7 +524,14 @@ def get_topic_list(vars):
     topic_list = [dict(name=rec.name, id=rec.id) for rec in topic_list if rec.name]
     #photographer_list = db(db.TblPhotographers).select(orderby=db.TblPhotographers.name)
     #photographer_list = [dict(name=rec.name, id=rec.id) for rec in photographer_list if rec.name]
-    return dict(topic_list=topic_list) ###, photographer_list=photographer_list)   
+    return dict(topic_list=topic_list) ###, photographer_list=photographer_list) 
+
+@serve_json
+def get_message_list(vars):
+    q = (db.TblStories.used_for==STORY4MESSAGE)
+    lst = db(q).select(orderby=~db.TblStories.creation_date, limitby=(0, vars.limit or 100))
+    result = [dict(story_text=rec.TblStories.story, name=rec.TblStories.name, story_id=rec.TblStories.id) for rec in lst]
+    return dict(message_list=result)
 
 def fix_date(date_str):
     if date_str.endswith('-'):
