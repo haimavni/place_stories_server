@@ -315,6 +315,11 @@ def create_random_photo_keys():
     
 def fit_all_photo_sizes():
     fit_all_sizes()
+    
+def calculate_story_lengths():
+    for rec in db(db.TblStories).select():
+        rec.update_record(story_length=len(rec.story))
+    db.commit()
 
 def index():
     try:

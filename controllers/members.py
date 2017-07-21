@@ -27,7 +27,7 @@ def create_parent(vars):
     parent_id = db.TblMembers.insert(**rec.member_info)
     rec.member_info.id = parent_id
     return dict(member_id=parent_id, member=rec)
-    
+
 def new_member_rec(gender=None, first_name=""):
     new_member = Storage(
         member_info=Storage(
@@ -42,7 +42,7 @@ def new_member_rec(gender=None, first_name=""):
             siblings=[],
             spouses=[],
             children=[]
-        ),
+            ),
         slides=[],
         spouses=[],
         member_stories = [],
@@ -112,8 +112,7 @@ def get_random_member(vars):
                   id=member_data.id
                   )
     return dict(member_data=result)
-    
-   
+
 def get_members_stats():
     q = (db.TblMembers.id == db.TblMemberPhotos.Member_id) & \
         (db.TblMembers.facePhotoURL != None) & (db.TblMembers.facePhotoURL != '')
@@ -121,7 +120,14 @@ def get_members_stats():
     lst = db(q).select(db.TblMembers.id, db.TblMembers.id.count(), groupby=[db.TblMembers.id])
     lst = [Storage(member_id=rec.TblMembers.id, num_photos=rec._extra['COUNT(TblMembers.id)']) for rec in lst]
     return lst
-  
+
+@serve_json
+def get_stories_sample(vars):
+    q = db.TblStories.used_for==STORY4EVENT
+    lst = db(q).select(limitby=(0, 100), orderby=~db.TblStories.story_length)
+    lst1 = random.sample(lst, 10)
+    return dict(stories_sample=lst1)
+
 
 @serve_json
 def save_member_info(vars):
@@ -178,7 +184,7 @@ def upload_photos(vars):
         if cnt > 0:
             number_duplicates += 1
             continue
-        
+
         original_file_name, ext = os.path.splitext(fil.name)
         file_name = '{crc:x}{ext}'.format(crc=crc & 0xffffffff, ext=ext)
         result = save_uploaded_photo(file_name, fil.BINvalue, 'uploads/' + month + '/', original_file_name)
@@ -400,7 +406,7 @@ def save_face(vars):
         db.TblMemberPhotos.insert(**data) 
     member_name = member_display_name(member_id=face.member_id)
     return dict(member_name=member_name, face_photo_url=face_photo_url)
-    
+
 @serve_json
 def remove_face(vars):
     face = vars.face;
@@ -454,7 +460,7 @@ def date_of_partial_date(s):
             else:
                 raise User_Error("member.illgal-date")
     return datetime.date(year=year, month=mon, day=day)
-    
+
 
 def make_photos_query(vars):
     q = (db.TblPhotos.width > 0)
@@ -465,7 +471,7 @@ def make_photos_query(vars):
             #q1 |= dbTblPhotos.photographer_id == p
         #q &= q1         
         ### q &= db.TblPhotos.photographer_id.belongs(photographer_list) caused error
-    
+
     if vars.from_date:
         from_date = fix_date(vars.from_date)
         q &= (db.TblPhotos.photo_date >= from_date)
@@ -543,7 +549,7 @@ def fix_date(date_str):
             y = int(lst[0])
             accuracy = 'Y'
     return datetime.date(day=d, month=m, year=y)
-        
+
 def save_profile_photo(face):
     rec = get_photo_rec(face.photo_id)
     input_path = local_photos_folder() + rec.photo_path
@@ -587,5 +593,5 @@ def get_member_stories(member_id):
         )
         result.append(dic)
     return result
-    
+
 

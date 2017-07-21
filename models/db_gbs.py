@@ -11,7 +11,8 @@ db.define_table('TblStories',
                 Field('creation_date', type='datetime'),
                 Field('author_id', type=db.auth_user),
                 Field('used_for', type='integer'),  #member, event, photo, term
-                Field('keywords', type='string')  #to be calculated automatically using tfidf
+                Field('keywords', type='string'),  #to be calculated automatically using tfidf
+                Field('story_length', compute=lambda row: len(row.story))
 )
 
 db.define_table('TblStoryVersions',
