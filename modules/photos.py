@@ -177,7 +177,7 @@ def get_slides_from_photo_list(q):
     lst = lst1
         
     folder = photos_folder()
-    slides = [dict(photo_id=rec.id, src=folder + rec.photo_path, width=rec.width, height=rec.height, title=rec.Description) for rec in lst]
+    slides = [dict(photo_id=rec.id, src=folder + rec.photo_path, width=rec.width, height=rec.height, title=rec.Description or rec.Name) for rec in lst]
     return slides
 
 def crop(input_path, output_path, face, size=100):

@@ -176,7 +176,10 @@ def upload_photos(vars):
     failed = []
     if not os.path.isdir(path):
         os.makedirs(path)
+    user_id = int(vars.user_id) if vars.user_id else None
     for fn in vars:
+        if fn.startswith('user'):
+            continue
         fil = vars[fn]
         crc = zlib.crc32(fil.BINvalue)
         cnt = db(db.TblPhotos.crc==crc).count()
@@ -194,6 +197,7 @@ def upload_photos(vars):
         number_uploaded += 1
         db.TblPhotos.insert(photo_path=file_location,
                             original_file_name=original_file_name,
+                            Name=original_file_name,
                             uploader=user_id,
                             upload_date=datetime.datetime.now(),
                             width=result.width,
