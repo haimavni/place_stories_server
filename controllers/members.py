@@ -94,8 +94,8 @@ def get_member_photo_list(vars):
 def save_story_info(vars):
     user_id = vars.user_id
     story_info = vars.story_info
-    story_id = save_story_data(story_info, used_for=STORY4MEMBER, user_id=user_id)
-    return dict(story_id=story_id)
+    info = save_story_data(story_info, user_id=user_id)
+    return dict(info=info)
 
 @serve_json
 def get_random_member(vars):
@@ -132,9 +132,12 @@ def get_stories_sample(vars):
 def save_member_info(vars):
     user_id = vars.user_id
     story_info = vars.story_info
+    story_info.used_for = STORY4MEMBER
     if story_info:
-        story_id = save_story_data(story_info, used_for=STORY4MEMBER, user_id=user_id)
+        info = save_story_data(story_info, user_id=user_id)
+        story_id = info.story_id
     else:
+        info = None
         story_id = None
     member_id = vars.member_id
     member_info = vars.member_info
@@ -158,7 +161,7 @@ def save_member_info(vars):
         ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL_USERS', member_rec=member_rec, new_member=new_member)
     elif story_id:
         db(db.TblMembers.id==member_id).update(story_id=story_id)
-    result = Storage(story_id=story_id)
+    result = Storage(info=info)
     if member_id:
         result.member_id = member_id;
     return result
@@ -533,10 +536,24 @@ def get_topic_list(vars):
 
 @serve_json
 def get_message_list(vars):
-    q = (db.TblStories.used_for==STORY4MESSAGE)
+    q = (db.TblStories.used_for==STORY4MESSAGE) & (db.TblStories.author_id==db.auth_user.id)
     lst = db(q).select(orderby=~db.TblStories.creation_date, limitby=(0, vars.limit or 100))
-    result = [dict(story_text=rec.TblStories.story, name=rec.TblStories.name, story_id=rec.TblStories.id) for rec in lst]
+    result = [dict(story_text=rec.TblStories.story, 
+                   name=rec.TblStories.name, 
+                   story_id=rec.TblStories.id, 
+                   timestamp=rec.TblStories.creation_date, 
+                   author=rec.auth_user.first_name + ' ' + rec.auth_user.last_name) for rec in lst]
     return dict(message_list=result)
+
+@serve_json
+def get_constants(vars):
+    return dict(
+        STORY4MEMBER = 1,
+        STORY4EVENT = 2,
+        STORY4PHOTO = 3,
+        STORY4TERM = 4,
+        STORY4MESSAGE = 5    
+    )
 
 def fix_date(date_str):
     if date_str.endswith('-'):
@@ -574,14 +591,14 @@ def get_photo_rec(photo_id):
     rec = db(db.TblPhotos.id==photo_id).select().first()
     return rec
 
-def save_story_data(story_info, used_for, user_id):
+def save_story_data(story_info, user_id):
     story_id = story_info.story_id
     sm = stories_manager.Stories(user_id)
     if story_id:
-        sm.update_story(story_id, story_info)
+        result = sm.update_story(story_id, story_info)
     else:
-        story_id = sm.add_story(story_info, used_for=used_for)
-    return story_id
+        result = sm.add_story(story_info)
+    return result
 
 def get_member_stories(member_id):
     q = (db.TblEventMembers.Member_id==member_id) & \

@@ -60,30 +60,35 @@ class Stories:
         )
         return story_info
 
-    def add_story(self, story_info, used_for):
+    def add_story(self, story_info):
         story_text = story_info.story_text
         name = story_info.name
         story_text = story_text.replace('~1', '&').replace('~2', ';').replace('\n', '').replace('>', '>\n')
-        db = inject('db')
+        now = datetime.datetime.now()
+        db, auth = inject('db', 'auth')
+        author_name = auth.user_name(self.author_id)
         story_id = db.TblStories.insert(story=story_text, author_id=self.author_id, 
                                         name=name,
-                                        used_for=used_for, creation_date=datetime.datetime.now())
-        return story_id
+                                        used_for=story_info.used_for, creation_date=now)
+        return Storage(story_id=story_id, creation_date=now, author=author_name)
 
     def update_story(self, story_id, story_info):
         updated_story_text = story_info.story_text
         updated_story_text = updated_story_text.replace('~1', '&').replace('~2', ';').replace('\n', '').replace('>', '>\n')
-        db = inject('db')
+        db, auth = inject('db', 'auth')
         rec = db(db.TblStories.id==story_id).select(db.TblStories.story).first()
         merger = mim.Merger()
         delta = merger.diff_make(rec.story, updated_story_text)
         db(db.TblStories.id==story_id).update(story=updated_story_text, name=story_info.name)
         if not rec.story:
             return
+        now = datetime.datetime.now()
         db.TblStoryVersions.insert(delta=delta, 
                                    story_id=story_id, 
-                                   creation_date=datetime.datetime.now(),
+                                   creation_date=now,
                                    author_id=self.author_id
                                    )
+        author_name = auth.user_name(self.author_id)
+        return Storage(story_id=story_id, creation_date=now, author=author_name)
 
 
