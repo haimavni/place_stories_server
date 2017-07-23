@@ -219,6 +219,7 @@ def get_member_names(visible_only=None, gender=None):
     arr = [Storage(id=rec.id,
                    name=member_display_name(rec, full=True),
                    gender=rec.gender,
+                   has_profile_photo=bool(rec.facePhotoURL),
                    facePhotoURL=photos_folder('profile_photos') + rec.facePhotoURL if rec.facePhotoURL else 'http://' + request.env.http_host  + "/gbs/static/images/dummy_face.png") for rec in lst]
     return arr
 
