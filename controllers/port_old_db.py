@@ -160,11 +160,15 @@ def guess_names():
         n_fixed += 1
     return '{} names were guessed'.format(n_fixed)
 
+def rename_locations():
+    for rec in db(db.TblPhotos).select():
+        rec.update_record(photo_path="ported/" + rec.LocationInDisk)
+
 def scan_photos():
     return scan_all_unscanned_photos()
 
 def collect_photographers():
-    db.TblPhotographers.truncate('RESTART IDENTITY CASCADE')
+    ###db.TblPhotographers.truncate('RESTART IDENTITY CASCADE')
     lst = db(db.TblPhotos.width>0).select()
     for rec in lst:
         if not rec.Photographer:
@@ -177,7 +181,7 @@ def collect_photographers():
             i = db.TblPhotographers.insert(name=name)
         rec.update_record(photographer_id=i)
     db.commit()
-    
+
 def find_duplicate_photos():
     dic = {}
     dups = {}
@@ -191,7 +195,7 @@ def find_duplicate_photos():
     z = len(dups)
     if z > 0:
         y = z
-        
+
 def string_date_to_date(s):
     p = "שנות ה"
     day = 1
@@ -228,7 +232,7 @@ def string_date_to_date(s):
                     if m:
                         year = int(m.groups()[0])
                         raw_str = s
-  
+
     return ('singledate', datetime.date(year=year, month=mon, day=day), raw_str)
 
 def dash_to_camel(s):
@@ -243,7 +247,7 @@ def dash_to_camel(s):
             continue
         t += c
     return t
- 
+
 def port_all_dates():
     tbls = db.tables()
     for tbl in tbls:
@@ -279,7 +283,7 @@ def port_all_dates():
                     data[k1 + '_str'] = val2
             rec.update_record(**data)
     return 'port_all_dates done!'
-     
+
 def port_photos_date():
     lst = db((db.TblPhotos.width>0) & (db.TblPhotos.photo_date==None)).select(db.TblPhotos.id, db.TblPhotos.PhotoDate, db.TblPhotos.photo_date, db.TblPhotos.photo_date_accuracy)
     for rec in lst:
@@ -306,22 +310,24 @@ def port_topics():
                 topic_collection[topic] = idx = db.TblTopics.insert(name=topic)
             db.TblPhotoTopics.insert(photo_id=rec.id, topic_id=idx)
     db.commit()
-    
+
 def create_random_photo_keys():
     for rec in db(db.TblPhotos).select():
         key = random.randint(1, 100)
         rec.update_record(random_photo_key=key)
     db.commit()
-    
+
 def fit_all_photo_sizes():
     fit_all_sizes()
-    
-def calculate_story_lengths():
-    for rec in db(db.TblStories).select():
-        rec.update_record(story_length=len(rec.story))
-    db.commit()
+
+#def calculate_story_lengths():
+    #for rec in db(db.TblStories).select():
+        #rec.update_record(story_length=len(rec.story))
+    #db.commit()
 
 def index():
+    if db(db.TblMembers).count() > 0:
+        return "Database already ported"
     try:
         comment('starting port old db')
         port_old_db()
@@ -335,21 +341,29 @@ def index():
         name_stories()
         guess_names()
         comment("start scan photos")
+        fix_photo_location_case()
+        rename_locations()
         scan_photos()
         comment('start fixing photo location case')
-        db.commit()
+        ###db.commit()
         collect_photographers()
-        fix_photo_location_case()
-        port_photos_date()
+        port_all_dates()
+        ###port_photos_date()
         port_topics()
         create_random_photo_keys()
+        ####calculate_story_lengths()
         comment('Porting done')
     except Exception, e:
         log_exception('Porting old db failed')
     db.commit()
     return "Old db was converted and modified"
 
-def rename_locations():
-    for rec in db(db.TblPhotos).select():
-        rec.update_record(photo_path="ported/" + rec.LocationInDisk)
-    
+def duplicate_db(old_db_name, new_db_name):
+    #after we duplicate db to become the dev db, we need to copy the files in databases renamed using the name that is calculated from the new uri
+    #todo: complete it
+    import hashlib
+    hashlib_md5 = hashlib.md5
+    dbname = request.application
+    adapter = 'psycopg2:'
+    uri = 'postgres:{ad}//lifestone:V3geHanu@localhost/{dbn}'.format(ad=adapter, dbn=dbname)    
+    db_uid = kwargs.get('db_uid', hashlib_md5(repr(uri)).hexdigest())

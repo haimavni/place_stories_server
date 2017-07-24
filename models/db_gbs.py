@@ -13,8 +13,10 @@ db.define_table('TblStories',
                 Field('author_id', type=db.auth_user),
                 Field('used_for', type='integer'),  #member, event, photo, term, message
                 Field('keywords', type='string'),  #to be calculated automatically using tfidf
-                Field('story_length', compute=lambda row: len(row.story))
-)
+                Field('story_len', type='integer', compute=lambda row: len(row.story)),
+                Field('language', type='string'),
+                Field('translated_from', type='integer') ##db.TblStories 
+)                
 
 db.define_table('TblStoryVersions',
                 Field('story_id', type=db.TblStories),
@@ -181,9 +183,9 @@ db.define_table('TblObjects',
                 Field('Priority', type='integer'),
 )
 
-#db.define_table('TblPhotographers',
-                #Field('name', type='string')
-#)
+db.define_table('TblPhotographers',
+                Field('name', type='string')
+)
 
 db.define_table('TblPhotos',
                 Field('ArchiveNum', type='string'),
@@ -204,7 +206,7 @@ db.define_table('TblPhotos',
                 Field('photo_date_str', type='string'),
                 Field('PhotoRank', type='integer'),
                 Field('Photographer', type='string'), #obsolete
-                ###Field('photographer_id', db.TblPhotographers),
+                Field('photographer_id', db.TblPhotographers),
                 Field('Recognized', type='boolean'),
                 Field('StatusID', type='integer'),
                 Field('Status_id', type='integer'),

@@ -105,6 +105,7 @@ scheduler = MyScheduler(db, __tasks)
 
 permanent_tasks = dict(
     ##scan_all_unscanned_photos=schedule_scan_all_unscanned_photos
+    #look for emailed photos and other mail
 )
 
 def _verify_tasks_started():

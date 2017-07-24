@@ -100,6 +100,8 @@ def save_story_info(vars):
 @serve_json
 def get_random_member(vars):
     lst = get_members_stats()
+    if not lst:
+        return dict(member_data = None)
     lst = sorted(lst, key=lambda rec: -rec.num_photos)
     idx = random.randint(0, len(lst) / 5)
     member_data=get_member_rec(lst[idx].member_id)
@@ -124,16 +126,19 @@ def get_members_stats():
 @serve_json
 def get_stories_sample(vars):
     q = db.TblStories.used_for==STORY4EVENT
-    lst = db(q).select(limitby=(0, 100), orderby=~db.TblStories.story_length)
-    lst1 = random.sample(lst, 10)
+    lst = db(q).select(limitby=(0, 100), orderby=~db.TblStories.story_len)
+    if len(lst) > 10:
+        lst1 = random.sample(lst, 10)
+    else:
+        lst1 = lst
     return dict(stories_sample=lst1)
 
 @serve_json
 def save_member_info(vars):
     user_id = vars.user_id
     story_info = vars.story_info
-    story_info.used_for = STORY4MEMBER
     if story_info:
+        story_info.used_for = STORY4MEMBER
         info = save_story_data(story_info, user_id=user_id)
         story_id = info.story_id
     else:

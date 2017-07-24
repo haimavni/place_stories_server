@@ -116,6 +116,7 @@ def scan_all_unscanned_photos():
     db, request, comment = inject('db', 'request', 'comment')
     q = (db.TblPhotos.crc==None) & (db.TblPhotos.photo_missing == False)
     to_scan = db(q).count()
+    comment("{} photos still unscanned", to_scan)
     failed_crops = 0
     chunk = 100
     folder = local_photos_folder()
