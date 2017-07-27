@@ -4,6 +4,7 @@ from gluon.utils import web2py_uuid
 from my_cache import Cache
 import ws_messaging
 from http_utils import json_to_storage
+from date_utils import date_of_date_str
 import datetime
 import os
 from dal_utils import insert_or_update
@@ -156,7 +157,7 @@ def save_member_info(vars):
                 date_fields.append(k)
         for df in date_fields:
             k = df[:-4]
-            member_info[k] = date_of_partial_date(member_info[df])
+            member_info[k] = date_of_date_str(member_info[df])
         result = insert_or_update(db.TblMembers, **member_info)
         if isinstance(result, dict):
             return dict(errors=result['errors'])
@@ -450,30 +451,6 @@ def get_photo_list_with_topics(vars):
     result = [dic[id] for id in bag]
     return result
 
-def date_of_partial_date(s):
-    day = 1
-    mon = 1
-    year = None
-    if not s:
-        return None
-    m = re.search(r'(\d{1,2})[./](\d{1,2})[./](\d{4})', s)
-    if m:
-        day, mon, year = m.groups()
-        day, mon, year = (int(day), int(mon), int(year))
-    else:
-        m = re.search(r'(\d{1,2})[./](\d{4})', s)
-        if m:
-            mon, year = m.groups()
-            mon, year = (int(mon), int(year))
-        else:
-            m = re.search(r'(\d{4})', s)
-            if m:
-                year = int(m.groups()[0])
-            else:
-                raise User_Error("member.illgal-date")
-    return datetime.date(year=year, month=mon, day=day)
-
-
 def make_photos_query(vars):
     q = (db.TblPhotos.width > 0)
     #photographer_list = [p.id for p in vars.selected_photographers]
@@ -485,10 +462,10 @@ def make_photos_query(vars):
         ### q &= db.TblPhotos.photographer_id.belongs(photographer_list) caused error
 
     if vars.from_date:
-        from_date = fix_date(vars.from_date)
+        from_date = date_of_date_str(vars.from_date)
         q &= (db.TblPhotos.photo_date >= from_date)
     if vars.to_date:
-        to_date = fix_date(vars.to_date)
+        to_date = date_of_date_str(vars.to_date)
         q &= (db.TblPhotos.photo_date <= to_date)
     #if vars.selected_uploader:
         #q &= db.TblPhotos.uploader==vars.uploader
@@ -559,29 +536,6 @@ def get_constants(vars):
         STORY4TERM = 4,
         STORY4MESSAGE = 5    
     )
-
-def fix_date(date_str):
-    if date_str.endswith('-'):
-        d = 1
-        m = 1
-        y = int(date_str[:-1])
-    else:
-        lst = re.split(r'[/.-]', date_str)
-        lst = [int(s) for s in lst]
-        if len(lst) == 3:
-            if lst[2] > 1000:
-                d, m, y = lst
-            else:
-                y, m, d = lst
-        elif len(lst) == 2:
-            d = 1
-            m, y = lst
-        else:
-            d = 1
-            m = 1
-            y = int(lst[0])
-            accuracy = 'Y'
-    return datetime.date(day=d, month=m, year=y)
 
 def save_profile_photo(face):
     rec = get_photo_rec(face.photo_id)

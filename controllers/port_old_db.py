@@ -200,8 +200,8 @@ def string_date_to_date(s):
     p = "שנות ה"
     day = 1
     mon = 1
-    year = 1800
-    raw_str = '1800'
+    year = 1
+    raw_str = '????-??-??'
     if s:
         s = s.replace(' ', '')
         m = re.search(r'(\d{4})\-(\d{4})', s)
@@ -214,24 +214,24 @@ def string_date_to_date(s):
                 if len(year) < 2:
                     year += '0'
                 year = 1900 + int(year)
-                raw_str = str(year) + '-'
+                raw_str = str(year) + '-??-??'
         else:
-            m = re.search(r'(\d{1,2})[./](\d{1,2})[./](\d{4})', s)
+            m = re.search(r'(\d{1,2})[./-](\d{1,2})[./-](\d{4})', s)
             if m:
                 day, mon, year = m.groups()
                 day, mon, year = (int(day), int(mon), int(year))
-                raw_str = s
+                raw_str = '{year:04}-{mon:02}-{day:02}'.format(year=year, mon=mon, day=day)
             else:
                 m = re.search(r'(\d{1,2})[./](\d{4})', s)
                 if m:
                     mon, year = m.groups()
                     mon, year = (int(mon), int(year))
-                    raw_str = s
+                    raw_str = '{year:04}-{mon:02}-??'.format(year=year, mon=mon)
                 else:
                     m = re.search(r'(\d{4})', s)
                     if m:
                         year = int(m.groups()[0])
-                        raw_str = s
+                        raw_str = '{year:04}-??-??'.format(year=year)
 
     return ('singledate', datetime.date(year=year, month=mon, day=day), raw_str)
 
@@ -277,10 +277,10 @@ def port_all_dates():
                     birth, death = val1, val2
                     k = fields[f]
                     data[k] = datetime.datetime(day=1, month=1, year=int(val1))
-                    data[k + '_str'] = val1
+                    data[k + '_str'] = val1 + "-??-??"
                     k1 = k.replace('birth', 'death')
                     data[k1] = datetime.datetime(day=1, month=1, year=int(val2))
-                    data[k1 + '_str'] = val2
+                    data[k1 + '_str'] = val2 + "-??-??"
             rec.update_record(**data)
     return 'port_all_dates done!'
 
