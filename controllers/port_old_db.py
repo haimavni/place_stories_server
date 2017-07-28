@@ -6,6 +6,7 @@ from glob import glob
 import re
 from photos import scan_all_unscanned_photos, fit_all_sizes
 import random
+from words import extract_words
 
 def port_old_db():
     folder = request.vars.folder or 'gbs-bkp-jun17'
@@ -108,24 +109,26 @@ def consolidate_stories():
 
     return 'Finished consolidation of stories'
 
-def is_hebrew(s):
+def to_hebrew(s):
     alef = 'א'
     tav = 'ת'
     alef = alef.decode('utf8')
     tav = tav.decode('utf8')
+    result = ''
     for c in s:
-        if c < alef or c > tav:
-            return False
-    return True
+        if alef <= c <= tav:
+            result += c
+    return result.strip()
 
 def name_stories():
     lst = db(db.TblStories).select()
     for i, rec in enumerate(lst):
         story = rec.story.decode('utf8')
-        words = story[:300].split()
-        words = [w for w in words if is_hebrew(w)]
-        name = ' '.join(words[:5])
-        db(db.TblStories.id==rec.id).update(name=name)
+        words = extract_words(story)
+        name = ' '.join(words[:6]).strip()
+        if name:
+            name += "..."
+        db(db.TblStories.id==rec.id).update(name=name, author_id=1)
     return 'Finished naming stories'
 
 def fix_photo_location_case():

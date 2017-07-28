@@ -136,7 +136,7 @@ def get_stories_sample(vars):
 
 @serve_json
 def get_story_list(vars):
-    q = (db.TblStories.used_for==STORY4EVENT) & ((db.TblStories.author_id==None) | (db.TblStories.author_id==db.auth_user.id))
+    q = (db.TblStories.used_for==STORY4EVENT) & (db.TblStories.author_id==db.auth_user.id)
     keywords = vars.keywords or ""
     keyword_list = keywords.split()
     q0 = q
@@ -157,12 +157,17 @@ def get_story_list(vars):
         lst1 = random.sample(lst, 100)
     else:
         lst1 = lst
+    for rec in lst1:
+        if rec.auth_user.id < 3:
+            rec.author = ""
+        else:
+            rec.author = rec.auth_user.first_name + ' ' + rec.auth_user.last_name
     
     result = [dict(story_text=rec.TblStories.story,
                    name=rec.TblStories.name, 
                    story_id=rec.TblStories.id, 
                    timestamp=rec.TblStories.creation_date, 
-                   author=rec.auth_user.first_name + ' ' + rec.auth_user.last_name) for rec in lst1]
+                   author=rec.author) for rec in lst1]
     return dict(story_list=result, used_keywords=used_keywords)
 
 @serve_json
