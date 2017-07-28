@@ -135,6 +135,37 @@ def get_stories_sample(vars):
     return dict(stories_sample=lst1)
 
 @serve_json
+def get_story_list(vars):
+    q = (db.TblStories.used_for==STORY4EVENT) & ((db.TblStories.author_id==None) | (db.TblStories.author_id==db.auth_user.id))
+    keywords = vars.keywords or ""
+    keyword_list = keywords.split()
+    q0 = q
+    used_keywords = ""
+    for keyword in keyword_list:
+        keyword = keyword.strip()
+        q &= (db.TblStories.story.like("%" + keyword + "%"))
+        if db(q).count() == 0:
+            q = q0
+            break
+        else:
+            if used_keywords:
+                used_keywords += ' '
+            used_keywords += keyword
+            q0 = q
+    lst = db(q).select(limitby=(0, 1000), orderby=~db.TblStories.story_len)
+    if len(lst) > 100:
+        lst1 = random.sample(lst, 100)
+    else:
+        lst1 = lst
+    
+    result = [dict(story_text=rec.TblStories.story,
+                   name=rec.TblStories.name, 
+                   story_id=rec.TblStories.id, 
+                   timestamp=rec.TblStories.creation_date, 
+                   author=rec.auth_user.first_name + ' ' + rec.auth_user.last_name) for rec in lst1]
+    return dict(story_list=result, used_keywords=used_keywords)
+
+@serve_json
 def save_member_info(vars):
     user_id = vars.user_id
     story_info = vars.story_info
