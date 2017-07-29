@@ -69,7 +69,9 @@ class Stories:
         author_name = auth.user_name(self.author_id)
         story_id = db.TblStories.insert(story=story_text, author_id=self.author_id, 
                                         name=name,
-                                        used_for=story_info.used_for, creation_date=now)
+                                        used_for=story_info.used_for, 
+                                        creation_date=now,
+                                        last_update_date=now)
         return Storage(story_id=story_id, creation_date=now, author=author_name)
 
     def update_story(self, story_id, story_info):
@@ -89,6 +91,6 @@ class Stories:
                                    author_id=self.author_id
                                    )
         author_name = auth.user_name(self.author_id)
-        return Storage(story_id=story_id, creation_date=now, author=author_name)
+        return Storage(story_id=story_id, last_update_date=now, author=author_name)
 
 

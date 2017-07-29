@@ -10,6 +10,9 @@ db.define_table('TblStories',
                 Field('name', type='string'),
                 Field('story', type='text'),
                 Field('creation_date', type='datetime'),
+                Field('historic_date', type='string'), #for old stories
+                Field('last_update_date', type='datetime'),
+                Field('source', type='string'),
                 Field('author_id', type=db.auth_user),
                 Field('used_for', type='integer'),  #member, event, photo, term, message
                 Field('keywords', type='string'),  #to be calculated automatically using tfidf
@@ -78,6 +81,7 @@ db.define_table('TblEvents',
                 Field('story_id', type=db.TblStories),
                 Field('EventDate', type='string'),
                 Field('event_date', type='date'),
+                Field('event_date_str', type='string'),
                 Field('EventRank', type='integer'),
                 Field('IIDD', type='integer'),
                 Field('KeyWords', type='string'),

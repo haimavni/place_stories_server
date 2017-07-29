@@ -121,14 +121,53 @@ def to_hebrew(s):
     return result.strip()
 
 def name_stories():
-    lst = db(db.TblStories).select()
+    lst = db(db.TblStories.id==db.TblEvents.story_id).select()
+    for i, rec in enumerate(lst):
+        story = rec.TblStories.story.decode('utf8')
+        name = rec.TblEvents.Name
+        source = rec.TblEvents.SSource
+        if not name:
+            words = extract_words(story)
+            name = ' '.join(words[:6]).strip()
+            if name:
+                name += "..."
+        db(db.TblStories.id==rec.TblStories.id).update(name=name, author_id=1, source=source)
+        
+    lst = db(db.TblStories.used_for==STORY4MEMBER).select()
     for i, rec in enumerate(lst):
         story = rec.story.decode('utf8')
-        words = extract_words(story)
-        name = ' '.join(words[:6]).strip()
-        if name:
-            name += "..."
-        db(db.TblStories.id==rec.id).update(name=name, author_id=1)
+        name = rec.name
+        if not name:
+            words = extract_words(story)
+            name = ' '.join(words[:6]).strip()
+            if name:
+                name += "..."
+        db(db.TblStories.id==rec.id).update(name=name, author_id=1, source="")
+        
+    lst = db(db.TblStories.id==db.TblTerms.story_id).select()
+    for i, rec in enumerate(lst):
+        story = rec.TblStories.story.decode('utf8')
+        name = rec.TblTerms.Name
+        author = rec.TblTerms.InventedBy
+        author_id = rec.TblTerms.InventedByMember_id or 1
+        if not name:
+            words = extract_words(story)
+            name = ' '.join(words[:6]).strip()
+            if name:
+                name += "..."
+        db(db.TblStories.id==rec.TblStories.id).update(name=name, source=author)
+        
+    lst = db(db.TblStories.id==db.TblPhotos.story_id).select()
+    for i, rec in enumerate(lst):
+        story = rec.TblStories.story.decode('utf8')
+        name = rec.TblPhotos.Name
+        if not name:
+            words = extract_words(story)
+            name = ' '.join(words[:6]).strip()
+            if name:
+                name += "..."
+        db(db.TblStories.id==rec.TblStories.id).update(name=name, author_id=1, source="")                
+        
     return 'Finished naming stories'
 
 def fix_photo_location_case():
@@ -354,6 +393,7 @@ def index():
         ###port_photos_date()
         port_topics()
         create_random_photo_keys()
+        name_stories()
         ####calculate_story_lengths()
         comment('Porting done')
     except Exception, e:
