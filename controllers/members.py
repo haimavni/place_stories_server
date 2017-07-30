@@ -202,7 +202,7 @@ def get_story_photo_list(vars):
     event = db(db.TblEvents.story_id==story_id).select().first()
     qp = (db.TblEventPhotos.Event_id==event.id) & (db.TblPhotos.id==db.TblEventPhotos.Photo_id)
     photos = get_slides_from_photo_list(qp)
-    return dict(photos=photos)
+    return dict(photo_list=photos)
 
 @serve_json
 def save_member_info(vars):

@@ -62,6 +62,7 @@ class Stories:
             story_text=story_text,
             name=rec.name,
             story_id=story_id,   #we always access via the master
+            source=rec.source,
             used_for=rec.used_for,
             author_id=rec.author_id,
             language=rec.language,
