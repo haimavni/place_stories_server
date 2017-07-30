@@ -2,6 +2,7 @@
 
 import re
 from bs4 import BeautifulSoup
+from guess_language import guessLanguage as guess
 
 alef = "א"
 tav = "ת"
@@ -18,6 +19,10 @@ def extract_words(s):
     s = remove_all_tags(s)
     ###lst = word_regex.findall(s, re.UNICODE | re.MULTILINE)
     return re.split(r'\s+', s)
+
+def guess_language(html):
+    s = remove_all_tags(html)
+    return guess(s)
 
 
 

@@ -171,6 +171,40 @@ def get_story_list(vars):
     return dict(story_list=result, used_keywords=used_keywords)
 
 @serve_json
+def get_story_detail(vars):
+    story_id = int(vars.story_id)
+    sm = stories_manager.Stories()
+    story=sm.get_story(story_id)
+    members = []
+    photos = []
+    if story.used_for == STORY4EVENT:
+        event = db(db.TblEvents.story_id==story_id).select().first()
+        qm = (db.TblEventMembers.Event_id==event.id) & (db.TblMembers.id==db.TblEventMembers.Member_id)
+        members = db(qm).select(db.TblMembers.id, db.TblMembers.first_name, db.TblMembers.last_name, db.TblMembers.facePhotoURL)
+        members = [m.as_dict() for m in members]
+        for m in members:
+            m['full_name'] = m['first_name'] + ' ' + m['last_name']
+            if not m['facePhotoURL']:
+                m['facePhotoURL'] = "dummy_face.png"
+            m['facePhotoURL'] = photos_folder("profile_photos") + m['facePhotoURL']
+        
+        qp = (db.TblEventPhotos.Event_id==event.id) & (db.TblPhotos.id==db.TblEventPhotos.Photo_id)
+        photos = db(qp).select(db.TblPhotos.id, db.TblPhotos.photo_path)
+        photos = [p.as_dict() for p in photos]
+        for p in photos:
+            p['photo_path'] = photos_folder() + p['photo_path']
+        #photos = [dict(photo_id=p.id, photo_path=photos_folder()+p.photo_path) for p in photos]
+    return dict(story=story, members=members, photos=photos)
+
+@serve_json
+def get_story_photo_list(vars):
+    story_id = int(vars.story_id)
+    event = db(db.TblEvents.story_id==story_id).select().first()
+    qp = (db.TblEventPhotos.Event_id==event.id) & (db.TblPhotos.id==db.TblEventPhotos.Photo_id)
+    photos = get_slides_from_photo_list(qp)
+    return dict(photos=photos)
+
+@serve_json
 def save_member_info(vars):
     user_id = vars.user_id
     story_info = vars.story_info
