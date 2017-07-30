@@ -104,7 +104,7 @@ class Stories:
             language = guess_language(updated_story_text)
         updated_story_text = updated_story_text.replace('~1', '&').replace('~2', ';').replace('\n', '').replace('>', '>\n')
         db, auth = inject('db', 'auth')
-        rec = db(db.TblStories.id==story_id).select(db.TblStories.story).first()
+        rec = db(db.TblStories.id==story_id).select().first()
         if rec.language and rec.language != language:
             rec1 = find_translation(rec, language)
         merger = mim.Merger()
