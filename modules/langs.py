@@ -246,9 +246,11 @@ def clean_word(w):
     return uout.encode('utf8') 
 
 def extract_words(s):
-    s = fix_utf8(s)
-    s = remove_annoying_characters(s)
-    s = url_regex.sub('', s)
+    #s = fix_utf8(s)
+    #s = remove_annoying_characters(s)
+    #s = url_regex.sub('', s)
+    if isinstance(s, unicode):
+        s = s.encode('utf8')
     result0 = _pat.findall(s)
     result = []
     for w in result0:
@@ -269,39 +271,40 @@ def test():
     s = '×—×™×™× ××‘× ×™ 1234  raanana' 
     s += r" I don't know what it's meaning is :-) ------ >;)  )))=====  ('}{') "
     s += r'â€œWe at http://www.coolano.com/1234?boom=5678&koom=123xCs_y-Yy donâ€™t report export volumes ' + chr(0x93)
+    s += "חיים אבני כתב תוכנית יפה "
     lst = extract_words(s)
     for i, x in enumerate(lst):
         print '{:3} word:  {} '.format(i, x)
         
-def build_langs_dics():
-    from injections import inject
-    request = inject('request')
-    fname = 'applications/' + request.application + '/private/languages_table.txt'
-    global name_to_code
-    global code_to_name
-    name_to_code = {}
-    code_to_name = {}
-    with open(fname) as f:
-        for s in f:
-            s = s.strip()
-            if s == '' or s.startswith('#'):
-                continue
-            lst = s.split()
-            code2 = lst[0]
-            if lst[2] == '/':
-                #have aliases
-                name = ' '.join(lst[5:])
-                code3 = lst[3][:-1]
-                code_to_name[code3] = name
-                code3 = lst[1]
-            else:
-                name = ' '.join(lst[3:])
-                code3 = lst[1]
-            code_to_name[code2] = name
-            code_to_name[code3] = name
-            name_to_code[name.lower()] = code2
+#def build_langs_dics():
+    #from injections import inject
+    #request = inject('request')
+    #fname = 'applications/' + request.application + '/private/languages_table.txt'
+    #global name_to_code
+    #global code_to_name
+    #name_to_code = {}
+    #code_to_name = {}
+    #with open(fname) as f:
+        #for s in f:
+            #s = s.strip()
+            #if s == '' or s.startswith('#'):
+                #continue
+            #lst = s.split()
+            #code2 = lst[0]
+            #if lst[2] == '/':
+                ##have aliases
+                #name = ' '.join(lst[5:])
+                #code3 = lst[3][:-1]
+                #code_to_name[code3] = name
+                #code3 = lst[1]
+            #else:
+                #name = ' '.join(lst[3:])
+                #code3 = lst[1]
+            #code_to_name[code2] = name
+            #code_to_name[code3] = name
+            #name_to_code[name.lower()] = code2
             
-build_langs_dics()
+#build_langs_dics()
             
 if __name__ == '__main__':
     test()

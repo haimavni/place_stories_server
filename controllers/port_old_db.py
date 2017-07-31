@@ -6,7 +6,7 @@ from glob import glob
 import re
 from photos import scan_all_unscanned_photos, fit_all_sizes
 import random
-from words import extract_words
+from words import extract_tokens, guess_language, tally_words
 
 def port_old_db():
     folder = request.vars.folder or 'gbs-bkp-jun17'
@@ -127,7 +127,7 @@ def name_stories():
         name = rec.TblEvents.Name
         source = rec.TblEvents.SSource
         if not name:
-            words = extract_words(story)
+            words = extract_tokens(story)
             name = ' '.join(words[:6]).strip()
             if name:
                 name += "..."
@@ -138,7 +138,7 @@ def name_stories():
         story = rec.story.decode('utf8')
         name = rec.name
         if not name:
-            words = extract_words(story)
+            words = extract_tokens(story)
             name = ' '.join(words[:6]).strip()
             if name:
                 name += "..."
@@ -151,7 +151,7 @@ def name_stories():
         author = rec.TblTerms.InventedBy
         author_id = rec.TblTerms.InventedByMember_id or 1
         if not name:
-            words = extract_words(story)
+            words = extract_tokens(story)
             name = ' '.join(words[:6]).strip()
             if name:
                 name += "..."
@@ -162,7 +162,7 @@ def name_stories():
         story = rec.TblStories.story.decode('utf8')
         name = rec.TblPhotos.Name
         if not name:
-            words = extract_words(story)
+            words = extract_tokens(story)
             name = ' '.join(words[:6]).strip()
             if name:
                 name += "..."
@@ -366,6 +366,17 @@ def fit_all_photo_sizes():
     #for rec in db(db.TblStories).select():
         #rec.update_record(story_length=len(rec.story))
     #db.commit()
+    
+def set_stories_language():
+    dic = {}
+    for rec in db(db.TblStories).select():
+        lang = guess_language(rec.story)
+        if lang not in dic:
+            dic[lang] = 0
+        dic[lang] += 1
+        rec.update_record(language=lang)
+    x = len(dic)
+    z = x
 
 def index():
     if db(db.TblMembers).count() > 0:
@@ -401,6 +412,10 @@ def index():
     db.commit()
     return "Old db was converted and modified"
 
+def collect_word_statistics():
+    from words import tally_all_stories
+    tally_all_stories()
+ 
 def duplicate_db(old_db_name, new_db_name):
     #after we duplicate db to become the dev db, we need to copy the files in databases renamed using the name that is calculated from the new uri
     #todo: complete it

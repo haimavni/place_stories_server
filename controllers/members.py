@@ -12,6 +12,7 @@ from photos import get_slides_from_photo_list, photos_folder, local_photos_folde
 import random
 import zlib
 import re
+from langs import language_name
 
 MAX_PHOTOS_COUNT = 1200
 
@@ -139,7 +140,12 @@ def get_stories_sample(vars):
 def get_story_list(vars):
     q = (db.TblStories.used_for==STORY4EVENT) & (db.TblStories.author_id==db.auth_user.id) & (db.TblEvents.story_id==db.TblStories.id)
     keywords = vars.keywords or ""
+    params = vars.params
     keyword_list = keywords.split()
+    if params and params.selected_languages:
+        langs = [x.id for x in params.selected_languages]
+        if langs:
+            q &= (db.TblStories.language.belongs(langs))
     q0 = q
     used_keywords = ""
     for keyword in keyword_list:
@@ -188,7 +194,7 @@ def get_story_detail(vars):
             if not m['facePhotoURL']:
                 m['facePhotoURL'] = "dummy_face.png"
             m['facePhotoURL'] = photos_folder("profile_photos") + m['facePhotoURL']
-        
+
         qp = (db.TblEventPhotos.Event_id==event.id) & (db.TblPhotos.id==db.TblEventPhotos.Photo_id)
         photos = db(qp).select(db.TblPhotos.id, db.TblPhotos.photo_path)
         photos = [p.as_dict() for p in photos]
@@ -607,6 +613,28 @@ def get_constants(vars):
         STORY4TERM = 4,
         STORY4MESSAGE = 5    
     )
+
+
+def _calc_used_languages():
+    dic = {}
+    for rec in db(db.TblStories).select():
+        lang = rec.language
+        if lang not in dic:
+            dic[lang] = 0
+        dic[lang] += 1
+    lst = []
+    for lang in sorted(dic):
+        item = dict(id=lang, name=language_name(lang), count=dic[lang])
+        lst.append(item)
+    return dict(used_languages=lst)
+    
+def calc_used_languages(refresh=False):
+    c = Cache('used_languages')
+    return c(_calc_used_languages, refresh)
+
+@serve_json
+def get_used_languages(vars):
+    return calc_used_languages()
 
 def save_profile_photo(face):
     rec = get_photo_rec(face.photo_id)
