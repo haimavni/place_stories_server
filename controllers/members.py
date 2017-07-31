@@ -108,6 +108,7 @@ def get_random_member(vars):
     member_data=get_member_rec(lst[idx].member_id)
     result = dict(face_photo_url=photos_folder('profile_photos') + member_data.facePhotoURL,
                   name=member_data.full_name,
+                  first_name=member_data.first_name,
                   year_of_birth=member_data.date_of_birth.year if member_data.date_of_birth else None,           
                   year_of_death=member_data.date_of_death.year if member_data.date_of_death else None,
                   place_of_birth=member_data.PlaceOfBirth,
