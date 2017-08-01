@@ -13,12 +13,13 @@ import random
 import zlib
 import re
 from langs import language_name
+from words import calc_used_languages, tally_all_stories, get_all_story_previews
 
 MAX_PHOTOS_COUNT = 1200
 
 @serve_json
 def member_list(vars):
-    return dict(member_list=get_member_names(vars.visible_only, vars.gender))
+    return dict(member_list=get_member_names())
 
 @serve_json
 def create_parent(vars):
@@ -97,7 +98,14 @@ def save_story_info(vars):
     user_id = vars.user_id
     story_info = vars.story_info
     info = save_story_data(story_info, user_id=user_id)
+    #todo: read-modify-write below?
+    get_all_story_previews(refresh=True)
     return dict(info=info)
+
+@serve_json
+def get_stories_index(vars):
+    dic = tally_all_stories()
+    return dict(stories_index=dic)
 
 @serve_json
 def get_random_member(vars):
@@ -178,6 +186,10 @@ def get_story_list(vars):
     return dict(story_list=result, used_keywords=used_keywords)
 
 @serve_json
+def get_story_previews(vars):
+    return dict(story_previews=get_all_story_previews())
+
+@serve_json
 def get_story_detail(vars):
     story_id = int(vars.story_id)
     sm = stories_manager.Stories()
@@ -247,6 +259,8 @@ def save_member_info(vars):
     result = Storage(info=info)
     if member_id:
         result.member_id = member_id;
+    #todo: read-modify-write below?
+    get_member_names(refresh=True)
     return result
 
 @serve_json
@@ -294,13 +308,8 @@ def upload_photos(vars):
                             )
     return dict(number_uploaded=number_uploaded, number_duplicates=number_duplicates, failed=failed)
 
-def get_member_names(visible_only=None, gender=None):
+def _get_member_names():
     q = (db.TblMembers.id > 0)
-    if visible_only:
-        q &= (db.TblMembers.visible == True)
-    if gender:
-        q &= (db.TblMembers.gender == gender)
-
     lst = db(q).select()
     arr = [Storage(id=rec.id,
                    name=member_display_name(rec, full=True),
@@ -308,6 +317,10 @@ def get_member_names(visible_only=None, gender=None):
                    has_profile_photo=bool(rec.facePhotoURL),
                    facePhotoURL=photos_folder('profile_photos') + rec.facePhotoURL if rec.facePhotoURL else 'http://' + request.env.http_host  + "/gbs/static/images/dummy_face.png") for rec in lst]
     return arr
+
+def get_member_names(refresh=False):
+    c = Cache('get_member_names')
+    return c(_get_member_names, refresh)
 
 def older_display_name(rec, full):
     s = rec.Name or ''
@@ -614,27 +627,9 @@ def get_constants(vars):
         STORY4MESSAGE = 5    
     )
 
-
-def _calc_used_languages():
-    dic = {}
-    for rec in db(db.TblStories).select():
-        lang = rec.language
-        if lang not in dic:
-            dic[lang] = 0
-        dic[lang] += 1
-    lst = []
-    for lang in sorted(dic):
-        item = dict(id=lang, name=language_name(lang), count=dic[lang])
-        lst.append(item)
-    return dict(used_languages=lst)
-    
-def calc_used_languages(refresh=False):
-    c = Cache('used_languages')
-    return c(_calc_used_languages, refresh)
-
 @serve_json
 def get_used_languages(vars):
-    return calc_used_languages()
+    return calc_used_languages(vars)
 
 def save_profile_photo(face):
     rec = get_photo_rec(face.photo_id)

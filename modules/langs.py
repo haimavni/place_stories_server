@@ -19,23 +19,22 @@ def language_info(lang_code):
         except:
             return None
         
-global name_to_code, code_to_name
-            
 def language_name(lang_code):
-    lang_info = language_info(lang_code)
-    if lang_info:
-        return lang_info.name
-    else:
-        return lang_code + '?'
-    
-def language_code(lang_name):
-    global name_to_code
-    if not lang_name:
-        return None
-    return name_to_code.get(lang_name.strip().lower(), lang_name[:3])
-
-def language_name(lang_code):
-    global code_to_name
+    if lang_code == "UNKNOWN":
+        return lang_code
+    code_to_name = dict(
+        ar='arabic',
+        de='german',
+        el='greek',
+        en='english',
+        es='spanish',
+        hu='hungarian',
+        it='italian',
+        he='hebrew',
+        nl='dutch',
+        rm='romanian',
+        ru='russian'
+    )
     return code_to_name.get(lang_code, lang_code + '?')
 
 #Sources for the coding table below: http://unicode-table.com/ and also http://www.utf8-chartable.de/unicode-utf8-table.pl
@@ -275,36 +274,6 @@ def test():
     lst = extract_words(s)
     for i, x in enumerate(lst):
         print '{:3} word:  {} '.format(i, x)
-        
-#def build_langs_dics():
-    #from injections import inject
-    #request = inject('request')
-    #fname = 'applications/' + request.application + '/private/languages_table.txt'
-    #global name_to_code
-    #global code_to_name
-    #name_to_code = {}
-    #code_to_name = {}
-    #with open(fname) as f:
-        #for s in f:
-            #s = s.strip()
-            #if s == '' or s.startswith('#'):
-                #continue
-            #lst = s.split()
-            #code2 = lst[0]
-            #if lst[2] == '/':
-                ##have aliases
-                #name = ' '.join(lst[5:])
-                #code3 = lst[3][:-1]
-                #code_to_name[code3] = name
-                #code3 = lst[1]
-            #else:
-                #name = ' '.join(lst[3:])
-                #code3 = lst[1]
-            #code_to_name[code2] = name
-            #code_to_name[code3] = name
-            #name_to_code[name.lower()] = code2
-            
-#build_langs_dics()
             
 if __name__ == '__main__':
     test()
