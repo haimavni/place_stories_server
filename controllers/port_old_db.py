@@ -405,6 +405,7 @@ def index():
         port_topics()
         create_random_photo_keys()
         name_stories()
+        set_stories_language()
         ####calculate_story_lengths()
         comment('Porting done')
     except Exception, e:

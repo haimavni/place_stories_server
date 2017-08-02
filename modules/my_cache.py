@@ -58,7 +58,9 @@ class Cache:
         self.mc.set(k, key_list)
         check_list = self.mc.get(k)
         if check_list != key_list:
-            raise Exception('update key list failed!')
+            comment = inject('comment')
+            comment("update key list failed!")
+            ##raise Exception('update key list failed!')
 
     def __call__(self, func=None, refresh=False, time_expire=0):
         result = None if refresh else self.mc.get(self.key)
