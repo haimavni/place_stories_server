@@ -6,6 +6,8 @@ from guess_language import guessLanguage as guess
 from langs import extract_words, language_name
 from my_cache import Cache
 from injections import inject
+#from base64 import b64decode, b64encode
+from math import log
 
 alef = "א"
 tav = "ת"
@@ -48,30 +50,91 @@ def guess_language(html):
         lang = 'UNKNOWN'
     return lang
 
-def tally_words(html, dic, story_id):
+def tally_words(html, dic, max_freqs, story_id):
     s = remove_all_tags(html)
     lst = extract_words(s)
+    if not lst:
+        return False
+    dic1 = dict()
     for w in lst:
         if w not in dic:
             dic[w] = {}
         if story_id not in dic[w]:
             dic[w][story_id] = 0
         dic[w][story_id] += 1
+        if w not in dic1:
+            dic1[w] = 0
+        dic1[w] += 1
+    max_freq = 0
+    for w in dic1:
+        max_freq = max(max_freq, dic1[w])
+    max_freqs[story_id] = max_freq
+    return True
 
 def _tally_all_stories():   
     from injections import inject
     db = inject('db')
-    dic = {}
+    dic = dict()
+    max_freqs = dict()
+    N = 0
     for rec in db(db.TblStories).select():
         html = rec.story
-        tally_words(html, dic, rec.id)
-    #todo: use tfidf to rank words?
+        if tally_words(html, dic, max_freqs, rec.id):
+            N += 1
+    # calculate average tfidf for each of the words to have them ranked accordingly
+    # tf = 0.5 + 0.5 * freq(t, d) / max freq
+    # idf = log(1 + N / Nt)
+    #avg = 0.0
+    #for wrd in dic:
+        #for doc_id in dic[wrd]:
+            #tf = 0.5 + 0.5 * dic[wrd][doc_id] / max_freqs[doc_id]
+            #idf = log(1 + N / len(dic[wrd]))
+            #avg = max(avg, tf * idf)
+        ####avg = avg / len(dic[wrd])
+        #dic[wrd]['*'] = avg
+
+    #test = [(dic[w]['*'], w) for w in dic]
+    #test1 = sorted(test, reverse=True)
+    #for t in test1[0:100]:
+        #print t[1] + ':' + str(t[0])
     return dic
 
 def tally_all_stories(refresh=False):
     c = Cache('tally_all_stories')
     return c(_tally_all_stories, refresh)
-    
+
+def _calc_words_index():
+    chunk_size = 100
+    dic = _tally_all_stories()
+    word_list = sorted(dic.keys())
+
+    ##return word_list
+    sections = []
+    for i in range(0, len(word_list), chunk_size):
+        lst = word_list[i:i+chunk_size]
+        section_dic = dict()
+        for wrd in lst:
+            section_dic[wrd] = dic[wrd]
+        ###word_list_section = [(wrd, dic[wrd]) for wrd in lst]
+        key = 'word_index_section-{:03}'.format(i) #first word in the section
+        c = Cache(key)
+        c(lambda: section_dic, refresh=True)
+        sections.append(key)
+    return sections
+
+def calc_words_index(refresh=False):
+    c = Cache('words_index')
+    return c(_calc_words_index, refresh)
+
+def fetch_words_index():
+    result = dict()
+    sections = calc_words_index()
+    for key in sections:
+        c = Cache(key)
+        dic = c(lambda: dict(nothing=='nothing'))
+        result.update(dic)
+    return result
+
 def _calc_used_languages(used_for):
     db = inject('db')
     dic = {}
@@ -88,7 +151,7 @@ def _calc_used_languages(used_for):
         item = dict(id=lang, name='stories.' + language_name(lang), count=dic[lang])
         lst.append(item)
     return dict(used_languages=lst)
-    
+
 def calc_used_languages(vars, refresh=False):
     used_for = int(vars.used_for) if vars.used_for else 2 #STORY4EVENT
     c = Cache('used_languages' + str(used_for))
@@ -106,14 +169,14 @@ def _get_all_story_previews():
 def get_all_story_previews(refresh=False):
     c = Cache('get_all_story_previews')
     return c(_get_all_story_previews, refresh)
-    
+
 def test():
     html = 'חיים אבני כותב תוכנית מחשב computer program'
     tally_words
-    
+
 if __name__ == '__main__'    :
     test()
-    
+
 
 
 

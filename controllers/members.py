@@ -13,7 +13,7 @@ import random
 import zlib
 import re
 from langs import language_name
-from words import calc_used_languages, tally_all_stories, get_all_story_previews
+from words import calc_used_languages, fetch_words_index, get_all_story_previews, get_reisha
 
 MAX_PHOTOS_COUNT = 1200
 
@@ -104,8 +104,8 @@ def save_story_info(vars):
 
 @serve_json
 def get_stories_index(vars):
-    dic = tally_all_stories()
-    return dict(stories_index=dic)
+    words_index = fetch_words_index()
+    return dict(stories_index=words_index)
 
 @serve_json
 def get_random_member(vars):
@@ -146,6 +146,7 @@ def get_stories_sample(vars):
 
 @serve_json
 def get_story_list(vars):
+    #todo: move all the logic to stories manager
     q = (db.TblStories.used_for==STORY4EVENT) & (db.TblStories.author_id==db.auth_user.id) & (db.TblEvents.story_id==db.TblStories.id)
     keywords = vars.keywords or ""
     params = vars.params
@@ -178,6 +179,7 @@ def get_story_list(vars):
         r.author = rec.auth_user.first_name + ' ' + rec.auth_user.last_name if rec.auth_user.id > 2 else ""
         lst.append(r)
     result = [dict(story_text=rec.story,
+                   story_preview=get_reisha(rec.story),
                    name=rec.name, 
                    story_id=rec.id, 
                    event_date=rec.creation_date, 
@@ -187,7 +189,8 @@ def get_story_list(vars):
 
 @serve_json
 def get_story_previews(vars):
-    return dict(story_previews=get_all_story_previews())
+    lst = get_all_story_previews()
+    return dict(story_previews=license)
 
 @serve_json
 def get_story_detail(vars):

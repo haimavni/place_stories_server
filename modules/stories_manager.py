@@ -60,6 +60,7 @@ class Stories:
             display_version = story_versions[to_story_version].display_version
         story_info = Storage(
             story_text=story_text,
+            story_preview=get_reisha(story_text),
             name=rec.name,
             story_id=story_id,   #we always access via the master
             source=rec.source,
