@@ -20,6 +20,8 @@ def language_info(lang_code):
             return None
         
 def language_name(lang_code):
+    if not lang_code:
+        lang_code = "UNKNOWN"
     if lang_code == "UNKNOWN":
         return lang_code
     code_to_name = dict(

@@ -108,7 +108,6 @@ def _calc_words_index():
     dic = _tally_all_stories()
     word_list = sorted(dic.keys())
 
-    ##return word_list
     sections = []
     for i in range(0, len(word_list), chunk_size):
         lst = word_list[i:i+chunk_size]
@@ -131,7 +130,7 @@ def fetch_words_index():
     sections = calc_words_index()
     for key in sections:
         c = Cache(key)
-        dic = c(lambda: dict(nothing=='nothing'))
+        dic = c(lambda: dict(nothing='nothing'))  #the code is called only if caching failed
         result.update(dic)
     return result
 
