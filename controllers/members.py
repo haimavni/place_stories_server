@@ -13,7 +13,7 @@ import random
 import zlib
 import re
 from langs import language_name
-from words import calc_used_languages, fetch_words_index, get_all_story_previews, get_reisha
+from words import calc_used_languages, read_words_index, get_all_story_previews, get_reisha
 
 MAX_PHOTOS_COUNT = 1200
 
@@ -98,13 +98,11 @@ def save_story_info(vars):
     user_id = vars.user_id
     story_info = vars.story_info
     info = save_story_data(story_info, user_id=user_id)
-    #todo: read-modify-write below?
-    get_all_story_previews(refresh=True)
     return dict(info=info)
 
 @serve_json
 def get_stories_index(vars):
-    words_index = fetch_words_index()
+    words_index = read_words_index()
     return dict(stories_index=words_index)
 
 @serve_json

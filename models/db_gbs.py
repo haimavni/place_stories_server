@@ -30,6 +30,16 @@ db.define_table('TblStoryVersions',
                 Field('delta', type='text'),
 )
 
+db.define_table('TblWords',
+                Field('word', type='string')
+)
+
+db.define_table('TblWordStories',
+                Field('word_id', type=db.TblWords),
+                Field('story_id', type=db.TblStories),
+                Field('word_count', type='integer')
+)
+
 db.define_table('TblDefaults',
                 Field('AdminHrefInitialAddress', type='string'),
                 Field('AdminMaxResultsInPage', type='integer'),
@@ -292,6 +302,7 @@ def write_indexing_sql_scripts():
         ('TblMemberPhotos', 'Photo_id', 'x', 'y'),
         ('TblEventMembers', 'Member_id'),
         ('TblEventMembers', 'Event_id'),
+        ('TblWordStories',  'word_id')
     ]
 
     path = 'applications/' + request.application + '/logs/'

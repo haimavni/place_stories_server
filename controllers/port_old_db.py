@@ -6,7 +6,7 @@ from glob import glob
 import re
 from photos import scan_all_unscanned_photos, fit_all_sizes
 import random
-from words import extract_tokens, guess_language, tally_words
+from words import extract_tokens, guess_language, create_word_index, read_word_index
 
 def port_old_db():
     folder = request.vars.folder or 'gbs-bkp-jun17'
@@ -414,8 +414,10 @@ def index():
     return "Old db was converted and modified"
 
 def collect_word_statistics():
-    from words import tally_all_stories
-    tally_all_stories()
+    create_word_index()
+    
+def get_word_index():
+    dic = read_word_index()
  
 def duplicate_db(old_db_name, new_db_name):
     #after we duplicate db to become the dev db, we need to copy the files in databases renamed using the name that is calculated from the new uri

@@ -9,6 +9,7 @@ from injections import inject
 #from base64 import b64decode, b64encode
 from math import log
 
+
 alef = "א"
 tav = "ת"
 
@@ -71,7 +72,7 @@ def tally_words(html, dic, max_freqs, story_id):
     max_freqs[story_id] = max_freq
     return True
 
-def _tally_all_stories():   
+def tally_all_stories():   
     from injections import inject
     db = inject('db')
     dic = dict()
@@ -81,58 +82,92 @@ def _tally_all_stories():
         html = rec.story
         if tally_words(html, dic, max_freqs, rec.id):
             N += 1
-    # calculate average tfidf for each of the words to have them ranked accordingly
-    # tf = 0.5 + 0.5 * freq(t, d) / max freq
-    # idf = log(1 + N / Nt)
-    #avg = 0.0
-    #for wrd in dic:
-        #for doc_id in dic[wrd]:
-            #tf = 0.5 + 0.5 * dic[wrd][doc_id] / max_freqs[doc_id]
-            #idf = log(1 + N / len(dic[wrd]))
-            #avg = max(avg, tf * idf)
-        ####avg = avg / len(dic[wrd])
-        #dic[wrd]['*'] = avg
-
-    #test = [(dic[w]['*'], w) for w in dic]
-    #test1 = sorted(test, reverse=True)
-    #for t in test1[0:100]:
-        #print t[1] + ':' + str(t[0])
     return dic
 
-def tally_all_stories(refresh=False):
-    c = Cache('tally_all_stories')
-    return c(_tally_all_stories, refresh)
+def create_word_index():
+    import datetime
+    t0 = datetime.datetime.now()
+    db = inject('db')
+    db.TblWords.truncate('RESTART IDENTITY CASCADE')
+    dic = tally_all_stories()
+    for wrd in dic:
+        word_id = db.TblWords.insert(word=wrd)
+        for story_id in dic[wrd]:
+            db.TblWordStories.insert(word_id=word_id, story_id=story_id, word_count=dic[wrd][story_id])
+    elapsed = datetime.datetime.now() - t0
+    print elapsed
 
-def _calc_words_index():
-    chunk_size = 100
-    dic = _tally_all_stories()
-    word_list = sorted(dic.keys())
+def read_words_index():
+    db = inject('db')
 
-    sections = []
-    for i in range(0, len(word_list), chunk_size):
-        lst = word_list[i:i+chunk_size]
-        section_dic = dict()
-        for wrd in lst:
-            section_dic[wrd] = dic[wrd]
-        ###word_list_section = [(wrd, dic[wrd]) for wrd in lst]
-        key = 'word_index_section-{:03}'.format(i) #first word in the section
-        c = Cache(key)
-        c(lambda: section_dic, refresh=True)
-        sections.append(key)
-    return sections
+    cmd = """
+        SELECT  TblWords.word,
+                array_agg(TblWordStories.story_id)
+        FROM TblWords, TblWordStories
+        WHERE (TblWords.id = TblWordStories.word_id)
+        GROUP BY TblWords.word;
+    """
 
-def calc_words_index(refresh=False):
-    c = Cache('words_index')
-    return c(_calc_words_index, refresh)
+    lst = db.executesql(cmd)
 
-def fetch_words_index():
-    result = dict()
-    sections = calc_words_index()
-    for key in sections:
-        c = Cache(key)
-        dic = c(lambda: dict(nothing='nothing'))  #the code is called only if caching failed
-        result.update(dic)
-    return result
+    dic = dict()
+    for item in lst:
+        dic[item[0]] = item[1]
+
+    return dic
+
+def update_words_index(story_id, dic, html=None):
+    if not html:
+        rec = db(db.TblStories.id==story_id).select().first()
+        html = rec.story
+    s = remove_all_tags(html)
+    dic = dict()
+    lst = extract_words(s)
+    if not lst:
+        return False
+    dic1 = dict()
+    for w in lst:
+        if w not in dic:
+            dic[w] = {}
+        if story_id not in dic[w]:
+            dic[w][story_id] = 0
+        dic[w][story_id] += 1
+        if w not in dic1:
+            dic1[w] = 0
+        dic1[w] += 1
+
+    rec = db(db.TblWordStories.story_id==story_id).select().first()
+    if rec:
+        q = (db.TblWordStories.story_id==story_id) & (db.TblWords.id==db.TblWordStories.word_id)
+        arr = db(q).select()
+        #remove deleted links, add new ones, update existing ones
+    else:
+        for wrd in dic1:
+            if wrd not in dic:
+                word_id = db.TblWords.insert(word=wrd)
+                db.TblWordStories.insert(story_id=story_id, word_id=word_id, word_count=dic1[w])
+            else:
+                word_id = db(db.TblWords.word==wrd).select().first().id
+                rec = db((db.TblWordStories.story_id==story_id) & (db.TblWordStories.word_id==word_id)).select().first()
+                if rec:
+                    if rec.word_count != dic1[wrd]:
+                        rec.update_record(word_count=dic1[wrd])
+                else:
+                    db.TblWordStories.insert(story_id=story_id, word_id=word_id, word_count=dic1[wrd])
+
+
+def save_words_index(words_index, story_id, from_scratch=False):
+    if from_scratch:
+        db.TblWords.truncate('RESTART IDENTITY CASCADE')
+    for wrd in words_index:
+        rec = db(db.TblWords.word==wrd).select().first()
+        if rec:
+            word_id = rec.id
+            stories = []
+        else:
+            word_id = db.TblWords.insert(word=wrd)
+            stories = db(db.TblWordStories.word_id==word_id).select()
+            stories = [rec.story_id for rec in stories]
 
 def _calc_used_languages(used_for):
     db = inject('db')
@@ -179,3 +214,12 @@ if __name__ == '__main__'    :
 
 
 
+
+t = """
+        select ctest1, array_agg(ctest2) as test2s
+        from (
+            select ctest1, ctest2
+            from ctest1 inner join ctest2 on ctest1.id = ctest2.test_id
+            order by ctest1.id, ctest2.label
+        ) x group by ctest1;
+"""
