@@ -296,7 +296,10 @@ db.define_table('TblChats',
 )
 
 def write_indexing_sql_scripts():
-    '''Creates a set of indexes if they do not exist'''
+    '''Creates a set of indexes if they do not exist.
+       In a terminal, su postgres and issue the command
+       psql -f create_indexes.sql gbs
+    '''
     indexes = [
         ('TblMemberPhotos', 'Member_id'),
         ('TblMemberPhotos', 'Photo_id', 'x', 'y'),

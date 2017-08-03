@@ -101,18 +101,18 @@ def read_words_index():
     db = inject('db')
 
     cmd = """
-        SELECT  TblWords.word,
-                array_agg(TblWordStories.story_id)
+        SELECT TblWords.word, TblWords.id,
+               array_agg(TblWordStories.story_id)
         FROM TblWords, TblWordStories
         WHERE (TblWords.id = TblWordStories.word_id)
-        GROUP BY TblWords.word;
+        GROUP BY TblWords.word, TblWords.id;
     """
 
     lst = db.executesql(cmd)
 
     dic = dict()
     for item in lst:
-        dic[item[0]] = item[1]
+        dic[item[0]] = dict(id=item[1], story_ids=item[2])
 
     return dic
 
