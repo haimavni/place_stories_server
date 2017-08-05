@@ -51,8 +51,17 @@ def guess_language(html):
         lang = 'UNKNOWN'
     return lang
 
-def tally_words(html, dic, max_freqs, story_id):
+def tally_words(html, dic, max_freqs, story_id, escape_seqs):
+    if "&quot;" in html:
+        r = html.find("&quot")
+    es = re.findall(r'&.{1,6}?;', html)
+    for e in es:
+        if e not in escape_seqs:
+            escape_seqs[e] = 0
+        escape_seqs[e] += 1
     s = remove_all_tags(html)
+    if '"' in s:
+        stop_here = True
     lst = extract_words(s)
     if not lst:
         return False
@@ -76,11 +85,12 @@ def tally_all_stories():
     from injections import inject
     db = inject('db')
     dic = dict()
+    escape_seqs = dict()
     max_freqs = dict()
     N = 0
     for rec in db(db.TblStories).select():
         html = rec.story
-        if tally_words(html, dic, max_freqs, rec.id):
+        if tally_words(html, dic, max_freqs, rec.id, escape_seqs):
             N += 1
     return dic
 
@@ -95,26 +105,24 @@ def create_word_index():
         for story_id in dic[wrd]:
             db.TblWordStories.insert(word_id=word_id, story_id=story_id, word_count=dic[wrd][story_id])
     elapsed = datetime.datetime.now() - t0
+    db.commit()
     print elapsed
 
 def read_words_index():
     db = inject('db')
 
     cmd = """
-        SELECT TblWords.word, TblWords.id,
-               array_agg(TblWordStories.story_id)
+        SELECT TblWords.word, array_agg(TblWordStories.story_id), sum(TblWordStories.word_count)
         FROM TblWords, TblWordStories
         WHERE (TblWords.id = TblWordStories.word_id)
-        GROUP BY TblWords.word, TblWords.id;
+        GROUP BY TblWords.word;
     """
 
     lst = db.executesql(cmd)
+    lst = sorted(lst, key=lambda item: item[2], reverse=True)
 
-    dic = dict()
-    for item in lst:
-        dic[item[0]] = dict(id=item[1], story_ids=item[2])
-
-    return dic
+    result = [dict(name=item[0], story_ids=item[1], word_count=item[2]) for item in lst]
+    return result
 
 def update_words_index(story_id, dic, html=None):
     if not html:

@@ -116,7 +116,7 @@ def lang_pat(seq)        :
     s = u'['
     for tup in seq:
         s += range_pat(tup)
-    s += ']+'
+    s += '"]+'
     return s
 
 def get_emoticons():
@@ -156,7 +156,7 @@ def multi_language_word_extractor():
     for lang in charsets:
         pat = lang_pat(lang)
         s +=  pat + '|'
-    s += get_emoticons()
+    ###s += get_emoticons()
     s = u"[a-z]+(?:[\'â€™]t|[\'â€™]s)|" +  s
     ###s += '| (?P<URL>http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F])))+'
     s = s.encode('utf8')
@@ -237,6 +237,9 @@ def clean_word(w):
         return w
     uout = u''
     for c in uin:
+        if c == '"':
+            uout += '"'
+            continue
         k = ord(c)
         c1 = c
         for tup in _bl:
@@ -244,6 +247,11 @@ def clean_word(w):
                 c1 = ' '
                 break
         uout += c1
+    #leave only qoutes that are in the middle of a word, for abbrevs
+    if uout.endswith('"'):
+        uout = uout[:-1]
+    if uout.startswith('"'):
+        uout = uout[1:]
     return uout.encode('utf8') 
 
 def extract_words(s):
@@ -257,11 +265,13 @@ def extract_words(s):
     for w in result0:
         if re.match(r"[a-z]+(?:\'t|\'s)", w, re.UNICODE):
             result.append(w)
-        elif _emoticons.match(w):
-            result.append(w)
+        #elif _emoticons.match(w):
+            #result.append(w)
         else:
             w = clean_word(w).strip()
             if w:
+                if '"' in w:
+                    b = w.startswith('"')
                 for w1 in re.split(r'\s+', w):
                     #if non_word_regex.match(w1):
                         #continue
@@ -272,7 +282,9 @@ def test():
     s = '×—×™×™× ××‘× ×™ 1234  raanana' 
     s += r" I don't know what it's meaning is :-) ------ >;)  )))=====  ('}{') "
     s += r'â€œWe at http://www.coolano.com/1234?boom=5678&koom=123xCs_y-Yy donâ€™t report export volumes ' + chr(0x93)
-    s += "חיים אבני כתב תוכנית יפה "
+    s += "חיים אבני תב תוכנית יפה "
+    s += 'לא הייתי בפלמ"ח, אני לא "גבר"?'
+    s += 'pal"mach'
     lst = extract_words(s)
     for i, x in enumerate(lst):
         print '{:3} word:  {} '.format(i, x)
