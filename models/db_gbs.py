@@ -338,3 +338,12 @@ db.define_table('TblHelpGotit',
 
 write_indexing_sql_scripts()                
 
+translatable_fields = dict(
+    TblEvents = ['Description', 'Name', 'Keyword', 'Place', 'SSource'],
+    TblMembers = ['first_name', 'last_name', 'former_first_name', 'former_last_name', 'NickName'],
+    TblPhotographers = ['name'],
+    TblPhotos = ['Description', 'Name'],
+    TblTopics = ['name', 'description'],
+    TblVideos = ['name'],
+    TblTerms = ['name']
+)

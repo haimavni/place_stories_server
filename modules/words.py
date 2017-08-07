@@ -51,14 +51,7 @@ def guess_language(html):
         lang = 'UNKNOWN'
     return lang
 
-def tally_words(html, dic, max_freqs, story_id, escape_seqs):
-    if "&quot;" in html:
-        r = html.find("&quot")
-    es = re.findall(r'&.{1,6}?;', html)
-    for e in es:
-        if e not in escape_seqs:
-            escape_seqs[e] = 0
-        escape_seqs[e] += 1
+def tally_words(html, dic, story_id):
     s = remove_all_tags(html)
     if '"' in s:
         stop_here = True
@@ -75,22 +68,16 @@ def tally_words(html, dic, max_freqs, story_id, escape_seqs):
         if w not in dic1:
             dic1[w] = 0
         dic1[w] += 1
-    max_freq = 0
-    for w in dic1:
-        max_freq = max(max_freq, dic1[w])
-    max_freqs[story_id] = max_freq
     return True
 
 def tally_all_stories():   
     from injections import inject
     db = inject('db')
     dic = dict()
-    escape_seqs = dict()
-    max_freqs = dict()
     N = 0
     for rec in db(db.TblStories).select():
         html = rec.story
-        if tally_words(html, dic, max_freqs, rec.id, escape_seqs):
+        if tally_words(html, dic, rec.id):
             N += 1
     return dic
 
@@ -119,7 +106,9 @@ def read_words_index():
     """
 
     lst = db.executesql(cmd)
-    lst = sorted(lst, key=lambda item: item[2], reverse=True)
+    lst = sorted(lst, key=lambda item: abs(item[2] - 300), reverse=False)
+    ##lst = sorted(lst, key=lambda item: item[2], reverse=True)
+    ##lst = sorted(lst)  #todo: collect number of clicks and sort first by num of clicks then alfabetically
 
     result = [dict(name=item[0], story_ids=item[1], word_count=item[2]) for item in lst]
     return result

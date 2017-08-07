@@ -145,9 +145,13 @@ def get_stories_sample(vars):
 @serve_json
 def get_story_list(vars):
     #todo: move all the logic to stories manager
-    q = (db.TblStories.used_for==STORY4EVENT) & (db.TblStories.author_id==db.auth_user.id) & (db.TblEvents.story_id==db.TblStories.id)
+    q = (db.TblStories.author_id==db.auth_user.id) & (db.TblEvents.story_id==db.TblStories.id)
+    ##q = (db.TblStories.used_for==STORY4EVENT) & (db.TblStories.author_id==db.auth_user.id) & (db.TblEvents.story_id==db.TblStories.id)
     keywords = vars.keywords or ""
     params = vars.params
+    selected_stories = params.selected_stories
+    if selected_stories:
+        q &= (db.TblStories.id.belongs(selected_stories))
     keyword_list = keywords.split()
     if params and params.selected_languages:
         langs = [x.id for x in params.selected_languages]
