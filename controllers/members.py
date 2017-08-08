@@ -145,29 +145,14 @@ def get_stories_sample(vars):
 @serve_json
 def get_story_list(vars):
     q = (db.TblStories.author_id==db.auth_user.id)
-    keywords = vars.keywords or ""
     params = vars.params
     selected_stories = params.selected_stories
     if selected_stories:
         q &= (db.TblStories.id.belongs(selected_stories))
-    keyword_list = keywords.split()
     if params and params.selected_languages:
         langs = [x.id for x in params.selected_languages]
         if langs:
             q &= (db.TblStories.language.belongs(langs))
-    q0 = q
-    used_keywords = ""
-    for keyword in keyword_list:
-        keyword = keyword.strip()
-        q &= (db.TblStories.story.like("%" + keyword + "%"))
-        if db(q).count() == 0:
-            q = q0
-            break
-        else:
-            if used_keywords:
-                used_keywords += ' '
-            used_keywords += keyword
-            q0 = q
     lst = db(q).select(limitby=(0, 1000), orderby=~db.TblStories.story_len)
     if len(lst) > 100:
         lst1 = random.sample(lst, 100)
@@ -186,7 +171,7 @@ def get_story_list(vars):
                    event_date=rec.creation_date, 
                    timestamp=rec.last_update_date, 
                    author=rec.source or rec.author) for rec in lst]
-    return dict(story_list=result, used_keywords=used_keywords)
+    return dict(story_list=result)
 
 @serve_json
 def get_story_previews(vars):
@@ -526,11 +511,15 @@ def remove_face(vars):
 
 def get_photo_list_with_topics(vars):
     first = True
+    grouped_selected_topics = vars.grouped_selected_topics or []
+    topic_groups = [[t.id for t in topic_group] for topic_group in grouped_selected_topics]
     for topic in vars.selected_topics:
+        topic_groups.append([topic.id])
+    for topic_group in topic_groups:
         q = make_photos_query(vars) #if we do not regenerate it the query becomes accumulated and necessarily fails
         q &= (db.TblPhotoTopics.photo_id==db.TblPhotos.id)
-        q &= (db.TblTopics.id==db.TblPhotoTopics.topic_id)
-        q &= (db.TblTopics.id==topic.id)
+        ##topic_ids = [t.id for t in topic_group]
+        q &= (db.TblPhotoTopics.topic_id.belongs(topic_group))
         lst = db(q).select()
         lst = [rec.TblPhotos for rec in lst]
         bag1 = set(r.id for r in lst)
@@ -539,6 +528,18 @@ def get_photo_list_with_topics(vars):
             bag = bag1
         else:
             bag &= bag1
+    #for topic in vars.selected_topics: #ungrouped
+        #q = make_photos_query(vars) #if we do not regenerate it the query becomes accumulated and necessarily fails
+        #q &= (db.TblTopics.id==db.TblPhotoTopics.topic_id)
+        #q &= (db.TblTopics.id==topic.id)
+        #lst = db(q).select()
+        #lst = [rec.TblPhotos for rec in lst]
+        #bag1 = set(r.id for r in lst)
+        #if first:
+            #first = False
+            #bag = bag1
+        #else:
+            #bag &= bag1
     dic = {}
     for r in lst:
         dic[r.id] = r
@@ -572,7 +573,9 @@ def make_photos_query(vars):
 
 @serve_json
 def get_photo_list(vars):
-    if vars.selected_topics and len(vars.selected_topics) > 0:
+    selected_topics = vars.selected_topics or []
+    grouped_selected_topics = vars.grouped_selected_topics or []
+    if selected_topics or grouped_selected_topics:
         lst = get_photo_list_with_topics(vars)
     else:
         q = make_photos_query(vars)
@@ -604,6 +607,10 @@ def get_photo_list(vars):
 
 @serve_json
 def get_topic_list(vars):
+    q = db.TblTopics.id > 0
+    if vars.usage:
+        for c in vars.usage:
+            q &= (db.TblTopics.usage.like("%" + c + "%"))
     topic_list = db(db.TblTopics).select(orderby=db.TblTopics.name)
     topic_list = [dict(name=rec.name, id=rec.id) for rec in topic_list if rec.name]
     #photographer_list = db(db.TblPhotographers).select(orderby=db.TblPhotographers.name)

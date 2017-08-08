@@ -332,8 +332,42 @@ def port_photos_date():
         date, date_str = string_date_to_date(rec.PhotoDate)
         db(db.TblPhotos.id==rec.id).update(photo_date=date, photo_date_accuracy=accuracy)
     db.commit()
+    
+def collect_topics(topic_collection, tbl_name):
+    tbl = db[tbl_name]
+    links_table = db[tbl_name[:-1] + 'Topics']
+    link_fld_id = tbl_name[3:-1].lower() + '_id'
+    this_collection = dict()
+    code = tbl_name[3]
+    q = tbl['KeyWords'] != ""
+    lst = db(q).select()
+    for rec in lst:
+        s = rec.KeyWords
+        if not s:
+            continue
+        topics = s.split(',')
+        for topic in topics:
+            topic = topic.strip()
+            if topic in topic_collection:
+                idx = topic_collection[topic]
+                if topic not in this_collection:
+                    r = db(db.TblTopics.id==idx).select().first()
+                    r.update_record(usage = r.usage + code)
+                    this_collection[topic] = 1
+            else:
+                topic_collection[topic] = idx = db.TblTopics.insert(name=topic, usage=code)
+            dic = {link_fld_id: rec.id, 'topic_id': idx}
+            links_table.insert(**dic)
+            
+def port_topics():            
+    db.TblTopics.truncate('RESTART IDENTITY CASCADE')
+    topic_collection = dict()
+    for tbl_name in ['TblPhotos', 'TblEvents', 'TblMembers']:
+        collect_topics(topic_collection, tbl_name)
+    x = len(topic_collection)
+    
 
-def port_topics():
+def port_topics_old():
     db.TblTopics.truncate('RESTART IDENTITY CASCADE')
     db.TblPhotoTopics.truncate()
     #collect keywords from photo list. later need to merge with event types...
