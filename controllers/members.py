@@ -144,9 +144,7 @@ def get_stories_sample(vars):
 
 @serve_json
 def get_story_list(vars):
-    #todo: move all the logic to stories manager
-    q = (db.TblStories.author_id==db.auth_user.id) & (db.TblEvents.story_id==db.TblStories.id)
-    ##q = (db.TblStories.used_for==STORY4EVENT) & (db.TblStories.author_id==db.auth_user.id) & (db.TblEvents.story_id==db.TblStories.id)
+    q = (db.TblStories.author_id==db.auth_user.id)
     keywords = vars.keywords or ""
     params = vars.params
     selected_stories = params.selected_stories
@@ -184,6 +182,7 @@ def get_story_list(vars):
                    story_preview=get_reisha(rec.story),
                    name=rec.name, 
                    story_id=rec.id, 
+                   used_for=rec.used_for,
                    event_date=rec.creation_date, 
                    timestamp=rec.last_update_date, 
                    author=rec.source or rec.author) for rec in lst]
