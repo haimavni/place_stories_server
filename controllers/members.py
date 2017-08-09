@@ -208,6 +208,8 @@ def get_story_detail(vars):
 def get_story_photo_list(vars):
     story_id = int(vars.story_id)
     event = db(db.TblEvents.story_id==story_id).select().first()
+    if not event:
+        return dict()
     qp = (db.TblEventPhotos.Event_id==event.id) & (db.TblPhotos.id==db.TblEventPhotos.Photo_id)
     photos = get_slides_from_photo_list(qp)
     return dict(photo_list=photos)
@@ -296,6 +298,16 @@ def upload_photos(vars):
                             photo_missing=False
                             )
     return dict(number_uploaded=number_uploaded, number_duplicates=number_duplicates, failed=failed)
+
+@serve_json
+def get_photo_detail(vars):
+    photo_id = int(vars.photo_id)
+    rec = db(db.TblPhotos.id==photo_id).select().first()
+    sm = stories_manager.Stories()
+    story=sm.get_story(rec.story_id)
+    return dict(photo_src=photos_folder() + rec.photo_path,
+                photo_name = rec.Name,
+                photo_story=story.story if story else None)
 
 def _get_member_names():
     q = (db.TblMembers.id > 0)

@@ -51,10 +51,8 @@ def guess_language(html):
         lang = 'UNKNOWN'
     return lang
 
-def tally_words(html, dic, story_id):
-    s = remove_all_tags(html)
-    if '"' in s:
-        stop_here = True
+def tally_words(html, dic, story_id, story_name):
+    s = story_name.decode('utf8') + ' ' + remove_all_tags(html)
     lst = extract_words(s)
     if not lst:
         return False
@@ -77,7 +75,7 @@ def tally_all_stories():
     N = 0
     for rec in db(db.TblStories).select():
         html = rec.story
-        if tally_words(html, dic, rec.id):
+        if tally_words(html, dic, rec.id, rec.name):
             N += 1
     return dic
 

@@ -132,7 +132,7 @@ def name_stories():
             if name:
                 name += "..."
         db(db.TblStories.id==rec.TblStories.id).update(name=name, author_id=1, source=source)
-        
+
     lst = db(db.TblStories.used_for==STORY4MEMBER).select()
     for i, rec in enumerate(lst):
         story = rec.story.decode('utf8')
@@ -143,7 +143,7 @@ def name_stories():
             if name:
                 name += "..."
         db(db.TblStories.id==rec.id).update(name=name, author_id=1, source="")
-        
+
     lst = db(db.TblStories.id==db.TblTerms.story_id).select()
     for i, rec in enumerate(lst):
         story = rec.TblStories.story.decode('utf8')
@@ -156,7 +156,7 @@ def name_stories():
             if name:
                 name += "..."
         db(db.TblStories.id==rec.TblStories.id).update(name=name, source=author)
-        
+
     lst = db(db.TblStories.id==db.TblPhotos.story_id).select()
     for i, rec in enumerate(lst):
         story = rec.TblStories.story.decode('utf8')
@@ -167,7 +167,7 @@ def name_stories():
             if name:
                 name += "..."
         db(db.TblStories.id==rec.TblStories.id).update(name=name, author_id=1, source="")                
-        
+
     return 'Finished naming stories'
 
 def fix_photo_location_case():
@@ -332,7 +332,7 @@ def port_photos_date():
         date, date_str = string_date_to_date(rec.PhotoDate)
         db(db.TblPhotos.id==rec.id).update(photo_date=date, photo_date_accuracy=accuracy)
     db.commit()
-    
+
 def collect_topics(topic_collection, tbl_name):
     tbl = db[tbl_name]
     links_table = db[tbl_name[:-1] + 'Topics']
@@ -358,14 +358,13 @@ def collect_topics(topic_collection, tbl_name):
                 topic_collection[topic] = idx = db.TblTopics.insert(name=topic, usage=code)
             dic = {link_fld_id: rec.id, 'topic_id': idx}
             links_table.insert(**dic)
-            
+
 def port_topics():            
     db.TblTopics.truncate('RESTART IDENTITY CASCADE')
     topic_collection = dict()
     for tbl_name in ['TblPhotos', 'TblEvents', 'TblMembers']:
         collect_topics(topic_collection, tbl_name)
     x = len(topic_collection)
-    
 
 def port_topics_old():
     db.TblTopics.truncate('RESTART IDENTITY CASCADE')
@@ -396,11 +395,6 @@ def create_random_photo_keys():
 def fit_all_photo_sizes():
     fit_all_sizes()
 
-#def calculate_story_lengths():
-    #for rec in db(db.TblStories).select():
-        #rec.update_record(story_length=len(rec.story))
-    #db.commit()
-    
 def set_stories_language():
     dic = {}
     for rec in db(db.TblStories).select():
@@ -449,10 +443,10 @@ def index():
 
 def collect_word_statistics():
     create_word_index()
-    
+
 def get_word_index():
     dic = read_words_index()
- 
+
 def duplicate_db(old_db_name, new_db_name):
     #after we duplicate db to become the dev db, we need to copy the files in databases renamed using the name that is calculated from the new uri
     #todo: complete it
