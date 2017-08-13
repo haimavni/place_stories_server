@@ -242,6 +242,13 @@ db.define_table('TblTopics',
                 Field('usage', type='string') ## made of the letters EMPTV for events, members, photos, terms and videos
 )
 
+db.define_table('TblItemTopics',
+          Field('item_type', type='string', requires=IS_LENGTH(1)),  #M=Member, P=Photo, E=Event
+          Field('item_id', type=db.TblPhotos),
+          Field('topic_id', type=db.TblTopics),
+          Field('story_id', type=db.TblStories)
+)
+
 db.define_table('TblPhotoTopics',
                 Field('photo_id', type=db.TblPhotos),
                 Field('topic_id', type=db.TblTopics)

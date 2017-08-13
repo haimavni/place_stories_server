@@ -104,8 +104,10 @@ def consolidate_stories():
 
     lst = db(db.TblTerms.Background != '').select(db.TblTerms.Background, db.TblTerms.id)
     for rec in lst:
-        story_id = db.TblStories.insert(story=rec.Background, used_for=STORY4EVENT)
-        db(db.TblTerms.id==rec.id).update(story_id=story_id, Background='', BackgroundNoHtml='')
+        story_id = db.TblStories.insert(story='<div class="term-background">' + rec.Background + '</div>' +
+                                        '<div class="term-translation">' + rec.TermTranslation + '</div>', 
+                                        used_for=STORY4TERM)
+        db(db.TblTerms.id==rec.id).update(story_id=story_id, Background='', BackgroundNoHtml='', TermTranslation='')
 
     return 'Finished consolidation of stories'
 
@@ -376,15 +378,23 @@ def collect_topics(topic_collection, tbl_name):
                 topic_collection[topic] = idx = db.TblTopics.insert(name=topic, usage=code)
             dic = {link_fld_id: rec.id, 'topic_id': idx}
             links_table.insert(**dic)
+            dic = dict(
+                item_id=rec.id,
+                topic_id=idx,
+                story_id=rec.story_id,
+                item_type=tbl_name[3]
+            )
+            db.TblItemTopics.insert(**dic)
 
 def port_topics():            
     db.TblTopics.truncate('RESTART IDENTITY CASCADE')
+    db.TblItemTopics.truncate('RESTART IDENTITY CASCADE')
     topic_collection = dict()
     for tbl_name in ['TblPhotos', 'TblEvents', 'TblMembers']:
         collect_topics(topic_collection, tbl_name)
     x = len(topic_collection)
 
-def port_topics_old():
+def port_topics_obsolete():
     db.TblTopics.truncate('RESTART IDENTITY CASCADE')
     db.TblPhotoTopics.truncate()
     #collect keywords from photo list. later need to merge with event types...
@@ -446,11 +456,10 @@ def index():
         comment('start fixing photo location case')
         ###db.commit()
         collect_photographers()
+        fit_all_photo_sizes()
         port_all_dates()
-        ###port_photos_date()
         port_topics()
         create_random_photo_keys()
-        name_stories()
         set_stories_language()
         ####calculate_story_lengths()
         comment('Porting done')

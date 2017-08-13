@@ -149,26 +149,25 @@ def get_stories_sample(vars):
 
 @serve_json
 def get_story_list(vars):
-    q = (db.TblStories.author_id==db.auth_user.id)
     params = vars.params
-    selected_story_types = [x.id for x in params.selected_story_types]
-    if selected_story_types:
-        q &= (db.TblStories.used_for.belongs(selected_story_types))
-    selected_stories = params.selected_stories
-    if selected_stories:
-        q &= (db.TblStories.id.belongs(selected_stories))
-    if params and params.selected_languages:
-        langs = [x.id for x in params.selected_languages]
-        if langs:
-            q &= (db.TblStories.language.belongs(langs))
-    lst = db(q).select(limitby=(0, 1000), orderby=~db.TblStories.story_len)
+
+    selected_topics = params.selected_topics or []
+    grouped_selected_topics = params.grouped_selected_topics or []
+    if selected_topics or grouped_selected_topics:
+        lst = get_story_list_with_topics(params, grouped_selected_topics, selected_topics)
+    else:
+        q = make_stories_query(params)
+        lst = db(q).select(limitby=(0, 1000), orderby=~db.TblStories.story_len)
     if len(lst) > 100:
         lst1 = random.sample(lst, 100)
     else:
         lst1 = lst
     lst = []
     for rec in lst1:
-        r = rec.TblStories
+        if 'TblStories' in rec:
+            r = rec.TblStories
+        else:
+            r = rec
         r.author = rec.auth_user.first_name + ' ' + rec.auth_user.last_name if rec.auth_user.id > 2 else ""
         lst.append(r)
     result = [dict(story_text=rec.story,
@@ -551,18 +550,6 @@ def get_photo_list_with_topics(vars):
             bag = bag1
         else:
             bag &= bag1
-    #for topic in vars.selected_topics: #ungrouped
-        #q = make_photos_query(vars) #if we do not regenerate it the query becomes accumulated and necessarily fails
-        #q &= (db.TblTopics.id==db.TblPhotoTopics.topic_id)
-        #q &= (db.TblTopics.id==topic.id)
-        #lst = db(q).select()
-        #lst = [rec.TblPhotos for rec in lst]
-        #bag1 = set(r.id for r in lst)
-        #if first:
-            #first = False
-            #bag = bag1
-        #else:
-            #bag &= bag1
     dic = {}
     for r in lst:
         dic[r.id] = r
@@ -571,13 +558,9 @@ def get_photo_list_with_topics(vars):
 
 def make_photos_query(vars):
     q = (db.TblPhotos.width > 0)
-    photographer_list = [p.id for p in vars.selected_photographers]
+    photographer_list = [p.id for p in vars.selected_photographers] if vars.selected_photographers else []
     if len(photographer_list) > 0:
-        #q1 = (db.TblPhotos.photographer_id == photographer_list[0])
-        #for p in photographer_list[1:]:
-            #q1 |= dbTblPhotos.photographer_id == p
-        #q &= q1         
-        q &= db.TblPhotos.photographer_id.belongs(photographer_list)## caused error
+        q &= db.TblPhotos.photographer_id.belongs(photographer_list)
 
     if vars.from_date:
         from_date = date_of_date_str(vars.from_date)
@@ -634,7 +617,7 @@ def get_topic_list(vars):
     if vars.usage:
         for c in vars.usage:
             q &= (db.TblTopics.usage.like("%" + c + "%"))
-    topic_list = db(db.TblTopics).select(orderby=db.TblTopics.name)
+    topic_list = db(q).select(orderby=db.TblTopics.name)
     topic_list = [dict(name=rec.name, id=rec.id) for rec in topic_list if rec.name]
     photographer_list = db(db.TblPhotographers).select(orderby=db.TblPhotographers.name)
     photographer_list = [dict(name=rec.name, id=rec.id) for rec in photographer_list if rec.name]
@@ -708,6 +691,44 @@ def get_member_stories(member_id):
             last_update_date=story.last_update_date
         )
         result.append(dic)
+    return result
+
+def make_stories_query(params):
+    q = (db.TblStories.author_id==db.auth_user.id)
+    selected_story_types = [x.id for x in params.selected_story_types]
+    if selected_story_types:
+        q &= (db.TblStories.used_for.belongs(selected_story_types))
+    selected_stories = params.selected_stories
+    if selected_stories:
+        q &= (db.TblStories.id.belongs(selected_stories))
+    if params and params.selected_languages:
+        langs = [x.id for x in params.selected_languages]
+        if langs:
+            q &= (db.TblStories.language.belongs(langs))
+    return q
+
+def get_story_list_with_topics(params, grouped_selected_topics, selected_topics):
+    first = True
+    grouped_selected_topics = grouped_selected_topics or []
+    topic_groups = [[t.id for t in topic_group] for topic_group in grouped_selected_topics]
+    for topic in selected_topics:
+        topic_groups.append([topic.id])
+    for topic_group in topic_groups:
+        q = make_stories_query(params) #if we do not regenerate it the query becomes accumulated and necessarily fails
+        q &= (db.TblItemTopics.story_id==db.TblStories.id)
+        q &= (db.TblItemTopics.topic_id.belongs(topic_group))
+        lst = db(q).select()
+        ###lst = [rec.TblStories for rec in lst]
+        bag1 = set(r.TblStories.id for r in lst)
+        if first:
+            first = False
+            bag = bag1
+        else:
+            bag &= bag1
+    dic = dict()
+    for r in lst:
+        dic[r.TblStories.id] = r
+    result = [dic[id] for id in bag]
     return result
 
 
