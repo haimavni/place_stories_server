@@ -209,11 +209,29 @@ def rename_locations():
 def scan_photos():
     return scan_all_unscanned_photos()
 
+def guess_photographer(location):
+    candidates = dict(
+        givon = "גבעון כהן",
+        hanan = "חנן בהיר",
+        lipman = "ולטר ליפמן",
+        micha = "מיכה אבני",
+        nanan = "חנן בהיר", #assuming this is a typo
+        vertheim = "אליעזר ורטהיים",
+        yok = "יוקי שטל"
+    )
+    location = location.lower()
+    for p in candidates:
+        if p in location:
+            return candidates[p]
+    return None
+
 def collect_photographers():
     ###db.TblPhotographers.truncate('RESTART IDENTITY CASCADE')
     lst = db(db.TblPhotos.width>0).select()
     for rec in lst:
         if not rec.Photographer:
+            rec.Photographer = guess_photographer(rec.LocationInDisk)
+        if not rec.Photographer:    
             continue
         name = rec.Photographer.strip()
         p = db(db.TblPhotographers.name==name).select().first()
