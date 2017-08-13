@@ -63,6 +63,9 @@ def get_member_details(vars):
         rec.member_info.full_name="members.new-member"
         return rec
     mem_id = int(vars.member_id)
+    if vars.what == 'story': #access member via its life story id
+        rec = db(db.TblMembers.story_id==mem_id).select().first()
+        mem_id = rec.id
     if vars.shift == 'next':
         mem_id += 1
     elif vars.shift == 'prev':
@@ -90,6 +93,8 @@ def get_member_details(vars):
 @serve_json
 def get_member_photo_list(vars):
     member_id = int(vars.member_id)
+    if vars.what == 'story':
+        member_id = db(db.TblMembers.story_id==member_id).select().first().id
     slides = get_member_slides(member_id)
     return dict(photo_list=slides)
 
@@ -146,6 +151,9 @@ def get_stories_sample(vars):
 def get_story_list(vars):
     q = (db.TblStories.author_id==db.auth_user.id)
     params = vars.params
+    selected_story_types = [x.id for x in params.selected_story_types]
+    if selected_story_types:
+        q &= (db.TblStories.used_for.belongs(selected_story_types))
     selected_stories = params.selected_stories
     if selected_stories:
         q &= (db.TblStories.id.belongs(selected_stories))
@@ -302,12 +310,15 @@ def upload_photos(vars):
 @serve_json
 def get_photo_detail(vars):
     photo_id = int(vars.photo_id)
-    rec = db(db.TblPhotos.id==photo_id).select().first()
+    if vars.what == 'story': #This photo is identified by the associated story
+        rec = db(db.TblPhotos.story_id==photo_id).select().first()
+    else:
+        rec = db(db.TblPhotos.id==photo_id).select().first()
     sm = stories_manager.Stories()
     story=sm.get_story(rec.story_id)
     return dict(photo_src=photos_folder() + rec.photo_path,
                 photo_name = rec.Name,
-                photo_story=story.story if story else None)
+                photo_story=story.story_text if story else None)
 
 def _get_member_names():
     q = (db.TblMembers.id > 0)
@@ -560,13 +571,13 @@ def get_photo_list_with_topics(vars):
 
 def make_photos_query(vars):
     q = (db.TblPhotos.width > 0)
-    #photographer_list = [p.id for p in vars.selected_photographers]
-    #if len(photographer_list) > 0:
+    photographer_list = [p.id for p in vars.selected_photographers]
+    if len(photographer_list) > 0:
         #q1 = (db.TblPhotos.photographer_id == photographer_list[0])
         #for p in photographer_list[1:]:
             #q1 |= dbTblPhotos.photographer_id == p
         #q &= q1         
-        ### q &= db.TblPhotos.photographer_id.belongs(photographer_list) caused error
+        q &= db.TblPhotos.photographer_id.belongs(photographer_list)## caused error
 
     if vars.from_date:
         from_date = date_of_date_str(vars.from_date)
@@ -625,9 +636,9 @@ def get_topic_list(vars):
             q &= (db.TblTopics.usage.like("%" + c + "%"))
     topic_list = db(db.TblTopics).select(orderby=db.TblTopics.name)
     topic_list = [dict(name=rec.name, id=rec.id) for rec in topic_list if rec.name]
-    #photographer_list = db(db.TblPhotographers).select(orderby=db.TblPhotographers.name)
-    #photographer_list = [dict(name=rec.name, id=rec.id) for rec in photographer_list if rec.name]
-    return dict(topic_list=topic_list) ###, photographer_list=photographer_list) 
+    photographer_list = db(db.TblPhotographers).select(orderby=db.TblPhotographers.name)
+    photographer_list = [dict(name=rec.name, id=rec.id) for rec in photographer_list if rec.name]
+    return dict(topic_list=topic_list, photographer_list=photographer_list)
 
 @serve_json
 def get_message_list(vars):
