@@ -539,9 +539,9 @@ def get_photo_list_with_topics(vars):
         topic_groups.append([topic.id])
     for topic_group in topic_groups:
         q = make_photos_query(vars) #if we do not regenerate it the query becomes accumulated and necessarily fails
-        q &= (db.TblPhotoTopics.photo_id==db.TblPhotos.id)
+        q &= (db.TblItemTopics.item_id==db.TblPhotos.id) & (db.TblItemTopics.item_type=='P')
         ##topic_ids = [t.id for t in topic_group]
-        q &= (db.TblPhotoTopics.topic_id.belongs(topic_group))
+        q &= (db.TblItemTopics.topic_id.belongs(topic_group))
         lst = db(q).select()
         lst = [rec.TblPhotos for rec in lst]
         bag1 = set(r.id for r in lst)

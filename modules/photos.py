@@ -157,7 +157,8 @@ def photos_folder(what="orig"):
 def local_photos_folder(what="orig"): 
     #what may be orig, squares,images or profile_photos. (images is for customer-specific images such as logo)
     request = inject('request')
-    return '/gb_photos/{app}/photos/{what}/'.format(app=request.application, what=what)
+    app = request.application.split('__')[0]  ## we want gbs__dev, gbs__test etc. all to use the same data
+    return '/gb_photos/{app}/photos/{what}/'.format(app=app, what=what)
 
 def get_slides_from_photo_list(q):
     db = inject('db')

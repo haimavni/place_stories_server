@@ -244,25 +244,10 @@ db.define_table('TblTopics',
 
 db.define_table('TblItemTopics',
           Field('item_type', type='string', requires=IS_LENGTH(1)),  #M=Member, P=Photo, E=Event
-          Field('item_id', type=db.TblPhotos),
+          Field('item_id', type='integer'),
           Field('topic_id', type=db.TblTopics),
           Field('story_id', type=db.TblStories)
 )
-
-db.define_table('TblPhotoTopics',
-                Field('photo_id', type=db.TblPhotos),
-                Field('topic_id', type=db.TblTopics)
-)                
-
-db.define_table('TblEventTopics',
-                Field('event_id', type=db.TblEvents),
-                Field('topic_id', type=db.TblTopics)
-)                
-
-db.define_table('TblMemberTopics',
-                Field('member_id', type=db.TblMembers),
-                Field('topic_id', type=db.TblTopics)
-)                
 
 db.define_table('TblVideos',
                 Field('name', type='string'),
