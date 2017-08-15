@@ -152,7 +152,8 @@ def photos_folder(what="orig"):
     #what may be orig, squares,images or profile_photos. (images is for customer-specific images such as logo)
     #app appears twice: one to reach static, the other is to separate different customers
     request = inject('request')
-    return 'http://{host}/{app}/static/gb_photos/{app}/photos/{what}/'.format(host=request.env.http_host, app=request.application, what=what)
+    app = request.application.split('__')[0]
+    return 'http://{host}/{app}/static/gb_photos/{app}/photos/{what}/'.format(host=request.env.http_host, app=app, what=what)
 
 def local_photos_folder(what="orig"): 
     #what may be orig, squares,images or profile_photos. (images is for customer-specific images such as logo)
