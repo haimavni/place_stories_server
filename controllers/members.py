@@ -49,7 +49,7 @@ def new_member_rec(gender=None, first_name=""):
         slides=[],
         spouses=[],
         member_stories = [],
-        facePhotoURL = request.application + '/static/images/dummy_face.png',
+        facePhotoURL = 'dummy_face.png',
         name=first_name
     )
     return new_member
@@ -88,7 +88,8 @@ def get_member_details(vars):
                 slides=slides, #todo: duplicate?
                 spouses=spouses, #this is just the key for translation
                 member_stories=member_stories,
-                facePhotoURL = photos_folder('profile_photos') + member_info.facePhotoURL if  member_info.facePhotoURL else request.application + '/static/images/dummy_face.png')
+                facePhotoURL = photos_folder('profile_photos') + (member_info.facePhotoURL or "dummy_face.png")
+                )
 
 @serve_json
 def get_member_photo_list(vars):
@@ -319,19 +320,19 @@ def get_photo_detail(vars):
                 photo_name = rec.Name,
                 photo_story=story.story_text if story else None)
 
-def _get_member_names():
+def get_member_names():
     q = (db.TblMembers.id > 0)
     lst = db(q).select()
     arr = [Storage(id=rec.id,
                    name=member_display_name(rec, full=True),
                    gender=rec.gender,
                    has_profile_photo=bool(rec.facePhotoURL),
-                   facePhotoURL=photos_folder('profile_photos') + rec.facePhotoURL if rec.facePhotoURL else 'http://' + request.env.http_host  + "/gbs/static/images/dummy_face.png") for rec in lst]
+                   facePhotoURL=photos_folder('profile_photos') + (rec.facePhotoURL or "dummy_face.png")) for rec in lst]
     return arr
 
-def get_member_names(refresh=False):
-    c = Cache('get_member_names')
-    return c(_get_member_names, refresh)
+#def get_member_names(refresh=False):
+    #c = Cache('get_member_names')
+    #return c(_get_member_names, refresh)
 
 def older_display_name(rec, full):
     s = rec.Name or ''
@@ -522,14 +523,13 @@ def save_face(vars):
     return dict(member_name=member_name, face_photo_url=face_photo_url)
 
 @serve_json
-def remove_face(vars):
-    face = vars.face;
-    if not face.member_id:
-        return dict()
-    q = (db.TblMemberPhotos.Photo_id==face.photo_id) & \
-        (db.TblMemberPhotos.Member_id==face.member_id)
+def detach_photo_from_member(vars):
+    member_id = vars.member_id
+    photo_id = vars.photo_id
+    q = (db.TblMemberPhotos.Photo_id==photo_id) & \
+        (db.TblMemberPhotos.Member_id==member_id)
     good = db(q).delete() == 1
-    return dict(face_deleted=good)
+    return dict(photo_detached=good)
 
 def get_photo_list_with_topics(vars):
     first = True

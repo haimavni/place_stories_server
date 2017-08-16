@@ -3,6 +3,8 @@
 import datetime
 
 def date_of_date_str(date_str):
+    if not date_str:
+        return None
     d = 1
     m = 1
     y = 1

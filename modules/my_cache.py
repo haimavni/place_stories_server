@@ -35,6 +35,9 @@ class Cache:
                 prefix = ''
         else:
             prefix = ''
+        if prefix:
+            prefix += '-'
+        prefix += request.application + '-'
         key = prefix + key
         if not valid_key_chars_re.match(key):
             key = key.encode('hex')
