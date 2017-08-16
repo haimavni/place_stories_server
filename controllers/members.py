@@ -648,6 +648,15 @@ def get_constants(vars):
 def get_used_languages(vars):
     return calc_used_languages(vars)
 
+@serve_json
+def get_term_list(vars):
+    lst = db(db.TblStories.used_for==STORY4TERM).select()
+    result = [dict(story_text=rec.story,
+                   name=rec.name, 
+                   story_id=rec.id, 
+                   author=rec.source) for rec in lst]
+    return dict(term_list=result)
+
 def save_profile_photo(face):
     rec = get_photo_rec(face.photo_id)
     input_path = local_photos_folder() + rec.photo_path

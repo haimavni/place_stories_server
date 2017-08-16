@@ -104,8 +104,8 @@ def consolidate_stories():
 
     lst = db(db.TblTerms.Background != '').select()
     for rec in lst:
-        story_id = db.TblStories.insert(story='<div class="term-background">' + rec.Background + '</div>' +
-                                        '<div class="term-translation">' + rec.TermTranslation + '</div>', 
+        story_id = db.TblStories.insert(story='<div class="term-translation">' + rec.TermTranslation + '</div>' +
+                                        '<div class="term-background">' + rec.Background + '</div>', 
                                         used_for=STORY4TERM)
         db(db.TblTerms.id==rec.id).update(story_id=story_id, Background='', BackgroundNoHtml='', TermTranslation='')
 
