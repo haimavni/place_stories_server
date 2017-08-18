@@ -127,6 +127,8 @@ def scan_all_unscanned_photos():
             comment('No unscanned photos were found!')
             return dict(message='No unscanned photos were found!', to_scan=to_scan)
         for rec in lst:
+            if not rec.photo_path:
+                continue
             fname = folder + rec.photo_path
             if not os.path.exists(fname):
                 rec.update_record(photo_missing=True)
