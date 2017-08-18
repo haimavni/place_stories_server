@@ -19,7 +19,7 @@ def index():
     if you need a simple wiki simply replace the two lines below with:
     return auth.wiki()
     """
-    redirect("/gbs/static/aurelia/index.html")
+    redirect("/{}/static/aurelia/index.html".format(request.application))
 
 
 def user():
