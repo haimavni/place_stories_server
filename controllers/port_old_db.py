@@ -139,7 +139,7 @@ def name_stories():
     for i, rec in enumerate(lst):
         story = rec.story.decode('utf8')
         name = rec.name
-        if not name:
+        if (not name) or name.endswith("..."):
             words = extract_tokens(story)
             name = ' '.join(words[:6]).strip()
             if name:

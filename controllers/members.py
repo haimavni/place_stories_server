@@ -245,7 +245,7 @@ def save_member_info(vars):
                 date_fields.append(k)
         for df in date_fields:
             k = df[:-4]
-            member_info[k] = date_of_date_str(member_info[df])
+            member_info[df], member_info[k] = date_of_date_str(member_info[df])
         result = insert_or_update(db.TblMembers, **member_info)
         if isinstance(result, dict):
             return dict(errors=result['errors'])
@@ -259,7 +259,7 @@ def save_member_info(vars):
     if member_id:
         result.member_id = member_id;
     #todo: read-modify-write below?
-    get_member_names(refresh=True)
+    get_member_names()
     return result
 
 @serve_json
@@ -280,31 +280,14 @@ def upload_photos(vars):
         if fn.startswith('user'):
             continue
         fil = vars[fn]
-        crc = zlib.crc32(fil.BINvalue)
-        cnt = db(db.TblPhotos.crc==crc).count()
-        if cnt > 0:
+        result = save_uploaded_photo(fil.name, fil.BINvalue, 'uploads/' + month + '/', user_id)
+        if result == 'duplicate':
             number_duplicates += 1
             continue
-
-        original_file_name, ext = os.path.splitext(fil.name)
-        file_name = '{crc:x}{ext}'.format(crc=crc & 0xffffffff, ext=ext)
-        result = save_uploaded_photo(file_name, fil.BINvalue, 'uploads/' + month + '/', original_file_name)
-        if result.failed:
-            failed.append(original_file_name)
+        if result == 'failed':
+            failed.append(fil.name)
             continue
-        file_location = 'uploads/' + month + '/' + file_name
         number_uploaded += 1
-        db.TblPhotos.insert(photo_path=file_location,
-                            original_file_name=original_file_name,
-                            Name=original_file_name,
-                            uploader=user_id,
-                            upload_date=datetime.datetime.now(),
-                            width=result.width,
-                            height=result.height,
-                            crc=crc,
-                            oversize=result.oversize,
-                            photo_missing=False
-                            )
     return dict(number_uploaded=number_uploaded, number_duplicates=number_duplicates, failed=failed)
 
 @serve_json
@@ -563,10 +546,10 @@ def make_photos_query(vars):
         q &= db.TblPhotos.photographer_id.belongs(photographer_list)
 
     if vars.from_date:
-        from_date = date_of_date_str(vars.from_date)
+        dummy, from_date = date_of_date_str(vars.from_date)
         q &= (db.TblPhotos.photo_date >= from_date)
     if vars.to_date:
-        to_date = date_of_date_str(vars.to_date)
+        dummy, to_date = date_of_date_str(vars.to_date)
         q &= (db.TblPhotos.photo_date <= to_date)
     #if vars.selected_uploader:
         #q &= db.TblPhotos.uploader==vars.uploader
@@ -575,6 +558,12 @@ def make_photos_query(vars):
         if days:
             upload_date = datetime.date.today() - datetime.timedelta(days=days)
             q &= (db.TblPhotos.upload_date >= upload_date)
+    if vars.selected_uploader:
+        opt = vars.selected_uploader
+    if opt == 'mine':
+        q &= (db.TblPhotos.uploader==auth.current_user())
+    elif opt == 'users':
+        q &= (db.TblPhotos.uploader!=None)
     return q
 
 @serve_json
@@ -660,7 +649,8 @@ def get_term_list(vars):
 def save_profile_photo(face):
     rec = get_photo_rec(face.photo_id)
     input_path = local_photos_folder() + rec.photo_path
-    facePhotoURL = "PP-{}-{}.jpg".format(face.member_id, face.photo_id)
+    rnd = random.randint(0, 1000) #if we use the same photo and just modify crop, change is not seen because of caching
+    facePhotoURL = "PP-{}-{}-{:03}.jpg".format(face.member_id, face.photo_id, rnd)
     output_path = local_photos_folder("profile_photos") + facePhotoURL
     crop(input_path, output_path, face)
     db(db.TblMembers.id==face.member_id).update(facePhotoURL=facePhotoURL)

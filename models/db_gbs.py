@@ -308,7 +308,8 @@ def write_indexing_sql_scripts():
         ('TblMemberPhotos', 'Photo_id', 'x', 'y'),
         ('TblEventMembers', 'Member_id'),
         ('TblEventMembers', 'Event_id'),
-        ('TblWordStories',  'word_id')
+        ('TblWordStories',  'word_id'),
+        ('TblPhotos',       'crc')
     ]
 
     path = 'applications/' + request.application + '/logs/'

@@ -4,25 +4,30 @@ import datetime
 
 def date_of_date_str(date_str):
     if not date_str:
-        return None
+        return None, None
+    date_str = date_str.replace('/', '-').replace('.', '-')
+    lst = (date_str + '-??-??').split('-')[:3]
     d = 1
     m = 1
     y = 1
-    ys, ms, ds = date_str.split('-')
+    ys, ms, ds =lst
+    if len(ds) == 4:  #date is dd/mm/yyyy
+        ds, ms, ys = lst
+    date_str = '{}-{}-{}'.format(ys, ms, ds)
     if ys.startswith('?'):
-        return datetime.date(day=d, month=m, year=y)
+        return date_str, datetime.date(day=d, month=m, year=y)
     if ys.endswith('?'):
         ys = ys[0:3] + '0'
         year = int(ys)
-        return datetime.date(day=d, month=m, year=y)
+        return date_str, datetime.date(day=d, month=m, year=y)
     y = int(ys)
     if ms == '??':
-        return datetime.date(day=d, month=m, year=y)
+        return date_str, datetime.date(day=d, month=m, year=y)
     m = int(ms)
     if ds == '??':
-        return datetime.date(day=d, month=m, year=y)
+        return date_str, datetime.date(day=d, month=m, year=y)
     d = int(ds)
-    return datetime.date(day=d, month=m, year=y)
+    return date_str, datetime.date(day=d, month=m, year=y)
 
 def string_date_to_date(s):
     p = "שנות ה"

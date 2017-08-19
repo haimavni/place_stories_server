@@ -36,10 +36,19 @@ def crop_to_square(img, width, height, side_size):
     except:
         return None
     return resized_img
+
+def modification_date(filename):
+    t = os.path.getmtime(filename)
+    return datetime.datetime.fromtimestamp(t)
    
-def save_uploaded_photo(file_name, blob, path_tail, original_file_name):
-    comment, log_exception = inject('comment', 'log_exception')
-    failed = False
+def save_uploaded_photo(file_name, blob, path_tail, user_id):
+    comment, log_exception, db = inject('comment', 'log_exception', 'db')
+    crc = zlib.crc32(blob)
+    cnt = db(db.TblPhotos.crc==crc).count()
+    if cnt > 0:
+        return 'duplicate'
+    original_file_name, ext = os.path.splitext(file_name)
+    file_name = '{crc:x}{ext}'.format(crc=crc & 0xffffffff, ext=ext)
     comment('start saving {}', original_file_name)
     try:
         stream = StringIO(blob)
@@ -62,11 +71,27 @@ def save_uploaded_photo(file_name, blob, path_tail, original_file_name):
             width, height = resized(width, height)
             img = img.resize((width, height), Image.LANCZOS)
         path = local_photos_folder() + path_tail
+        if os.path.isfile(path + file_name):
+            file_date = modification_date(path + file_name)
+        else:
+            file_date = None
         img.save(path + file_name)
     except Exception, e:
         log_exception("saving photo {} failed".format(original_file_name))
-        failed = True
-    return Storage(oversize=oversize, got_square=got_square, width=width, height=height, failed=failed)
+        return 'failed'
+    
+    db.TblPhotos.insert(photo_path=path + file_name,
+                        original_file_name=original_file_name,
+                        Name=original_file_name,
+                        uploader=user_id,
+                        upload_date=file_date or datetime.datetime.now(),
+                        width=width,
+                        height=height,
+                        crc=crc,
+                        oversize=oversize,
+                        photo_missing=False
+                        )
+    return 'success'
 
 def get_image_info(image_path):
     img = Image.open(image_path)
@@ -217,4 +242,20 @@ def crop_square(img_src, width, height, side_size):
     except:
         return False
     return True
+
+def add_photos_from_drive(sub_folder):
+    folder = local_photos_folder("orig")
+    root_folder = folder + sub_folder
+    for root, dirs, files in os.walk(root_folder, topdown=True):
+        print("there are", len(files), "files in", root)
+        for file_name in files:
+            path = root + '/' + file_name
+            with open(path, 'r') as f:
+                blob = f.read()
+            result = save_uploaded_photo(file_name, blob, sub_folder)
+            if result in ('failed', 'duplicate'):
+                continue
+            #delete the file. it has been saved using crc as name and was possibly resized
+            os.remove(path)
+    
 
