@@ -206,16 +206,3 @@ def test():
 
 if __name__ == '__main__'    :
     test()
-
-
-
-
-
-t = """
-        select ctest1, array_agg(ctest2) as test2s
-        from (
-            select ctest1, ctest2
-            from ctest1 inner join ctest2 on ctest1.id = ctest2.test_id
-            order by ctest1.id, ctest2.label
-        ) x group by ctest1;
-"""

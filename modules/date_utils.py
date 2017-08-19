@@ -10,7 +10,7 @@ def date_of_date_str(date_str):
     d = 1
     m = 1
     y = 1
-    ys, ms, ds =lst
+    ys, ms, ds = lst
     if len(ds) == 4:  #date is dd/mm/yyyy
         ds, ms, ys = lst
     date_str = '{}-{}-{}'.format(ys, ms, ds)

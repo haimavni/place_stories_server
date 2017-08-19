@@ -3,6 +3,7 @@ from PIL import Image, ImageFile
 from gluon.storage import Storage
 from injections import inject
 import os
+import datetime
 from distutils import dir_util
 import zlib
 from cStringIO import StringIO
@@ -252,7 +253,7 @@ def add_photos_from_drive(sub_folder):
             path = root + '/' + file_name
             with open(path, 'r') as f:
                 blob = f.read()
-            result = save_uploaded_photo(file_name, blob, sub_folder)
+            result = save_uploaded_photo(file_name, blob, sub_folder, 1)
             if result in ('failed', 'duplicate'):
                 continue
             #delete the file. it has been saved using crc as name and was possibly resized
