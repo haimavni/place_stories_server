@@ -138,8 +138,10 @@ def fit_all_sizes():
         db.commit()
     return dict(num_failed=num_failed)
         
-def scan_all_unscanned_photos():
+def scan_all_unscanned_photos(scratch = False):
     db, request, comment = inject('db', 'request', 'comment')
+    if scratch:
+        db(db.TblPhotos).update(crc=0, photo_missing=None)
     q = (db.TblPhotos.crc==None) & (db.TblPhotos.photo_missing == False)
     to_scan = db(q).count()
     comment("{} photos still unscanned", to_scan)
