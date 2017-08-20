@@ -210,6 +210,7 @@ def rename_locations():
         
 def init_all_photos():
     db(db.TblPhotos).update(crc=None, photo_missing=False)
+    db.commit()
     
 def scan_photos():
     return scan_all_unscanned_photos()
