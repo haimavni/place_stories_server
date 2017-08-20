@@ -209,7 +209,7 @@ def rename_locations():
         rec.update_record(photo_path="ported/" + rec.LocationInDisk)
 
 def scan_photos():
-    scratch = vars.scratch
+    scratch = request.vars.scratch
     return scan_all_unscanned_photos(scratch)
 
 def guess_photographer(location):
