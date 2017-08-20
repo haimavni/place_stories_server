@@ -207,10 +207,12 @@ def guess_names():
 def rename_locations():
     for rec in db(db.TblPhotos).select():
         rec.update_record(photo_path="ported/" + rec.LocationInDisk)
-
+        
+def init_all_photos():
+    db(db.TblPhotos).update(crc=0, photo_missing=None)
+    
 def scan_photos():
-    scratch = request.vars.scratch
-    return scan_all_unscanned_photos(scratch)
+    return scan_all_unscanned_photos()
 
 def guess_photographer(location):
     candidates = dict(
