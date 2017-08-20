@@ -209,7 +209,7 @@ def rename_locations():
         rec.update_record(photo_path="ported/" + rec.LocationInDisk)
         
 def init_all_photos():
-    db(db.TblPhotos).update(crc=0, photo_missing=None)
+    db(db.TblPhotos).update(crc=0, photo_missing=False)
     
 def scan_photos():
     return scan_all_unscanned_photos()
