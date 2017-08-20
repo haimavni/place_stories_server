@@ -558,6 +558,7 @@ def make_photos_query(vars):
         if days:
             upload_date = datetime.date.today() - datetime.timedelta(days=days)
             q &= (db.TblPhotos.upload_date >= upload_date)
+    opt = None
     if vars.selected_uploader:
         opt = vars.selected_uploader
     if opt == 'mine':
