@@ -1,5 +1,6 @@
-cd /home/www-data/place_stories_server
+cd /home/www-data/tol_server_${$1}
 git pull
+git checkout ${$1}
 chown -R www-data:www-data .
 systemctl stop web2py-scheduler.service
 systemctl stop nginx
