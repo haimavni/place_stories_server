@@ -106,7 +106,7 @@ def fit_size(rec):
     try:
         img = Image.open(fname)
         oversize_file_name = local_photos_folder("oversize") + rec.photo_path
-        oversize_path, fname = os.path.split(oversize_file_name)
+        oversize_path, f = os.path.split(oversize_file_name)
         dir_util.mkpath(oversize_path)
         img.save(oversize_file_name)
         width, height = resized(rec.width, rec.height)
@@ -149,7 +149,7 @@ def scan_all_unscanned_photos():
     while True:
         comment('started scanning chunk of photos')
         lst = db(q).select(limitby=(0, chunk))
-        if len(lst) == 0:
+        if not len(lst):
             comment('No unscanned photos were found!')
             return dict(message='No unscanned photos were found!', to_scan=to_scan)
         for rec in lst:
