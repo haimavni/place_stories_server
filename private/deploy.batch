@@ -1,6 +1,0 @@
-lcd /home/haim/deployment_folder
-cd /home/www-data/place_stories_server/static
-rename aurelia aurelia_prev
-mkdir aurelia
-cd aurelia
-put -R *

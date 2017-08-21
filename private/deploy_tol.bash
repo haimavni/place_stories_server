@@ -49,12 +49,12 @@ rename aurelia aurelia_prev
 mkdir aurelia
 cd aurelia
 put -R *
-" > ../server/place_stories_server/private/deploy.batch
+" > ../server/tol_server/private/deploy.batch
 
-ssh root@gbstories.org rm -R -f /home/www-data/tol_server_${BRANCH}/static/aurelia_prev/*
-sftp -b ../server/tol_server_${BRANCH}/private/deploy.batch root@gbstories.org
+ssh gbstories.org rm -R -f /home/www-data/tol_server_${BRANCH}/static/aurelia_prev/*
+sftp -b ../server/tol_server/private/deploy.batch gbstories.org
 
-ssh root@gbstories.org bash /home/www-data/tol_server_${BRANCH}/private/update_gbs_server.bash ${BRANCH}
-rm deploy.batch
+ssh gbstories.org bash /home/www-data/tol_server_${BRANCH}/private/update_gbs_server.bash ${BRANCH}
+rm ../server/tol_server/private/deploy.batch
 
 popd
