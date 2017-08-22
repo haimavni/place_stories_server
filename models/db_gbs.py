@@ -19,7 +19,8 @@ db.define_table('TblStories',
                 Field('keywords', type='string'),  #to be calculated automatically using tfidf
                 Field('story_len', type='integer', compute=lambda row: len(row.story)),
                 Field('language', type='string'),
-                Field('translated_from', type='integer') ##db.TblStories 
+                Field('translated_from', type='integer'), ##db.TblStories 
+                Field('deleted', type='boolean', default=False)
 )                
 
 db.define_table('TblStoryVersions',
@@ -189,7 +190,8 @@ db.define_table('TblMembers',
                 Field('Professions', type='string'),
                 Field('StatusID', type='integer'),
                 Field('Status_id', type='integer'),
-                Field('facePhotoURL', type='string')
+                Field('facePhotoURL', type='string'),
+                Field('deleted', type='boolean', default=False)
 )
 
 db.define_table('TblObjects',

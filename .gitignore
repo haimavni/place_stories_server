@@ -20,7 +20,7 @@ venv/
 ENV/
 static/gb_photos
 static/aurelia
-static/aurelia-prev
+static/aurelia_prev
 sessions/
 private/junk/
 host_address.txt

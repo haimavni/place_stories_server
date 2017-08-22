@@ -252,14 +252,14 @@ def save_member_info(vars):
         member_id = result
         member_rec = get_member_rec(member_id)
         member_rec = json_to_storage(member_rec)
-        ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL_USERS', member_rec=member_rec, new_member=new_member)
+        ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL', member_rec=member_rec, new_member=new_member)
     elif story_id:
         db(db.TblMembers.id==member_id).update(story_id=story_id)
     result = Storage(info=info)
     if member_id:
         result.member_id = member_id;
     #todo: read-modify-write below?
-    get_member_names()
+    ##get_member_names() #todo: needed if we use caching again
     return result
 
 @serve_json
@@ -304,7 +304,7 @@ def get_photo_detail(vars):
                 photo_story=story.story_text if story else None)
 
 def get_member_names():
-    q = (db.TblMembers.id > 0)
+    q = (db.TblMembers.deleted != True)
     lst = db(q).select()
     arr = [Storage(id=rec.id,
                    name=member_display_name(rec, full=True),
@@ -312,6 +312,14 @@ def get_member_names():
                    has_profile_photo=bool(rec.facePhotoURL),
                    facePhotoURL=photos_folder('profile_photos') + (rec.facePhotoURL or "dummy_face.png")) for rec in lst]
     return arr
+
+@serve_json
+def remove_member(vars):
+    member_id = int(vars.member_id)
+    deleted = db(db.TblMembers.id==member_id).update(deleted=True) == 1
+    if deleted:
+        ws_messaging.send_message(key='MEMBER_DELETED', group='ALL', member_id=member_id)
+    return dict(deleted=deleted)
 
 #def get_member_names(refresh=False):
     #c = Cache('get_member_names')

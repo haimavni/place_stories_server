@@ -94,7 +94,8 @@ Installation of postgresql
     ssh -L 5433:localhost:5432 senseforge.net               #SSH tunnel
     The server name is then, in pgadmin III or psql, localhost and the port is 5433! 
     The command line is " psql --host localhost --port 5433"
-    change password: ALTER ROLE name SET PASSWORD TO value
+    change password: ALTER ROLE name SET PASSWORD TO value;
+	change database name: ALTER DATABASE name RENAME TO new-name;
     
     To grant permissions:  GRANT READ ... on TO ... 
 sudo lvdisplay #to see all logical volumes. if srv is selected, to mount it:
