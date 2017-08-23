@@ -3,6 +3,7 @@ STORY4EVENT = 2
 STORY4PHOTO = 3
 STORY4TERM = 4
 STORY4MESSAGE = 5
+STORY4HELP = 6
 
 T.force('he')
 
@@ -331,15 +332,9 @@ def write_indexing_sql_scripts():
                 f.write(create_cmd + '\n')
                 g.write(drop_cmd + '\n')
 
-db.define_table('TblHelpMessages',
-                Field('Name', type='string', default=""),
-                Field('content', type='text', default="")
-)
-
-db.define_table('TblHelpGotit',
-                Field('help_message_id', type=db.TblHelpMessages),
-                Field('member_id', type=db.TblMembers),
-                Field('Gotit', type='boolean', default=False)
+db.define_table('TblHelp',
+                Field('topic', type='string', default=""),
+                Field('story_id', type=db.TblStories)
 )
 
 write_indexing_sql_scripts()                

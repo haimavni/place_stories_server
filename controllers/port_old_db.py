@@ -133,7 +133,7 @@ def name_stories():
             name = ' '.join(words[:6]).strip()
             if name:
                 name += "..."
-        db(db.TblStories.id==rec.TblStories.id).update(name=name, author_id=1, source=source)
+        db(db.TblStories.id==rec.TblStories.id).update(name=name, source=source)
 
     lst = db(db.TblStories.used_for==STORY4MEMBER).select()
     for i, rec in enumerate(lst):
@@ -144,7 +144,7 @@ def name_stories():
             name = ' '.join(words[:6]).strip()
             if name:
                 name += "..."
-        db(db.TblStories.id==rec.id).update(name=name, author_id=1, source="")
+        db(db.TblStories.id==rec.id).update(name=name, source="")
 
     lst = db(db.TblStories.id==db.TblTerms.story_id).select()
     for i, rec in enumerate(lst):
@@ -168,7 +168,7 @@ def name_stories():
             name = ' '.join(words[:6]).strip()
             if name:
                 name += "..."
-        db(db.TblStories.id==rec.TblStories.id).update(name=name, author_id=1, source="")                
+        db(db.TblStories.id==rec.TblStories.id).update(name=name, source="")                
 
     return 'Finished naming stories'
 
@@ -443,9 +443,12 @@ def index():
         create_random_photo_keys()
         set_stories_language()
         ####calculate_story_lengths()
+        comment("start collecting word statistics")
+        collect_word_statistics()
         comment('Porting done')
     except Exception, e:
         log_exception('Porting old db failed')
+        return 'Porting old db failed: ' + e.message
     db.commit()
     return "Old db was converted and modified"
 

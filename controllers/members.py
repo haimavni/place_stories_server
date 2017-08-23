@@ -739,4 +739,14 @@ def get_story_list_with_topics(params, grouped_selected_topics, selected_topics)
     result = [dic[id] for id in bag]
     return result
 
-
+def merge_members(mem1_id, mem2_id):
+    photos1 = db(db.TblMemberPhotos.Member_id==mem1_id).select()
+    photos2 = db(db.TblMemberPhotos.Member_id==mem2_id).select()
+    set1 = set([rec.Photo_id for rec in photos1])
+    set2 = set([rec.Photo_id for rec in photos2])
+    for rec in photos2:
+        if rec.Photo_id in set1:
+            db(db.TblMemberPhotos.id==rec.id).delete
+        else:
+            rec.update_record(Member_id=mem1_id)
+    db(db.TblMembers.id==mem2_id).update(deleted=True)
