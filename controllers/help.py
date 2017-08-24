@@ -16,20 +16,12 @@ def get_help(vars):
                              story_id=None,
                              used_for = STORY4MEMBER
                              )
-    return dict(
-        title = story_info.name,
-        content = story_info.story_text
-    )
+    return dict(story_info=story_info)
 
 @serve_json
 def save_help(vars):
-    topic = vars.topic
-    story_id = vars.story_id
-    story_info = Storage(
-        name=vars.name,
-        story_text=vars.content,
-        used_for = STORY4MEMBER
-    )
+    story_info = vars.story_info
+    story_id = story_info.story_id
     sm = stories_manager.Stories()
     if not story_id:
         result = sm.add_story(story_info)
