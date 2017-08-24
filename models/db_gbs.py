@@ -9,6 +9,7 @@ T.force('he')
 
 db.define_table('TblStories',
                 Field('name', type='string'),
+                Field('topic', type='string'),
                 Field('story', type='text'),
                 Field('creation_date', type='datetime'),
                 Field('historic_date', type='string'), #for old stories
@@ -331,11 +332,6 @@ def write_indexing_sql_scripts():
                 drop_cmd = 'DROP INDEX {};'.format(tcc[0])
                 f.write(create_cmd + '\n')
                 g.write(drop_cmd + '\n')
-
-db.define_table('TblHelp',
-                Field('topic', type='string', default=""),
-                Field('story_id', type=db.TblStories)
-)
 
 write_indexing_sql_scripts()                
 

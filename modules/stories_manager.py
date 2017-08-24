@@ -62,6 +62,7 @@ class Stories:
             story_text=story_text,
             story_preview=get_reisha(story_text),
             name=rec.name,
+            topic=rec.topic,
             story_id=story_id,   #we always access via the master
             source=rec.source,
             used_for=rec.used_for,
@@ -91,6 +92,7 @@ class Stories:
                                         translated_from=story_id,
                                         creation_date=now,
                                         language=language,
+                                        topic=story_info.topic,
                                         last_update_date=now)
         return Storage(story_id=story_id, creation_date=now, author=author_name)
 
@@ -124,5 +126,15 @@ class Stories:
         return Storage(story_id=story_id, last_update_date=now, updater_name=author_name, author=story_info.author)
 
     def find_translation(self, story_id, language):
+        db = inject('db')
         q = (db.TblStories.translated_from==story_id) & (db.TblStories.language==language)
         return db(q).select().first()
+    
+    def find_story(self, used_for, topic):
+        db = inject('db')
+        q = (db.TblStories.used_for==used_for) & (db.TblStories.topic==topic)
+        rec = db(q).select(db.TblStories.id).first()
+        if rec:
+            return self.get_story(rec.id)
+        else:
+            return None

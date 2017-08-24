@@ -702,7 +702,7 @@ def get_member_stories(member_id):
     return result
 
 def make_stories_query(params):
-    q = (db.TblStories.author_id==db.auth_user.id)
+    q = (db.TblStories.author_id==db.auth_user.id) | (db.TblStories.author_id==None)
     selected_story_types = [x.id for x in params.selected_story_types]
     if selected_story_types:
         q &= (db.TblStories.used_for.belongs(selected_story_types))
