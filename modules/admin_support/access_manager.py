@@ -60,8 +60,9 @@ class AccessManager:
     def get_users_data(self):
         db, auth = inject('db', 'auth')
         if auth.user:
-            name = (auth.user.first_name + ' ' + auth.user.last_name).lower()
-            by_developer = name in ('haim avni', 'barak shohat')
+            by_developer = auth.user.email in ['haimavni@gmail.com']
+            #name = (auth.user.first_name + ' ' + auth.user.last_name).lower()
+            #by_developer = name in ('haim avni', 'barak shohat')
         else:
             by_developer = False
         result = []
