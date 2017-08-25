@@ -27,6 +27,9 @@ echo -e "Deploy to branch " $BRANCH
 
 pushd ~/aurelia-gbs/gbs
 git pull
+
+python ~/aurelia-gbs/server/tol_server/private/handle_locale.py
+
 ##git checkout $BRNACH
 cp index.html index-orig.html
 rm -R -f scripts/*
