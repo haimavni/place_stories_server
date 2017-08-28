@@ -29,10 +29,11 @@ def save_help(vars):
         dbTblHelp.insert(topic=topic, story_id=story_id)
     else:
         sm.update_story(story_id, story_info)
+    save_help_messages_to_csv()
         
 def default_csv_name():
     request = inject('request')
-    return 'applications/{}/private/help_messages.csv'.format(request.application)
+    return 'applications/{}/logs/help_messages.csv'.format(request.application)
 
 def save_help_messages_to_csv(csv_name=None):
     db = inject('db')
@@ -44,4 +45,4 @@ def save_help_messages_to_csv(csv_name=None):
 def load_help_messages_from_csv(csv_name=None):
     csv_name = csv_name or default_csv_name()
     for rec in get_records(csv_name):
-        x = rec
+        db(db.TblStories.id==rec.id).update(**rec)

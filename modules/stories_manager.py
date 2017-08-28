@@ -138,3 +138,11 @@ class Stories:
             return self.get_story(rec.id)
         else:
             return None
+        
+    def get_all_stories(self, used_for):
+        db = inject('db')
+        q = (db.TblStories.used_for==used_for)
+        for rec in db(q).select(db.TblStories.id):
+            yield self.get_story(story_id)
+            
+        

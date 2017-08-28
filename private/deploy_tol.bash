@@ -28,24 +28,21 @@ echo -e "Deploy to branch " $BRANCH
 pushd ~/aurelia-gbs/gbs
 git pull
 
-python ~/aurelia-gbs/server/tol_server/private/handle_locale.py
-
 ##git checkout $BRNACH
 cp index.html index-orig.html
 rm -R -f scripts/*
-au build --env prod
 rm -R -f ~/deployment_folder/*
+python ~/aurelia-gbs/server/tol_server/private/handle_locale.py
+au build --env tmp_env
 cp -a ./scripts ~/deployment_folder/
 cp ./index.html  ~/deployment_folder
 cp ./favicon.ico  ~/deployment_folder
-cp -a ./locales  ~/deployment_folder
+##cp -a ./locales  ~/deployment_folder
 cp -a ./froala-style ~/deployment_folder
 cp -a ./images ~/deployment_folder
 cp index-orig.html index.html
 rm index-orig.html
 git checkout master
-
-
 
 echo "
 lcd /home/haim/deployment_folder

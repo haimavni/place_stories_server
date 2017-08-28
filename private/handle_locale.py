@@ -1,5 +1,6 @@
 import os
 import zlib
+from distutils import dir_util
 from shutil import copyfile
 
 os.chdir("/home/haim/aurelia-gbs/gbs")
@@ -24,6 +25,8 @@ for root, dirs, files in os.walk(cwd + '/locales', topdown=True):
 for k in dic:
     target = dic[k]['target'] + '{:0x}'.format(combined_crc & 0xffffffff) + ext
     source = dic[k]['source']
+    target_path, f = os.path.split(target)
+    dir_util.mkpath(target_path)
     copyfile(source, target)
     
 env = '''
@@ -35,7 +38,7 @@ export default {{
 }};
 '''.format(combined_crc & 0xffffffff) 
 
-with open('aurelia_project/environments/tmp_env', mode='w') as f:
+with open('aurelia_project/environments/tmp_env.ts', mode='w') as f:
     f.write(env)
         
     

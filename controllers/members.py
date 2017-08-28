@@ -148,6 +148,13 @@ def get_stories_sample(vars):
         lst1 = lst
     return dict(stories_sample=lst1)
 
+def calc_user_list():
+    lst = db(db.auth_user).select()
+    dic = dict()
+    for rec in lst:
+        dic[rec.id] = rec
+    return dic
+
 @serve_json
 def get_story_list(vars):
     params = vars.params
@@ -164,12 +171,17 @@ def get_story_list(vars):
     else:
         lst1 = lst
     lst = []
+    user_list = calc_user_list()
     for rec in lst1:
         if 'TblStories' in rec:
             r = rec.TblStories
         else:
             r = rec
-        r.author = rec.auth_user.first_name + ' ' + rec.auth_user.last_name if rec.auth_user.id > 2 else ""
+        if rec.author_id:
+            user = user_list[rec.author_id]
+            r.author = user.first_name + ' ' + user.last_name
+        else:
+            r.author = ""
         lst.append(r)
     result = [dict(story_text=rec.story,
                    story_preview=get_reisha(rec.story),
@@ -702,7 +714,7 @@ def get_member_stories(member_id):
     return result
 
 def make_stories_query(params):
-    q = (db.TblStories.author_id==db.auth_user.id) | (db.TblStories.author_id==None)
+    q = (db.TblStories.id > 0)
     selected_story_types = [x.id for x in params.selected_story_types]
     if selected_story_types:
         q &= (db.TblStories.used_for.belongs(selected_story_types))
