@@ -20,29 +20,38 @@ def get_help(vars):
 
 @serve_json
 def save_help(vars):
+    #this code is currently not called! the story is saved like any other story!
     story_info = vars.story_info
-    story_id = story_info.story_id
+    topic = story_info.topic
+    rec = db((db.TblStories.used_for==STORY4HELP) & (db.TblStories.topic==topic)).select().first()
+    if rec:
+        story_id = rec.id
+        if story_id != story_info.story_id:
+            x = 999 #bug? breakpoint here
+    else:
+        story_id = None
     sm = stories_manager.Stories()
     if not story_id:
         result = sm.add_story(story_info)
         story_id = result.story_id
-        dbTblHelp.insert(topic=topic, story_id=story_id)
     else:
         sm.update_story(story_id, story_info)
     save_help_messages_to_csv()
         
 def default_csv_name():
-    request = inject('request')
-    return 'applications/{}/logs/help_messages.csv'.format(request.application)
+    return 'applications/{}/private/help_messages.csv'.format(request.application)
 
-def save_help_messages_to_csv(csv_name=None):
-    db = inject('db')
-    csv_name = csv_name or default_csv_name()
+@serve_json
+def save_help_messages_to_csv(vars):
+    csv_name = vars.cvs_name or default_csv_name();
     rows = db(db.TblStories.used_for==STORY4HELP).select(db.TblStories.name, db.TblStories.topic, db.TblStories.story)
     with open(csv_name, 'w') as f:
         rows.export_to_csv_file(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
 
-def load_help_messages_from_csv(csv_name=None):
-    csv_name = csv_name or default_csv_name()
+@serve_json
+def load_help_messages_from_csv(vars):
+    csv_name = vars.cvs_name or default_csv_name();
     for rec in get_records(csv_name):
-        db(db.TblStories.id==rec.id).update(**rec)
+        pass
+        ##db(db.TblStories.id==rec.id).update(**rec)
+        

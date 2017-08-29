@@ -110,18 +110,21 @@ class Stories:
         db, auth = inject('db', 'auth')
         rec = db(db.TblStories.id==story_id).select().first()
         if rec.language and rec.language != language:
-            rec1 = find_translation(rec, language)
-        merger = mim.Merger()
-        delta = merger.diff_make(rec.story, updated_story_text)
-        db(db.TblStories.id==story_id).update(story=updated_story_text, name=story_info.name)
-        if not rec.story:
-            return
+            rec = find_translation(rec, language)
         now = datetime.datetime.now()
-        db.TblStoryVersions.insert(delta=delta, 
-                                   story_id=story_id, 
-                                   creation_date=now,
-                                   author_id=self.author_id
-                                   )
+        if rec.story != updated_story_text:
+            merger = mim.Merger()
+            delta = merger.diff_make(rec.story, updated_story_text)
+            rec.update_record(story=updated_story_text, name=story_info.name)
+            if not rec.story:
+                return
+            db.TblStoryVersions.insert(delta=delta, 
+                                       story_id=story_id, 
+                                       creation_date=now,
+                                       author_id=self.author_id
+                                       )
+        elif story_info.name != rec.name:
+            rec.update_record(name=story_info.name)
         author_name = auth.user_name(self.author_id)
         return Storage(story_id=story_id, last_update_date=now, updater_name=author_name, author=story_info.author)
 
