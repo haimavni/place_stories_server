@@ -1,6 +1,5 @@
 import stories_manager
 import csv, cStringIO
-from porting.create_old_db_mappings import get_records
 
 @serve_json
 def get_help(vars):
@@ -18,26 +17,25 @@ def get_help(vars):
                              )
     return dict(story_info=story_info)
 
-@serve_json
-def save_help(vars):
-    #this code is currently not called! the story is saved like any other story!
-    story_info = vars.story_info
-    topic = story_info.topic
+def save_help(name, topic, content):
     rec = db((db.TblStories.used_for==STORY4HELP) & (db.TblStories.topic==topic)).select().first()
     if rec:
         story_id = rec.id
-        if story_id != story_info.story_id:
-            x = 999 #bug? breakpoint here
     else:
         story_id = None
+    story_info = Storage(
+        name=name,
+        topic=topic,
+        story_text=content,
+        story_id=story_id,
+        used_for = STORY4HELP
+    )
     sm = stories_manager.Stories()
-    if not story_id:
-        result = sm.add_story(story_info)
-        story_id = result.story_id
-    else:
+    if story_id:
         sm.update_story(story_id, story_info)
-    save_help_messages_to_csv()
-        
+    else:
+        sm.add_story(story_info)
+
 def default_csv_name():
     return 'applications/{}/private/help_messages.csv'.format(request.application)
 
@@ -52,6 +50,14 @@ def save_help_messages_to_csv(vars):
 def load_help_messages_from_csv(vars):
     csv_name = vars.cvs_name or default_csv_name();
     for rec in get_records(csv_name):
-        pass
-        ##db(db.TblStories.id==rec.id).update(**rec)
-        
+        name, topic, content = rec
+        save_help(name, topic, content)
+
+def get_records(csv_name):
+    with open(csv_name, 'rb') as csvfile:
+        reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+        reader.next()     #skip header
+        for row in reader:
+            yield row
+
+
