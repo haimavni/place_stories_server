@@ -467,3 +467,27 @@ def duplicate_db(old_db_name, new_db_name):
     adapter = 'psycopg2:'
     uri = 'postgres:{ad}//lifestone:V3geHanu@localhost/{dbn}'.format(ad=adapter, dbn=dbname)    
     db_uid = kwargs.get('db_uid', hashlib_md5(repr(uri)).hexdigest())
+    
+def calc_members_visibility():
+    dic = dict()
+    for member in db(db.TblMembers).select():
+        mem_id = member.id
+        dic[mem_id] = dict(photo_count=0, story_count=1 if member.story_id != None else 0)
+        member.update_record(visibility=VIS_NOT_READY)
+    for rec in db(db.TblMemberPhotos).select():
+        mem_id = rec.Member_id
+        dic[mem_id]['photo_count'] += 1
+    for rec in db(db.TblEventMembers).select():
+        mem_id = rec.Member_id
+        dic[mem_id]['story_count'] += 1
+    for mem_id in dic:
+        scores = dic[mem_id]
+        if scores['photo_count'] > 6 or scores['story_count'] > 3:
+            vis = VIS_HIGH
+        elif scores['photo_count'] > 0 or scores['story_count'] > 0:
+            vis = VIS_VISIBLE
+        else:
+            vis = 0
+        if vis:
+            db(db.TblMembers.id==mem_id).update(visibility=vis)
+    

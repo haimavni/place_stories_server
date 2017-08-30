@@ -93,6 +93,8 @@ def get_member_details(vars):
 
 @serve_json
 def get_member_photo_list(vars):
+    if vars.member_id == "new":
+        return dict(photo_list=[])
     member_id = int(vars.member_id)
     if vars.what == 'story':
         member_id = db(db.TblMembers.story_id==member_id).select().first().id
@@ -320,6 +322,11 @@ def get_member_names():
     lst = db(q).select()
     arr = [Storage(id=rec.id,
                    name=member_display_name(rec, full=True),
+                   first_name=rec.first_name,
+                   last_name=rec.last_name,
+                   former_first_name=rec.former_first_name,
+                   former_last_name=rec.former_last_name,
+                   nick_name=rec.NickName,
                    gender=rec.gender,
                    has_profile_photo=bool(rec.facePhotoURL),
                    facePhotoURL=photos_folder('profile_photos') + (rec.facePhotoURL or "dummy_face.png")) for rec in lst]
@@ -425,6 +432,7 @@ def get_children(member_id):
         q = db.TblMembers.father_id==member_id
     else:
         return [] #error!
+    q &= (db.TblMembers.visibility > 0)
     lst = db(q).select(db.TblMembers.id, db.TblMembers.date_of_birth, orderby=db.TblMembers.date_of_birth)
     lst = [get_member_rec(rec.id, prepend_path=True) for rec in lst]
     return lst
@@ -647,12 +655,21 @@ def get_message_list(vars):
 @serve_json
 def get_constants(vars):
     return dict(
-        STORY4MEMBER = 1,
-        STORY4EVENT = 2,
-        STORY4PHOTO = 3,
-        STORY4TERM = 4,
-        STORY4MESSAGE = 5    
-    )
+        story_type=dict(
+            STORY4MEMBER=STORY4MEMBER,
+            STORY4EVENT=STORY4EVENT,
+            STORY4PHOTO=STORY4PHOTO,
+            STORY4TERM=STORY4TERM,
+            STORY4MESSAGE=STORY4MESSAGE,
+            STORY4HELP=STORY4HELP
+            ),
+        visibility=dict(
+            VIS_NEVER=VIS_NEVER, #for non existing members such as the child of a childless couple (it just connects the)
+            VIS_NOT_READY=VIS_NOT_READY,
+            VIS_VISIBLE=VIS_VISIBLE,
+            VIS_HIGH=VIS_HIGH          
+        )
+    )    
 
 @serve_json
 def get_used_languages(vars):

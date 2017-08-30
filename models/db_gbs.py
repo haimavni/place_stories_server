@@ -5,6 +5,11 @@ STORY4TERM = 4
 STORY4MESSAGE = 5
 STORY4HELP = 6
 
+VIS_NEVER = 0           #for non existing members such as the child of a childless couple (it just connects them)
+VIS_NOT_READY = 1
+VIS_VISIBLE = 2
+VIS_HIGH = 3            #
+
 T.force('he')
 
 db.define_table('TblStories',
@@ -177,7 +182,8 @@ db.define_table('TblMembers',
                 Field('father_id', type='integer'), #all family relations can be derived from these 2 fields.
                 Field('mother_id', type='integer'), #virtual child can define childless married couple etc. 
                 Field('member_photo_id', type='integer'),
-                Field('visible', type='boolean'),
+                Field('visible', type='boolean'), #obsolete
+                Field('visibility', type='integer'),
                 Field('Institute', type='string'),
                 Field('KeyWords', type='string'),
                 Field('LifeStory', type='text'),
