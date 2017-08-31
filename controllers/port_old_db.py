@@ -445,6 +445,8 @@ def index():
         ####calculate_story_lengths()
         comment("start collecting word statistics")
         collect_word_statistics()
+        comment("start calculating visibility")
+        calc_members_visibility()
         comment('Porting done')
     except Exception, e:
         log_exception('Porting old db failed')

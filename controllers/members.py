@@ -38,6 +38,7 @@ def new_member_rec(gender=None, first_name=""):
             last_name="",
             former_first_name="",
             former_last_name="",
+            visibility=VIS_NOT_READY,
             gender=gender),
         story_info = Storage(display_version='New Story', story_versions=[], story_text='', story_id=None),
         family_connections =  Storage(
@@ -328,6 +329,7 @@ def get_member_names():
                    former_last_name=rec.former_last_name,
                    nick_name=rec.NickName,
                    gender=rec.gender,
+                   visibility=rec.visibility,
                    has_profile_photo=bool(rec.facePhotoURL),
                    facePhotoURL=photos_folder('profile_photos') + (rec.facePhotoURL or "dummy_face.png")) for rec in lst]
     return arr
