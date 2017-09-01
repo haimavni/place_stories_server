@@ -460,16 +460,6 @@ def collect_word_statistics():
 def get_word_index():
     dic = read_words_index()
 
-def duplicate_db(old_db_name, new_db_name):
-    #after we duplicate db to become the dev db, we need to copy the files in databases renamed using the name that is calculated from the new uri
-    #todo: complete it
-    import hashlib
-    hashlib_md5 = hashlib.md5
-    dbname = request.application
-    adapter = 'psycopg2:'
-    uri = 'postgres:{ad}//lifestone:V3geHanu@localhost/{dbn}'.format(ad=adapter, dbn=dbname)    
-    db_uid = kwargs.get('db_uid', hashlib_md5(repr(uri)).hexdigest())
-    
 def calc_members_visibility():
     dic = dict()
     for member in db(db.TblMembers).select():
