@@ -180,8 +180,8 @@ def get_story_list(vars):
             r = rec.TblStories
         else:
             r = rec
-        if rec.author_id:
-            user = user_list[rec.author_id]
+        if r.author_id:
+            user = user_list[r.author_id]
             r.author = user.first_name + ' ' + user.last_name
         else:
             r.author = ""
