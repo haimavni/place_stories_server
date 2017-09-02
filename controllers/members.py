@@ -126,7 +126,7 @@ def get_random_member(vars):
                   name=member_data.full_name,
                   first_name=member_data.first_name,
                   year_of_birth=member_data.date_of_birth.year if member_data.date_of_birth else None,           
-                  year_of_death=member_data.date_of_death.year if member_data.date_of_death else None,
+                  year_of_death=member_data.date_of_death.year if member_data.date_of_death and member_data.date_of_death > datetime.date(year=1000, month=1, day=1) else None,
                   place_of_birth=member_data.PlaceOfBirth,
                   gender=member_data.gender,
                   id=member_data.id
