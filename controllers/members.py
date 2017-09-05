@@ -419,7 +419,7 @@ def get_siblings(member_id):
     if not parents:
         return []
     pa, ma = parents.pa, parents.ma
-    q = db.TblMembers.id!=member_id
+    q = (db.TblMembers.id != member_id) & (db.TblMembers.visibility > 0)
     if pa:
         lst1 = db(q & (db.TblMembers.father_id==pa.id)).select(orderby=db.TblMembers.date_of_birth) if pa else []
         lst1 = [r.id for r in lst1]
@@ -432,6 +432,9 @@ def get_siblings(member_id):
         lst2 = []
     lst = list(set(lst1 + lst2)) #make it unique
     lst = [get_member_rec(id, prepend_path=True) for id in lst]
+    for rec in lst:
+        if not rec.date_of_birth:
+            rec.date_of_birth = datetime.date(year=1, month=1, day=1) #should not happen but it did...
     lst = sorted(lst, key=lambda rec: rec.date_of_birth)
     return lst
 

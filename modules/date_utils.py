@@ -4,7 +4,7 @@ import datetime
 
 def date_of_date_str(date_str):
     if not date_str:
-        return None, None
+        date_str = '????-??-??'
     date_str = date_str.replace('/', '-').replace('.', '-')
     lst = (date_str + '-??-??').split('-')[:3]
     d = 1
