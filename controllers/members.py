@@ -160,6 +160,7 @@ def calc_user_list():
 
 @serve_json
 def get_story_list(vars):
+    story_topics = get_story_topics()
     params = vars.params
 
     selected_topics = params.selected_topics or []
@@ -189,7 +190,8 @@ def get_story_list(vars):
     result = [dict(story_text=rec.story,
                    story_preview=get_reisha(rec.story),
                    name=rec.name, 
-                   story_id=rec.id, 
+                   story_id=rec.id,
+                   topics = '; '.join(story_topics[rec.id]) if rec.id in story_topics else "",
                    used_for=rec.used_for,
                    event_date=rec.creation_date, 
                    timestamp=rec.last_update_date, 
@@ -203,8 +205,12 @@ def get_story_previews(vars):
 
 @serve_json
 def get_story_detail(vars):
-    story_id = int(vars.story_id)
+    story_id = vars.story_id
     sm = stories_manager.Stories()
+    if story_id == 'new':
+        story = sm.get_empty_story(used_for=STORY4EVENT)
+        return dict(story=story, members=[], photos=[])
+    story_id = int(story_id)
     story=sm.get_story(story_id)
     members = []
     photos = []
@@ -229,7 +235,10 @@ def get_story_detail(vars):
 
 @serve_json
 def get_story_photo_list(vars):
-    story_id = int(vars.story_id)
+    story_id = vars.story_id
+    if story_id == 'new':
+        return dict(photo_list=[])
+    story_id = int(story_id)
     event = db(db.TblEvents.story_id==story_id).select().first()
     if not event:
         return dict()
@@ -426,7 +435,7 @@ def get_siblings(member_id):
     lst = sorted(lst, key=lambda rec: rec.date_of_birth)
     return lst
 
-def get_children(member_id):
+def get_children(member_id, hidden_too=False):
     member_rec = get_member_rec(member_id)
     if member_rec.gender=='F' :
         q = db.TblMembers.mother_id==member_id
@@ -434,13 +443,14 @@ def get_children(member_id):
         q = db.TblMembers.father_id==member_id
     else:
         return [] #error!
-    q &= (db.TblMembers.visibility > 0)
+    if not hidden_too:
+        q &= (db.TblMembers.visibility > 0)
     lst = db(q).select(db.TblMembers.id, db.TblMembers.date_of_birth, orderby=db.TblMembers.date_of_birth)
     lst = [get_member_rec(rec.id, prepend_path=True) for rec in lst]
     return lst
 
 def get_spouses(member_id):
-    children = get_children(member_id)
+    children = get_children(member_id, hidden_too=True)
     member_rec = get_member_rec(member_id)
     if member_rec.gender == 'F':
         spouses = [child.father_id for child in children]
@@ -731,6 +741,21 @@ def get_member_stories(member_id):
         )
         result.append(dic)
     return result
+
+def _get_story_topics():
+    q = (db.TblItemTopics.story_id==db.TblStories.id) & (db.TblTopics.id==db.TblItemTopics.topic_id)
+    dic = dict()
+    for rec in db(q).select(db.TblStories.id, db.TblItemTopics.story_id, db.TblTopics.name):
+        story_id = rec.TblStories.id
+        topic_name = rec.TblTopics.name
+        if story_id not in dic:
+            dic[story_id] = []
+        dic[story_id].append(topic_name)
+    return dic
+
+def get_story_topics(refresh=False):
+    c = Cache('get_story_topics')
+    return c(_get_story_topics, refresh)
 
 def make_stories_query(params):
     q = (db.TblStories.id > 0)

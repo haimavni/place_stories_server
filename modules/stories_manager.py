@@ -73,6 +73,19 @@ class Stories:
             display_version=display_version
         )
         return story_info
+    
+    def get_empty_story(self, used_for=2):
+        story_info = Storage(
+            story_text="New Story",
+            story_preview=[],
+            name='stories.new-story',
+            topic="",
+            story_id="new",   #we always access via the master
+            source="",
+            used_for=used_for,
+            author_id=None
+            )
+        return story_info
 
     def add_story(self, story_info, story_id=None, language=None):
         story_text = story_info.story_text
@@ -97,6 +110,8 @@ class Stories:
         return Storage(story_id=story_id, creation_date=now, author=author_name)
 
     def update_story(self, story_id, story_info, language=None):
+        if story_id == 'new':
+            return self.add_story(story_info)
         updated_story_text = story_info.story_text
         if language:
             rec1 = self.find_translation(story_id, language)
