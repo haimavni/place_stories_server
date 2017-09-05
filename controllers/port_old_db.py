@@ -468,9 +468,13 @@ def calc_members_visibility():
         member.update_record(visibility=VIS_NOT_READY)
     for rec in db(db.TblMemberPhotos).select():
         mem_id = rec.Member_id
+        if not mem_id: #should not happen, but it did...
+            continue
         dic[mem_id]['photo_count'] += 1
     for rec in db(db.TblEventMembers).select():
         mem_id = rec.Member_id
+        if not mem_id:
+            continue
         dic[mem_id]['story_count'] += 1
     for mem_id in dic:
         scores = dic[mem_id]
