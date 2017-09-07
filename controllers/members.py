@@ -332,6 +332,7 @@ def get_member_names():
     lst = db(q).select()
     arr = [Storage(id=rec.id,
                    name=member_display_name(rec, full=True),
+                   title='<span dir="rtl">' + member_display_name(rec, full=True) + '</span>',
                    first_name=rec.first_name,
                    last_name=rec.last_name,
                    former_first_name=rec.former_first_name,
