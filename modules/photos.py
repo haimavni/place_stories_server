@@ -81,7 +81,7 @@ def save_uploaded_photo(file_name, blob, path_tail, user_id):
         log_exception("saving photo {} failed".format(original_file_name))
         return 'failed'
     
-    db.TblPhotos.insert(photo_path=path + file_name,
+    db.TblPhotos.insert(photo_path=path_tail + file_name,
                         original_file_name=original_file_name,
                         Name=original_file_name,
                         uploader=user_id,
