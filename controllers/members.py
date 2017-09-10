@@ -263,6 +263,7 @@ def save_member_info(vars):
         story_id = None
     member_id = vars.member_id
     member_info = vars.member_info
+    del member_info.facePhotoURL #it is saved separately, not updated in client and can only destroy here
     if member_info:
         new_member = not member_info.id
         if story_id:
