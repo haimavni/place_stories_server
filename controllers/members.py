@@ -263,7 +263,8 @@ def save_member_info(vars):
         story_id = None
     member_id = vars.member_id
     member_info = vars.member_info
-    del member_info.facePhotoURL #it is saved separately, not updated in client and can only destroy here
+    if 'facePhotoURL' in member_info:
+        del member_info.facePhotoURL #it is saved separately, not updated in client and can only destroy here
     if member_info:
         new_member = not member_info.id
         if story_id:
@@ -634,7 +635,17 @@ def get_photo_list(vars):
     if len(lst) > MAX_PHOTOS_COUNT:
         lst1 = random.sample(lst, MAX_PHOTOS_COUNT)
         lst = lst1
+    checked_photo_list = vars.checked_photo_list
     result = []
+    if checked_photo_list:
+        lst1 = db(db.TblPhotos.id.belongs(checked_photo_list)).select()
+        lst1 = [rec for rec in lst1]
+        for rec in lst1:
+            rec.selected = 'photo-selected'
+    else:
+        lst1 = []
+    lst = [rec for rec in lst if rec.id not in lst1]
+    lst = lst1 + lst
     for rec in lst:
         dic = dict(
             keywords = rec.KeyWords or "",
@@ -645,7 +656,8 @@ def get_photo_list(vars):
             src=photos_folder('orig') + rec.photo_path,
             photo_id=rec.id,
             width=rec.width,
-            height=rec.height
+            height=rec.height,
+            selected=rec.selected if 'selected' in rec else ''
         )
         result.append(dic)
     return dict(photo_list=result)
