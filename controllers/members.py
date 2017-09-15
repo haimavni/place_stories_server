@@ -178,9 +178,21 @@ def get_story_list(vars):
         lst1 = random.sample(lst, 100)
     else:
         lst1 = lst
-    lst = []
+    ##lst = []
     user_list = calc_user_list()
+    if params.checked_story_list:
+        checked_story_list = db(db.TblStories.id.belongs(params.checked_story_list)).select()
+        checked_story_list = [rec for rec in checked_story_list]
+        for rec in checked_story_list:
+            rec.checked = True
+            if not rec.source:
+                rec.author = ''
+    else:
+        checked_story_list = []
+    lst = checked_story_list
     for rec in lst1:
+        if rec.id in params.checked_story_list:
+            continue
         if 'TblStories' in rec:
             r = rec.TblStories
         else:
@@ -190,6 +202,7 @@ def get_story_list(vars):
             r.author = user.first_name + ' ' + user.last_name
         else:
             r.author = ""
+        r.checked = False
         lst.append(r)
     result = [dict(story_text=rec.story,
                    story_preview=get_reisha(rec.story),
@@ -198,7 +211,8 @@ def get_story_list(vars):
                    topics = '; '.join(story_topics[rec.id]) if rec.id in story_topics else "",
                    used_for=rec.used_for,
                    event_date=rec.creation_date, 
-                   timestamp=rec.last_update_date, 
+                   timestamp=rec.last_update_date,
+                   checked=rec.checked,
                    author=rec.source or rec.author) for rec in lst]
     return dict(story_list=result)
 
@@ -330,7 +344,9 @@ def get_photo_detail(vars):
     sm = stories_manager.Stories()
     story=sm.get_story(rec.story_id)
     return dict(photo_src=photos_folder() + rec.photo_path,
-                photo_name = rec.Name,
+                photo_name=rec.Name,
+                height=rec.height,
+                width=rec.width,
                 photo_story=story.story_text if story else None)
 
 def get_member_names():
