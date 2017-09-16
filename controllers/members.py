@@ -8,7 +8,7 @@ from date_utils import date_of_date_str
 import datetime
 import os
 from dal_utils import insert_or_update
-from photos import get_slides_from_photo_list, photos_folder, local_photos_folder, crop, save_uploaded_photo
+from photos import get_slides_from_photo_list, photos_folder, local_photos_folder, images_folder, crop, save_uploaded_photo
 import random
 import zlib
 import re
@@ -191,12 +191,12 @@ def get_story_list(vars):
         checked_story_list = []
     lst = checked_story_list
     for rec in lst1:
-        if rec.id in params.checked_story_list:
-            continue
         if 'TblStories' in rec:
             r = rec.TblStories
         else:
             r = rec
+        if r.id in params.checked_story_list:
+            continue
         if r.author_id:
             user = user_list[r.author_id]
             r.author = user.first_name + ' ' + user.last_name
@@ -843,3 +843,21 @@ def merge_members(mem1_id, mem2_id):
         else:
             rec.update_record(Member_id=mem1_id)
     db(db.TblMembers.id==mem2_id).update(deleted=True)
+    
+@serve_json    
+def get_theme_data(vars):
+    path = images_folder()
+    files = dict(
+        content_background='content-background.png',
+        header_background='header-background.png',
+        top_background='top-background.png',
+        footer_background='footer-background.png',
+        founders_group_photo='founders_group_photo.jpg',
+        gb_logo_png='gb-logo.png',
+        himnon='himnon-givat-brenner.mp3'
+    )
+    result = dict()
+    for k in files:
+        result[k] = path + files[k]
+    return dict(files=result)
+    

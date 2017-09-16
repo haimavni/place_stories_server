@@ -183,6 +183,11 @@ def photos_folder(what="orig"):
     app = request.application.split('__')[0]
     return 'http://{host}/{app}/static/gb_photos/{app}/photos/{what}/'.format(host=request.env.http_host, app=app, what=what)
 
+def images_folder():
+    request = inject('request')
+    app = request.application.split('__')[0]  ## we want gbs__dev, gbs__test etc. all to use the same data
+    return 'http://{host}/{app}/static/gb_photos/{app}/images/'.format(host=request.env.http_host, app=app)
+
 def local_photos_folder(what="orig"): 
     #what may be orig, squares,images or profile_photos. (images is for customer-specific images such as logo)
     request = inject('request')
