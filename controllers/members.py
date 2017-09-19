@@ -806,6 +806,8 @@ def make_stories_query(params):
         langs = [x.id for x in params.selected_languages]
         if langs:
             q &= (db.TblStories.language.belongs(langs))
+    if params.link_class == "primary":
+        q &= (db.TblStories.story.like("%givat-brenner.co.il%"))
     return q
 
 def get_story_list_with_topics(params, grouped_selected_topics, selected_topics):
@@ -860,4 +862,12 @@ def get_theme_data(vars):
     for k in files:
         result[k] = path + files[k]
     return dict(files=result)
+
+@serve_json
+def delete_checked_stories(vars):
+    params = vars.params
+    checked_stories = params.checked_story_list
+    deleted = not params.deleted_stories
+    db(db.TblStories.id.belongs(checked_stories)).update(deleted=deleted)
+
     

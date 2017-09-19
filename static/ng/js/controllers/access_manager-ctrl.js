@@ -56,6 +56,9 @@ function($scope, $rootScope, $timeout, $log, ngDialog, callServerService, messag
             case 'HELP_AUTHOR':
                 cls = 'fa-life-saver fa-pencil';
                 break;
+            case 'ADVANCED':
+                cls = 'fa-certificate';
+                break;
         }
         if (r.active)
         {

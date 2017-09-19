@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 
 from porting.create_old_db_mappings import table_fields, csv_name_to_table_name, get_records, csv_name_to_table_name
@@ -486,4 +485,27 @@ def calc_members_visibility():
             vis = 0
         if vis:
             db(db.TblMembers.id==mem_id).update(visibility=vis)
+            
+def blank_ref(m):
+    s = m.group(0)
+    if '_blank' in s:
+        return s
+    s = s[:-1] + ' target="_blank"' + s[-1]
+    return s
+          
+def blank_refs(html):
+    pat = r'<a .*?>'
+    s = re.sub(pat, blank_ref, html)
+    return s
+
+def blank_all_refs():
+    lst = db(db.TblStories.story.like("%href=%")).select()
+    for rec in lst:
+        html = blank_refs(rec.story)
+        rec.update_record(story=html)
+    db.commit()
+        
+        
+    
+    
     
