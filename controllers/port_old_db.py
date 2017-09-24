@@ -374,7 +374,8 @@ def collect_topics(topic_collection, tbl_name):
                 idx = topic_collection[topic]
                 if topic not in this_collection:
                     r = db(db.TblTopics.id==idx).select().first()
-                    r.update_record(usage = r.usage + code)
+                    if code not in r.usage:
+                        r.update_record(usage = r.usage + code)
                     this_collection[topic] = 1
             else:
                 topic_collection[topic] = idx = db.TblTopics.insert(name=topic, usage=code)

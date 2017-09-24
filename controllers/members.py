@@ -869,5 +869,25 @@ def delete_checked_stories(vars):
     checked_stories = params.checked_story_list
     deleted = not params.deleted_stories
     db(db.TblStories.id.belongs(checked_stories)).update(deleted=deleted)
+    
+@serve_json
+def save_tag_merges(vars):
+    gst = vars.grouped_selected_topics
+    for topic_group in gst:
+        topic0 = topic_group[0]
+        rec0 = db(db.TblTopics.id==topic0.id).select().first()
+        for topic in topic_group[1:]:
+            rec = db(db.TblTopics.id==topic.id).select().first()
+            for c in rec.usage:
+                if c not in rec0.usage:
+                    rec0.usage += c
+                    rec0.update_record(usage=rec0.usage)
+                    
+            db(db.TblItemTopics.topic_id==rec.id).update(topic_id=rec0.id)
+        db(db.TblTopics.id==rec.id).delete()
+    ws_messaging.send_message(key='TAGS_MERGED', group='ALL')
+    return dict()
+    
+    
 
     
