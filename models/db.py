@@ -59,6 +59,7 @@ from gluon.tools import Auth, Service, PluginManager
 from my_auth import MyAuth
 
 auth = MyAuth(db)
+auth.expiration=31 * 24 * 3600
 service = Service()
 plugins = PluginManager()
 

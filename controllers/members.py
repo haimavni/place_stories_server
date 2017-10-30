@@ -651,10 +651,10 @@ def get_photo_list(vars):
     if len(lst) > MAX_PHOTOS_COUNT:
         lst1 = random.sample(lst, MAX_PHOTOS_COUNT)
         lst = lst1
-    checked_photo_list = vars.checked_photo_list
+    selected_photo_list = vars.selected_photo_list
     result = []
-    if checked_photo_list:
-        lst1 = db(db.TblPhotos.id.belongs(checked_photo_list)).select()
+    if selected_photo_list:
+        lst1 = db(db.TblPhotos.id.belongs(selected_photo_list)).select()
         lst1 = [rec for rec in lst1]
         for rec in lst1:
             rec.selected = 'photo-selected'
