@@ -885,8 +885,38 @@ def save_tag_merges(vars):
                     
             db(db.TblItemTopics.topic_id==rec.id).update(topic_id=rec0.id)
         db(db.TblTopics.id==rec.id).delete()
+        
+    gsp = vars.grouped_selected_photographers
+    for p_group in gsp:
+        p0 = p_group[0]
+        rec0 = db(db.TblPhotographers.id==p0.id).select().first()
+        for p in p_group[1:]:
+            rec = db(db.TblPhotographers.id==p.id).select().first()
+            db(db.TblPhotos.photographer_id==rec.id).update(photographer_id=rec0.id)
+        db(db.TblPhotographers.id==rec.id).delete()
+        
     ws_messaging.send_message(key='TAGS_MERGED', group='ALL')
     return dict()
+    
+@serve_json
+def apply_to_selected_photos(vars):
+    spl = vars.selected_photo_list
+    st = vars.selected_topics
+    for pid in spl:
+        curr_tag_ids = get_tag_ids(pid, "P")
+        for topic in st:
+            if topic.sign=="plus" and topic.id not in curr_tag_ids:
+                db.TblItemTopics.insert(item_type="P", item_id=pid, topic_id=topic.id) #todo: story_id=???
+            elif topic.sign=="minus" and topic.id in curr_tag_ids:
+                q = (db.TblItemTopics.item_type=="P") & (db.TblItemTopics.item_id==pid) & (db.TblItemTopics.topic_id==topic.id)
+                db(q).delete()
+    return dict()
+    
+def get_tag_ids(item_id, item_type):
+    q = (db.TblItemTopics.item_type==item_type) & (db.TblItemTopics.item_id==item_id)
+    lst = db(q).select()
+    return [rec.topic_id for rec in lst]
+    
     
     
 
