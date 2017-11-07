@@ -145,7 +145,7 @@ def check_if_logged_in(vars):
 def login(vars):
     result = auth.login_bare(vars.user_email, vars.password)
     if not result:
-        raise User_Error('login_failed')
+        raise User_Error('login-failed')
     user = Storage()
     for k in ['email', 'facebook', 'first_name', 'last_name', 'id', 'skype']:
         v = result[k]
