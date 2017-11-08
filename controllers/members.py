@@ -759,7 +759,8 @@ def save_story_data(story_info, user_id):
 def get_member_stories(member_id):
     q = (db.TblEventMembers.Member_id==member_id) & \
         (db.TblEventMembers.Event_id==db.TblEvents.id) & \
-        (db.TblEvents.story_id==db.TblStories.id)
+        (db.TblEvents.story_id==db.TblStories.id) & \
+        (db.TblStories.deleted==False)
     result = []
     lst = db(q).select()
     for rec in lst:
