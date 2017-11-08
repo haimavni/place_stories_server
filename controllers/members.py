@@ -417,6 +417,8 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
         rec = db(db.TblMembers.id==member_id).select().first()
     if not rec:
         return None
+    if rec.deleted:
+        return None
     rec = Storage(rec.as_dict())
     rec.full_name = member_display_name(rec, full=True)
     rec.name = member_display_name(rec, full=False)
@@ -442,7 +444,7 @@ def get_siblings(member_id):
     if not parents:
         return []
     pa, ma = parents.pa, parents.ma
-    q = (db.TblMembers.id != member_id) & (db.TblMembers.visibility > 0)
+    q = (db.TblMembers.id != member_id) & (db.TblMembers.visibility > 0) & (db.TblMembers.deleted == False)
     if pa:
         lst1 = db(q & (db.TblMembers.father_id==pa.id)).select(orderby=db.TblMembers.date_of_birth) if pa else []
         lst1 = [r.id for r in lst1]
@@ -471,6 +473,7 @@ def get_children(member_id, hidden_too=False):
         return [] #error!
     if not hidden_too:
         q &= (db.TblMembers.visibility > 0)
+    q &= (db.TblMembers.deleted == False)
     lst = db(q).select(db.TblMembers.id, db.TblMembers.date_of_birth, orderby=db.TblMembers.date_of_birth)
     lst = [get_member_rec(rec.id, prepend_path=True) for rec in lst]
     return lst
