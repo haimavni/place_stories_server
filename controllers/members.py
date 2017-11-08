@@ -795,7 +795,8 @@ def get_story_topics(refresh=False):
     return c(_get_story_topics, refresh)
 
 def make_stories_query(params):
-    q = (db.TblStories.id > 0)
+    getting_live_stories = not params.deleted_stories
+    q = (db.TblStories.deleted != getting_live_stories) & (db.TblStories.used_for.belongs(STORY4USER)) 
     selected_story_types = [x.id for x in params.selected_story_types]
     if selected_story_types:
         q &= (db.TblStories.used_for.belongs(selected_story_types))
@@ -867,8 +868,9 @@ def get_theme_data(vars):
 def delete_checked_stories(vars):
     params = vars.params
     checked_stories = params.checked_story_list
-    deleted = not params.deleted_stories
-    db(db.TblStories.id.belongs(checked_stories)).update(deleted=deleted)
+    deleted = not params.deleted_stories #will undelete if the list is of deleted stories
+    n = db(db.TblStories.id.belongs(checked_stories)).update(deleted=deleted)
+    return dict(num_deleted=n)
     
 @serve_json
 def save_tag_merges(vars):

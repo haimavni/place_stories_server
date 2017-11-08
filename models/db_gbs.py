@@ -4,6 +4,7 @@ STORY4PHOTO = 3
 STORY4TERM = 4
 STORY4MESSAGE = 5
 STORY4HELP = 6
+STORY4USER = [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM]
 
 VIS_NEVER = 0           #for non existing members such as the child of a childless couple (it just connects them)
 VIS_NOT_READY = 1
