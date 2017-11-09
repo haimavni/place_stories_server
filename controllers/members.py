@@ -307,6 +307,11 @@ def save_member_info(vars):
     return result
 
 @serve_json
+def set_member_story_id(vars):
+    db(db.TblMembers.id==vars.member_id).update(story_id=vars.story_id)
+    return dict()
+
+@serve_json
 def upload_photos(vars):
     user_id = vars.user_id or auth.current_user()
     comment("start handling uploaded files")
