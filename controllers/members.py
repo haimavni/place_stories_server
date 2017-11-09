@@ -267,22 +267,12 @@ def get_story_photo_list(vars):
 @serve_json
 def save_member_info(vars):
     user_id = vars.user_id
-    story_info = vars.story_info
-    if story_info:
-        story_info.used_for = STORY4MEMBER
-        info = save_story_data(story_info, user_id=user_id)
-        story_id = info.story_id
-    else:
-        info = None
-        story_id = None
     member_id = vars.member_id
     member_info = vars.member_info
     if 'facePhotoURL' in member_info:
         del member_info.facePhotoURL #it is saved separately, not updated in client and can only destroy here
     if member_info:
         new_member = not member_info.id
-        if story_id:
-            member_info.story_id = story_id
         date_fields = []
         for k in member_info:
             if k.startswith("date_of_") and k.endswith('_str'):
@@ -297,8 +287,6 @@ def save_member_info(vars):
         member_rec = get_member_rec(member_id)
         member_rec = json_to_storage(member_rec)
         ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL', member_rec=member_rec, new_member=new_member)
-    elif story_id:
-        db(db.TblMembers.id==member_id).update(story_id=story_id)
     result = Storage(info=info)
     if member_id:
         result.member_id = member_id;
@@ -309,6 +297,8 @@ def save_member_info(vars):
 @serve_json
 def set_member_story_id(vars):
     db(db.TblMembers.id==vars.member_id).update(story_id=vars.story_id)
+    sm = stories_manager.Stories()
+    sm.set_used_for(vars.story_id, STORY4MEMBER)
     return dict()
 
 @serve_json

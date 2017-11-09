@@ -163,4 +163,9 @@ class Stories:
         for rec in db(q).select(db.TblStories.id):
             yield self.get_story(story_id)
             
+    def set_used_for(self, story_id, used_for):
+        db = inject('db')
+        db(db.TblStories.id==story_id).update(used_for=used_for)
+        
+            
         
