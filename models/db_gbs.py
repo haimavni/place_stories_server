@@ -41,7 +41,7 @@ db.define_table('TblStoryVersions',
 
 db.define_table('TblWords',
                 Field('word', type='string'),
-                ###Field('click_count', type='integer', default=0)
+                Field('click_count', type='integer', default=0)
 )
 
 db.define_table('TblWordStories',
