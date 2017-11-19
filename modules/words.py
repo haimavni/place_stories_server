@@ -69,6 +69,61 @@ def tally_words(html, dic, story_id, story_name):
         dic1[w] += 1
     return True
 
+def extract_story_words(story_id):
+    from injections import inject
+    db = inject('db')
+    rec = db(db.TblStories.id==story_id).select().first()
+    if not rec:
+        return None
+    story_name = rec.name
+    html = rec.story
+    s = story_name.decode('utf8') + ' ' + remove_all_tags(html)
+    lst = extract_words(s)
+    if not lst:
+        return None
+    dic = dict()
+    for w in lst:
+        if w not in dic:
+            dic[w] = 0
+        dic[w] += 1
+    return dic
+
+def retrieve_story_words(story_id):
+    from injections import inject
+    db = inject('db')
+    q = (db.TblWordStories.story_id==story_id) & (db.TblWors.word_id==db.TblWordStories.word_id)
+    lst = db(q).select()
+    dic = dict()
+    for rec in lst:
+        w = rec.TblWords.word
+        dic[w] = rec.TblWordStories.word_count
+    return dic
+
+def update_story_words(story_id):
+    from injections import inject
+    db = inject('db')
+    old_dic = retrieve_story_words(story_id)
+    new_dic = extract_story_words(story_id)
+    for w in new_dic:
+        word_id = find_or_insert_word(w)
+        if w not in old_dic:
+            db.TblWordStories.insert(story_id=story_id, word_id=word_id, word_count=new_dic[w])
+        elif new_dic[w] != old_dic[w]:
+            db((db.TblWordStories.word_id==word_id) & (db.TblWordStories.story_id==story_id)).update(word_count=new_dic[w])
+    for w in old_dic:
+        if w not in new_dic:
+            word_id = find_or_insert_word(w) #it will not be inserted...
+            db((db.TblWordStories.word_id==word_id) & (db.TblWordStories.story_id==story_id)).delete()
+            
+def find_or_insert(wrd):            
+    from injections import inject
+    db = inject('db')
+    rec = db(db.TblWords.word==wrd).select().first()
+    if rec:
+        return rec.id
+    else:
+        return db.TblWords.insert(word=wrd)
+
 def tally_all_stories():   
     from injections import inject
     db = inject('db')

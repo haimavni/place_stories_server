@@ -802,12 +802,15 @@ def make_stories_query(params):
     selected_stories = params.selected_stories
     if selected_stories:
         q &= (db.TblStories.id.belongs(selected_stories))
-    if params and params.selected_languages:
+    if params.selected_languages:
         langs = [x.id for x in params.selected_languages]
         if langs:
             q &= (db.TblStories.language.belongs(langs))
     if params.link_class == "primary":
         q &= (db.TblStories.story.like("%givat-brenner.co.il%"))
+    if params.days_since_update and params.days_since_update.value:
+        date0 = datetime.datetime.now() - datetime.timedelta(days=params.days_since_update.value)
+        q &= (db.TblStories.last_update_date>date0)
     return q
 
 def get_story_list_with_topics(params, grouped_selected_topics, selected_topics):
@@ -834,7 +837,7 @@ def get_story_list_with_topics(params, grouped_selected_topics, selected_topics)
     result = [dic[id] for id in bag]
     return result
 
-def merge_members(mem1_id, mem2_id):
+def _merge_members(mem1_id, mem2_id):
     photos1 = db(db.TblMemberPhotos.Member_id==mem1_id).select()
     photos2 = db(db.TblMemberPhotos.Member_id==mem2_id).select()
     set1 = set([rec.Photo_id for rec in photos1])
@@ -846,17 +849,24 @@ def merge_members(mem1_id, mem2_id):
             rec.update_record(Member_id=mem1_id)
     db(db.TblMembers.id==mem2_id).update(deleted=True)
     
+def merge_members():
+    mem1 = int(request.vars.mem1)
+    mem2 = int(request.vars.mem2)
+    _merge_members(mem1, mem2)
+    return "Members merged"
+    
 @serve_json    
 def get_theme_data(vars):
     path = images_folder()
     files = dict(
-        content_background='content-background.png',
+        ##content_background='content-background.png',
         header_background='header-background.png',
         top_background='top-background.png',
         footer_background='footer-background.png',
         founders_group_photo='founders_group_photo.jpg',
         gb_logo_png='gb-logo.png',
-        himnon='himnon-givat-brenner.mp3'
+        himnon='himnon-givat-brenner.mp3',
+        content_background='bgs/body-bg.jpg'
     )
     result = dict()
     for k in files:
