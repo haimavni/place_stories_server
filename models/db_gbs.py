@@ -1,3 +1,6 @@
+import datetime
+NO_DATE = datetime.datetime(day=1, month=1, year=1)
+
 STORY4MEMBER = 1
 STORY4EVENT = 2
 STORY4PHOTO = 3
@@ -23,6 +26,7 @@ db.define_table('TblStories',
                 Field('source', type='string'),
                 Field('author_id', type=db.auth_user),
                 Field('updater_id', type=db.auth_user),
+                Field('indexing_date', type='datetime', default=NO_DATE),
                 Field('used_for', type='integer'),  #member, event, photo, term, message
                 Field('keywords', type='string'),  #to be calculated automatically using tfidf
                 Field('story_len', type='integer', compute=lambda row: len(row.story)),

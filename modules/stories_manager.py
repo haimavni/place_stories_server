@@ -87,14 +87,14 @@ class Stories:
             )
         return story_info
 
-    def add_story(self, story_info, story_id=None, language=None):
+    def add_story(self, story_info, story_id=None, language=None, owner_id=None):
         story_text = story_info.story_text
         if not language: #we just found it before we called = no need to recalculate
             language = guess_language(story_text)
         name = story_info.name
         story_text = story_text.replace('~1', '&').replace('~2', ';').replace('\n', '').replace('>', '>\n')
         now = datetime.datetime.now()
-        db, auth = inject('db', 'auth')
+        db, auth, STORY4EVENT, STORY4TERM = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM')
         author_name = auth.user_name(self.author_id)
         ###todo: handle language issues here and in update_story
         story_id = db.TblStories.insert(story=story_text, 
@@ -107,6 +107,20 @@ class Stories:
                                         language=language,
                                         topic=story_info.topic,
                                         last_update_date=now)
+        if story_info.used_for == STORY4EVENT:
+            db.TblEvents.insert(
+                story_id=story_id,
+                ###event_date=
+                ###event_date_str=
+            )
+        elif story_info.used_for == STORY4TERM:    
+            db.TblTerms.insert(
+                story_id=story_id,
+                ###event_date=
+                ###event_date_str=
+            )
+        
+        update_story_words_index(story_id)
         return Storage(story_id=story_id, creation_date=now, author=author_name)
 
     def update_story(self, story_id, story_info, language=None):
@@ -139,7 +153,8 @@ class Stories:
                                        author_id=self.author_id
                                        )
         elif story_info.name != rec.name:
-            rec.update_record(name=story_info.name)
+            rec.update_record(name=story_info.name, last_update_date=now, updater_id=self.author_id)
+        update_story_words_index(story_id)
         author_name = auth.user_name(self.author_id)
         return Storage(story_id=story_id, last_update_date=now, updater_name=author_name, author=story_info.author)
 

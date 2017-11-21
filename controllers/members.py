@@ -225,8 +225,9 @@ def get_story_previews(vars):
 def get_story_detail(vars):
     story_id = vars.story_id
     sm = stories_manager.Stories()
+    used_for = int(vars.used_for) if vars.used_for else STORY4EVENT
     if story_id == 'new':
-        story = sm.get_empty_story(used_for=STORY4EVENT)
+        story = sm.get_empty_story(used_for=used_for)
         return dict(story=story, members=[], photos=[])
     story_id = int(story_id)
     story=sm.get_story(story_id)
@@ -234,20 +235,21 @@ def get_story_detail(vars):
     photos = []
     if story.used_for == STORY4EVENT:
         event = db(db.TblEvents.story_id==story_id).select().first()
-        qm = (db.TblEventMembers.Event_id==event.id) & (db.TblMembers.id==db.TblEventMembers.Member_id)
-        members = db(qm).select(db.TblMembers.id, db.TblMembers.first_name, db.TblMembers.last_name, db.TblMembers.facePhotoURL)
-        members = [m.as_dict() for m in members]
-        for m in members:
-            m['full_name'] = m['first_name'] + ' ' + m['last_name']
-            if not m['facePhotoURL']:
-                m['facePhotoURL'] = "dummy_face.png"
-            m['facePhotoURL'] = photos_folder("profile_photos") + m['facePhotoURL']
-
-        qp = (db.TblEventPhotos.Event_id==event.id) & (db.TblPhotos.id==db.TblEventPhotos.Photo_id)
-        photos = db(qp).select(db.TblPhotos.id, db.TblPhotos.photo_path)
-        photos = [p.as_dict() for p in photos]
-        for p in photos:
-            p['photo_path'] = photos_folder() + p['photo_path']
+        if event:
+            qm = (db.TblEventMembers.Event_id==event.id) & (db.TblMembers.id==db.TblEventMembers.Member_id)
+            members = db(qm).select(db.TblMembers.id, db.TblMembers.first_name, db.TblMembers.last_name, db.TblMembers.facePhotoURL)
+            members = [m.as_dict() for m in members]
+            for m in members:
+                m['full_name'] = m['first_name'] + ' ' + m['last_name']
+                if not m['facePhotoURL']:
+                    m['facePhotoURL'] = "dummy_face.png"
+                m['facePhotoURL'] = photos_folder("profile_photos") + m['facePhotoURL']
+    
+            qp = (db.TblEventPhotos.Event_id==event.id) & (db.TblPhotos.id==db.TblEventPhotos.Photo_id)
+            photos = db(qp).select(db.TblPhotos.id, db.TblPhotos.photo_path)
+            photos = [p.as_dict() for p in photos]
+            for p in photos:
+                p['photo_path'] = photos_folder() + p['photo_path']
         #photos = [dict(photo_id=p.id, photo_path=photos_folder()+p.photo_path) for p in photos]
     return dict(story=story, members=members, photos=photos)
 
@@ -287,7 +289,7 @@ def save_member_info(vars):
         member_rec = get_member_rec(member_id)
         member_rec = json_to_storage(member_rec)
         ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL', member_rec=member_rec, new_member=new_member)
-    result = Storage(info=info)
+    result = Storage(info=member_info)
     if member_id:
         result.member_id = member_id;
     #todo: read-modify-write below?

@@ -8,7 +8,7 @@ from my_cache import Cache
 from injections import inject
 #from base64 import b64decode, b64encode
 from math import log
-
+import datetime
 
 alef = "א"
 tav = "ת"
@@ -91,7 +91,7 @@ def extract_story_words(story_id):
 def retrieve_story_words(story_id):
     from injections import inject
     db = inject('db')
-    q = (db.TblWordStories.story_id==story_id) & (db.TblWors.word_id==db.TblWordStories.word_id)
+    q = (db.TblWordStories.story_id==story_id) & (db.TblWords.id==db.TblWordStories.word_id)
     lst = db(q).select()
     dic = dict()
     for rec in lst:
@@ -99,8 +99,9 @@ def retrieve_story_words(story_id):
         dic[w] = rec.TblWordStories.word_count
     return dic
 
-def update_story_words(story_id):
+def update_story_words_index(story_id):
     from injections import inject
+    now = datetime.datetime.now()
     db = inject('db')
     old_dic = retrieve_story_words(story_id)
     new_dic = extract_story_words(story_id)
@@ -114,8 +115,9 @@ def update_story_words(story_id):
         if w not in new_dic:
             word_id = find_or_insert_word(w) #it will not be inserted...
             db((db.TblWordStories.word_id==word_id) & (db.TblWordStories.story_id==story_id)).delete()
+    db(db.TblStories.id==story_id).update(indexing_date=now)
             
-def find_or_insert(wrd):            
+def find_or_insert_word(wrd):            
     from injections import inject
     db = inject('db')
     rec = db(db.TblWords.word==wrd).select().first()
