@@ -340,11 +340,14 @@ def get_photo_detail(vars):
         rec = db(db.TblPhotos.id==photo_id).select().first()
     sm = stories_manager.Stories()
     story=sm.get_story(rec.story_id)
+    if not story:
+        story = sm.get_empty_story(used_for=STORY4PHOTO)
+        
     return dict(photo_src=photos_folder() + rec.photo_path,
                 photo_name=rec.Name,
                 height=rec.height,
                 width=rec.width,
-                photo_story=story.story_text if story else None)
+                photo_story=story)
 
 def get_member_names():
     q = (db.TblMembers.deleted != True)
