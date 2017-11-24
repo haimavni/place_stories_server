@@ -115,8 +115,8 @@ def notify_registration(vars):
 def register_user(vars):
     from gluon.utils import web2py_uuid
     u = vars.user_info
-    if not db(db.auth_user.email==u.email).isempty():
-        raise User_Error('<br><h4>Email is already in use!</h4>')
+    if not db(db.auth_user.email==u.user_email).isempty():
+        raise User_Error('email-already-exists')
     u.registration_key = key = web2py_uuid()
 
     am = AccessManager()
@@ -125,12 +125,12 @@ def register_user(vars):
     link = auth.url('verify_email', args=[key], scheme=True)
     u.update(dict(key=key, link=link, username=u.email))
     good = auth.settings.mailer and auth.settings.mailer.send(
-        to=u.email,
+        to=u.user_email,
         subject=auth.messages.verify_email_subject,
         message='Click on the link {lnk} to verify your email'.format(lnk=link))
     if not good:
         db.rollback()
-        raise User_Error(auth.messages.unable_send_email)
+        raise User_Error('cant-send-mail')
     notify_registration(vars)
     return dict(good=True);
 

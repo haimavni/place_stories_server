@@ -83,17 +83,19 @@ class AccessManager:
         db, auth, User_Error = inject('db', 'auth', 'User_Error')
         new_user = not user_data.id
         if not (user_data.last_name and user_data.first_name and user_data.email):
-            raise User_Error('All fields are mandatory!')
-        if new_user and not user_data.password:
-            raise User_Error('A password must be entered!')
-        if 0 < len(user_data.password or '') < 4:
-            raise User_Error('Password is too short!')
+            raise User_Error('mandatory-fields-empty')
         if new_user:
+            if not user_data.password:
+                raise User_Error('password-is-mandatory')
+            if user_data.password != user_data.confirm_password:
+                raise User_Error('passwords-dont-match')
+            if 0 < len(user_data.password or '') < 4:
+                raise User_Error('password-too-short')
             cond = True
         else:
             cond = user_data.email != db(db.auth_user.id==user_data.id).select().first().email
         if cond and not db(db.auth_user.email==user_data.email).isempty():
-            raise User_Error('User "{em}" already exists!'.format(em=user_data.email))
+            raise User_Error('user-already-exists'.format(em=user_data.email))
         if new_user:
             uid = register_new_user(user_data.email, 
                                     user_data.password, 
