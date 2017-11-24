@@ -83,7 +83,7 @@ class AccessManager:
         db, auth, User_Error = inject('db', 'auth', 'User_Error')
         new_user = not user_data.id
         if not (user_data.last_name and user_data.first_name and user_data.email):
-            raise User_Error('mandatory-fields-empty')
+            raise User_Error('missing-mandatory-fields')
         if new_user:
             if not user_data.password:
                 raise User_Error('password-is-mandatory')
