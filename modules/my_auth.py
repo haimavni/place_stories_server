@@ -44,6 +44,20 @@ class MyAuth(Auth):
             subject=self.messages.verify_email_subject,
             message=self.messages.verify_email % dict(key=user_rec.registration_key))):
             raise Exception(T('Failed to resend verify email to {}').format(user_rec.email))
+        
+    def verify_email(self, key):
+        """
+        Action used to verify the registration email
+        """
+        EDITOR, PHOTO_UPLOADER = inject('EDITOR', 'PHOTO_UPLOADER')
+        table_user = self.table_user()
+        user = table_user(registration_key=key)
+        if not user:
+            return False
+        user.update_record(registration_key='')
+        self.add_membership(user_id=user.id, group_id=EDITOR)
+        self.add_membership(user_id=user.id, group_id=PHOTO_UPLOADER)
+        return True
 
     def user_language(self, language=None):
         db = self.db
@@ -76,6 +90,24 @@ class MyAuth(Auth):
             if group:
                 privileges[group.role] = True
         return privileges
+    
+    def login_bare(self, username, password):
+        """
+        Logins user as specified by username (or email) and password
+        """
+        settings = self._get_login_settings()
+        user = settings.table_user(**{settings.userfield: username})
+        if not user:
+            return 'user-not-registered'
+        if user and user.get(settings.passfield, False):
+            if user.registration_key:
+                return 'incomplete-registration'
+            password = settings.table_user[settings.passfield].validate(password)[0]
+            if password == user[settings.passfield]:
+                self.login_user(user)
+                return user
+        return 'wrong-password'
+    
     
         
         

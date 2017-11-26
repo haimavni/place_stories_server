@@ -135,7 +135,8 @@ def register_user(vars):
     return dict(good=True);
 
 def verify_email():
-    auth.verify_email()
+    success = auth.verify_email(key=request.args[0])
+    return dict(success=success)
 
 @serve_json
 def check_if_logged_in(vars):
@@ -144,8 +145,8 @@ def check_if_logged_in(vars):
 @serve_json
 def login(vars):
     result = auth.login_bare(vars.user_email, vars.password)
-    if not result:
-        raise User_Error('login-failed')
+    if isinstance(result, str):
+        raise User_Error(result)
     user = Storage()
     for k in ['email', 'facebook', 'first_name', 'last_name', 'id', 'skype']:
         v = result[k]
