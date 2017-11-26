@@ -287,6 +287,8 @@ def save_member_info(vars):
             return dict(errors=result['errors'])
         member_id = result
         member_rec = get_member_rec(member_id)
+        if new_member:
+            member_rec.facePhotoURL = photos_folder('profile_photos') + "dummy_face.png"
         member_rec = json_to_storage(member_rec)
         ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL', member_rec=member_rec, new_member=new_member)
     result = Storage(info=member_info)

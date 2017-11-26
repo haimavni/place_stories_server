@@ -82,8 +82,8 @@ class AccessManager:
     def add_or_update_user(self, user_data):
         db, auth, User_Error = inject('db', 'auth', 'User_Error')
         new_user = not user_data.id
-        if not (user_data.last_name and user_data.first_name and user_data.email):
-            raise User_Error('missing-mandatory-fields')
+        if not (user_data.last_name and user_data.first_name and user_data.user_email):
+            raise User_Error('mandatory-fields-empty')
         if new_user:
             if not user_data.password:
                 raise User_Error('password-is-mandatory')
@@ -93,11 +93,11 @@ class AccessManager:
                 raise User_Error('password-too-short')
             cond = True
         else:
-            cond = user_data.email != db(db.auth_user.id==user_data.id).select().first().email
-        if cond and not db(db.auth_user.email==user_data.email).isempty():
-            raise User_Error('user-already-exists'.format(em=user_data.email))
+            cond = user_data.user_email != db(db.auth_user.id==user_data.id).select().first().email
+        if cond and not db(db.auth_user.email==user_data.user_email).isempty():
+            raise User_Error('user-already-exists'.format(em=user_data.user_email))
         if new_user:
-            uid = register_new_user(user_data.email, 
+            uid = register_new_user(user_data.user_email, 
                                     user_data.password, 
                                     user_data.first_name, 
                                     user_data.last_name, 
@@ -108,7 +108,7 @@ class AccessManager:
             uid = int(user_data.id)
             updated_data = dict(first_name=user_data.first_name, 
                                 last_name=user_data.last_name, 
-                                email=user_data.email,
+                                email=user_data.user_email,
                                 registration_key=None)
             if user_data.password:
                 cpassword = encrypt_password(user_data.password)
