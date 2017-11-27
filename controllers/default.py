@@ -103,13 +103,13 @@ def notify_registration(vars):
     lst = db((db.auth_membership.group_id==ADMIN)&(db.auth_user.id==db.auth_membership.user_id)).select(db.auth_user.email)
     receivers = [r.email for r in lst]    
     message = ('', '''
-    {uname} has just registered to <b>Coolano</b>.
+    {uname} has just registered to <b>GB Stories</b>.
     Email adddress is {uemail}.
 
 
-    Click <a href="www.coolano.biz/coolano/admin/access_manager">here</a> for access manager.
+    Click <a href="http://gbstories.org/gbs__www/stories">here</a> for access manager.
     '''.format(uname=user_name, uemail=user_email).replace('\n', '<br>'))
-    mail.send(to=receivers, subject='New Coolano user', message=message)
+    mail.send(to=receivers, subject='New GB Stories registration', message=message)
 
 @serve_json
 def register_user(vars):
