@@ -225,7 +225,7 @@ def get_story_previews(vars):
 def get_story_detail(vars):
     story_id = vars.story_id
     sm = stories_manager.Stories()
-    used_for = int(vars.used_for) if vars.used_for else STORY4EVENT
+    used_for = int(vars.used_for) if vars.used_for and vars.used_for != 'undefined' else STORY4EVENT
     if story_id == 'new':
         story = sm.get_empty_story(used_for=used_for)
         return dict(story=story, members=[], photos=[])
