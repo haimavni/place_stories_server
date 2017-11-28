@@ -99,7 +99,7 @@ def register():
 def notify_registration(vars):
     ui = vars.user_info
     user_name = ui.first_name + ' ' + ui.last_name
-    user_email = ui.email
+    user_email = ui.user_email
     lst = db((db.auth_membership.group_id==ADMIN)&(db.auth_user.id==db.auth_membership.user_id)).select(db.auth_user.email)
     receivers = [r.email for r in lst]    
     message = ('', '''
@@ -123,7 +123,7 @@ def register_user(vars):
     user_data, new_user = am.add_or_update_user(u)
     #send verification email to new user
     link = auth.url('verify_email', args=[key], scheme=True)
-    u.update(dict(key=key, link=link, username=u.email))
+    u.update(dict(key=key, link=link, username=u.user_email))
     good = auth.settings.mailer and auth.settings.mailer.send(
         to=u.user_email,
         subject=auth.messages.verify_email_subject,
@@ -144,6 +144,8 @@ def check_if_logged_in(vars):
 
 @serve_json
 def login(vars):
+    if not vars.user_email:
+        return dict()
     result = auth.login_bare(vars.user_email, vars.password)
     if isinstance(result, str):
         raise User_Error(result)

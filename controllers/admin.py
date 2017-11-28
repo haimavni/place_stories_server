@@ -36,8 +36,9 @@ def add_or_update_user(vars):
 
 @serve_json
 def delete_user(vars):
-    schedule_background_task('delete user {}'.format(vars.id), 'delete_user({})'.format(vars.id))
-    return dict(id=vars.id)
+    uid = vars.id
+    n = db(db.auth_user.id==uid).delete()
+    return dict(id=vars.id, ok=n==1)
 #---------------------------------------------------------------------------
 # Task Monitor
 #---------------------------------------------------------------------------
