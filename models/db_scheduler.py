@@ -7,6 +7,9 @@ import ws_messaging
 from my_cache import Cache
 from photos import scan_all_unscanned_photos
 
+def test_scheduler(msg):
+    comment("test task {}", msg)
+
 class MyScheduler(Scheduler):
 
     def restart_task(self, task_id, period=None):
@@ -69,8 +72,12 @@ def execute_task(name, command):
         db.commit()
 
 __tasks = dict(
-    scan_all_unscanned_photos=scan_all_unscanned_photos
+    ###scan_all_unscanned_photos=scan_all_unscanned_photos,
+    execute_task=execute_task,
 )
+
+def dict_to_json_str(dic):
+    return response.json(dic)
 
 def schedule_background_task(name, command, period=None, timeout=None):
     return db.scheduler_task.insert(
