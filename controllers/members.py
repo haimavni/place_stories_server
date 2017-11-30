@@ -352,6 +352,22 @@ def get_photo_detail(vars):
                 width=rec.width,
                 photo_story=story)
 
+@serve_json
+def get_photo_info(vars):
+    photo_id = int(vars.photo_id)
+    rec = db(db.TblPhotos.id==photo_id).select().first()
+    if rec.photographer_id:
+        photographer_rec = db(db.TblPhotographers.id==rec.photographer_id).select().first()
+    else:
+        phtographer_rec = Storage()
+    result = dict(
+        name=rec.Name,
+        description=rec.Description,
+        photographer=photographer_rec.name,
+        date=rec.photo_date_str
+    )
+    return result
+
 def get_member_names():
     q = (db.TblMembers.deleted != True)
     lst = db(q).select()
