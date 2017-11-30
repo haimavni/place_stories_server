@@ -164,6 +164,7 @@ def calc_user_list():
 
 @serve_json
 def get_story_list(vars):
+    MAX_STORIES = 20
     story_topics = get_story_topics()
     params = vars.params
 
