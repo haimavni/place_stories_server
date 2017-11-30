@@ -15,7 +15,7 @@ import re
 from langs import language_name
 from words import calc_used_languages, read_words_index, get_all_story_previews, get_reisha
 
-MAX_PHOTOS_COUNT = 1200
+MAX_PHOTOS_COUNT = 120
 
 @serve_json
 def member_list(vars):
@@ -648,7 +648,7 @@ def get_photo_list(vars):
         q = make_photos_query(vars)
         n = db(q).count()
         if n > MAX_PHOTOS_COUNT:
-            frac = MAX_PHOTOS_COUNT * 100 / n
+            frac = max(MAX_PHOTOS_COUNT * 100 / n, 1)
             sample = random.sample(range(1, 101), frac)
             ##q &= (db.TblPhotos.random_photo_key <= frac)
             q &= (db.TblPhotos.random_photo_key.belongs(sample)) #we don't want to bore our uses so there are several collections
