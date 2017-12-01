@@ -139,7 +139,7 @@ class Stories:
         db, auth = inject('db', 'auth')
         rec = db(db.TblStories.id==story_id).select().first()
         if rec.language and rec.language != language:
-            rec = find_translation(rec, language)
+            rec = self.find_translation(rec, language)
         now = datetime.datetime.now()
         if rec.story != updated_story_text:
             merger = mim.Merger()
