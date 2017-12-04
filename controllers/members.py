@@ -362,7 +362,7 @@ def get_photo_info(vars):
     if rec.photographer_id:
         photographer_rec = db(db.TblPhotographers.id==rec.photographer_id).select().first()
     else:
-        phtographer_rec = Storage()
+        photographer_rec = Storage()
     result = dict(
         name=rec.Name,
         description=rec.Description,
@@ -395,10 +395,6 @@ def remove_member(vars):
     if deleted:
         ws_messaging.send_message(key='MEMBER_DELETED', group='ALL', member_id=member_id)
     return dict(deleted=deleted)
-
-#def get_member_names(refresh=False):
-    #c = Cache('get_member_names')
-    #return c(_get_member_names, refresh)
 
 def older_display_name(rec, full):
     s = rec.Name or ''
