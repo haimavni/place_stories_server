@@ -39,10 +39,10 @@ def new_member_rec(gender=None, first_name=""):
             former_first_name="",
             former_last_name="",
             visibility=VIS_NOT_READY,
-            date_of_death=None,
-            date_of_birth=None,
-            date_of_death_str=None,
-            date_of_birth_str=None,
+            date_of_death=NO_DATE,
+            date_of_birth=NO_DATE,
+            date_of_death_str="????-??-??",
+            date_of_birth_str="????-??-??",
             gender=gender),
         story_info = Storage(display_version='New Story', story_versions=[], story_text='', story_id=None),
         family_connections =  Storage(
@@ -308,6 +308,7 @@ def set_member_story_id(vars):
 
 @serve_json
 def upload_photos(vars):
+    uploaded_photo_ids = []
     user_id = vars.user_id or auth.current_user()
     comment("start handling uploaded files")
     today = datetime.date.today()
@@ -332,6 +333,8 @@ def upload_photos(vars):
             failed.append(fil.name)
             continue
         number_uploaded += 1
+        uploaded_photo_ids += [result]
+    ws_messaging.send_message(key='PHOTOS_WERE_UPLOADED', group='ALL', uploaded_photo_ids=uploaded_photo_ids)
     return dict(number_uploaded=number_uploaded, number_duplicates=number_duplicates, failed=failed)
 
 @serve_json
@@ -639,18 +642,14 @@ def make_photos_query(vars):
     if vars.to_date:
         dummy, to_date = date_of_date_str(vars.to_date)
         q &= (db.TblPhotos.photo_date <= to_date)
-    #if vars.selected_uploader:
-        #q &= db.TblPhotos.uploader==vars.uploader
     if vars.selected_days_since_upload:
         days = vars.selected_days_since_upload.value
         if days:
             upload_date = datetime.date.today() - datetime.timedelta(days=days)
             q &= (db.TblPhotos.upload_date >= upload_date)
-    opt = None
-    if vars.selected_uploader:
-        opt = vars.selected_uploader
+    opt = vars.selected_uploader
     if opt == 'mine':
-        q &= (db.TblPhotos.uploader==auth.current_user())
+        q &= (db.TblPhotos.uploader==vars.user_id)
     elif opt == 'users':
         q &= (db.TblPhotos.uploader!=None)
     return q
