@@ -99,7 +99,7 @@ def register():
 def notify_registration(vars):
     ui = vars.user_info
     user_name = ui.first_name + ' ' + ui.last_name
-    user_email = ui.user_email
+    email = ui.email
     lst = db((db.auth_membership.group_id==ADMIN)&(db.auth_user.id==db.auth_membership.user_id)).select(db.auth_user.email)
     receivers = [r.email for r in lst]    
     message = ('', '''
@@ -108,14 +108,14 @@ def notify_registration(vars):
 
 
     Click <a href="http://gbstories.org/gbs__www/stories">here</a> for access manager.
-    '''.format(uname=user_name, uemail=user_email).replace('\n', '<br>'))
+    '''.format(uname=user_name, uemail=email).replace('\n', '<br>'))
     mail.send(to=receivers, subject='New GB Stories registration', message=message)
 
 @serve_json
 def register_user(vars):
     from gluon.utils import web2py_uuid
     u = vars.user_info
-    if not db(db.auth_user.email==u.user_email).isempty():
+    if not db(db.auth_user.email==u.email).isempty():
         raise User_Error('email-already-exists')
     u.registration_key = key = web2py_uuid()
 
@@ -123,9 +123,9 @@ def register_user(vars):
     user_data, new_user = am.add_or_update_user(u)
     #send verification email to new user
     link = auth.url('verify_email', args=[key], scheme=True)
-    u.update(dict(key=key, link=link, username=u.user_email))
+    u.update(dict(key=key, link=link, username=u.email))
     good = auth.settings.mailer and auth.settings.mailer.send(
-        to=u.user_email,
+        to=u.email,
         subject=auth.messages.verify_email_subject,
         message='Click on the link {lnk} to verify your email'.format(lnk=link))
     if not good:
@@ -144,9 +144,9 @@ def check_if_logged_in(vars):
 
 @serve_json
 def login(vars):
-    if not vars.user_email:
+    if not vars.email:
         return dict()
-    result = auth.login_bare(vars.user_email, vars.password)
+    result = auth.login_bare(vars.email, vars.password)
     if isinstance(result, str):
         raise User_Error(result)
     user = Storage()
