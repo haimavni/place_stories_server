@@ -129,6 +129,17 @@ function($scope, $rootScope, $timeout, $log, ngDialog, callServerService, messag
         });
     }
 
+    $scope.unlock_user = function(uid)
+    {
+        callServerService.call_server('admin/unlock_user', {user_id: uid}).
+        success(
+            function(result)
+            {
+                toaster.pop('success', '', 'The user can now login');
+            }
+        );
+    }
+
     $scope.resend_verification_email = function(uid)
     {
         callServerService.call_server('admin/resend_verification_email', {user_id: uid}).

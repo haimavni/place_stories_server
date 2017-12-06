@@ -84,3 +84,7 @@ def resend_verification_email(vars):
     auth.resend_verification_email(vars.user_id)
     return dict()
 
+@serve_json
+def unlock_user(vars):
+    am = AccessManager()
+    am.unlock_user(vars.user_id)

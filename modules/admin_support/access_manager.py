@@ -124,6 +124,10 @@ class AccessManager:
         db = inject('db')
         n = db(db.auth_user.id==uid).delete()
 
+    def unlock_user(self, uid):
+        db = inject('db')
+        n = db(db.auth_user.id==uid).update(registration_key="")
+
 mask = 1 << 40 | 1 << 38 | 1 << 21 | 1 << 19
 def shift(seed):
     lsb = seed & 1

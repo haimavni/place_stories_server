@@ -9,6 +9,7 @@ from injections import inject
 #from base64 import b64decode, b64encode
 from math import log
 import datetime
+import ws_messaging
 
 alef = "א"
 tav = "ת"
@@ -102,6 +103,8 @@ def retrieve_story_words(story_id):
 def update_story_words_index(story_id):
     from injections import inject
     now = datetime.datetime.now()
+    added_words = []
+    deleted_words = []
     db = inject('db')
     old_dic = retrieve_story_words(story_id)
     new_dic = extract_story_words(story_id)
@@ -109,12 +112,16 @@ def update_story_words_index(story_id):
         word_id = find_or_insert_word(w)
         if w not in old_dic:
             db.TblWordStories.insert(story_id=story_id, word_id=word_id, word_count=new_dic[w])
+            added_words.append((w, word_id))
         elif new_dic[w] != old_dic[w]:
             db((db.TblWordStories.word_id==word_id) & (db.TblWordStories.story_id==story_id)).update(word_count=new_dic[w])
+            #for now we do not broadcast modified word count
     for w in old_dic:
         if w not in new_dic:
             word_id = find_or_insert_word(w) #it will not be inserted...
+            deleted_words.append(word_id)
             db((db.TblWordStories.word_id==word_id) & (db.TblWordStories.story_id==story_id)).delete()
+    ws_messaging.send_message('WORD_INDEX_CHANGED', group='ALL', story_id=story_id, added_words=added_words, deleted_words=deleted_words)
     db(db.TblStories.id==story_id).update(indexing_date=now)
             
 def find_or_insert_word(wrd):            
@@ -168,59 +175,6 @@ def read_words_index():
 
     result = [dict(name=item[0], story_ids=item[1], word_count=item[2]) for item in lst]
     return result
-
-def update_words_index(story_id, dic, html=None):
-    if not html:
-        rec = db(db.TblStories.id==story_id).select().first()
-        html = rec.story
-    s = remove_all_tags(html)
-    dic = dict()
-    lst = extract_words(s)
-    if not lst:
-        return False
-    dic1 = dict()
-    for w in lst:
-        if w not in dic:
-            dic[w] = {}
-        if story_id not in dic[w]:
-            dic[w][story_id] = 0
-        dic[w][story_id] += 1
-        if w not in dic1:
-            dic1[w] = 0
-        dic1[w] += 1
-
-    rec = db(db.TblWordStories.story_id==story_id).select().first()
-    if rec:
-        q = (db.TblWordStories.story_id==story_id) & (db.TblWords.id==db.TblWordStories.word_id)
-        arr = db(q).select()
-        #remove deleted links, add new ones, update existing ones
-    else:
-        for wrd in dic1:
-            if wrd not in dic:
-                word_id = db.TblWords.insert(word=wrd)
-                db.TblWordStories.insert(story_id=story_id, word_id=word_id, word_count=dic1[w])
-            else:
-                word_id = db(db.TblWords.word==wrd).select().first().id
-                rec = db((db.TblWordStories.story_id==story_id) & (db.TblWordStories.word_id==word_id)).select().first()
-                if rec:
-                    if rec.word_count != dic1[wrd]:
-                        rec.update_record(word_count=dic1[wrd])
-                else:
-                    db.TblWordStories.insert(story_id=story_id, word_id=word_id, word_count=dic1[wrd])
-
-
-def save_words_index(words_index, story_id, from_scratch=False):
-    if from_scratch:
-        db.TblWords.truncate('RESTART IDENTITY CASCADE')
-    for wrd in words_index:
-        rec = db(db.TblWords.word==wrd).select().first()
-        if rec:
-            word_id = rec.id
-            stories = []
-        else:
-            word_id = db.TblWords.insert(word=wrd)
-            stories = db(db.TblWordStories.word_id==word_id).select()
-            stories = [rec.story_id for rec in stories]
 
 def _calc_used_languages(used_for):
     db = inject('db')

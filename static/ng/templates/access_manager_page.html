@@ -57,9 +57,12 @@
                         <a href ng-click="display_customer_data(gridItem.id)">
                             <i class="fa fa-user" title="Display User Data" ></i>
                         </a>
+                        <a href ng-click="unlock_user(gridItem.id)" ng-show="gridItem.status=='Unconfirmed'">
+                            <i class="fa fa-unlock" title="Unlock User" ></i>
+                        </a>
                     </td>
                     <td class="center">
-                        <a href g-click="resend_verification_email(gridItem.id)" ng-show="gridItem.status=='Unconfirmed'">
+                        <a href ng-click="resend_verification_email(gridItem.id)" ng-show="gridItem.status=='Unconfirmed'">
                             <i class="fa fa-envelope" ng-attr-title="Resend Verification Email"  ></i>
                         </a>
                         <a href ng-attr-title="Delete" ng-click="delete_user(gridItem)">
