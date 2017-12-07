@@ -631,10 +631,12 @@ def make_photos_query(vars):
     photographer_list = [p.id for p in vars.selected_photographers] if vars.selected_photographers else []
     if len(photographer_list) > 0:
         q &= db.TblPhotos.photographer_id.belongs(photographer_list)
-    from_date = datetime.date(year=vars.first_year, month=1, day=1)
-    to_date = datetime.date(year=vars.last_year, month=1, day=1)
-    q &= (db.TblPhotos.photo_date >= from_date)
-    q &= (db.TblPhotos.photo_date < to_date)
+    if vars.first_year:
+        from_date = datetime.date(year=vars.first_year, month=1, day=1)
+        q &= (db.TblPhotos.photo_date >= from_date)
+    if vars.last_year:
+        to_date = datetime.date(year=vars.last_year, month=1, day=1)
+        q &= (db.TblPhotos.photo_date < to_date)
     if vars.selected_days_since_upload:
         days = vars.selected_days_since_upload.value
         if days:
