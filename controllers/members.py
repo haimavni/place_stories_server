@@ -15,8 +15,6 @@ import re
 from langs import language_name
 from words import calc_used_languages, read_words_index, get_all_story_previews, get_reisha
 
-MAX_PHOTOS_COUNT = 120
-
 @serve_json
 def member_list(vars):
     return dict(member_list=get_member_names())
@@ -653,6 +651,10 @@ def make_photos_query(vars):
 def get_photo_list(vars):
     selected_topics = vars.selected_topics or []
     grouped_selected_topics = vars.grouped_selected_topics or []
+    privileges = auth.get_privileges()
+    MAX_PHOTOS_COUNT = 120
+    if privileges and privileges.DEVELOPER:
+        MAX_PHOTOS_COUNT = 1500
     if selected_topics or grouped_selected_topics:
         lst = get_photo_list_with_topics(vars)
     else:
