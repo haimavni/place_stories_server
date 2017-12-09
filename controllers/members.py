@@ -628,19 +628,25 @@ def get_photo_list_with_topics(vars):
 
 def make_photos_query(vars):
     q = (db.TblPhotos.width > 0)
+    first_year = vars.first_year
+    if first_year < vars.base_year + 4:
+        first_year = 0
+    last_year = vars.last_year
+    if last_year and last_year > vars.base_year + vars.num_years  - 5:
+        last_year = 0
     photographer_list = [p.id for p in vars.selected_photographers] if vars.selected_photographers else []
     if len(photographer_list) > 0:
         q &= db.TblPhotos.photographer_id.belongs(photographer_list)
-    if vars.first_year:
-        from_date = datetime.date(year=vars.first_year, month=1, day=1)
+    if first_year:
+        from_date = datetime.date(year=first_year, month=1, day=1)
         q &= (db.TblPhotos.photo_date >= from_date)
-    if vars.last_year:
-        to_date = datetime.date(year=vars.last_year, month=1, day=1)
+    if last_year:
+        to_date = datetime.date(year=last_year, month=1, day=1)
         q &= (db.TblPhotos.photo_date < to_date)
     if vars.selected_days_since_upload:
         days = vars.selected_days_since_upload.value
         if days:
-            upload_date = datetime.date.today() - datetime.timedelta(days=days)
+            upload_date = datetime.datetime.today() - datetime.timedelta(days=days)
             q &= (db.TblPhotos.upload_date >= upload_date)
     opt = vars.selected_uploader
     if opt == 'mine':
