@@ -1,5 +1,6 @@
 import datetime
 NO_DATE = datetime.datetime(day=1, month=1, year=1)
+FAR_FUTURE = datetime.datetime(day=1, month=1, year=3000)
 
 STORY4MEMBER = 1
 STORY4EVENT = 2
@@ -107,6 +108,8 @@ db.define_table('TblEvents',
                 Field('EventDate', type='string'),
                 Field('event_date', type='date', default=NO_DATE),
                 Field('event_date_str', type='string'),
+                Field('event_date_from', type='date', default=NO_DATE),
+                Field('event_date_to', type='date', default=FAR_FUTURE),
                 Field('EventRank', type='integer'),
                 Field('IIDD', type='integer'),
                 Field('KeyWords', type='string'),
@@ -236,6 +239,8 @@ db.define_table('TblPhotos',
                 Field('PhotoDate', type='string'),
                 Field('photo_date', type='date', default=NO_DATE),
                 Field('photo_date_str', type='string'),
+                Field('photo_date_from', type='date', default=NO_DATE),
+                Field('photo_date_to', type='date', default=FAR_FUTURE),
                 Field('PhotoRank', type='integer'),
                 Field('Photographer', type='string'), #obsolete
                 Field('photographer_id', db.TblPhotographers),
