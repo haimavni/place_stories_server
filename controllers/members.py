@@ -627,10 +627,14 @@ def get_photo_list_with_topics(vars):
 def make_photos_query(vars):
     q = (db.TblPhotos.width > 0)
     first_year = vars.first_year
-    if first_year < vars.base_year + 4:
-        first_year = 0
     last_year = vars.last_year
-    if last_year and last_year > vars.base_year + vars.num_years  - 5:
+    if vars.base_year: #time range may be defined
+        if first_year < vars.base_year + 4:
+            first_year = 0
+        if last_year and last_year > vars.base_year + vars.num_years  - 5:
+            last_year = 0
+    else:
+        first_year = 0
         last_year = 0
     photographer_list = [p.id for p in vars.selected_photographers] if vars.selected_photographers else []
     if len(photographer_list) > 0:
