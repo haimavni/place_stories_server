@@ -505,6 +505,30 @@ def blank_all_refs():
         html = blank_refs(rec.story)
         rec.update_record(story=html)
     db.commit()
+    
+def map_old_event_id_to_story_id():
+    dic = dict()
+    lst = db(db.TblEvents).select()
+    for rec in lst:
+        dic[rec.IIDD] = rec.story_id
+    return dic
+
+def replace_ref(m):
+    return m.group(0)
+
+
+def fix_old_site_refs():
+    index = map_old_event_id_to_story_id()
+    q = db.TblStories.story.like("%givat-brenner.co.il%") & \
+        (db.TblStories.used_for==STORY4EVENT)
+    lst = db(q).select(limitby=(0, 100))
+    pat_str = r'<a href="http://givat-brenner.co.il/(\w+).asp\?(\w+)=(\d+).*>'
+    pat = re.compile(pat_str)
+    for rec in lst:
+        txt = rec.story
+        m = pat.search(txt)
+        new_txt = pat.sub(replace_ref, txt)
+        x = rec
         
         
     
