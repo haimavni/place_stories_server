@@ -507,10 +507,13 @@ def blank_all_refs():
     db.commit()
     
 class RefsFixer:
-    
-    photo_ref_format = 'http://gbs.gbstories.org/gbs/static/gb_photos/gbs/photos/orig/ported/hanan14/Phb1976.jpg'
-    member_ref_format = '/gbs__www/static/aurelia/index.html#/member-details/850/*'
-    story_ref_format = '/gbs__www/static/aurelia/index.html#/story-detail/1482/*?what=story'
+    base_url = request.env.http_orign or request.env.http_host
+    app = request.application
+    app_area = app.split('__')[0]
+    photo_ref_format = '<img src="' + base_url + '/{app_area}/static/gb_photos/{app_area}/photos/orig/'.format(app_area=app_area) + '{path}">'
+    member_ref_format = '<a href="/{app}/static/aurelia/index.html#/member-details/'.format(app=app) + '{mem_id}/*">'
+    story_ref_format = '<a href="/{app}/static/aurelia/index.html#/story-detail/'.format(app=app) + '{sid}/*?what=story">'
+    term_ref_format = '<a href="/{app}/static/aurelia/index.html#/term-detail/'.format(app=app) + '{sid}/*?what=story">'
     
     def __init__(self):
         self.refs_map = dict(member = {}, 
@@ -533,7 +536,7 @@ class RefsFixer:
         dic = dict()
         lst = db(db.TblPhotos).select()
         for rec in lst:
-            dic[rec.IIDD] = rec.id
+            dic[rec.IIDD] = rec.photo_path
         self.refs_map['photo'] = dic
     
     def map_old_member_ids_to_new_member_ids(self):
@@ -547,13 +550,26 @@ class RefsFixer:
         dic = dict()
         lst = db(db.TblTerms).select()
         for rec in lst:
-            dic[rec.IIDD] = rec.id
+            dic[rec.IIDD] = rec.story_id
         self.refs_map['term'] = dic
 
     def replace_ref(self, m):
         s = m.group(0)
         what = m.group(1)
-        ref_id = m.group(2)
+        ref_id = m.group(3)
+        ref_id = int(ref_id)
+        try:
+            if what == 'member':
+                return RefsFixer.member_ref_format.format(mem_id=self.refs_map['member'][ref_id])
+            if what == 'event':
+                return RefsFixer.story_ref_format.format(sid=self.refs_map['event'][ref_id])
+            if what == 'term':
+                return RefsFixer.story_ref_format.format(sid=self.refs_map['term'][ref_id])
+            if what == 'photo':
+                return RefsFixer.photo_ref_format.format(path=self.refs_map['photo'][ref_id])
+        except Exception, e:
+            comment("error fixing refs. story id={sid}", sid=self.curr_story_id)
+            pass
         #todo: implement the transformation
         return m.group(0)
     
@@ -561,13 +577,15 @@ class RefsFixer:
         q = db.TblStories.story.like("%givat-brenner.co.il%") & \
             (db.TblStories.used_for==STORY4EVENT)
         lst = db(q).select(limitby=(0, 100))
-        pat_str = r'<a href="http://givat-brenner.co.il/(\w+).asp\?(\w+)=(\d+).*>'
+        pat_str = r'<a href="http://givat-brenner.co.il/(\w+).asp\?(\w+)=(\d+).*?>'
         pat = re.compile(pat_str)
         for rec in lst:
+            self.curr_story_id = rec.id
+            comment("fixing story {sid}", sid=rec.id)
             txt = rec.story
             m = pat.search(txt)
             new_txt = pat.sub(self.replace_ref, txt)
-            x = rec
+            rec.update_record(story=new_txt)
         
 def fix_old_site_refs():
     fixer = RefsFixer()
