@@ -26,6 +26,7 @@ fi
 echo -e "Deploy to branch " $BRANCH
 
 pushd ~/aurelia-gbs/gbs
+git checkout $BRANCH
 git pull
 
 ##git checkout $BRNACH
@@ -34,6 +35,7 @@ rm -R -f scripts/*
 rm -R -f ~/deployment_folder/*
 python ~/aurelia-gbs/server/tol_server/private/handle_locale.py
 au build --env tmp_env
+rm tmp_env
 cp -a ./scripts ~/deployment_folder/
 cp ./index.html  ~/deployment_folder
 cp ./favicon.ico  ~/deployment_folder
