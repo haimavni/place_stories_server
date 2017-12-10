@@ -506,30 +506,63 @@ def blank_all_refs():
         rec.update_record(story=html)
     db.commit()
     
-def map_old_event_id_to_story_id():
-    dic = dict()
-    lst = db(db.TblEvents).select()
-    for rec in lst:
-        dic[rec.IIDD] = rec.story_id
-    return dic
+class RefsFixer:
+    
+    def __init__(self):
+        self.map_old_event_ids_to_story_ids()
+        self.map_old_photo_ids_to_new_photo_ids()
+        self.map_old_member_ids_to_new_member_ids()
+        self.map_old_term_ids_to_new_terms_ids()
 
-def replace_ref(m):
-    return m.group(0)
+    def map_old_event_ids_to_story_ids(self):
+        dic = dict()
+        lst = db(db.TblEvents).select()
+        for rec in lst:
+            dic[rec.IIDD] = id
+        self.events_map = dic
+    
+    def map_old_photo_ids_to_new_photo_ids(self):
+        dic = dict()
+        lst = db(db.TblPhotos).select()
+        for rec in lst:
+            dic[rec.IIDD] = rec.id
+        self.photos_map = dic
+    
+    def map_old_member_ids_to_new_member_ids(self):
+        dic = dict()
+        lst = db(db.TblMembers).select()
+        for rec in lst:
+            dic[rec.IIDD] = rec.id
+        self.members_map = dic
+            
+    def map_old_term_ids_to_new_terms_ids(self):
+        dic = dict()
+        lst = db(db.TblTerms).select()
+        for rec in lst:
+            dic[rec.IIDD] = rec.id
+        map_terms = dic
 
-
-def fix_old_site_refs():
-    index = map_old_event_id_to_story_id()
-    q = db.TblStories.story.like("%givat-brenner.co.il%") & \
-        (db.TblStories.used_for==STORY4EVENT)
-    lst = db(q).select(limitby=(0, 100))
-    pat_str = r'<a href="http://givat-brenner.co.il/(\w+).asp\?(\w+)=(\d+).*>'
-    pat = re.compile(pat_str)
-    for rec in lst:
-        txt = rec.story
-        m = pat.search(txt)
-        new_txt = pat.sub(replace_ref, txt)
-        x = rec
+    def replace_ref(self, m):
+        #todo: implement the transformation
+        return m.group(0)
+    
+    def fix_old_site_refs(self):
+        index = map_old_event_id_to_story_id()
+        q = db.TblStories.story.like("%givat-brenner.co.il%") & \
+            (db.TblStories.used_for==STORY4EVENT)
+        lst = db(q).select(limitby=(0, 100))
+        pat_str = r'<a href="http://givat-brenner.co.il/(\w+).asp\?(\w+)=(\d+).*>'
+        pat = re.compile(pat_str)
+        for rec in lst:
+            txt = rec.story
+            m = pat.search(txt)
+            new_txt = pat.sub(self.replace_ref, txt)
+            x = rec
         
+def fix_old_site_refs():
+    fixer = RefsFixer()
+    fixer.fix_old_site_refs()
+    return "refs fixed"
         
     
     
