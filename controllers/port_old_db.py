@@ -513,6 +513,10 @@ class RefsFixer:
     story_ref_format = '/gbs__www/static/aurelia/index.html#/story-detail/1482/*?what=story'
     
     def __init__(self):
+        self.refs_map = dict(member = {}, 
+                             event = {}, 
+                             photo = {}, 
+                             term = {})
         self.map_old_event_ids_to_story_ids()
         self.map_old_photo_ids_to_new_photo_ids()
         self.map_old_member_ids_to_new_member_ids()
@@ -520,38 +524,40 @@ class RefsFixer:
 
     def map_old_event_ids_to_story_ids(self):
         dic = dict()
-        lst = db(db.TblEvents).select()
+        lst = db(db.TblEvents.story_id==db.TblStories.id).select()
         for rec in lst:
-            dic[rec.IIDD] = id
-        self.events_map = dic
+            dic[rec.TblEvents.IIDD] = rec.TblStories.id
+        self.refs_map['event'] = dic
     
     def map_old_photo_ids_to_new_photo_ids(self):
         dic = dict()
         lst = db(db.TblPhotos).select()
         for rec in lst:
             dic[rec.IIDD] = rec.id
-        self.photos_map = dic
+        self.refs_map['photo'] = dic
     
     def map_old_member_ids_to_new_member_ids(self):
         dic = dict()
         lst = db(db.TblMembers).select()
         for rec in lst:
             dic[rec.IIDD] = rec.id
-        self.members_map = dic
+        self.refs_map['member'] = dic
             
     def map_old_term_ids_to_new_terms_ids(self):
         dic = dict()
         lst = db(db.TblTerms).select()
         for rec in lst:
             dic[rec.IIDD] = rec.id
-        map_terms = dic
+        self.refs_map['term'] = dic
 
     def replace_ref(self, m):
+        s = m.group(0)
+        what = m.group(1)
+        ref_id = m.group(2)
         #todo: implement the transformation
         return m.group(0)
     
     def fix_old_site_refs(self):
-        index = map_old_event_id_to_story_id()
         q = db.TblStories.story.like("%givat-brenner.co.il%") & \
             (db.TblStories.used_for==STORY4EVENT)
         lst = db(q).select(limitby=(0, 100))
