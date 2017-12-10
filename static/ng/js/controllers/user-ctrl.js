@@ -1,7 +1,7 @@
 app.controller('UserCtrl', ['$scope', '$timeout', '$window', 'callServerService', 'messagingService', 'toaster',
 function($scope, $timeout, $window, callServerService, messagingService, toaster)
     {
-        $scope.user_email = null;
+        $scope.email = null;
         $scope.password = null;
         callServerService.translate($scope, {password: 'Password', login: 'Log In', cancel:'Cancel', please_login: 'Please Login', 
                                              email_address: "Email Address", register: "register", reset_password: "Reset Password",
@@ -14,7 +14,7 @@ function($scope, $timeout, $window, callServerService, messagingService, toaster
 
         $scope.do_login = function() 
         {
-            callServerService.call_server('default/login', {user_email: $scope.user_email, password: $scope.password})
+            callServerService.call_server('default/login', {email: $scope.email, password: $scope.password})
             .success(function(result)
             {
                 if (result.error)

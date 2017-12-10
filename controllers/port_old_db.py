@@ -508,6 +508,10 @@ def blank_all_refs():
     
 class RefsFixer:
     
+    photo_ref_format = 'http://gbs.gbstories.org/gbs/static/gb_photos/gbs/photos/orig/ported/hanan14/Phb1976.jpg'
+    member_ref_format = '/gbs__www/static/aurelia/index.html#/member-details/850/*'
+    story_ref_format = '/gbs__www/static/aurelia/index.html#/story-detail/1482/*?what=story'
+    
     def __init__(self):
         self.map_old_event_ids_to_story_ids()
         self.map_old_photo_ids_to_new_photo_ids()
