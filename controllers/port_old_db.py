@@ -526,6 +526,7 @@ class RefsFixer:
         self.map_old_member_ids_to_new_member_ids()
         self.map_old_term_ids_to_new_terms_ids()
         self.num_errors = 0
+        self.counter = dict()
 
     def map_old_event_ids_to_story_ids(self):
         dic = dict()
@@ -558,6 +559,9 @@ class RefsFixer:
     def replace_ref(self, m):
         s = m.group(0)
         what = m.group(1)
+        if what not in self.counter:
+            self.counter[what] = 0
+        self.counter[what] += 1
         comment("ref type {what}", what=what)
         ref_id = m.group(3)
         ref_id = int(ref_id)
@@ -606,6 +610,8 @@ class RefsFixer:
                 num_non_refs += 1
                 comment("not a real ref in story {sid}", sid=self.curr_story_id)
         num_stories_to_fix = db(q).count()
+        for what in self.counter:
+            comment('{n} refs of type {t}', n=self.counter[what], t=what)
         return num_modified, num_failed, num_non_refs, num_stories_to_fix
         
 def fix_old_site_refs():

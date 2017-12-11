@@ -354,6 +354,13 @@ def get_photo_detail(vars):
                 photo_story=story)
 
 @serve_json
+def update_photo_caption(vars):
+    photo_id = int(vars.photo_id)
+    caption = vars.caption
+    db(db.TblPhotos.id==photo_id).update(Name=caption)
+    return dict()
+
+@serve_json
 def get_photo_info(vars):
     photo_id = int(vars.photo_id)
     rec = db(db.TblPhotos.id==photo_id).select().first()
