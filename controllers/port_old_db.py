@@ -510,7 +510,8 @@ class RefsFixer:
     base_url = request.env.http_orign or request.env.http_host
     app = request.application
     app_area = app.split('__')[0]
-    photo_ref_format = '<img src="' + base_url + '/{app_area}/static/gb_photos/{app_area}/photos/orig/'.format(app_area=app_area) + '{path}">'
+    ###photo_ref_format = '<img src="' + base_url + '/{app_area}/static/gb_photos/{app_area}/photos/orig/'.format(app_area=app_area) + '{path}">'
+    photo_ref_format = '<a href="/{app}/static/aurelia/index.html#/photos/'.format(app=app) + '{photo_id}/*">'
     member_ref_format = '<a href="/{app}/static/aurelia/index.html#/member-details/'.format(app=app) + '{mem_id}/*">'
     story_ref_format = '<a href="/{app}/static/aurelia/index.html#/story-detail/'.format(app=app) + '{sid}/*?what=story">'
     term_ref_format = '<a href="/{app}/static/aurelia/index.html#/term-detail/'.format(app=app) + '{sid}/*?what=story">'
@@ -524,6 +525,7 @@ class RefsFixer:
         self.map_old_photo_ids_to_new_photo_ids()
         self.map_old_member_ids_to_new_member_ids()
         self.map_old_term_ids_to_new_terms_ids()
+        self.num_errors = 0
 
     def map_old_event_ids_to_story_ids(self):
         dic = dict()
@@ -536,7 +538,7 @@ class RefsFixer:
         dic = dict()
         lst = db(db.TblPhotos).select()
         for rec in lst:
-            dic[rec.IIDD] = rec.photo_path
+            dic[rec.IIDD] = rec.id
         self.refs_map['photo'] = dic
     
     def map_old_member_ids_to_new_member_ids(self):
@@ -556,6 +558,7 @@ class RefsFixer:
     def replace_ref(self, m):
         s = m.group(0)
         what = m.group(1)
+        comment("ref type {what}", what=what)
         ref_id = m.group(3)
         ref_id = int(ref_id)
         try:
@@ -568,29 +571,47 @@ class RefsFixer:
             if what == 'photo':
                 return RefsFixer.photo_ref_format.format(path=self.refs_map['photo'][ref_id])
         except Exception, e:
-            comment("error fixing refs. story id={sid}", sid=self.curr_story_id)
+            self.num_errors += 1
             pass
         #todo: implement the transformation
+        comment("ERROR in story {sid}", sid=self.curr_story_id)
         return m.group(0)
     
     def fix_old_site_refs(self):
         q = db.TblStories.story.like("%givat-brenner.co.il%") & \
             (db.TblStories.used_for==STORY4EVENT)
+        num_stories_to_fix = db(q).count()
+        comment("Start fixing refs. {n} remaining.".format(n=num_stories_to_fix))
         lst = db(q).select(limitby=(0, 100))
-        pat_str = r'<a href="http://givat-brenner.co.il/(\w+).asp\?(\w+)=(\d+).*?>'
-        pat = re.compile(pat_str)
+        pat_str = r'<a href="http://givat-brenner\.co\.il.(\w+)\.asp\?(\w+)=(\d+).*?>'  #should work, but it doesn't. hence next line
+        pat_str = r'<a href.*?givat-brenner\.co\.il.(\w+)\.asp\?(\w+)=(\d+).*?>'
+        pat = re.compile(pat_str, re.IGNORECASE)
+        num_modified = 0
+        num_failed = 0
+        num_non_refs = 0
         for rec in lst:
             self.curr_story_id = rec.id
             comment("fixing story {sid}", sid=rec.id)
             txt = rec.story
             m = pat.search(txt)
-            new_txt = pat.sub(self.replace_ref, txt)
-            rec.update_record(story=new_txt)
+            if m:
+                ne = self.num_errors
+                new_txt = pat.sub(self.replace_ref, txt)
+                if self.num_errors > ne:
+                    num_failed += 1
+                else:
+                    rec.update_record(story=new_txt)
+                    num_modified += 1
+            else:
+                num_non_refs += 1
+                comment("not a real ref in story {sid}", sid=self.curr_story_id)
+        num_stories_to_fix = db(q).count()
+        return num_modified, num_failed, num_non_refs, num_stories_to_fix
         
 def fix_old_site_refs():
     fixer = RefsFixer()
-    fixer.fix_old_site_refs()
-    return "refs fixed"
+    num_modified, num_failed, num_non_refs, num_stories_to_fix = fixer.fix_old_site_refs()
+    return "{n} refs fixed. {nf} failed. {nnr} non links. {ne} errors occured. {nl} remaining unfixed.".format(n=num_modified, nf=num_failed, nnr=num_non_refs, ne=fixer.num_errors, nl=num_stories_to_fix)
         
     
     
