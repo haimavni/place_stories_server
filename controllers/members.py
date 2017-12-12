@@ -720,9 +720,10 @@ def get_photo_list(vars):
 @serve_json
 def get_topic_list(vars):
     q = db.TblTopics.id > 0
-    if vars.usage:
-        for c in vars.usage:
-            q &= (db.TblTopics.usage.like("%" + c + "%"))
+    if len(vars) > 0:
+        pass #todo: calculate usage from active story types
+        #for c in usage:
+            #q &= (db.TblTopics.usage.like("%" + c + "%"))
     topic_list = db(q).select(orderby=db.TblTopics.name)
     topic_list = [dict(name=rec.name, id=rec.id) for rec in topic_list if rec.name]
     photographer_list = db(db.TblPhotographers).select(orderby=db.TblPhotographers.name)

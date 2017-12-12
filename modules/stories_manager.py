@@ -138,8 +138,8 @@ class Stories:
         updated_story_text = updated_story_text.replace('~1', '&').replace('~2', ';').replace('\n', '').replace('>', '>\n')
         db, auth = inject('db', 'auth')
         rec = db(db.TblStories.id==story_id).select().first()
-        if rec.language and rec.language != language:
-            rec = self.find_translation(rec, language)
+        #if rec.language and rec.language != language:
+            #rec = self.find_translation(rec, language)
         now = datetime.datetime.now()
         if rec.story != updated_story_text:
             merger = mim.Merger()
