@@ -467,7 +467,7 @@ def get_siblings(member_id):
     if not parents:
         return []
     pa, ma = parents.pa, parents.ma
-    q = (db.TblMembers.id != member_id) & (db.TblMembers.visibility > 0) & (db.TblMembers.deleted == False)
+    q = (db.TblMembers.id != member_id) & (db.TblMembers.visibility != VIS_NEVER) & (db.TblMembers.deleted == False)
     if pa:
         lst1 = db(q & (db.TblMembers.father_id==pa.id)).select(orderby=db.TblMembers.date_of_birth) if pa else []
         lst1 = [r.id for r in lst1]
@@ -495,7 +495,7 @@ def get_children(member_id, hidden_too=False):
     else:
         return [] #error!
     if not hidden_too:
-        q &= (db.TblMembers.visibility > 0)
+        q &= (db.TblMembers.visibility != VIS_NEVER)
     q &= (db.TblMembers.deleted == False)
     lst = db(q).select(db.TblMembers.id, db.TblMembers.date_of_birth, orderby=db.TblMembers.date_of_birth)
     lst = [get_member_rec(rec.id, prepend_path=True) for rec in lst]
@@ -524,8 +524,12 @@ def get_spouses(member_id):
     return [get_member_rec(m_id, prepend_path=True) for m_id in spouses]
 
 def get_family_connections(member_info):
+    parents = get_parents(member_info.id)
+    for p in ['pa', 'ma']:
+        if parents[p] and parents[p].visibility == VIS_NEVER:
+            parents[p] = None
     result = Storage(
-        parents=get_parents(member_info.id),
+        parents=parents,
         siblings=get_siblings(member_info.id),
         spouses=get_spouses(member_info.id),
         children=get_children(member_info.id)
