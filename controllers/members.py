@@ -351,7 +351,8 @@ def get_photo_detail(vars):
                 photo_name=rec.Name,
                 height=rec.height,
                 width=rec.width,
-                photo_story=story)
+                photo_story=story,
+                photo_id=rec.id)
 
 @serve_json
 def update_photo_caption(vars):
@@ -917,7 +918,8 @@ def get_theme_data(vars):
         founders_group_photo='founders_group_photo.jpg',
         gb_logo_png='gb-logo.png',
         himnon='himnon-givat-brenner.mp3',
-        content_background='bgs/body-bg.jpg'
+        content_background='bgs/body-bg.jpg',
+        mayflower='bgs/mayflower.jpg'
     )
     result = dict()
     for k in files:
