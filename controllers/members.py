@@ -721,7 +721,7 @@ def get_photo_list(vars):
 def get_topic_list(vars):
     topic_chars = 'xMEPTV'
     q = db.TblTopics.id > 0
-    if len(vars) > 0:
+    if vars.params:
         topics = vars.params.selected_story_types
         topics = [topic.id for topic in topics]
         if topics:
