@@ -319,6 +319,26 @@ db.define_table('TblChats',
                 Field('message', type='text')
 )
 
+db.define_table('TblUserStoryGroups',
+                Field('user_id', type=db.auth_user),
+                Field('name', type='string')
+)
+
+db.define_table('TblUserStoryGroupItems',
+                Field('group_id', db.TblUserStoryGroups),
+                Field('story_id', db.TblStories)
+)
+
+db.define_table('TblUserPhotoGroups',
+                Field('user_id', type=db.auth_user),
+                Field('name', type='string')
+)
+
+db.define_table('TblUserPhotoGroupItems',
+                Field('group_id', db.TblUserPhotoGroups),
+                Field('photo_id', db.TblPhotos)
+)
+
 def write_indexing_sql_scripts():
     '''Creates a set of indexes if they do not exist.
        In a terminal, su postgres and issue the command

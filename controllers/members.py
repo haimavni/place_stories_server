@@ -619,7 +619,7 @@ def get_photo_list_with_topics(vars):
         topic_groups.append([topic.id])
     for topic_group in topic_groups:
         q = make_photos_query(vars) #if we do not regenerate it the query becomes accumulated and necessarily fails
-        q &= (db.TblItemTopics.item_id==db.TblPhotos.id) & (db.TblItemTopics.item_type=='P')
+        q &= (db.TblItemTopics.item_id==db.TblPhotos.id) & (db.TblItemTopics.item_type.like('%P%'))
         ##topic_ids = [t.id for t in topic_group]
         q &= (db.TblItemTopics.topic_id.belongs(topic_group))
         lst = db(q).select()
@@ -674,9 +674,10 @@ def get_photo_list(vars):
     selected_topics = vars.selected_topics or []
     grouped_selected_topics = vars.grouped_selected_topics or []
     privileges = auth.get_privileges()
-    MAX_PHOTOS_COUNT = 120
-    if privileges and privileges.DEVELOPER:
-        MAX_PHOTOS_COUNT = 1500
+    mprl = int(vars.max_photos_per_line)
+    if mprl < 8: #should not happen
+        mprl = 8 
+    MAX_PHOTOS_COUNT = 100 + (mprl - 8) * 100
     if selected_topics or grouped_selected_topics:
         lst = get_photo_list_with_topics(vars)
     else:
@@ -720,20 +721,26 @@ def get_photo_list(vars):
 
 @serve_json
 def get_topic_list(vars):
-    topic_chars = 'xMEPTV'
+    if vars.usage:
+        usage = vars.usage
+    elif vars.params:
+        usage = ""
+        topic_chars = 'xMEPTV'
+        story_types = vars.params.selected_story_types
+        story_types = [st.id for st in story_types]
+        for t in story_types:
+            usage += topic_chars[t] 
+    else:
+        usage = ""
     q = db.TblTopics.id > 0
-    if vars.params:
-        topics = vars.params.selected_story_types
-        topics = [topic.id for topic in topics]
-        if topics:
-            q1 = None
-            for t in topics:
-                c = topic_chars[t] 
-                if q1:
-                    q1 |= (db.TblTopics.usage.like("%" + c + "%"))
-                else:
-                    q1 = (db.TblTopics.usage.like("%" + c + "%"))
-            q &= q1
+    if usage:
+        q1 = None
+        for c in usage:
+            if q1:
+                q1 |= (db.TblTopics.usage.like("%" + c + "%"))
+            else:
+                q1 = (db.TblTopics.usage.like("%" + c + "%"))
+        q &= q1
     topic_list = db(q).select(orderby=db.TblTopics.name)
     topic_list = [dict(name=rec.name, id=rec.id) for rec in topic_list if rec.name]
     photographer_list = db(db.TblPhotographers).select(orderby=db.TblPhotographers.name)
@@ -942,13 +949,15 @@ def save_tag_merges(vars):
         rec0 = db(db.TblTopics.id==topic0.id).select().first()
         for topic in topic_group[1:]:
             rec = db(db.TblTopics.id==topic.id).select().first()
+            if not rec.usage:
+                continue
             for c in rec.usage:
                 if c not in rec0.usage:
                     rec0.usage += c
                     rec0.update_record(usage=rec0.usage)
                     
             db(db.TblItemTopics.topic_id==rec.id).update(topic_id=rec0.id)
-        db(db.TblTopics.id==rec.id).delete()
+            db(db.TblTopics.id==rec.id).delete()
         
     gsp = vars.grouped_selected_photographers
     for p_group in gsp:
