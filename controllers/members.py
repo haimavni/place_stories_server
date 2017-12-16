@@ -674,9 +674,7 @@ def get_photo_list(vars):
     selected_topics = vars.selected_topics or []
     grouped_selected_topics = vars.grouped_selected_topics or []
     privileges = auth.get_privileges()
-    mprl = int(vars.max_photos_per_line) if vars.max_photos_per_line else 8;
-    if mprl < 8: #should not happen
-        mprl = 8 
+    mprl = vars.max_photos_per_line or 8;
     MAX_PHOTOS_COUNT = 100 + (mprl - 8) * 100
     if selected_topics or grouped_selected_topics:
         lst = get_photo_list_with_topics(vars)
