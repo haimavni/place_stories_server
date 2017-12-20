@@ -319,24 +319,15 @@ db.define_table('TblChats',
                 Field('message', type='text')
 )
 
-db.define_table('TblUserStoryGroups',
+db.define_table('TblUserObjectGroups',
                 Field('user_id', type=db.auth_user),
+                Field('what', type='string'), #Members, Photos, Stories
                 Field('name', type='string')
 )
 
-db.define_table('TblUserStoryGroupItems',
-                Field('group_id', db.TblUserStoryGroups),
-                Field('story_id', db.TblStories)
-)
-
-db.define_table('TblUserPhotoGroups',
-                Field('user_id', type=db.auth_user),
-                Field('name', type='string')
-)
-
-db.define_table('TblUserPhotoGroupItems',
-                Field('group_id', db.TblUserPhotoGroups),
-                Field('photo_id', db.TblPhotos)
+db.define_table('TblUserObjectGroupItems',
+                Field('group_id', db.TblUserObjectGroups),
+                Field('item_id', type='integer')
 )
 
 def write_indexing_sql_scripts():
