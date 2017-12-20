@@ -389,6 +389,7 @@ def get_member_names():
                    former_last_name=rec.former_last_name,
                    nick_name=rec.NickName,
                    gender=rec.gender,
+                   birth_date=rec.date_of_birth,
                    visibility=rec.visibility,
                    has_profile_photo=bool(rec.facePhotoURL), #used in client!
                    facePhotoURL=photos_folder('profile_photos') + (rec.facePhotoURL or "dummy_face.png")) for rec in lst]

@@ -19,6 +19,8 @@ word_regex = re.compile(word_pat, re.UNICODE | re.MULTILINE)
 
 def remove_all_tags(html):
     html = html.replace('>', '> ')  #to prevent words that are separated by tags only to stick together
+    html = re.sub(r'&quot;', '"', html)
+    html = re.sub(r'&#39;', "'", html)
     html = re.sub(r'&.{1,7};', ' ', html)
     soup = BeautifulSoup(html)
     text = soup.get_text()

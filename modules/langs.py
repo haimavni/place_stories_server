@@ -116,7 +116,7 @@ def lang_pat(seq)        :
     s = u'['
     for tup in seq:
         s += range_pat(tup)
-    s += '"]+'
+    s += '"\']+'
     return s
 
 def get_emoticons():
@@ -237,8 +237,8 @@ def clean_word(w):
         return w
     uout = u''
     for c in uin:
-        if c == '"':
-            uout += '"'
+        if c in '"\':':
+            uout += c
             continue
         k = ord(c)
         c1 = c
@@ -248,10 +248,11 @@ def clean_word(w):
                 break
         uout += c1
     #leave only qoutes that are in the middle of a word, for abbrevs
-    if uout.endswith('"'):
-        uout = uout[:-1]
-    if uout.startswith('"'):
-        uout = uout[1:]
+    for c in ('"', "'"):
+        if uout.endswith(c):
+            uout = uout[:-1]
+        if uout.startswith(c):
+            uout = uout[1:]
     return uout.encode('utf8') 
 
 def extract_words(s):
@@ -272,6 +273,8 @@ def extract_words(s):
             if w:
                 if '"' in w:
                     b = w.startswith('"')
+                if "'" in w:
+                    b = w.startswith("'")
                 for w1 in re.split(r'\s+', w):
                     #if non_word_regex.match(w1):
                         #continue
