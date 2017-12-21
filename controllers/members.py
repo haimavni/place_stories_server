@@ -984,6 +984,28 @@ def apply_to_selected_photos(vars):
                 db(q).delete()
     return dict()
     
+@serve_json
+def save_group_members(vars):
+    if vars.caller_type == 'story':
+        return save_story_members(vars.caller_id, vars.member_ids)
+    else:
+        return dict() #todo: implement for terms etc.
+    
+def save_story_members(story_id, member_ids):
+    event = db(db.TblEvents.story_id==story_id).select().first()
+    qm = (db.TblEventMembers.Event_id==event.id) & (db.TblMembers.id==db.TblEventMembers.Member_id)
+    old_members = db(qm).select(db.TblMembers.id)
+    old_members = [m.id for m in old_members]
+    for m in old_members:
+        if m not in member_ids:
+            db((db.TblEventMembers.Member_id==m) & (db.TblEventMembers.Event_id==event.id)).delete()
+    for m in member_ids:
+        if m not in old_members:
+            db.TblEventMembers.insert(Member_id=m, Event_id=event.id)
+    
+    return dict()
+    
+
 def get_tag_ids(item_id, item_type):
     q = (db.TblItemTopics.item_type==item_type) & (db.TblItemTopics.item_id==item_id)
     lst = db(q).select()
