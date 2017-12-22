@@ -618,6 +618,38 @@ def fix_old_site_refs():
     fixer = RefsFixer()
     num_modified, num_failed, num_non_refs, num_stories_to_fix = fixer.fix_old_site_refs()
     return "{n} refs fixed. {nf} failed. {nnr} non links. {ne} errors occured. {nl} remaining unfixed.".format(n=num_modified, nf=num_failed, nnr=num_non_refs, ne=fixer.num_errors, nl=num_stories_to_fix)
+
+def clean_drek(m):
+    return ""
+
+def remove_style_defs(s):
+    pat_str = r'(style=".+?")|(<font.+?>)|(</font>)|(class=".+?")|(lang=".+?")|(align=".+?")'
+    pat = re.compile(pat_str, re.IGNORECASE)
+    result = pat.sub(clean_drek, s)
+    return result
+
+def replace_div(m):
+    s = m.group(0)
+    s = s.replace("div", "p")
+    return s
+
+def replace_divs(s):
+    pat_str = r'(<div\s*>)|(</div\s*>)'
+    pat = re.compile(pat_str, re.IGNORECASE)
+    result = pat.sub(replace_div, s)
+    return result
+
+def clean_all_style_defs():
+    count = 0
+    lst = db(db.TblStories).select()
+    for rec in lst:
+        s = rec.story
+        s1 = remove_style_defs(s)
+        s2 = replace_divs(s1)
+        if s != s2:
+            count += 1
+            rec.update_record(story=s2)
+    return "style, font, lang, class, div and align removed from {} stories.".format(count)
         
     
     
