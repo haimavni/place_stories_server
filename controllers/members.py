@@ -470,8 +470,8 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
     rec = Storage(rec.as_dict())
     rec.full_name = member_display_name(rec, full=True)
     rec.name = member_display_name(rec, full=False)
-    if prepend_path and rec.facePhotoURL:
-        rec.facePhotoURL = photos_folder('profile_photos') + rec.facePhotoURL
+    if prepend_path :
+        rec.facePhotoURL = photos_folder('profile_photos') + (rec.facePhotoURL or 'dummy_face.png')
     return rec
 
 def get_parents(member_id):
@@ -1026,6 +1026,22 @@ def save_story_members(story_id, member_ids):
         if m not in old_members:
             db.TblEventMembers.insert(Member_id=m, Event_id=event.id)
     
+    return dict()
+
+@serve_json
+def save_photo_group(vars):
+    story_id = vars.caller_id
+    event = db(db.TblEvents.story_id==story_id).select().first()
+    qp = (db.TblEventPhotos.Event_id==event.id) & (db.TblEventPhotos.Photo_id==db.TblPhotos.id)
+    old_photos = db(qp).select(db.TblPhotos.id)
+    old_photos = [p.id for p in old_photos]
+    photo_ids = vars.photo_ids
+    for p in old_photos:
+        if p not in photo_ids:
+            db((db.TblEventPhotos.Photo_id==p) & (db.TblEventPhotos.Event_id==event.id)).delete()
+    for p in vars.photo_ids:
+        if p not in old_photos:
+            db.TblEventPhotos.insert(Photo_id=p, Event_id=event.id)
     return dict()
     
 def get_tag_ids(item_id, item_type):
