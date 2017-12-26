@@ -1050,6 +1050,87 @@ def get_tag_ids(item_id, item_type):
     q = (db.TblItemTopics.item_type==item_type) & (db.TblItemTopics.item_id==item_id)
     lst = db(q).select()
     return [rec.topic_id for rec in lst]
+
+@serve_json
+def consolidate_stories(vars):
+    lst = vars.stories_to_merge
+    lst = [(get_story_name(story_id), story_id) for story_id in lst]
+    lst = sorted(lst)
+    stm = [item[1] for item in lst]
+    base_event_id = event_id_of_story_id(stm[0])
+    #--------merge photos-------------------------
+    base_photo_ids = set(get_story_photo_ids(stm[0]))
+    added_photo_ids = set([])
+    for story_id in stm[1:]:
+        added_photo_ids |= set(get_story_photo_ids(story_id))
+    added_photo_ids = added_photo_ids - base_photo_ids
+    for pid in added_photo_ids:
+        db.TblEventPhotos.insert(Photo_id=pid, Event_id=base_event_id)
+    for pid in added_photo_ids:
+        event_id = event_id_of_story_id(pid)
+        db((db.TblEventPhotos.Event_id==event_id) & (db.TblEventPhotos.Photo_id==pid)).delete()
+    #--------merge members--------------------------
+    base_member_ids = set(get_story_member_ids(stm[0]))
+    added_member_ids = set([])
+    for story_id in stm[1:]:
+        added_member_ids |= set(get_story_member_ids(story_id))
+    added_member_ids = added_member_ids - base_member_ids
+    for pid in added_member_ids:
+        db.TblEventMembers.insert(Member_id=pid, Event_id=base_event_id)
+    for pid in added_member_ids:
+        event_id = event_id_of_story_id(pid)
+        db((db.TblEventMembers.Event_id==event_id) & (db.TblEventMembers.Member_id==pid)).delete()
+    #--------merge stories--------------------------
+    story = get_story_text(stm[0])
+    for i, story_id in enumerate(stm[1:]):
+        name = lst[i+1][0]
+        story += '<br>----------' + name + '-------------------<br>'
+        story += get_story_text(story_id)
+    db(db.TblStories.id==stm[0]).update(story=story)
+    #--------delete obsolete stories----------------
+    db(db.TblStories.id.belongs(stm[1:])).update(deleted=True)
+    return dict()
+    
+def get_story_text(story_id):
+    rec = db(db.TblStories.id==story_id).select().first()
+    if rec:
+        return rec.story
+    else:
+        return ''
+    
+def get_story_name(story_id):
+    rec = db(db.TblStories.id==story_id).select().first()
+    if rec:
+        return rec.name
+    else:
+        return ''
+    
+def event_id_of_story_id(story_id):
+    rec = db(db.TblEvents.story_id==story_id).select().first()
+    if rec:
+        return rec.id
+    else:
+        return None
+
+def get_story_photo_ids(story_id):
+    event_id = event_id_of_story_id(story_id)
+    if not event_id:
+        return []
+    qp = (db.TblEventPhotos.Event_id==event_id) & (db.TblPhotos.id==db.TblEventPhotos.Photo_id)
+    lst = db(qp).select(db.TblPhotos.id)
+    lst = [p.id for p in lst]
+    return lst
+
+def get_story_member_ids(story_id):
+    event_id = event_id_of_story_id(story_id)
+    if not event_id:
+        return []
+    qm = (db.TblEventMembers.Event_id==event_id) & (db.TblMembers.id==db.TblEventMembers.Member_id)
+    lst = db(qm).select(db.TblMembers.id)
+    lst = [m.id for m in lst]
+    return lst
+
+
     
     
     
