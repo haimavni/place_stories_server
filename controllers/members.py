@@ -415,7 +415,9 @@ def get_member_names():
                    birth_date=rec.date_of_birth,
                    visibility=rec.visibility,
                    has_profile_photo=bool(rec.facePhotoURL), #used in client!
+                   rnd=random.randint(0, 1000000),
                    facePhotoURL=photos_folder('profile_photos') + (rec.facePhotoURL or "dummy_face.png")) for rec in lst]
+    arr.sort(key=lambda item: item.rnd)
     return arr
 
 @serve_json
