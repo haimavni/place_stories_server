@@ -110,20 +110,24 @@ def update_story_words_index(story_id):
     db = inject('db')
     old_dic = retrieve_story_words(story_id)
     new_dic = extract_story_words(story_id)
+    new_words = {}
     for w in new_dic:
-        word_id = find_or_insert_word(w)
+        word_id, new = find_or_insert_word(w)
+        if new:
+            new_words[word_id] = w
         if w not in old_dic:
             db.TblWordStories.insert(story_id=story_id, word_id=word_id, word_count=new_dic[w])
-            added_words.append((w, word_id))
+            added_words.append(word_id)
         elif new_dic[w] != old_dic[w]:
             db((db.TblWordStories.word_id==word_id) & (db.TblWordStories.story_id==story_id)).update(word_count=new_dic[w])
             #for now we do not broadcast modified word count
     for w in old_dic:
         if w not in new_dic:
-            word_id = find_or_insert_word(w) #it will not be inserted...
+            word_id, new = find_or_insert_word(w) #it will not be inserted...
             deleted_words.append(word_id)
             db((db.TblWordStories.word_id==word_id) & (db.TblWordStories.story_id==story_id)).delete()
-    ws_messaging.send_message('WORD_INDEX_CHANGED', group='ALL', story_id=story_id, added_words=added_words, deleted_words=deleted_words)
+    ws_messaging.send_message('WORD_INDEX_CHANGED', group='ALL', 
+                              story_id=story_id, added_words=added_words, deleted_words=deleted_words, new_words=new_words)
     db(db.TblStories.id==story_id).update(indexing_date=now)
             
 def find_or_insert_word(wrd):            
@@ -131,9 +135,9 @@ def find_or_insert_word(wrd):
     db = inject('db')
     rec = db(db.TblWords.word==wrd).select().first()
     if rec:
-        return rec.id
+        return rec.id, False
     else:
-        return db.TblWords.insert(word=wrd)
+        return db.TblWords.insert(word=wrd), True
 
 def tally_all_stories():   
     from injections import inject
@@ -164,18 +168,18 @@ def read_words_index():
     db = inject('db')
 
     cmd = """
-        SELECT TblWords.word, array_agg(TblWordStories.story_id), sum(TblWordStories.word_count)
+        SELECT TblWords.id, TblWords.word, array_agg(TblWordStories.story_id), sum(TblWordStories.word_count)
         FROM TblWords, TblWordStories
         WHERE (TblWords.id = TblWordStories.word_id)
-        GROUP BY TblWords.word;
+        GROUP BY TblWords.word, TblWords.id;
     """
 
     lst = db.executesql(cmd)
-    lst = sorted(lst, key=lambda item: abs(item[2] - 300), reverse=False)
+    lst = sorted(lst, key=lambda item: abs(item[3] - 300), reverse=False)
     ##lst = sorted(lst, key=lambda item: item[2], reverse=True)
     ##lst = sorted(lst)  #todo: collect number of clicks and sort first by num of clicks then alfabetically
 
-    result = [dict(name=item[0], story_ids=item[1], word_count=item[2]) for item in lst]
+    result = [dict(word_id=item[0], name=item[1], story_ids=item[2], word_count=item[3]) for item in lst]
     return result
 
 def _calc_used_languages(used_for):
