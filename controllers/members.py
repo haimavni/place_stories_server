@@ -230,13 +230,29 @@ def get_story_detail(vars):
         return dict(story=story, members=[], photos=[])
     story_id = int(story_id)
     story=sm.get_story(story_id)
+    member_fields = [db.TblMembers.id, db.TblMembers.first_name, db.TblMembers.last_name, db.TblMembers.facePhotoURL]
     members = []
     photos = []
     if story.used_for == STORY4EVENT:
         event = db(db.TblEvents.story_id==story_id).select().first()
         if event:
+            qp = (db.TblEventPhotos.Event_id==event.id) & (db.TblPhotos.id==db.TblEventPhotos.Photo_id)
+            photos = db(qp).select(db.TblPhotos.id, db.TblPhotos.photo_path)
+            photo_ids = [photo.id for photo in photos]
+            photo_member_set = photo_lst_member_ids(photo_ids)
+            
+            photos = [p.as_dict() for p in photos]
+            for p in photos:
+                p['photo_path'] = photos_folder() + p['photo_path']
             qm = (db.TblEventMembers.Event_id==event.id) & (db.TblMembers.id==db.TblEventMembers.Member_id)
-            members = db(qm).select(db.TblMembers.id, db.TblMembers.first_name, db.TblMembers.last_name, db.TblMembers.facePhotoURL)
+            members = db(qm).select(*member_fields)
+            members = [m for m in members]
+            member_set = set([m.id for m in members])
+            added_members_from_photos = photo_member_set - member_set
+            added_members_lst = [mid for mid in added_members_from_photos]
+            added_members = db(db.TblMembers.id.belongs(added_members_lst)).select(*member_fields)
+            added_members = [m for m in added_members]
+            members += added_members
             members = [m.as_dict() for m in members]
             for m in members:
                 m['full_name'] = m['first_name'] + ' ' + m['last_name']
@@ -244,14 +260,21 @@ def get_story_detail(vars):
                     m['facePhotoURL'] = "dummy_face.png"
                 m['facePhotoURL'] = photos_folder("profile_photos") + m['facePhotoURL']
     
-            qp = (db.TblEventPhotos.Event_id==event.id) & (db.TblPhotos.id==db.TblEventPhotos.Photo_id)
-            photos = db(qp).select(db.TblPhotos.id, db.TblPhotos.photo_path)
-            photos = [p.as_dict() for p in photos]
-            for p in photos:
-                p['photo_path'] = photos_folder() + p['photo_path']
         #photos = [dict(photo_id=p.id, photo_path=photos_folder()+p.photo_path) for p in photos]
     return dict(story=story, members=members, photos=photos)
 
+def photo_member_ids(photo_id):
+    qmp = (db.TblMemberPhotos.Photo_id==photo_id)
+    lst = db(qmp).select(db.TblMemberPhotos.Member_id)
+    return [mp.Member_id for mp in lst]
+
+def photo_lst_member_ids(photo_id_lst):
+    result = set([])
+    for photo_id in photo_id_lst:
+        member_ids = photo_member_ids(photo_id)
+        result |= set(member_ids)
+    return result
+    
 @serve_json
 def get_story_photo_list(vars):
     story_id = vars.story_id
@@ -392,7 +415,9 @@ def get_member_names():
                    birth_date=rec.date_of_birth,
                    visibility=rec.visibility,
                    has_profile_photo=bool(rec.facePhotoURL), #used in client!
+                   rnd=random.randint(0, 1000000),
                    facePhotoURL=photos_folder('profile_photos') + (rec.facePhotoURL or "dummy_face.png")) for rec in lst]
+    arr.sort(key=lambda item: item.rnd)
     return arr
 
 @serve_json
@@ -447,8 +472,8 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
     rec = Storage(rec.as_dict())
     rec.full_name = member_display_name(rec, full=True)
     rec.name = member_display_name(rec, full=False)
-    if prepend_path and rec.facePhotoURL:
-        rec.facePhotoURL = photos_folder('profile_photos') + rec.facePhotoURL
+    if prepend_path :
+        rec.facePhotoURL = photos_folder('profile_photos') + (rec.facePhotoURL or 'dummy_face.png')
     return rec
 
 def get_parents(member_id):
@@ -1004,8 +1029,23 @@ def save_story_members(story_id, member_ids):
             db.TblEventMembers.insert(Member_id=m, Event_id=event.id)
     
     return dict()
-    
 
+@serve_json
+def save_photo_group(vars):
+    story_id = vars.caller_id
+    event = db(db.TblEvents.story_id==story_id).select().first()
+    qp = (db.TblEventPhotos.Event_id==event.id) & (db.TblEventPhotos.Photo_id==db.TblPhotos.id)
+    old_photos = db(qp).select(db.TblPhotos.id)
+    old_photos = [p.id for p in old_photos]
+    photo_ids = vars.photo_ids
+    for p in old_photos:
+        if p not in photo_ids:
+            db((db.TblEventPhotos.Photo_id==p) & (db.TblEventPhotos.Event_id==event.id)).delete()
+    for p in vars.photo_ids:
+        if p not in old_photos:
+            db.TblEventPhotos.insert(Photo_id=p, Event_id=event.id)
+    return dict()
+    
 def get_tag_ids(item_id, item_type):
     q = (db.TblItemTopics.item_type==item_type) & (db.TblItemTopics.item_id==item_id)
     lst = db(q).select()
