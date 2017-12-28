@@ -87,7 +87,9 @@ def get_member_details(vars):
     else:
         spouses = 'wife' + ('s' if len(family_connections.spouses) > 1 else '')
     member_stories = [story_info] + member_stories;
-    return dict(member_info=member_info, story_info=story_info, family_connections=family_connections, 
+    return dict(member_info=member_info, 
+                story_info=story_info, 
+                family_connections=family_connections, 
                 slides=slides, #todo: duplicate?
                 spouses=spouses, #this is just the key for translation
                 member_stories=member_stories,

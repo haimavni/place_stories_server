@@ -175,7 +175,7 @@ def read_words_index():
     """
 
     lst = db.executesql(cmd)
-    lst = sorted(lst, key=lambda item: abs(item[3] - 300), reverse=False)
+    lst = sorted(lst, key=lambda item: item[1], reverse=False)
     ##lst = sorted(lst, key=lambda item: item[2], reverse=True)
     ##lst = sorted(lst)  #todo: collect number of clicks and sort first by num of clicks then alfabetically
 
