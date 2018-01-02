@@ -2,6 +2,33 @@
 
 import datetime
 
+DATE_STR_SUFFIX = "_datestr"
+DATE_SPAN_SUFFIX = "_daterange"
+
+def parse_date(date_str):
+    if date_str:
+        parts = date_str.split('/')
+    else:
+        parts = []
+    kind = 'NYMD'[len(parts)]
+    parts.reverse() #we want it ymd
+    parts = [int(p or 1) for p in parts]
+    parts += [1, 1, 1]
+    return kind, datetime.date(year=parts[0], month=parts[1], day=parts[2])
+
+def get_all_dates(rec):
+    result = ''
+    for fld_str in rec:
+        if fld_str.endswith(DATE_STR_SUFFIX):
+            fld = fld_str[:-len(DATE_STR_SUFFIX)]
+            fld_range = fld + DATE_SPAN_SUFFIX
+            item = dict(
+                date=rec[fld_str],
+                span=rec[fld_range]
+            )
+            result.append(item)
+    return result
+
 def date_of_date_str(date_str):
     if not date_str:
         date_str = '????-??-??'
@@ -73,6 +100,8 @@ def test():
     print date_of_date_str(s)
     s = '2017-??-??'
     print date_of_date_str(s)
+    for s in ['', '1945', '08/1945', '25/8/1945']:
+        print parse_date(s)
     
 if __name__ == '__main__'    :
     test()

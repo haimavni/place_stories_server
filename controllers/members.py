@@ -4,7 +4,7 @@ from gluon.utils import web2py_uuid
 from my_cache import Cache
 import ws_messaging
 from http_utils import json_to_storage
-from date_utils import date_of_date_str
+from date_utils import date_of_date_str, parse_date
 import datetime
 import os
 from dal_utils import insert_or_update
@@ -299,6 +299,7 @@ def save_member_info(vars):
         del member_info.facePhotoURL #it is saved separately, not updated in client and can only destroy here
     if member_info:
         new_member = not member_info.id
+        #--------------handle dates - old version------------------
         date_fields = []
         for k in member_info:
             if k.startswith("date_of_") and k.endswith('_str'):
@@ -306,6 +307,21 @@ def save_member_info(vars):
         for df in date_fields:
             k = df[:-4]
             member_info[df], member_info[k] = date_of_date_str(member_info[df])
+        #--------------handle dates - new version------------------
+        tbl = db.TblMembers
+        for fld in tbl:
+            if fld.type=='date':
+                fld_str_name = fld.name + '_string'
+                fld_span_name = fld.name + '_span_size'
+                fld_scale_name = fld.name + '_scale'
+                if fld_str_name not in tbl or fld_span_name not in tbl:
+                    continue
+                if fld_str_name in member_info:
+                    date_scale, date = parse_date(member_info[fld_str_name])
+                    member_info[fld.name] = date
+                    member_info[fld_scale_name] = date_scale
+                    
+        #--------------handle dates - end--------------------------
         result = insert_or_update(db.TblMembers, **member_info)
         if isinstance(result, dict):
             return dict(errors=result['errors'])

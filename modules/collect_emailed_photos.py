@@ -26,8 +26,26 @@ class EmailPhotosCollector:
             sender_name, sender_email = m.groups()
         else:
             sender_name, sender_email = "", s
+        what = msg['To'].split('@')[0]
         subject = msg['Subject']
+        subject = base64.b64decode(subject)
         payload = msg.get_payload()
+        if what in ['info', 'support']:
+            self.handle_support(what, msg, payload)
+        elif what == 'photos':
+            self.handle_photos(payload)
+            
+    def handle_support(self, what, msg, payload):
+        item = payload.pop()
+        while True:
+            s = item.get_payload()
+            s = base64.b64decode(s)
+            if not payload:
+                break
+            item = payload.pop()
+        
+
+    def handle_photos(self, payload):
         photo_list = []
         item = payload.pop()
         text_html = ""
