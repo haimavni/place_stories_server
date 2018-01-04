@@ -256,7 +256,7 @@ def clean_word(w):
     if uout.endswith('"'):
         uout = uout[:-1]
     if len(uout) > 3 and uout[1] == '"':
-        uout = uout[2:] #for quoted segments which start with ב, ל, מ
+        uout = uout[2:]  #for quoted segments which start with ב, ל, מ but מ"פ is OK
     
     return uout.encode('utf8') 
 

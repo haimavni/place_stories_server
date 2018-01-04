@@ -4,6 +4,9 @@ import re
 import zlib
 from os import listdir
 from os.path import isfile, join, splitext
+from photos import save_uploaded_photo
+from gluon.storage import Storage
+from email.header import decode_header
 
 class EmailPhotosCollector:
     
@@ -15,27 +18,61 @@ class EmailPhotosCollector:
     def collect(self):
         msg_list = [join(self.maildir, f) for f in listdir(self.maildir) if isfile(join(self.maildir, f))]
         for msg_file in msg_list:
-            self.handle_msg(msg_file)
+            result = self.handle_msg(msg_file)
+            print 'image names: ', result.images.keys()
+            
+    def handle_message_item(self, msg, result):
+        content_type = msg.get_content_maintype();
+        content_subtype = msg.get_content_subtype();
+        if content_type == 'image':
+            filename, blob = self.handle_image(msg)
+            result.images[filename] = blob
+        elif content_type == 'text':
+            if content_subtype == 'plain':
+                result.plain_content = self.handle_text(msg)
+            elif content_subtype == 'html':
+                result.html_content = self.handle_text(msg)
+        elif content_type == 'multipart' and content_subtype == 'mixed':
+            result.sender = msg.get('from')
+            result.to = msg.get('to')
+            result.what = result.to.split('@')[0]
+            result.subject = msg.get('subject')
+            result.date = msg.get('date')
+            
+    def handle_image(self, msg):
+        disposition = msg.get('content-disposition')
+        if disposition.endswith('"'):
+            disposition = disposition[:-1]
+        x = decode_header(disposition)
+        if len(x) > 1:
+            filename = x[1][0]
+        else:
+            m = re.search(r'"(.+)', disposition)
+            if m:
+                filename = m.group(1)
+                if filename.endswith('"'):
+                    filename = filename[:-1]
+            else:
+                filename = "Unknown"
+        blob = msg.get_payload(decode=True)
+        return filename, blob
+    
+    def handle_text(self, msg):
+        return msg.get_payload(decode=True)
             
     def handle_msg(self, msg_file):
-        with open(msg_file) as f:
-            msg = email.message_from_file(f)        
-        s = msg['Return-Path'][1:-1]
-        m = re.search(r'(.*)<(.+)>', s)
-        if m:
-            sender_name, sender_email = m.groups()
-        else:
-            sender_name, sender_email = "", s
-        what = msg['To'].split('@')[0]
-        subject = msg['Subject']
-        subject = base64.b64decode(subject)
-        payload = msg.get_payload()
-        if what in ['info', 'support']:
-            self.handle_support(what, msg, payload)
-        elif what == 'photos':
-            self.handle_photos(payload)
+        from email.parser import Parser
+        parser = Parser()
+        result = Storage(images=dict())
+        with open(msg_file) as fp:
+            x = parser.parse(fp)
+            items = x.walk()
+            for item in items:
+                self.handle_message_item(item, result)
+        return result
             
-    def handle_support(self, what, msg, payload):
+    #obsolete            
+    def handle_support(self, what, msg, payload): 
         item = payload.pop()
         while True:
             s = item.get_payload()
@@ -43,8 +80,8 @@ class EmailPhotosCollector:
             if not payload:
                 break
             item = payload.pop()
-        
 
+    #obsolete            
     def handle_photos(self, payload):
         photo_list = []
         item = payload.pop()
@@ -55,11 +92,12 @@ class EmailPhotosCollector:
                 break
             coding = item['Content-Transfer-Encoding']
             content_type = item['Content-Type']
-            s = item.get_payload()
-            blob = base64.b64decode(s)
-            crc = zlib.crc32(blob)
             m = re.search(r'filename\=\"(.+)\"', disposition)
             filename = m.group(1)
+            s = item.get_payload()
+            blob = base64.b64decode(s)
+            save_uploaded_photo(file_name, blob, path_tail, user_id)
+            crc = zlib.crc32(blob)
             name, ext = splitext(filename)
             output_filename = '{}{:x}{}'.format(self.output_folder, crc & 0xffffffff, ext)
             with open(output_filename, 'wb') as f:
@@ -73,8 +111,8 @@ class EmailPhotosCollector:
                 break
         return dict(sender_email=sender_email, sender_name=sender_name, text_html=text_html, photo_list=photo_list)
     
-def test():
-    email_photos_collector = EmailPhotosCollector(maildir='/home/haim/tmp/maildir/', output_folder='/home/haim/tmp/photos/') 
+def test_collect_mail():
+    email_photos_collector = EmailPhotosCollector(maildir='/home/haim/tmp/maildir/new', output_folder='/home/haim/tmp/photos/') 
     email_photos_collector.collect()
     
 if __name__ == "__main__":

@@ -359,7 +359,7 @@ def upload_photos(vars):
     failed = []
     if not os.path.isdir(path):
         os.makedirs(path)
-    user_id = int(vars.user_id) if vars.user_id else None
+    user_id = int(vars.user_id) if vars.user_id else auth.current_user()
     for fn in vars:
         if fn.startswith('user'):
             continue
@@ -573,11 +573,13 @@ def get_family_connections(member_info):
     for p in ['pa', 'ma']:
         if parents[p] and parents[p].visibility == VIS_NEVER:
             parents[p] = None
+    privileges = auth.get_privileges()
+    is_admin = privileges.ADMIN if privileges else False
     result = Storage(
         parents=parents,
         siblings=get_siblings(member_info.id),
         spouses=get_spouses(member_info.id),
-        children=get_children(member_info.id)
+        children=get_children(member_info.id, hidden_too=is_admin)
     )
     result.hasFamilyConnections = len(result.parents) > 0 or len(result.siblings) > 0 or len(result.spouses) > 0 or len(result.children) > 0
     return result

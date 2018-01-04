@@ -1,12 +1,13 @@
 import PIL
 from PIL import Image, ImageFile
-from gluon.storage import Storage
 from injections import inject
 import os
 import datetime
 from distutils import dir_util
 import zlib
 from cStringIO import StringIO
+from date_utils import datetime_from_str
+from gluon.storage import Storage
 
 MAX_WIDTH = 1200
 MAX_HEIGHT = 800
@@ -40,10 +41,12 @@ def crop_to_square(img, width, height, side_size):
 
 def modification_date(filename):
     t = os.path.getmtime(filename)
-    return datetime.datetime.fromtimestamp(t)
+    dt = datetime.datetime.fromtimestamp(t)
+    return datetime.datetime(year=dt.year, month=dt.month, day=dt.day)
    
 def save_uploaded_photo(file_name, blob, path_tail, user_id):
-    comment, log_exception, db = inject('comment', 'log_exception', 'db')
+    auth, comment, log_exception, db = inject('auth', 'comment', 'log_exception', 'db')
+    user_id = user_id or auth.current_user()
     crc = zlib.crc32(blob)
     cnt = db(db.TblPhotos.crc==crc).count()
     if cnt > 0:
@@ -54,6 +57,7 @@ def save_uploaded_photo(file_name, blob, path_tail, user_id):
     try:
         stream = StringIO(blob)
         img = Image.open(stream)
+        photo_date = img._getexif()[36867]
         width, height = img.size
         square_img = crop_to_square(img, width, height, 256)
         if square_img:
@@ -72,10 +76,12 @@ def save_uploaded_photo(file_name, blob, path_tail, user_id):
             width, height = resized(width, height)
             img = img.resize((width, height), Image.LANCZOS)
         path = local_photos_folder() + path_tail
-        if os.path.isfile(path + file_name):
-            file_date = modification_date(path + file_name)
+        if photo_date:
+            photo_date = datetime_from_str(photo_date, date_only=True)
+        elif os.path.isfile(path + file_name):
+            photo_date = modification_date(path + file_name)
         else:
-            file_date = None
+            photo_date = None
         img.save(path + file_name)
     except Exception, e:
         log_exception("saving photo {} failed".format(original_file_name))
@@ -85,7 +91,8 @@ def save_uploaded_photo(file_name, blob, path_tail, user_id):
                         original_file_name=original_file_name,
                         Name=original_file_name,
                         uploader=user_id,
-                        upload_date=file_date or datetime.datetime.now(),
+                        upload_date=datetime.datetime.now(),
+                        photo_date=photo_date,
                         width=width,
                         height=height,
                         crc=crc,

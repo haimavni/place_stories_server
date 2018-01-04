@@ -102,10 +102,21 @@ def test():
     print date_of_date_str(s)
     for s in ['', '1945', '08/1945', '25/8/1945']:
         print parse_date(s)
+        
+def datetime_from_str(s, date_only=False):
+    date, time = s.split(' ')
+    parts = date.split(':')
+    y, m, d = [int(p) for p in parts]
+    if date_only:
+        return datetime.date(year=y, month=m, day=d)
+    parts = time.split(':')
+    h,mn,s = [int(p) for p in parts]
+    return datetime.datetime(year=y, month=m, day=d, hour=h, minute=mn, second=s)
     
 if __name__ == '__main__'    :
     test()
     
 
     
+
 
