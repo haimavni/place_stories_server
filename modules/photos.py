@@ -44,7 +44,7 @@ def modification_date(filename):
     dt = datetime.datetime.fromtimestamp(t)
     return datetime.datetime(year=dt.year, month=dt.month, day=dt.day)
    
-def save_uploaded_photo(file_name, blob, path_tail, user_id):
+def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
     auth, comment, log_exception, db = inject('auth', 'comment', 'log_exception', 'db')
     user_id = user_id or auth.current_user()
     crc = zlib.crc32(blob)
@@ -54,6 +54,11 @@ def save_uploaded_photo(file_name, blob, path_tail, user_id):
     original_file_name, ext = os.path.splitext(file_name)
     file_name = '{crc:x}{ext}'.format(crc=crc & 0xffffffff, ext=ext)
     comment('start saving {}', original_file_name)
+    today = datetime.date.today()
+    month = str(today)[:-3]
+    sub_folder = sub_folder or 'uploads/' + month + '/',
+    path = local_photos_folder() + sub_folder
+    dir_util.mkpath(path)
     try:
         stream = StringIO(blob)
         img = Image.open(stream)
@@ -61,7 +66,7 @@ def save_uploaded_photo(file_name, blob, path_tail, user_id):
         width, height = img.size
         square_img = crop_to_square(img, width, height, 256)
         if square_img:
-            path = local_photos_folder("squares") + path_tail
+            path = local_photos_folder("squares") + sub_folder
             dir_util.mkpath(path)
             square_img.save(path + file_name)
             got_square = True
@@ -70,7 +75,7 @@ def save_uploaded_photo(file_name, blob, path_tail, user_id):
         oversize = False
         if height > MAX_HEIGHT or width > MAX_WIDTH:
             oversize = True
-            path = local_photos_folder("oversize") + path_tail
+            path = local_photos_folder("oversize") + sub_folder
             dir_util.mkpath(path)
             img.save(path + file_name)
             width, height = resized(width, height)
@@ -265,7 +270,7 @@ def add_photos_from_drive(sub_folder):
             path = root + '/' + file_name
             with open(path, 'r') as f:
                 blob = f.read()
-            result = save_uploaded_photo(file_name, blob, sub_folder, 1)
+            result = save_uploaded_photo(file_name, blob, 1, sub_folder=sub_folder)
             if result in ('failed', 'duplicate'):
                 continue
             #delete the file. it has been saved using crc as name and was possibly resized

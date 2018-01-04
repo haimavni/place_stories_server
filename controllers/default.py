@@ -97,11 +97,10 @@ def translate(vars):
 def register():
     return dict(controller='RegisterCtrl')
 
-
 @serve_json
 def register_user(vars):
-    new_user_id = auth.register_user(vars.user_info)
-    
+    new_user = auth.register_user(vars.user_info)
+    new_user_id = new_user.id if new_user else None
     return dict(user_id=new_user_id);
 
 def verify_email():
@@ -124,7 +123,7 @@ def login(vars):
         v = result[k]
         if v:
             user[k] = v
-        
+
     user.privileges = auth.get_privileges()
     return dict(user=user)
 
@@ -147,7 +146,7 @@ def reset_password():
     else:
         message = auth.messages.unable_to_send_email
     redirect(URL(r=request, f='login', vars=dict(message=message, status=status, controller='')))
-    
+
 def change_password():
     return dict(controller='ChangePasswordCtrl')
 
@@ -160,7 +159,7 @@ def do_change_password(vars):
 
 def test_collect_mail():
     collect_emailed_photos.test_collect_mail()
-    
+
 
 
 

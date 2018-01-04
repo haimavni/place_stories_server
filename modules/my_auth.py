@@ -77,7 +77,7 @@ class MyAuth(Auth):
         u.registration_key = key = web2py_uuid()
     
         am = AccessManager()
-        user_data, new_user = am.add_or_update_user(u)
+        user, is_new_user = am.add_or_update_user_bare(u)
         #send verification email to new user
         link = auth.url('verify_email', args=[key], scheme=True)
         u.update(dict(key=key, link=link, username=u.email))
@@ -89,7 +89,7 @@ class MyAuth(Auth):
             db.rollback()
             raise User_Error('cant-send-mail')
         notify_registration(user_info)
-        return new_user
+        return user
     
     def notify_registration(self, user_info):
         db, mail = inject('db', 'mail')

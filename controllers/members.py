@@ -350,21 +350,15 @@ def upload_photos(vars):
     uploaded_photo_ids = []
     user_id = vars.user_id or auth.current_user()
     comment("start handling uploaded files")
-    today = datetime.date.today()
-    month = str(today)[:-3]
-
-    path = local_photos_folder() + 'uploads/' + month + '/'
     number_uploaded = 0
     number_duplicates = 0
     failed = []
-    if not os.path.isdir(path):
-        os.makedirs(path)
     user_id = int(vars.user_id) if vars.user_id else auth.current_user()
     for fn in vars:
         if fn.startswith('user'):
             continue
         fil = vars[fn]
-        result = save_uploaded_photo(fil.name, fil.BINvalue, 'uploads/' + month + '/', user_id)
+        result = save_uploaded_photo(fil.name, fil.BINvalue, user_id)
         if result == 'duplicate':
             number_duplicates += 1
             continue

@@ -31,9 +31,9 @@ def toggle_membership(vars):
 def add_or_update_user(vars):
     am = AccessManager()
     vars.confirm_password = vars.password #avoid passwords dont match error
-    user_data, new_user = am.add_or_update_user(vars)
+    user_data, is_new_user = am.add_or_update_user(vars)
     return dict(user_data=user_data, 
-                new_user=new_user)
+                new_user=is_new_user)
 
 @serve_json
 def delete_user(vars):

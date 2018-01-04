@@ -96,7 +96,7 @@ class EmailPhotosCollector:
             filename = m.group(1)
             s = item.get_payload()
             blob = base64.b64decode(s)
-            save_uploaded_photo(file_name, blob, path_tail, user_id)
+            save_uploaded_photo(file_name, blob, user_id)
             crc = zlib.crc32(blob)
             name, ext = splitext(filename)
             output_filename = '{}{:x}{}'.format(self.output_folder, crc & 0xffffffff, ext)
