@@ -39,7 +39,7 @@ class MyAuth(Auth):
     
     def user_id_of_email(self, email, name=None):
         db = self.db
-        rec = db(db.aurh_user.email==email).select(db.auth_user.id).first()
+        rec = db(db.auth_user.email==email).select(db.auth_user.id).first()
         user_id = rec.id if rec else None
         #if create_if_not_exist:
         #    self.register...

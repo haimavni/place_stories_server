@@ -7,20 +7,59 @@ from os.path import isfile, join, splitext
 from photos import save_uploaded_photo
 from gluon.storage import Storage
 from email.header import decode_header
+from shutil import move
+from injections import inject
 
 class EmailPhotosCollector:
-    
+
     def __init__(self, maildir, output_folder):
         self.output_folder = output_folder
         self.maildir = maildir #'/home/photos/Maildir'
         self.photo_collection = []
-        
+
     def collect(self):
-        msg_list = [join(self.maildir, f) for f in listdir(self.maildir) if isfile(join(self.maildir, f))]
+        maildir_new = self.maildir + '/new'
+        msg_list = [join(maildir_new, f) for f in listdir(maildir_new) if isfile(join(maildir_new, f))]
         for msg_file in msg_list:
             result = self.handle_msg(msg_file)
-            print 'image names: ', result.images.keys()
-            
+            yield result
+
+    def handle_msg(self, msg_file):
+        from email.parser import Parser
+        parser = Parser()
+        result = Storage(images=dict())
+        with open(msg_file) as fp:
+            x = parser.parse(fp)
+            items = x.walk()
+            for item in items:
+                self.handle_message_item(item, result)
+        dst = msg_file.replace('/new/', '/cur/')
+        move(msg_file, dst)
+        return result
+    
+    def get_header_info(self, msg, result):
+        if result.sender:
+            return #already done though in the wrong place
+        result.sender = msg.get('from')
+        if not result.sender:
+            return
+        lst = decode_header(result.sender)
+        if len(lst) == 2:
+            result.sender_name = lst[0][0]
+            result.sender_email = lst[1][0][1:-1] #get rid of <>
+        else:
+            s = lst[0][0]
+            parts = s.split('<')
+            result.sender_name = parts[0].strip()
+            result.sender_email = parts[1][:-1]
+        result.to = msg.get('to')
+        result.what = result.to.split('@')[0]
+        subject = msg.get('subject')
+        lst = decode_header(subject)
+        lst = [itm[0] for itm in lst]
+        result.subject = ' '.join(lst)
+        result.date = msg.get('date')
+
     def handle_message_item(self, msg, result):
         content_type = msg.get_content_maintype();
         content_subtype = msg.get_content_subtype();
@@ -29,16 +68,14 @@ class EmailPhotosCollector:
             result.images[filename] = blob
         elif content_type == 'text':
             if content_subtype == 'plain':
+                if not result.sender:  #some messages do not behave...
+                    self.get_header_info(msg, result)
                 result.plain_content = self.handle_text(msg)
             elif content_subtype == 'html':
                 result.html_content = self.handle_text(msg)
-        elif content_type == 'multipart' and content_subtype == 'mixed':
-            result.sender = msg.get('from')
-            result.to = msg.get('to')
-            result.what = result.to.split('@')[0]
-            result.subject = msg.get('subject')
-            result.date = msg.get('date')
-            
+        elif content_type == 'multipart':
+            self.get_header_info(msg, result)
+
     def handle_image(self, msg):
         disposition = msg.get('content-disposition')
         if disposition.endswith('"'):
@@ -56,70 +93,41 @@ class EmailPhotosCollector:
                 filename = "Unknown"
         blob = msg.get_payload(decode=True)
         return filename, blob
-    
+
     def handle_text(self, msg):
         return msg.get_payload(decode=True)
-            
-    def handle_msg(self, msg_file):
-        from email.parser import Parser
-        parser = Parser()
-        result = Storage(images=dict())
-        with open(msg_file) as fp:
-            x = parser.parse(fp)
-            items = x.walk()
-            for item in items:
-                self.handle_message_item(item, result)
-        return result
-            
-    #obsolete            
-    def handle_support(self, what, msg, payload): 
-        item = payload.pop()
-        while True:
-            s = item.get_payload()
-            s = base64.b64decode(s)
-            if not payload:
-                break
-            item = payload.pop()
 
-    #obsolete            
-    def handle_photos(self, payload):
-        photo_list = []
-        item = payload.pop()
-        text_html = ""
-        while True:
-            disposition = item['Content-Disposition']
-            if not disposition:
-                break
-            coding = item['Content-Transfer-Encoding']
-            content_type = item['Content-Type']
-            m = re.search(r'filename\=\"(.+)\"', disposition)
-            filename = m.group(1)
-            s = item.get_payload()
-            blob = base64.b64decode(s)
-            save_uploaded_photo(file_name, blob, user_id)
-            crc = zlib.crc32(blob)
-            name, ext = splitext(filename)
-            output_filename = '{}{:x}{}'.format(self.output_folder, crc & 0xffffffff, ext)
-            with open(output_filename, 'wb') as f:
-                f.write(blob)
-            photo_info = dict(crc=crc, output_filename=output_filename, filename=filename)
-            photo_list.append(photo_info)
-            item = payload.pop()
-            if not item['Content-Disposition']:
-                m = item.get_payload()
-                text_html = m[1].get_payload()
-                break
-        return dict(sender_email=sender_email, sender_name=sender_name, text_html=text_html, photo_list=photo_list)
-    
+def get_user_id_of_sender(sender_email, sender_name):
+    auth = inject('auth')
+    return auth.user_id_of_email(sender_email)
+
 def test_collect_mail():
-    email_photos_collector = EmailPhotosCollector(maildir='/home/haim/tmp/maildir/new', output_folder='/home/haim/tmp/photos/') 
-    email_photos_collector.collect()
-    
+    email_photos_collector = EmailPhotosCollector(maildir='/home/haim/tmp/maildir', output_folder='/home/haim/tmp/photos/')
+    results = []
+    for msg in email_photos_collector.collect():
+        user_id = get_user_id_of_sender(msg.sender_email, msg.sender_name)
+        user_id = user_id or 1 #if we decide not to create new user
+        text = msg.html_content or msg.plain_content
+        print 'subject: ', msg.subject, ' image names: ', msg.images.keys(), msg.sender_email
+        num_duplicates = num_failed = 0
+        photo_ids = []
+        for image_name in msg.images:
+            result = save_uploaded_photo(image_name, msg.images[image_name], user_id)
+            if result == 'duplicate':
+                num_duplicates += 1
+            elif result == 'failed':
+                num_failed += 1
+            else:
+                photo_ids.append(result)
+            result = "{} duplicates, {} failed, {} uploaded photos".format(num_duplicates, num_failed, len(photo_ids))
+            results.append(result)
+    return results
+
 if __name__ == "__main__":
     # execute only if run as a script
     test()  
-        
-        
+
+
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
@@ -136,10 +144,10 @@ def send_mail(subject, frm, to, msg):
     try:
         server = smtplib.SMTP("localhost")
         server.sendmail(
-             message["From"],
-             message["To"],
+            message["From"],
+            message["To"],
              message.as_string()
-         )
+        )
         server.quit()
     except smtplib.SMTPException:
         print("e-mail send error")        

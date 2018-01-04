@@ -805,7 +805,8 @@ def get_constants(vars):
             STORY4PHOTO=STORY4PHOTO,
             STORY4TERM=STORY4TERM,
             STORY4MESSAGE=STORY4MESSAGE,
-            STORY4HELP=STORY4HELP
+            STORY4HELP=STORY4HELP,
+            STORY4FEEDBACK=STORY4FEEDBACK
             ),
         visibility=dict(
             VIS_NEVER=VIS_NEVER, #for non existing members such as the child of a childless couple (it just connects the)
