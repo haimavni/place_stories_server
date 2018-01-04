@@ -4,6 +4,7 @@ from gluon.utils import web2py_uuid
 from gluon.dal import Row
 from gluon.storage import Storage
 from injections import inject
+from admin_support.access_manager import AccessManager
 
 class MyAuth(Auth):
 
@@ -35,7 +36,15 @@ class MyAuth(Auth):
         if self.user:
             return session.current_user or self.user.id
         return None
-
+    
+    def user_id_of_email(self, email, name=None):
+        db = self.db
+        rec = db(db.aurh_user.email==email).select(db.auth_user.id).first()
+        user_id = rec.id if rec else None
+        #if create_if_not_exist:
+        #    self.register...
+        return user_id
+    
     def resend_verification_email(self, uid):
         db = self.db
         user_rec = db(db.auth_user.id==uid).select().first()
@@ -58,7 +67,46 @@ class MyAuth(Auth):
         self.add_membership(user_id=user.id, group_id=EDITOR)
         self.add_membership(user_id=user.id, group_id=PHOTO_UPLOADER)
         return True
-
+    
+    def register_user(self, user_info):
+        from gluon.utils import web2py_uuid
+        db, User_Error, auth = inject('db', 'User_Error', 'auth')
+        u = user_info
+        if not db(db.auth_user.email==u.email).isempty():
+            raise User_Error('email-already-exists')
+        u.registration_key = key = web2py_uuid()
+    
+        am = AccessManager()
+        user, is_new_user = am.add_or_update_user_bare(u)
+        #send verification email to new user
+        link = auth.url('verify_email', args=[key], scheme=True)
+        u.update(dict(key=key, link=link, username=u.email))
+        good = auth.settings.mailer and auth.settings.mailer.send(
+            to=u.email,
+            subject=auth.messages.verify_email_subject,
+            message='Click on the link {lnk} to verify your email'.format(lnk=link))
+        if not good:
+            db.rollback()
+            raise User_Error('cant-send-mail')
+        notify_registration(user_info)
+        return user
+    
+    def notify_registration(self, user_info):
+        db, mail = inject('db', 'mail')
+        ui = user_info
+        user_name = ui.first_name + ' ' + ui.last_name
+        email = ui.email
+        lst = db((db.auth_membership.group_id==ADMIN)&(db.auth_user.id==db.auth_membership.user_id)).select(db.auth_user.email)
+        receivers = [r.email for r in lst]    
+        message = ('', '''
+        {uname} has just registered to <b>GB Stories</b>.
+        Email adddress is {uemail}.
+    
+    
+        Click <a href="http://gbstories.org/gbs__www/stories">here</a> for access manager.
+        '''.format(uname=user_name, uemail=email).replace('\n', '<br>'))
+        mail.send(to=receivers, subject='New GB Stories registration', message=message)
+    
     def user_language(self, language=None):
         db = self.db
         uid = self.current_user()

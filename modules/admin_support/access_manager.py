@@ -25,14 +25,16 @@ def register_new_user(email, password, first_name, last_name, registration_key='
     return db.auth_user.insert(**fields)
 
 class AccessManager:
-    db = inject('db')
-    user_fields = [
-        db.auth_user.id, 
-        db.auth_user.email, 
-        db.auth_user.first_name,
-        db.auth_user.last_name,
-        db.auth_user.registration_key,
-    ]
+    
+    def __init__(self):
+        db = inject('db')
+        self.user_fields = [
+            db.auth_user.id, 
+            db.auth_user.email, 
+            db.auth_user.first_name,
+            db.auth_user.last_name,
+            db.auth_user.registration_key,
+        ]
 
     @staticmethod
     def auth_groups():
@@ -66,7 +68,7 @@ class AccessManager:
         else:
             by_developer = False
         result = []
-        lst = db(db.auth_user).select(*AccessManager.user_fields)
+        lst = db(db.auth_user).select(*self.user_fields)
         for usr in lst:
             data = self.user_data(usr, by_developer)
             result.append(data)
@@ -79,12 +81,12 @@ class AccessManager:
         else:
             auth.del_membership(grp_id, usr_id)
 
-    def add_or_update_user(self, user_data):
+    def add_or_update_user_bare(self, user_data):
         db, auth, User_Error = inject('db', 'auth', 'User_Error')
-        new_user = not user_data.id
+        is_new_user = not user_data.id
         if not (user_data.last_name and user_data.first_name and user_data.email):
             raise User_Error('mandatory-fields-empty')
-        if new_user:
+        if is_new_user:
             if not user_data.password:
                 raise User_Error('password-is-mandatory')
             if user_data.password != user_data.confirm_password:
@@ -96,7 +98,7 @@ class AccessManager:
             cond = user_data.email != db(db.auth_user.id==user_data.id).select().first().email
         if cond and not db(db.auth_user.email==user_data.email).isempty():
             raise User_Error('user-already-exists'.format(em=user_data.email))
-        if new_user:
+        if is_new_user:
             uid = register_new_user(user_data.email, 
                                     user_data.password, 
                                     user_data.first_name, 
@@ -116,9 +118,12 @@ class AccessManager:
             db(db.auth_user.id==uid).update(**updated_data)
             usr = db(db.auth_user.id==uid).select().first()
 
-        usr = db(db.auth_user.id==uid).select(*AccessManager.user_fields).first()
-        user_data = self.user_data(usr)
-        return user_data, new_user
+        usr = db(db.auth_user.id==uid).select(*self.user_fields).first()
+        return usr, is_new_user
+    
+    def add_or_update_user(self, user_data):
+        usr, is_new_user = self.add_or_update_user_bare(user_data)
+        return self.user_data(usr), is_new_user
 
     def delete_user(self, uid):
         db = inject('db')

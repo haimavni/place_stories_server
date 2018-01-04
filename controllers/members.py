@@ -4,7 +4,7 @@ from gluon.utils import web2py_uuid
 from my_cache import Cache
 import ws_messaging
 from http_utils import json_to_storage
-from date_utils import date_of_date_str
+from date_utils import date_of_date_str, parse_date
 import datetime
 import os
 from dal_utils import insert_or_update
@@ -299,6 +299,7 @@ def save_member_info(vars):
         del member_info.facePhotoURL #it is saved separately, not updated in client and can only destroy here
     if member_info:
         new_member = not member_info.id
+        #--------------handle dates - old version------------------
         date_fields = []
         for k in member_info:
             if k.startswith("date_of_") and k.endswith('_str'):
@@ -306,6 +307,21 @@ def save_member_info(vars):
         for df in date_fields:
             k = df[:-4]
             member_info[df], member_info[k] = date_of_date_str(member_info[df])
+        #--------------handle dates - new version------------------
+        tbl = db.TblMembers
+        for fld in tbl:
+            if fld.type=='date':
+                fld_str_name = fld.name + '_string'
+                fld_span_name = fld.name + '_span_size'
+                fld_scale_name = fld.name + '_scale'
+                if fld_str_name not in tbl or fld_span_name not in tbl:
+                    continue
+                if fld_str_name in member_info:
+                    date_scale, date = parse_date(member_info[fld_str_name])
+                    member_info[fld.name] = date
+                    member_info[fld_scale_name] = date_scale
+                    
+        #--------------handle dates - end--------------------------
         result = insert_or_update(db.TblMembers, **member_info)
         if isinstance(result, dict):
             return dict(errors=result['errors'])
@@ -334,21 +350,15 @@ def upload_photos(vars):
     uploaded_photo_ids = []
     user_id = vars.user_id or auth.current_user()
     comment("start handling uploaded files")
-    today = datetime.date.today()
-    month = str(today)[:-3]
-
-    path = local_photos_folder() + 'uploads/' + month + '/'
     number_uploaded = 0
     number_duplicates = 0
     failed = []
-    if not os.path.isdir(path):
-        os.makedirs(path)
-    user_id = int(vars.user_id) if vars.user_id else None
+    user_id = int(vars.user_id) if vars.user_id else auth.current_user()
     for fn in vars:
         if fn.startswith('user'):
             continue
         fil = vars[fn]
-        result = save_uploaded_photo(fil.name, fil.BINvalue, 'uploads/' + month + '/', user_id)
+        result = save_uploaded_photo(fil.name, fil.BINvalue, user_id)
         if result == 'duplicate':
             number_duplicates += 1
             continue
@@ -557,11 +567,13 @@ def get_family_connections(member_info):
     for p in ['pa', 'ma']:
         if parents[p] and parents[p].visibility == VIS_NEVER:
             parents[p] = None
+    privileges = auth.get_privileges()
+    is_admin = privileges.ADMIN if privileges else False
     result = Storage(
         parents=parents,
         siblings=get_siblings(member_info.id),
         spouses=get_spouses(member_info.id),
-        children=get_children(member_info.id)
+        children=get_children(member_info.id, hidden_too=is_admin)
     )
     result.hasFamilyConnections = len(result.parents) > 0 or len(result.siblings) > 0 or len(result.spouses) > 0 or len(result.children) > 0
     return result

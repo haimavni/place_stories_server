@@ -248,11 +248,16 @@ def clean_word(w):
                 break
         uout += c1
     #leave only qoutes that are in the middle of a word, for abbrevs
-    for c in ('"', "'"):
-        if uout.endswith(c):
-            uout = uout[:-1]
-        if uout.startswith(c):
-            uout = uout[1:]
+
+    if uout.startswith("'") and uout.endswith("'"): #leave only as apostrophy
+        uout = uout[1:-1]
+    if uout.startswith('"'):
+        uout = uout[1:]
+    if uout.endswith('"'):
+        uout = uout[:-1]
+    if len(uout) > 3 and uout[1] == '"':
+        uout = uout[2:]  #for quoted segments which start with ב, ל, מ but מ"פ is OK
+    
     return uout.encode('utf8') 
 
 def extract_words(s):
