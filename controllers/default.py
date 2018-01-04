@@ -3,6 +3,7 @@
 
 from ws_messaging import send_message, messaging_group
 from admin_support.access_manager import AccessManager
+import collect_emailed_photos
 
 #########################################################################
 ## This is a sample controller
@@ -96,43 +97,12 @@ def translate(vars):
 def register():
     return dict(controller='RegisterCtrl')
 
-def notify_registration(vars):
-    ui = vars.user_info
-    user_name = ui.first_name + ' ' + ui.last_name
-    email = ui.email
-    lst = db((db.auth_membership.group_id==ADMIN)&(db.auth_user.id==db.auth_membership.user_id)).select(db.auth_user.email)
-    receivers = [r.email for r in lst]    
-    message = ('', '''
-    {uname} has just registered to <b>GB Stories</b>.
-    Email adddress is {uemail}.
-
-
-    Click <a href="http://gbstories.org/gbs__www/stories">here</a> for access manager.
-    '''.format(uname=user_name, uemail=email).replace('\n', '<br>'))
-    mail.send(to=receivers, subject='New GB Stories registration', message=message)
 
 @serve_json
 def register_user(vars):
-    from gluon.utils import web2py_uuid
-    u = vars.user_info
-    if not db(db.auth_user.email==u.email).isempty():
-        raise User_Error('email-already-exists')
-    u.registration_key = key = web2py_uuid()
-
-    am = AccessManager()
-    user_data, new_user = am.add_or_update_user(u)
-    #send verification email to new user
-    link = auth.url('verify_email', args=[key], scheme=True)
-    u.update(dict(key=key, link=link, username=u.email))
-    good = auth.settings.mailer and auth.settings.mailer.send(
-        to=u.email,
-        subject=auth.messages.verify_email_subject,
-        message='Click on the link {lnk} to verify your email'.format(lnk=link))
-    if not good:
-        db.rollback()
-        raise User_Error('cant-send-mail')
-    notify_registration(vars)
-    return dict(good=True);
+    new_user_id = auth.register_user(vars.user_info)
+    
+    return dict(user_id=new_user_id);
 
 def verify_email():
     success = auth.verify_email(key=request.args[0])
@@ -187,5 +157,11 @@ def do_change_password(vars):
     if not good:
         raise User_Error('Wrong Password')
     return dict(good=True)
+
+def test_collect_mail():
+    collect_emailed_photos.test_collect_mail()
+    
+
+
 
 

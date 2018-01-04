@@ -25,14 +25,16 @@ def register_new_user(email, password, first_name, last_name, registration_key='
     return db.auth_user.insert(**fields)
 
 class AccessManager:
-    db = inject('db')
-    user_fields = [
-        db.auth_user.id, 
-        db.auth_user.email, 
-        db.auth_user.first_name,
-        db.auth_user.last_name,
-        db.auth_user.registration_key,
-    ]
+    
+    def __init__(self):
+        db = inject('db')
+        self.user_fields = [
+            db.auth_user.id, 
+            db.auth_user.email, 
+            db.auth_user.first_name,
+            db.auth_user.last_name,
+            db.auth_user.registration_key,
+        ]
 
     @staticmethod
     def auth_groups():
@@ -66,7 +68,7 @@ class AccessManager:
         else:
             by_developer = False
         result = []
-        lst = db(db.auth_user).select(*AccessManager.user_fields)
+        lst = db(db.auth_user).select(*self.user_fields)
         for usr in lst:
             data = self.user_data(usr, by_developer)
             result.append(data)
@@ -116,7 +118,7 @@ class AccessManager:
             db(db.auth_user.id==uid).update(**updated_data)
             usr = db(db.auth_user.id==uid).select().first()
 
-        usr = db(db.auth_user.id==uid).select(*AccessManager.user_fields).first()
+        usr = db(db.auth_user.id==uid).select(*self.user_fields).first()
         user_data = self.user_data(usr)
         return user_data, new_user
 
