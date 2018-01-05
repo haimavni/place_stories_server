@@ -6,7 +6,7 @@ import re
 import ws_messaging
 from my_cache import Cache
 from photos import scan_all_unscanned_photos
-from collect_emailed_photos import collect_mail
+from collect_emails import collect_mail
 
 def test_scheduler(msg):
     comment("test task {}", msg)

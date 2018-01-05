@@ -44,6 +44,22 @@ def modification_date(filename):
     dt = datetime.datetime.fromtimestamp(t)
     return datetime.datetime(year=dt.year, month=dt.month, day=dt.day)
 
+def save_uploaded_photo_collection(collection, user_id):
+    duplicates = []
+    failed = []
+    photo_ids = []
+    for file_name in collection:
+        result = save_uploaded_photo(file_name, collection[file_name], user_id)
+        if result == 'failed':
+            failed += [file_name]
+        elif result == 'duplicate':
+            duplicates += [file_name]
+        else:
+            photo_ids.append(result)
+    return Storage(failed=failed,
+                   duplicates=duplicates,
+                   photo_ids=photo_ids)
+        
 def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
     auth, comment, log_exception, db = inject('auth', 'comment', 'log_exception', 'db')
     user_id = user_id or auth.current_user()

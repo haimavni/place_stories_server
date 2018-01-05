@@ -4,11 +4,13 @@ import re
 import zlib
 from os import listdir
 from os.path import isfile, join, splitext
-from photos import save_uploaded_photo
+from photos import save_uploaded_photo_collection
 from gluon.storage import Storage
 from email.header import decode_header
 from shutil import move
 from injections import inject
+from cStringIO import StringIO
+from mammoth import convert_to_html
 
 class EmailCollector:
 
@@ -74,6 +76,23 @@ class EmailCollector:
                 result.html_content = self.handle_text(msg)
         elif content_type == 'multipart':
             self.get_header_info(msg, result)
+        elif content_type == 'application':
+            self.get_application_info(msg, content_subtype, result)
+            
+    def get_application_info(self, msg, content_subtype, result):
+        disposition = msg.get('content-disposition')
+        if disposition.endswith('"'):
+            disposition = disposition[:-1]
+        x = decode_header(disposition)
+        blob = msg.get_payload(decode=True)
+        if content_subtype == 'vnd.openxmlformats-officedocument.wordprocessingml.document':
+            self.handle_docx(blob, result)
+    
+    def handle_docx(self, blob, result):
+        stream = StringIO(blob)
+        temp = convert_to_html(stream)
+        result.html_content = temp.value # The generated HTML
+        messages = temp.messages # Any messages, such as warnings during conversion
 
     def handle_image(self, msg):
         disposition = msg.get('content-disposition')
@@ -109,18 +128,10 @@ def collect_mail():
         user_id = get_user_id_of_sender(msg.sender_email, msg.sender_name)
         user_id = user_id or 1 #if we decide not to create new user
         text = msg.html_content or msg.plain_content
-        print 'subject: ', msg.subject, ' image names: ', msg.images.keys(), msg.sender_email
-        num_duplicates = num_failed = 0
-        photo_ids = []
-        for image_name in msg.images:
-            result = save_uploaded_photo(image_name, msg.images[image_name], user_id)
-            if result == 'duplicate':
-                num_duplicates += 1
-            elif result == 'failed':
-                num_failed += 1
-            else:
-                photo_ids.append(result)
-            result = "{} duplicates, {} failed, {} uploaded photos".format(num_duplicates, num_failed, len(photo_ids))
-            results.append(result)
+        comment('New email: subject: {subject}, emages: {image_names} sent by {sender}', 
+                subject=msg.subject, image_names=msg.images.keys(), sender=msg.sender_email)
+        if msg.images:
+            result = save_uploaded_photo_collection(msg.images, user_id)
+            comment("upload result {result}", result=result)
     comment('Finished collecting mail')
     return results
