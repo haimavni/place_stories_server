@@ -10,12 +10,11 @@ from email.header import decode_header
 from shutil import move
 from injections import inject
 
-class EmailPhotosCollector:
+class EmailCollector:
 
-    def __init__(self, maildir, output_folder):
-        self.output_folder = output_folder
-        self.maildir = maildir #'/home/photos/Maildir'
-        self.photo_collection = []
+    def __init__(self):
+        request = inject('request')
+        self.maildir = '/home/{}_mailbox/Maildir'.format(request.application)
 
     def collect(self):
         maildir_new = self.maildir + '/new'
@@ -101,8 +100,10 @@ def get_user_id_of_sender(sender_email, sender_name):
     auth = inject('auth')
     return auth.user_id_of_email(sender_email)
 
-def test_collect_mail():
-    email_photos_collector = EmailPhotosCollector(maildir='/home/haim/tmp/maildir', output_folder='/home/haim/tmp/photos/')
+def collect_mail():
+    comment = inject('comment')
+    comment('Started collecting mail')
+    email_photos_collector = EmailCollector()
     results = []
     for msg in email_photos_collector.collect():
         user_id = get_user_id_of_sender(msg.sender_email, msg.sender_name)
@@ -121,33 +122,5 @@ def test_collect_mail():
                 photo_ids.append(result)
             result = "{} duplicates, {} failed, {} uploaded photos".format(num_duplicates, num_failed, len(photo_ids))
             results.append(result)
+    comment('Finished collecting mail')
     return results
-
-if __name__ == "__main__":
-    # execute only if run as a script
-    test()  
-
-
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-import smtplib
-
-def send_mail(subject, frm, to, msg):
-
-    message = MIMEMultipart("alternative")
-    message["Subject"] = subject
-    message["From"]    = frm
-    message["To"]      = to
-
-    message.attach(MIMEText(msg, "plain"))
-
-    try:
-        server = smtplib.SMTP("localhost")
-        server.sendmail(
-            message["From"],
-            message["To"],
-             message.as_string()
-        )
-        server.quit()
-    except smtplib.SMTPException:
-        print("e-mail send error")        
