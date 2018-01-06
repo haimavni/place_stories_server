@@ -651,6 +651,14 @@ def clean_all_style_defs():
             rec.update_record(story=s2)
     return "style, font, lang, class, div and align removed from {} stories.".format(count)
         
-    
+def delete_detached_life_stories():
+    lst = db(db.TblMembers.deleted==False).select(db.TblMembers.story_id)
+    lst = [rec.story_id for rec in lst]
+    lst = set(lst)
+    lifes = db((db.TblStories.used_for==1)&(db.TblStories.deleted==False)).select(db.TblStories.id)
+    lifes = [rec.id for rec in lifes]
+    orphans = [i for i in lifes if i not in lst]
+    deleted_orphans = db(db.TblStories.id.belongs(orpnahs)).update(deleted=True)
+    print "{} detached life stories out of {} were marked as deleted".format(deleted_orphans, len(orpnahs))
     
     

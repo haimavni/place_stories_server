@@ -43,7 +43,23 @@ def modification_date(filename):
     t = os.path.getmtime(filename)
     dt = datetime.datetime.fromtimestamp(t)
     return datetime.datetime(year=dt.year, month=dt.month, day=dt.day)
-   
+
+def save_uploaded_photo_collection(collection, user_id):
+    duplicates = []
+    failed = []
+    photo_ids = []
+    for file_name in collection:
+        result = save_uploaded_photo(file_name, collection[file_name], user_id)
+        if result == 'failed':
+            failed += [file_name]
+        elif result == 'duplicate':
+            duplicates += [file_name]
+        else:
+            photo_ids.append(result)
+    return Storage(failed=failed,
+                   duplicates=duplicates,
+                   photo_ids=photo_ids)
+        
 def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
     auth, comment, log_exception, db = inject('auth', 'comment', 'log_exception', 'db')
     user_id = user_id or auth.current_user()
@@ -56,13 +72,18 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
     comment('start saving {}', original_file_name)
     today = datetime.date.today()
     month = str(today)[:-3]
-    sub_folder = sub_folder or 'uploads/' + month + '/',
+    if not sub_folder:
+        sub_folder = sub_folder or 'uploads/' + month + '/'
     path = local_photos_folder() + sub_folder
     dir_util.mkpath(path)
     try:
         stream = StringIO(blob)
         img = Image.open(stream)
-        photo_date = img._getexif()[36867]
+        exif = img._getexif()
+        if exif:
+            photo_date = exif[36867]
+        else:
+            photo_date = None
         width, height = img.size
         square_img = crop_to_square(img, width, height, 256)
         if square_img:
@@ -80,7 +101,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
             img.save(path + file_name)
             width, height = resized(width, height)
             img = img.resize((width, height), Image.LANCZOS)
-        path = local_photos_folder() + path_tail
+        path = local_photos_folder() + sub_folder
         if photo_date:
             photo_date = datetime_from_str(photo_date, date_only=True)
         elif os.path.isfile(path + file_name):
@@ -91,20 +112,21 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
     except Exception, e:
         log_exception("saving photo {} failed".format(original_file_name))
         return 'failed'
-    
-    db.TblPhotos.insert(photo_path=path_tail + file_name,
-                        original_file_name=original_file_name,
-                        Name=original_file_name,
-                        uploader=user_id,
-                        upload_date=datetime.datetime.now(),
-                        photo_date=photo_date,
-                        width=width,
-                        height=height,
-                        crc=crc,
-                        oversize=oversize,
-                        photo_missing=False
-                        )
-    return 'success'
+
+    photo_id = db.TblPhotos.insert(
+        photo_path=sub_folder + file_name,
+        original_file_name=original_file_name,
+        Name=original_file_name,
+        uploader=user_id,
+        upload_date=datetime.datetime.now(),
+        photo_date=photo_date,
+        width=width,
+        height=height,
+        crc=crc,
+        oversize=oversize,
+        photo_missing=False
+    )
+    return photo_id
 
 def get_image_info(image_path):
     img = Image.open(image_path)
@@ -130,7 +152,7 @@ def fit_size(rec):
         rec.update_record(photo_missing=True)
         return False
     return True
-    
+
 def fit_all_sizes():
     db, request, comment = inject('db', 'request', 'comment')
     comment('started fitting size for chunk of photos')
@@ -149,7 +171,7 @@ def fit_all_sizes():
                 num_failed += 1
         db.commit()
     return dict(num_failed=num_failed)
-        
+
 def scan_all_unscanned_photos():
     db, request, comment = inject('db', 'request', 'comment')
     q = (db.TblPhotos.crc==None) & (db.TblPhotos.photo_missing == False)
@@ -223,7 +245,7 @@ def get_slides_from_photo_list(q):
         visited |= set([rec.id])
         lst1.append(rec)
     lst = lst1
-        
+
     folder = photos_folder()
     slides = [dict(photo_id=rec.id, src=folder + rec.photo_path, width=rec.width, height=rec.height, title=rec.Description or rec.Name) for rec in lst]
     return slides
@@ -275,5 +297,5 @@ def add_photos_from_drive(sub_folder):
                 continue
             #delete the file. it has been saved using crc as name and was possibly resized
             os.remove(path)
-    
+
 

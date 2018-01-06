@@ -3,7 +3,6 @@
 
 from ws_messaging import send_message, messaging_group
 from admin_support.access_manager import AccessManager
-import collect_emailed_photos
 
 #########################################################################
 ## This is a sample controller
@@ -156,11 +155,6 @@ def do_change_password(vars):
     if not good:
         raise User_Error('Wrong Password')
     return dict(good=True)
-
-def test_collect_mail():
-    collect_emailed_photos.test_collect_mail()
-
-
 
 
 
