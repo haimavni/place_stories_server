@@ -6,6 +6,7 @@ import re
 import ws_messaging
 from my_cache import Cache
 from photos import scan_all_unscanned_photos
+from collect_emails import collect_mail
 
 def test_scheduler(msg):
     comment("test task {}", msg)
@@ -73,6 +74,7 @@ def execute_task(name, command):
 
 __tasks = dict(
     ###scan_all_unscanned_photos=scan_all_unscanned_photos,
+    collect_mail=collect_mail,
     execute_task=execute_task,
 )
 
@@ -108,11 +110,26 @@ def schedule_scan_all_unscanned_photos():
         timeout = 2 * 60*60, # will time out if running for a two hours
     )
 
+def schedule_collect_mail():
+    now = datetime.datetime.now()
+    return db.scheduler_task.insert(
+        status='QUEUED',
+        application_name=request.application,
+        task_name = 'collect mail',
+        function_name='collect_mail',
+        start_time=now,
+        stop_time=now + datetime.timedelta(days=1461),
+        repeats=0,
+        period=3 * 60 * 60,   # every 3 minutes
+        timeout = 5 * 60*60, # will time out if running for a 5 minutes
+    )
+
 scheduler = MyScheduler(db, __tasks)
 
 permanent_tasks = dict(
     ##scan_all_unscanned_photos=schedule_scan_all_unscanned_photos
     #look for emailed photos and other mail
+    collect_mail=schedule_collect_mail
 )
 
 def _verify_tasks_started():

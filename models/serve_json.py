@@ -27,16 +27,16 @@ def serve_json(func):
             result = func(vars)
         except HTTP, e:
             if e.status == 303:
-                result = e.headers
+                return response.json(e.headers)
             else:
                 log_exception('Error serving ' + func.__name__)
-                result = dict(error=str(e))
+                return response.json(dict(error=str(e)))
         except User_Error, e:
             log_exception('User error serving ' + func.__name__)
-            result = dict(user_error=str(e))
+            return response.json(dict(user_error=str(e)))
         except Exception, e:
             log_exception('Error serving ' + func.__name__)
-            result = dict(error=str(e))
+            return response.json(dict(error=str(e)))
         try:
             result = response.json(result)
         except Exception, e:
