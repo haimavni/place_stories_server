@@ -147,8 +147,8 @@ def get_members_stats():
 
 @serve_json
 def get_stories_sample(vars):
-    q = db.TblStories.used_for==STORY4EVENT
-    lst = db(q).select(limitby=(0, 100), orderby=~db.TblStories.story_len)
+    q = (db.TblStories.used_for==STORY4EVENT) & (db.TblStories.deleted==False)
+    lst = db(q).select(limitby=(0, 200), orderby=~db.TblStories.story_len)
     if len(lst) > 10:
         lst1 = random.sample(lst, 10)
     else:
