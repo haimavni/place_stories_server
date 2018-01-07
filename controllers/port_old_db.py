@@ -638,7 +638,7 @@ def delete_detached_life_stories():
     lifes = db((db.TblStories.used_for==1)&(db.TblStories.deleted==False)).select(db.TblStories.id)
     lifes = [rec.id for rec in lifes]
     orphans = [i for i in lifes if i not in lst]
-    deleted_orphans = db(db.TblStories.id.belongs(orpnahs)).update(deleted=True)
-    print "{} detached life stories out of {} were marked as deleted".format(deleted_orphans, len(orpnahs))
+    deleted_orphans = db(db.TblStories.id.belongs(orphans)).update(deleted=True)
+    return "{} detached life stories out of {} were marked as deleted. story ids: {}".format(deleted_orphans, len(orphans), orphans)
     
     
