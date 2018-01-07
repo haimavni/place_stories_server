@@ -6,6 +6,7 @@ import re
 from photos import scan_all_unscanned_photos, fit_all_sizes
 import random
 from words import extract_tokens, guess_language, create_word_index, read_words_index
+from html_utils import clean_html
 
 def port_old_db():
     folder = request.vars.folder or 'gbs-bkp-jun17'
@@ -619,36 +620,15 @@ def fix_old_site_refs():
     num_modified, num_failed, num_non_refs, num_stories_to_fix = fixer.fix_old_site_refs()
     return "{n} refs fixed. {nf} failed. {nnr} non links. {ne} errors occured. {nl} remaining unfixed.".format(n=num_modified, nf=num_failed, nnr=num_non_refs, ne=fixer.num_errors, nl=num_stories_to_fix)
 
-def clean_drek(m):
-    return ""
-
-def remove_style_defs(s):
-    pat_str = r'(style=".+?")|(<font.+?>)|(</font>)|(class=".+?")|(lang=".+?")|(align=".+?")'
-    pat = re.compile(pat_str, re.IGNORECASE)
-    result = pat.sub(clean_drek, s)
-    return result
-
-def replace_div(m):
-    s = m.group(0)
-    s = s.replace("div", "p")
-    return s
-
-def replace_divs(s):
-    pat_str = r'(<div\s*>)|(</div\s*>)'
-    pat = re.compile(pat_str, re.IGNORECASE)
-    result = pat.sub(replace_div, s)
-    return result
-
 def clean_all_style_defs():
     count = 0
     lst = db(db.TblStories).select()
     for rec in lst:
-        s = rec.story
-        s1 = remove_style_defs(s)
-        s2 = replace_divs(s1)
-        if s != s2:
+        orig_html = rec.story
+        html = clean_html(orig_html)
+        if orig_html != html:
             count += 1
-            rec.update_record(story=s2)
+            rec.update_record(story=html)
     return "style, font, lang, class, div and align removed from {} stories.".format(count)
         
 def delete_detached_life_stories():
