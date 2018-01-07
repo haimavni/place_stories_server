@@ -14,6 +14,7 @@ import zlib
 import re
 from langs import language_name
 from words import calc_used_languages, read_words_index, get_all_story_previews, get_reisha
+from html_utils import clean_html
 
 @serve_json
 def member_list(vars):
@@ -68,7 +69,10 @@ def get_member_details(vars):
     mem_id = int(vars.member_id)
     if vars.what == 'story': #access member via its life story id
         rec = db(db.TblMembers.story_id==mem_id).select().first()
-        mem_id = rec.id
+        if rec:
+            mem_id = rec.id
+        else:
+            raise Exception('No member for this story')
     if vars.shift == 'next':
         mem_id += 1
     elif vars.shift == 'prev':
@@ -102,7 +106,11 @@ def get_member_photo_list(vars):
         return dict(photo_list=[])
     member_id = int(vars.member_id)
     if vars.what == 'story':
-        member_id = db(db.TblMembers.story_id==member_id).select().first().id
+        rec = db(db.TblMembers.story_id==member_id).select().first()
+        if rec:
+            member_id = rec.id
+        else:
+            return []
     slides = get_member_slides(member_id)
     return dict(photo_list=slides)
 
@@ -739,7 +747,8 @@ def get_photo_list(vars):
             rec.selected = 'photo-selected'
     else:
         lst1 = []
-    lst = [rec for rec in lst if rec.id not in lst1]
+    lst1_ids = [rec.id for rec in lst1]
+    lst = [rec for rec in lst if rec.id not in lst1_ids]
     lst = lst1 + lst
     for rec in lst:
         dic = dict(
@@ -1012,17 +1021,33 @@ def save_tag_merges(vars):
     
 @serve_json
 def apply_to_selected_photos(vars):
+    all_tags = calc_all_tags()
     spl = vars.selected_photo_list
     st = vars.selected_topics
+    added = []
+    deleted = []
     for pid in spl:
         curr_tag_ids = get_tag_ids(pid, "P")
+        curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
+        keywords = "; ".join(curr_tags)
+        db(db.TblPhotos.id==pid).update(KeyWords=keywords)
         for topic in st:
+            item = dict(item_id=pid, topic_id=topic.id)
             if topic.sign=="plus" and topic.id not in curr_tag_ids:
-                db.TblItemTopics.insert(item_type="P", item_id=pid, topic_id=topic.id) #todo: story_id=???
+                new_id = db.TblItemTopics.insert(item_type="P", item_id=pid, topic_id=topic.id) #todo: story_id=???
+                added.append(item)
             elif topic.sign=="minus" and topic.id in curr_tag_ids:
                 q = (db.TblItemTopics.item_type=="P") & (db.TblItemTopics.item_id==pid) & (db.TblItemTopics.topic_id==topic.id)
+                deleted.append(item)
                 db(q).delete()
+    ws_messaging.send_message('PHOTO-TAGS-CHANGED', added=added, deleted=deleted)
     return dict()
+
+def calc_all_tags():
+    result = dict()
+    for rec in db(db.TblTopics).select():
+        result [rec.id] = rec.name
+    return result
     
 @serve_json
 def save_group_members(vars):
@@ -1105,6 +1130,12 @@ def consolidate_stories(vars):
     #--------delete obsolete stories----------------
     db(db.TblStories.id.belongs(stm[1:])).update(deleted=True)
     return dict()
+
+@serve_json
+def clean_html_format(vars):
+    html = vars.html
+    html = clean_html(html)
+    return dict(html=html)
     
 def get_story_text(story_id):
     rec = db(db.TblStories.id==story_id).select().first()
