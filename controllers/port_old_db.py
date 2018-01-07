@@ -416,7 +416,7 @@ def set_stories_language():
     x = len(dic)
     z = x
 
-def index():
+def port_from_old_db():
     if db(db.TblMembers).count() > 0:
         return "Database already ported"
     try:

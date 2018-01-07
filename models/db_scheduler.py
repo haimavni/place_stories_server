@@ -7,6 +7,7 @@ import ws_messaging
 from my_cache import Cache
 from photos import scan_all_unscanned_photos
 from collect_emails import collect_mail
+from injections import inject
 
 def test_scheduler(msg):
     comment("test task {}", msg)
@@ -33,7 +34,9 @@ class MyScheduler(Scheduler):
 
     def on_update_task_status(self, task_id, data):
         #comment('on update task status', log_name='dbg_scheduler')
+        comment = inject('comment')
         try:
+            comment("task {task_id} status changed {data}", task_id=task_id, data=data)
             ws_messaging.send_message(key='task_status_changed', group='TASK_MONITOR', task_id=task_id, data=data)
         except Exception, e:
             log_exception('failed on update task status')
@@ -120,8 +123,8 @@ def schedule_collect_mail():
         start_time=now,
         stop_time=now + datetime.timedelta(days=1461),
         repeats=0,
-        period=3 * 60 * 60,   # every 3 minutes
-        timeout = 5 * 60*60, # will time out if running for a 5 minutes
+        period=3 * 60,   # every 3 minutes
+        timeout = 5 * 60, # will time out if running for a 5 minutes
     )
 
 scheduler = MyScheduler(db, __tasks)
@@ -133,8 +136,11 @@ permanent_tasks = dict(
 )
 
 def _verify_tasks_started():
+    
     if db(db.auth_user).count() < 2:
         return
+    comment = inject('comment')
+    comment("verify tasks started")
     for task_name in permanent_tasks:
         if db(db.scheduler_task.task_name==task_name).isempty():
             permanent_tasks[task_name]()
@@ -143,6 +149,7 @@ def _verify_tasks_started():
 def verify_tasks_started():
     #do NOT use memcache - it must be run once when the server starts. The memcache is NOT deleted at that time, 
     #so the verification may never be called
-    cache.ram('VERIFY_TASKS_STARTED', _verify_tasks_started, time_expire=7200)
+    c = Cache('VERIFY_TASKS_STARTED')
+    return c(lambda: _verify_tasks_started())
 
 verify_tasks_started()       
