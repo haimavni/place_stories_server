@@ -39,6 +39,7 @@ class EmailCollector:
         return result
     
     def get_header_info(self, msg, result):
+        comment = inject('comment')
         if result.sender:
             return #already done though in the wrong place
         result.sender = msg.get('from')
@@ -50,9 +51,13 @@ class EmailCollector:
             result.sender_email = lst[1][0][1:-1] #get rid of <>
         else:
             s = lst[0][0]
+            comment("sender email {}", s)
             parts = s.split('<')
-            result.sender_name = parts[0].strip()
-            result.sender_email = parts[1][:-1]
+            if len(parts) == 1:
+                result.sender_email = s
+            elif parts:
+                result.sender_name = parts[0].strip()
+                result.sender_email = parts[1][:-1]
         result.to = msg.get('to')
         result.what = result.to.split('@')[0]
         subject = msg.get('subject')

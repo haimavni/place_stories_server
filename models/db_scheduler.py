@@ -142,8 +142,10 @@ def _verify_tasks_started():
     comment = inject('comment')
     comment("verify tasks started")
     for task_name in permanent_tasks:
+        comment("start {}", task_name)
         if db(db.scheduler_task.task_name==task_name).isempty():
             permanent_tasks[task_name]()
+    comment('tasks verified.')
     return True
 
 def verify_tasks_started():
