@@ -1,0 +1,114 @@
+from injections import inject
+from members_support import get_member_rec
+
+def get_parents(member_id):
+    member_rec = get_member_rec(member_id)
+    pa = member_rec.father_id
+    ma = member_rec.mother_id
+    pa_rec = get_member_rec(pa, prepend_path=True)
+    ma_rec = get_member_rec(ma, prepend_path=True)
+    parents = Storage()
+    if pa_rec:
+        parents.pa = pa_rec
+    if ma_rec:
+        parents.ma = ma_rec
+    return parents
+
+def get_siblings(member_id):
+    parents = get_parents(member_id)
+    if not parents:
+        return []
+    pa, ma = parents.pa, parents.ma
+    q = (db.TblMembers.id != member_id) & (db.TblMembers.visibility != VIS_NEVER) & (db.TblMembers.deleted == False)
+    if pa:
+        lst1 = db(q & (db.TblMembers.father_id==pa.id)).select(orderby=db.TblMembers.date_of_birth) if pa else []
+        lst1 = [r.id for r in lst1]
+    else:
+        lst1 = []
+    if ma:
+        lst2 = db(q & (db.TblMembers.mother_id==ma.id)).select(orderby=db.TblMembers.date_of_birth) if ma else []
+        lst2 = [r.id for r in lst2]
+    else:
+        lst2 = []
+    lst = list(set(lst1 + lst2)) #make it unique
+    lst = [get_member_rec(id, prepend_path=True) for id in lst]
+    for rec in lst:
+        if not rec.date_of_birth:
+            rec.date_of_birth = datetime.date(year=1, month=1, day=1) #should not happen but it did...
+    lst = sorted(lst, key=lambda rec: rec.date_of_birth)
+    return lst
+
+def get_children(member_id, hidden_too=False):
+    member_rec = get_member_rec(member_id)
+    if member_rec.gender=='F' :
+        q = db.TblMembers.mother_id==member_id
+    elif member_rec.gender=='M':
+        q = db.TblMembers.father_id==member_id
+    else:
+        return [] #error!
+    if not hidden_too:
+        q &= (db.TblMembers.visibility != VIS_NEVER)
+    q &= (db.TblMembers.deleted == False)
+    lst = db(q).select(db.TblMembers.id, db.TblMembers.date_of_birth, orderby=db.TblMembers.date_of_birth)
+    lst = [get_member_rec(rec.id, prepend_path=True) for rec in lst]
+    return lst
+
+def get_spouses(member_id):
+    children = get_children(member_id, hidden_too=True)
+    member_rec = get_member_rec(member_id)
+    if member_rec.gender == 'F':
+        spouses = [child.father_id for child in children]
+    elif member_rec.gender == 'M':
+        spouses = [child.mother_id for child in children]
+    else:
+        spouses = [] ##error
+    spouses = [sp for sp in spouses if sp]  #to handle incomplete data
+    visited = set([])
+    spouses1 = []
+    for sp_id in spouses:
+        if sp_id in visited:
+            continue
+        else:
+            visited |= set([sp_id])
+            spouses1.append(sp_id)
+    spouses = spouses1        
+    ###spouses = list(set(spouses))  ## nice but does no preserve order
+    return [get_member_rec(m_id, prepend_path=True) for m_id in spouses]
+
+def get_family_connections(member_id):
+    parents = get_parents(member_id)
+    for p in ['pa', 'ma']:
+        if parents[p] and parents[p].visibility == VIS_NEVER:
+            parents[p] = None
+    privileges = auth.get_privileges()
+    is_admin = privileges.ADMIN if privileges else False
+    result = Storage(
+        parents=parents,
+        siblings=get_siblings(member_id),
+        spouses=get_spouses(member_id),
+        children=get_children(member_id, hidden_too=is_admin)
+    )
+    result.hasFamilyConnections = len(result.parents) > 0 or len(result.siblings) > 0 or len(result.spouses) > 0 or len(result.children) > 0
+    return result
+
+def get_all_first_degree_relatives(member_id):
+    result = set([rec.id for rec in get_parents(member_id)])
+    result |= set([rec.id for rec in get_siblings(member_id)])
+    result |= set([rec.id for rec in get_spouses(member_id)])
+    result |= set([rec.id for rec in get_children(member_id)])
+    return result
+
+def get_all_relatives(member_id):
+    visited = set([member_id])
+    levels = [visited]
+
+    def walk():
+        this_level = set([])
+        for m_id in levels[-1]:
+            immediates = get_all_first_degree_relatives(m_id)
+            for i in immediates:
+                if i in visited:
+                    continue
+                this_level != set([i]) 
+                visited      
+    

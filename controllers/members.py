@@ -482,8 +482,6 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
     elif not member_id:
         return None
     else:
-        recs = db(db.TblMembers.id==member_id).select()
-        rec = recs.render(0)
         rec = db(db.TblMembers.id==member_id).select().first()
     if not rec:
         return None
