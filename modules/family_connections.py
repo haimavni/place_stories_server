@@ -1,5 +1,6 @@
 from injections import inject
 from members_support import get_member_rec
+from gluon.storage import Storage
 
 def get_parents(member_id):
     member_rec = get_member_rec(member_id)
@@ -14,10 +15,18 @@ def get_parents(member_id):
         parents.ma = ma_rec
     return parents
 
+def get_parent_list(member_id):
+    parents = get_parents(member_id)
+    result = []
+    for p in parents:
+        result.append(parents[p])
+    return result
+
 def get_siblings(member_id):
     parents = get_parents(member_id)
     if not parents:
         return []
+    db, VIS_NEVER = inject('db', 'VIS_NEVER')
     pa, ma = parents.pa, parents.ma
     q = (db.TblMembers.id != member_id) & (db.TblMembers.visibility != VIS_NEVER) & (db.TblMembers.deleted == False)
     if pa:
@@ -40,6 +49,7 @@ def get_siblings(member_id):
 
 def get_children(member_id, hidden_too=False):
     member_rec = get_member_rec(member_id)
+    db, VIS_NEVER = inject('db', 'VIS_NEVER')
     if member_rec.gender=='F' :
         q = db.TblMembers.mother_id==member_id
     elif member_rec.gender=='M':
@@ -76,6 +86,10 @@ def get_spouses(member_id):
     return [get_member_rec(m_id, prepend_path=True) for m_id in spouses]
 
 def get_family_connections(member_id):
+    auth, VIS_NEVER = inject('auth', 'VIS_NEVER')
+    ###debugging only! get_all_relatives(member_id)
+    fc = FamilyConnections(member_id)
+    
     parents = get_parents(member_id)
     for p in ['pa', 'ma']:
         if parents[p] and parents[p].visibility == VIS_NEVER:
@@ -92,7 +106,7 @@ def get_family_connections(member_id):
     return result
 
 def get_all_first_degree_relatives(member_id):
-    result = set([rec.id for rec in get_parents(member_id)])
+    result = set([rec.id for rec in get_parent_list(member_id)])
     result |= set([rec.id for rec in get_siblings(member_id)])
     result |= set([rec.id for rec in get_spouses(member_id)])
     result |= set([rec.id for rec in get_children(member_id)])
@@ -100,15 +114,58 @@ def get_all_first_degree_relatives(member_id):
 
 def get_all_relatives(member_id):
     visited = set([member_id])
-    levels = [visited]
+    levels = [set([member_id])]
 
-    def walk():
+    def walk(visited, levels):
         this_level = set([])
-        for m_id in levels[-1]:
+        prev = levels[-1]
+        for m_id in prev:
             immediates = get_all_first_degree_relatives(m_id)
             for i in immediates:
                 if i in visited:
                     continue
-                this_level != set([i]) 
-                visited      
+                this_level |= set([i]) 
+                visited |= set([i])
+        if this_level:
+            levels.append(this_level)
+            walk(visited, levels)
+            
+    walk(visited, levels)
+    return dict(visited=visited, levels=levels)
+
+class FamilyConnections:
+    
+    def __init__(self, member_id):
+        self.member_id = member_id
+        self.visited =  set([member_id])
+        self.levels = [set([member_id])]
+        self.walk()
+        
+    def walk(self):
+        this_level = set([])
+        prev = self.levels[-1]
+        for m_id in prev:
+            immediates = self.get_all_first_degree_relatives(m_id)
+            for i in immediates:
+                if i in self.visited:
+                    continue
+                this_level |= set([i]) 
+                self.visited |= set([i])
+        if this_level:
+            self.levels.append(this_level)
+            self.walk()
+            
+    def get_all_first_degree_relatives(self, member_id):
+        result = set([rec.id for rec in get_parent_list(member_id)])
+        result |= set([rec.id for rec in get_siblings(member_id)])
+        result |= set([rec.id for rec in get_spouses(member_id)])
+        result |= set([rec.id for rec in get_children(member_id)])
+        return result
+    
+    def get_all_relatives(self):
+        return self.levels
+    
+    def find_path(self, other_member_id):
+        pass #todo: do it
+        
     

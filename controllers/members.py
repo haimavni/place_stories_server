@@ -15,6 +15,8 @@ import re
 from langs import language_name
 from words import calc_used_languages, read_words_index, get_all_story_previews, get_reisha
 from html_utils import clean_html
+from members_support import *
+from family_connections import *
 
 @serve_json
 def member_list(vars):
@@ -84,7 +86,7 @@ def get_member_details(vars):
     sm = stories_manager.Stories()
     story_info = sm.get_story(member_info.story_id) or Storage(display_version='New Story', topic="member.life-summary", story_versions=[], story_text='', story_id=None)
     story_info.used_for = STORY4MEMBER
-    family_connections = get_family_connections(member_info)
+    family_connections = get_family_connections(member_info.id)
     slides = get_member_slides(mem_id)
     if member_info.gender == 'F':
         spouses = 'husband' + ('s' if len(family_connections.spouses) > 1 else '')
@@ -448,142 +450,6 @@ def remove_member(vars):
         ws_messaging.send_message(key='MEMBER_DELETED', group='ALL', member_id=member_id)
     return dict(deleted=deleted)
 
-def older_display_name(rec, full):
-    s = rec.Name or ''
-    if full and rec.FormerName:
-        s += ' ({})'.format(rec.FormerName)
-    if full and rec.NickName:
-        s += ' - {}'.format(rec.NickName)
-    return s
-
-def member_display_name(rec=None, member_id=None, full=True):
-    rec = rec or get_member_rec(member_id)
-    if not rec:
-        return ''
-    if not rec.first_name:
-        return older_display_name(rec, full)
-    s = rec.first_name + ' ' + rec.last_name
-    if full and (rec.former_first_name or rec.former_last_name):
-        s += ' ('
-        if rec.former_first_name:
-            s += rec.former_first_name
-        if rec.former_last_name:
-            if rec.former_first_name:
-                s += ' '
-            s += rec.former_last_name
-        s += ')'     
-    if rec.NickName:
-        s += ' - {}'.format(rec.NickName)
-    return s
-
-def get_member_rec(member_id, member_rec=None, prepend_path=False):
-    if member_rec:
-        rec = member_rec #used when initially all members are loaded into the cache
-    elif not member_id:
-        return None
-    else:
-        rec = db(db.TblMembers.id==member_id).select().first()
-    if not rec:
-        return None
-    if rec.deleted:
-        return None
-    rec = Storage(rec.as_dict())
-    rec.full_name = member_display_name(rec, full=True)
-    rec.name = member_display_name(rec, full=False)
-    if prepend_path :
-        rec.facePhotoURL = photos_folder('profile_photos') + (rec.facePhotoURL or 'dummy_face.png')
-    return rec
-
-def get_parents(member_id):
-    member_rec = get_member_rec(member_id)
-    pa = member_rec.father_id
-    ma = member_rec.mother_id
-    pa_rec = get_member_rec(pa, prepend_path=True)
-    ma_rec = get_member_rec(ma, prepend_path=True)
-    parents = Storage()
-    if pa_rec:
-        parents.pa = pa_rec
-    if ma_rec:
-        parents.ma = ma_rec
-    return parents
-
-def get_siblings(member_id):
-    parents = get_parents(member_id)
-    if not parents:
-        return []
-    pa, ma = parents.pa, parents.ma
-    q = (db.TblMembers.id != member_id) & (db.TblMembers.visibility != VIS_NEVER) & (db.TblMembers.deleted == False)
-    if pa:
-        lst1 = db(q & (db.TblMembers.father_id==pa.id)).select(orderby=db.TblMembers.date_of_birth) if pa else []
-        lst1 = [r.id for r in lst1]
-    else:
-        lst1 = []
-    if ma:
-        lst2 = db(q & (db.TblMembers.mother_id==ma.id)).select(orderby=db.TblMembers.date_of_birth) if ma else []
-        lst2 = [r.id for r in lst2]
-    else:
-        lst2 = []
-    lst = list(set(lst1 + lst2)) #make it unique
-    lst = [get_member_rec(id, prepend_path=True) for id in lst]
-    for rec in lst:
-        if not rec.date_of_birth:
-            rec.date_of_birth = datetime.date(year=1, month=1, day=1) #should not happen but it did...
-    lst = sorted(lst, key=lambda rec: rec.date_of_birth)
-    return lst
-
-def get_children(member_id, hidden_too=False):
-    member_rec = get_member_rec(member_id)
-    if member_rec.gender=='F' :
-        q = db.TblMembers.mother_id==member_id
-    elif member_rec.gender=='M':
-        q = db.TblMembers.father_id==member_id
-    else:
-        return [] #error!
-    if not hidden_too:
-        q &= (db.TblMembers.visibility != VIS_NEVER)
-    q &= (db.TblMembers.deleted == False)
-    lst = db(q).select(db.TblMembers.id, db.TblMembers.date_of_birth, orderby=db.TblMembers.date_of_birth)
-    lst = [get_member_rec(rec.id, prepend_path=True) for rec in lst]
-    return lst
-
-def get_spouses(member_id):
-    children = get_children(member_id, hidden_too=True)
-    member_rec = get_member_rec(member_id)
-    if member_rec.gender == 'F':
-        spouses = [child.father_id for child in children]
-    elif member_rec.gender == 'M':
-        spouses = [child.mother_id for child in children]
-    else:
-        spouses = [] ##error
-    spouses = [sp for sp in spouses if sp]  #to handle incomplete data
-    visited = set([])
-    spouses1 = []
-    for sp_id in spouses:
-        if sp_id in visited:
-            continue
-        else:
-            visited |= set([sp_id])
-            spouses1.append(sp_id)
-    spouses = spouses1        
-    ###spouses = list(set(spouses))  ## nice but does no preserve order
-    return [get_member_rec(m_id, prepend_path=True) for m_id in spouses]
-
-def get_family_connections(member_info):
-    parents = get_parents(member_info.id)
-    for p in ['pa', 'ma']:
-        if parents[p] and parents[p].visibility == VIS_NEVER:
-            parents[p] = None
-    privileges = auth.get_privileges()
-    is_admin = privileges.ADMIN if privileges else False
-    result = Storage(
-        parents=parents,
-        siblings=get_siblings(member_info.id),
-        spouses=get_spouses(member_info.id),
-        children=get_children(member_info.id, hidden_too=is_admin)
-    )
-    result.hasFamilyConnections = len(result.parents) > 0 or len(result.siblings) > 0 or len(result.spouses) > 0 or len(result.children) > 0
-    return result
-
 def image_url(rec):
     #for development need full http address
     return photos_folder() + rec.TblPhotos.photo_path
@@ -592,12 +458,6 @@ def get_member_slides(member_id):
     q = (db.TblMemberPhotos.Member_id==member_id) & \
         (db.TblPhotos.id==db.TblMemberPhotos.Photo_id)
     return get_slides_from_photo_list(q)
-
-def get_portrait_candidates(member_id): #todo: not in use
-    q = (db.TblMemberPhotos.Member_id==member_id) & \
-        (db.TblMemberPhotos.r > 10)
-    lst = db(q).select(orderby=~db.TblMemberPhotos.r)
-    return lst
 
 @serve_json
 def get_faces(vars):
@@ -1173,10 +1033,3 @@ def get_story_member_ids(story_id):
     lst = db(qm).select(db.TblMembers.id)
     lst = [m.id for m in lst]
     return lst
-
-
-    
-    
-    
-
-    
