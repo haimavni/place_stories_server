@@ -103,6 +103,17 @@ def get_member_details(vars):
                 )
 
 @serve_json
+def get_all_relatives(vars):
+    member_id = vars.member_id;
+    fc = get_all_family_connections(member_id);
+    levels = fc.levels
+    relative_list = []
+    for level in levels:
+        lst = [mid for mid in level]
+        relative_list.append(lst)
+    return dict(relative_list=relative_list)
+
+@serve_json
 def get_member_photo_list(vars):
     if vars.member_id == "new":
         return dict(photo_list=[])

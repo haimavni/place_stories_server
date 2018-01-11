@@ -1,6 +1,7 @@
 from injections import inject
 from members_support import get_member_rec
 from gluon.storage import Storage
+from my_cache import Cache
 
 def get_parents(member_id):
     member_rec = get_member_rec(member_id)
@@ -88,7 +89,8 @@ def get_spouses(member_id):
 def get_family_connections(member_id):
     auth, VIS_NEVER = inject('auth', 'VIS_NEVER')
     ###debugging only! get_all_relatives(member_id)
-    fc = FamilyConnections(member_id)
+    #fc = get_all_family_connections(member_id)
+    #path = fc.find_path(493)
     
     parents = get_parents(member_id)
     for p in ['pa', 'ma']:
@@ -105,35 +107,7 @@ def get_family_connections(member_id):
     result.hasFamilyConnections = len(result.parents) > 0 or len(result.siblings) > 0 or len(result.spouses) > 0 or len(result.children) > 0
     return result
 
-def get_all_first_degree_relatives(member_id):
-    result = set([rec.id for rec in get_parent_list(member_id)])
-    result |= set([rec.id for rec in get_siblings(member_id)])
-    result |= set([rec.id for rec in get_spouses(member_id)])
-    result |= set([rec.id for rec in get_children(member_id)])
-    return result
-
-def get_all_relatives(member_id):
-    visited = set([member_id])
-    levels = [set([member_id])]
-
-    def walk(visited, levels):
-        this_level = set([])
-        prev = levels[-1]
-        for m_id in prev:
-            immediates = get_all_first_degree_relatives(m_id)
-            for i in immediates:
-                if i in visited:
-                    continue
-                this_level |= set([i]) 
-                visited |= set([i])
-        if this_level:
-            levels.append(this_level)
-            walk(visited, levels)
-            
-    walk(visited, levels)
-    return dict(visited=visited, levels=levels)
-
-class FamilyConnections:
+class AllFamilyConnections:
     
     def __init__(self, member_id):
         self.member_id = member_id
@@ -165,7 +139,27 @@ class FamilyConnections:
     def get_all_relatives(self):
         return self.levels
     
-    def find_path(self, other_member_id):
-        pass #todo: do it
+    def find_path(self, other_member_id, origin=None, level=1):
+        if origin is None:
+            self.counter = 0
+            origin = self.member_id
+        self.counter += 1
+        fdr = self.get_all_first_degree_relatives(origin)
+        if level < len(self.levels):
+            for mid in self.levels[level] & fdr:
+                if mid==other_member_id:
+                    return [mid]
+                else:
+                    path = self.find_path(other_member_id, origin=mid, level=level+1)
+                    if path:
+                        return [mid] + path
+        return None
+    
+def _get_all_family_connections(member_id):
+    return AllFamilyConnections(member_id)
+
+def get_all_family_connections(member_id, refresh=False):
+    c = Cache('FAMILY-CONNECTIONS-{}', format(member_id))
+    return c(lambda: _get_all_family_connections(member_id), refresh=refresh, time_expire=3600)
         
     

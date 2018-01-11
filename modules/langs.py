@@ -2,6 +2,7 @@
 
 from pycountry import languages
 import re
+from unicodedata import normalize
 
 def language_info(lang_code):
     if lang_code.endswith('-'):
@@ -59,7 +60,7 @@ charsets = [ #ranges of letters unicode used to extract all words from text writ
                  (0x0531, 0x0556), (0x0561, 0x0587)                              #Armenian
                  ),
              (
-                 (0x05d0, 0x5ea),                                                #Hebrew
+                 (0x0591, 0x05c7), (0x05d0, 0x5ea)                               #Hebrew. From 0x0591 to 05c7 they are punctuation marks
                  ),
              (
                  (0x061d, 0x061d), (0x0620, 0x063f), (0x0641, 0x064a),           #Arabic
@@ -257,7 +258,7 @@ def clean_word(w):
         uout = uout[:-1]
     if len(uout) > 3 and uout[1] == '"':
         uout = uout[2:]  #for quoted segments which start with ב, ל, מ but מ"פ is OK
-    
+    uout = unpunctuate(uout)
     return uout.encode('utf8') 
 
 def extract_words(s):
@@ -286,7 +287,20 @@ def extract_words(s):
                     result.append(w1)
     return result
 
+def unpunctuate(unistr):
+    result = u""
+    for c in unistr:
+        if 0x0591 <= ord(c) < 0x05c8:
+            continue
+        result += c
+    return result
+        
+
 def test():
+    s = u"סִפּוּרֵי גִּבְעַת בְּרֶנֶר"
+    x = normalize('NFC', s)
+    y = normalize('NFD', s)
+    s1 = unpunctuate(s)
     s = '×—×™×™× ××‘× ×™ 1234  raanana' 
     s += r" I don't know what it's meaning is :-) ------ >;)  )))=====  ('}{') "
     s += r'â€œWe at http://www.coolano.com/1234?boom=5678&koom=123xCs_y-Yy donâ€™t report export volumes ' + chr(0x93)
