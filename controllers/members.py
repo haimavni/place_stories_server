@@ -114,6 +114,14 @@ def get_all_relatives(vars):
     return dict(relative_list=relative_list)
 
 @serve_json
+def get_relatives_path(vars):
+    origin_member_id = vars.origin_member_id
+    other_member_id = vars.other_member_id
+    fc = get_all_family_connections(origin_member_id);
+    path = fc.find_path(other_member_id)
+    return dict(relatives_path=[origin_member_id] + path)
+
+@serve_json
 def get_member_photo_list(vars):
     if vars.member_id == "new":
         return dict(photo_list=[])

@@ -139,21 +139,28 @@ class AllFamilyConnections:
     def get_all_relatives(self):
         return self.levels
     
-    def find_path(self, other_member_id, origin=None, level=1):
-        if origin is None:
-            self.counter = 0
-            origin = self.member_id
-        self.counter += 1
+    def _find_path(self, other_member_id, origin, level, max_level):
+        if level > max_level:
+            return None
         fdr = self.get_all_first_degree_relatives(origin)
-        if level < len(self.levels):
-            for mid in self.levels[level] & fdr:
-                if mid==other_member_id:
-                    return [mid]
-                else:
-                    path = self.find_path(other_member_id, origin=mid, level=level+1)
-                    if path:
-                        return [mid] + path
+        for mid in self.levels[level] & fdr:
+            if mid==other_member_id:
+                return [mid]
+        for mid in self.levels[level] & fdr:
+            path = self._find_path(other_member_id, mid, level + 1, max_level)
+            if path:
+                return [mid] + path
         return None
+    
+    def find_path(self, other_member_id):
+        max_level = 1000
+        for m, level in enumerate(self.levels):
+            if other_member_id in level:
+                max_level = m;
+                break;
+        if max_level > 100:
+            return None #should never happen
+        return self._find_path(other_member_id, origin=self.member_id, level=1, max_level=max_level)
     
 def _get_all_family_connections(member_id):
     return AllFamilyConnections(member_id)
