@@ -79,11 +79,12 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
     try:
         stream = StringIO(blob)
         img = Image.open(stream)
+        photo_date = None
         exif = img._getexif()
         if exif:
-            photo_date = exif[36867]
-        else:
-            photo_date = None
+            for key in [36867, 306]:
+                if key in exif:
+                    photo_date = exif[key]
         width, height = img.size
         square_img = crop_to_square(img, width, height, 256)
         if square_img:
