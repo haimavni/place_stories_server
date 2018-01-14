@@ -36,7 +36,7 @@ class MyScheduler(Scheduler):
         #comment('on update task status', log_name='dbg_scheduler')
         comment = inject('comment')
         try:
-            comment("task {task_id} status changed {data}", task_id=task_id, data=data)
+            ###comment("task {task_id} status changed {data}", task_id=task_id, data=data)
             ws_messaging.send_message(key='task_status_changed', group='TASK_MONITOR', task_id=task_id, data=data)
         except Exception, e:
             log_exception('failed on update task status')
@@ -66,13 +66,13 @@ def time_dif_str(tim, now = datetime.datetime.now()):
     return difstr + ' ago' if ago else 'in ' + difstr
 
 def execute_task(name, command):
-    comment('Started task {}: {}'.format(name, command))
+    ###comment('Started task {}: {}'.format(name, command))
     try:
         result = eval(command)
     except Exception, e:
         log_exception('Executing ' + name)
     else:
-        comment('Finished task {}. Returned {}.'.format(name, result))
+        ###comment('Finished task {}. Returned {}.'.format(name, result))
         db.commit()
 
 __tasks = dict(

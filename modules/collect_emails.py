@@ -126,17 +126,15 @@ def get_user_id_of_sender(sender_email, sender_name):
 
 def collect_mail():
     comment = inject('comment')
-    comment('Started collecting mail')
     email_photos_collector = EmailCollector()
     results = []
     for msg in email_photos_collector.collect():
         user_id = get_user_id_of_sender(msg.sender_email, msg.sender_name)
-        user_id = user_id or 1 #if we decide not to create new user
+        user_id = user_id or 1 #todo: if we decide not to create new user
         text = msg.html_content or msg.plain_content
         comment('New email: subject: {subject}, emages: {image_names} sent by {sender}', 
                 subject=msg.subject, image_names=msg.images.keys(), sender=msg.sender_email)
         if msg.images:
             result = save_uploaded_photo_collection(msg.images, user_id)
             comment("upload result {result}", result=result)
-    comment('Finished collecting mail')
     return results
