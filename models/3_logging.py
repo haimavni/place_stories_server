@@ -27,8 +27,13 @@ def my_log(s, file_name="log_all"):
     if file_size + len(s) > size_limit:
         roll_over(fname, 10)
     s1 = "{ts}: {s}\n\n".format(ts=datetime.datetime.now(), s=s)
-    with open(fname, 'a') as f:
-        f.write(s1)
+    try:
+        with open(fname, 'a') as f:
+            f.write(s1)
+    except:
+        fname = fname = '{}{}.log'.format(log_path(), file_name.upper())
+        with open(fname, 'a') as f:
+            f.write(s1)
 
 def log_exception_only(p, file_name='exceptions'):
     import traceback
