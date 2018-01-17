@@ -136,6 +136,15 @@ def get_member_photo_list(vars):
     return dict(photo_list=slides)
 
 @serve_json
+def add_photographer(vars):
+    photographer_name = vars.photographer_name
+    if not db(db.TblPhotographers.name==photographer_name).isempty():
+        raise User_Error("photos.already-exists")
+    db.TblPhotographers.insert(name=photographer_name)
+    ws_messaging.send_message(key='PHOTOGRAPHER_ADDED', group='ALL', photographer_name=photographer_name)
+    return dict()
+    
+@serve_json
 def save_story_info(vars):
     user_id = vars.user_id
     story_info = vars.story_info
