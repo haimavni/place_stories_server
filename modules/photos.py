@@ -80,7 +80,11 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
         stream = StringIO(blob)
         img = Image.open(stream)
         photo_date = None
-        exif = img._getexif()
+        exif = None
+        try:
+            exif = img._getexif()
+        except:
+            pass
         if exif:
             for key in [36867, 306]:
                 if key in exif:
