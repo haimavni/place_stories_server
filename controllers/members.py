@@ -323,7 +323,7 @@ def get_story_photo_list(vars):
     story_id = int(story_id)
     event = db(db.TblEvents.story_id==story_id).select().first()
     if not event:
-        return dict()
+        return dict(photo_list=[])
     qp = (db.TblEventPhotos.Event_id==event.id) & (db.TblPhotos.id==db.TblEventPhotos.Photo_id)
     photos = get_slides_from_photo_list(qp)
     return dict(photo_list=photos)
