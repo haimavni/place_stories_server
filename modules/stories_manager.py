@@ -144,7 +144,7 @@ class Stories:
         if rec.story != updated_story_text:
             merger = mim.Merger()
             delta = merger.diff_make(rec.story, updated_story_text)
-            rec.update_record(story=updated_story_text, name=story_info.name)
+            rec.update_record(story=updated_story_text, name=story_info.name, last_update_date=now)
             if not rec.story:
                 return
             db.TblStoryVersions.insert(delta=delta, 
