@@ -165,3 +165,19 @@ sudo apt-get install memcached
 install bower:
 
 sudo npm install -g bower
+
+To copy db
+-----------
+
+pg_dump -Fc -f mydb.dump -h server1 mydb
+then restore with:
+
+dropdb -h server2 mydb
+createdb -h server2 -T template0 mydb
+pg_restore -d mydb -h server2 mydb.dump
+
+This will:
+
+DROP database mydb on server2, completely and permanently destroying all data in mydb on server2
+Re-CREATE database mydb on server2 from a totally empty template
+Restore the copy of mydb on server into server2

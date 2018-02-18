@@ -24,6 +24,7 @@ then
 fi
 
 echo -e "Deploy to branch " $BRANCH
+echo -e "Deploy to branch " $BRANCH >> ~/log/deploy_history.log
 
 pushd ~/aurelia-gbs/gbs
 git checkout $BRANCH
@@ -37,6 +38,8 @@ python ~/aurelia-gbs/server/tol_server/private/handle_locale.py
 au build --env tmp_env
 rm tmp_env
 cp -a ./scripts ~/deployment_folder/
+ls -l ~/deployment_folder/scripts >> ~/log/deploy_history.log
+
 cp ./index.html  ~/deployment_folder
 cp ./favicon.ico  ~/deployment_folder
 ##cp -a ./locales  ~/deployment_folder

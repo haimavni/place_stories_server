@@ -95,12 +95,12 @@ class Stories:
         story_text = story_text.replace('~1', '&').replace('~2', ';').replace('\n', '').replace('>', '>\n')
         now = datetime.datetime.now()
         db, auth, STORY4EVENT, STORY4TERM = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM')
-        author_name = auth.user_name(self.author_id)
+        source = story_info.source or auth.user_name(self.author_id)
         ###todo: handle language issues here and in update_story
         story_id = db.TblStories.insert(story=story_text, 
                                         author_id=self.author_id, 
                                         name=name,
-                                        source=author_name,
+                                        source=source,
                                         used_for=story_info.used_for,
                                         translated_from=story_id,
                                         creation_date=now,
@@ -121,7 +121,7 @@ class Stories:
             )
         
         update_story_words_index(story_id)
-        return Storage(story_id=story_id, creation_date=now, author=author_name)
+        return Storage(story_id=story_id, creation_date=now, author=source)
 
     def update_story(self, story_id, story_info, language=None):
         if story_id == 'new':
@@ -144,7 +144,7 @@ class Stories:
         if rec.story != updated_story_text:
             merger = mim.Merger()
             delta = merger.diff_make(rec.story, updated_story_text)
-            rec.update_record(story=updated_story_text, name=story_info.name, last_update_date=now)
+            rec.update_record(story=updated_story_text, name=story_info.name, source=story_info.source, last_update_date=now)
             if not rec.story:
                 return
             db.TblStoryVersions.insert(delta=delta, 
@@ -152,11 +152,11 @@ class Stories:
                                        creation_date=now,
                                        author_id=self.author_id
                                        )
-        elif story_info.name != rec.name:
-            rec.update_record(name=story_info.name, last_update_date=now, updater_id=self.author_id)
+        elif story_info.name != rec.name or story_info.source != rec.source:
+            rec.update_record(name=story_info.name, source=story_info.source, last_update_date=now, updater_id=self.author_id)
         update_story_words_index(story_id)
-        author_name = auth.user_name(self.author_id)
-        return Storage(story_id=story_id, last_update_date=now, updater_name=author_name, author=story_info.author)
+        author_name = auth.user_name(self.author_id) #name of the mblbhd, not the source
+        return Storage(story_id=story_id, last_update_date=now, updater_name=author_name, author=story_info.source)
 
     def find_translation(self, story_id, language):
         db = inject('db')
