@@ -909,23 +909,33 @@ def save_tag_merges(vars):
 def apply_to_selected_photos(vars):
     all_tags = calc_all_tags()
     spl = vars.selected_photo_list
+    plist = vars.selected_photographers
+    if len(plist) == 1:
+        photographer_id = plist[0].id
+    else:
+        photographer_id = None
     st = vars.selected_topics
     added = []
     deleted = []
     for pid in spl:
-        curr_tag_ids = get_tag_ids(pid, "P")
-        curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
-        keywords = "; ".join(curr_tags)
-        db(db.TblPhotos.id==pid).update(KeyWords=keywords)
+        curr_tag_ids = set(get_tag_ids(pid, "P"))
         for topic in st:
             item = dict(item_id=pid, topic_id=topic.id)
             if topic.sign=="plus" and topic.id not in curr_tag_ids:
                 new_id = db.TblItemTopics.insert(item_type="P", item_id=pid, topic_id=topic.id) #todo: story_id=???
+                curr_tag_ids |= set([topic.id])
                 added.append(item)
             elif topic.sign=="minus" and topic.id in curr_tag_ids:
                 q = (db.TblItemTopics.item_type=="P") & (db.TblItemTopics.item_id==pid) & (db.TblItemTopics.topic_id==topic.id)
+                curr_tag_ids -= set([topic.id])
                 deleted.append(item)
                 db(q).delete()
+        curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
+        keywords = "; ".join(curr_tags)
+        db(db.TblPhotos.id==pid).update(KeyWords=keywords)
+        if photographer_id:
+            db(db.TblPhotos.id==pid).update(photographer_id=photographer_id)
+                
     ws_messaging.send_message('PHOTO-TAGS-CHANGED', added=added, deleted=deleted)
     return dict()
 
