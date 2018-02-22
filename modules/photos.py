@@ -8,6 +8,7 @@ import zlib
 from cStringIO import StringIO
 from date_utils import datetime_from_str
 from gluon.storage import Storage
+import random
 
 MAX_WIDTH = 1200
 MAX_HEIGHT = 800
@@ -129,7 +130,8 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
         height=height,
         crc=crc,
         oversize=oversize,
-        photo_missing=False
+        photo_missing=False,
+        random_photo_key=random.randint(1, 101)
     )
     return photo_id
 

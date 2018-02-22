@@ -3,10 +3,11 @@
 from porting.create_old_db_mappings import table_fields, csv_name_to_table_name, get_records, csv_name_to_table_name
 from glob import glob
 import re
-from photos import scan_all_unscanned_photos, fit_all_sizes
+from photos import scan_all_unscanned_photos, fit_all_sizes, local_photos_folder
 import random
 from words import extract_tokens, guess_language, create_word_index, read_words_index
 from html_utils import clean_html
+import os, time
 
 def port_old_db():
     folder = request.vars.folder or 'gbs-bkp-jun17'
@@ -614,6 +615,25 @@ class RefsFixer:
         for what in self.counter:
             comment('{n} refs of type {t}', n=self.counter[what], t=what)
         return num_modified, num_failed, num_non_refs, num_stories_to_fix
+    
+def recover_uploaded_photo_dates():
+    src_folder = local_photos_folder("squares")
+    nh = len(src_folder)
+    src_folder += 'uploads/'
+    cnt = 0
+    for (root, dirnames, filenames) in os.walk(src_folder):
+        for filename in filenames:
+            path = root + '/' + filename
+            photo_path = path[nh:]
+            (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat(path)
+            upload_date = datetime.datetime.fromtimestamp(mtime)
+            rec = db(db.TblPhotos.photo_path==photo_path).select().first()
+            if rec:
+                if rec.upload_date == None or rec.upload_date == NO_DATE:
+                    uploader = rec.uploader or 6 #Itai Tadmor uploaded most of them
+                    rec.update(upload_date=upload_date, uploader=uploader)
+                    cnt += 1
+    return "{} photo dates recovered".format(cnt)
         
 def fix_old_site_refs():
     fixer = RefsFixer()

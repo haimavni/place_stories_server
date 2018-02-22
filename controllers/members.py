@@ -601,6 +601,13 @@ def make_photos_query(vars):
         q &= (db.TblPhotos.uploader==vars.user_id)
     elif opt == 'users':
         q &= (db.TblPhotos.uploader!=None)
+    opt = vars.selected_dates_option
+    if opt == 'selected_dates_option':
+        pass
+    elif opt == 'dated':
+        q &= (db.TblPhotos.photo_date != NO_DATE)
+    elif opt == 'undated':
+        q &= (db.TblPhotos.photo_date == NO_DATE)
     return q
 
 @serve_json
