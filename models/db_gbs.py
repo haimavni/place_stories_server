@@ -34,7 +34,8 @@ db.define_table('TblStories',
                 Field('story_len', type='integer', compute=lambda row: len(row.story)),
                 Field('language', type='string'),
                 Field('translated_from', type='integer'), ##db.TblStories 
-                Field('deleted', type='boolean', default=False)
+                Field('deleted', type='boolean', default=False),
+                Field('touch_time', type='date', default=NO_DATE) #
 )                
 
 db.define_table('TblStoryVersions',
@@ -239,6 +240,8 @@ db.define_table('TblPhotos',
                 Field('PageHits', type='integer'),
                 Field('PhotoDate', type='string'),
                 Field('photo_date', type='date', default=NO_DATE),
+                Field('photo_date_resolution', type='string', default='Y'), # D, M or Y for day, month, year
+                Field('photo_date_span', type='integer', default=1), # how many months or years in the range
                 Field('photo_date_str', type='string'),
                 Field('photo_date_from', type='date', default=NO_DATE),
                 Field('photo_date_to', type='date', default=FAR_FUTURE),

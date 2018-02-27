@@ -186,12 +186,15 @@ def get_members_stats():
 @serve_json
 def get_stories_sample(vars):
     q = (db.TblStories.used_for==STORY4EVENT) & (db.TblStories.deleted==False)
-    lst = db(q).select(limitby=(0, 200), orderby=~db.TblStories.story_len)
-    if len(lst) > 10:
-        lst1 = random.sample(lst, 10)
-    else:
-        lst1 = lst
-    return dict(stories_sample=lst1)
+    q1 = q & (db.TblStories.touch_time != NO_DATE)
+    lst1 = db(q1).select(limitby=(0, 10), orderby=~db.TblStories.touch_time)
+    lst1 = [rec for rec in lst1]
+    q2 = q & (db.TblStories.touch_time == NO_DATE)
+    lst2 = db(q2).select(limitby=(0, 200), orderby=~db.TblStories.story_len)
+    lst2 = [rec for rec in lst2]
+    if len(lst2) > 10:
+        lst2 = random.sample(lst2, 10)
+    return dict(stories_sample=lst1 + lst2)
 
 def calc_user_list():
     lst = db(db.auth_user).select()
@@ -946,6 +949,13 @@ def apply_to_selected_photos(vars):
     ws_messaging.send_message('PHOTO-TAGS-CHANGED', added=added, deleted=deleted)
     return dict()
 
+@serve_json
+def promote_stories(vars):
+    checked_story_list = vars.params.checked_story_list
+    q = (db.TblStories.id.belongs(checked_story_list))
+    today = datetime.date.today()
+    db(q).update(touch_time=today)
+ 
 def calc_all_tags():
     result = dict()
     for rec in db(db.TblTopics).select():
