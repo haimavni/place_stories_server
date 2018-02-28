@@ -692,7 +692,7 @@ def get_topic_list(vars):
 
 @serve_json
 def get_message_list(vars):
-    q = (db.TblStories.used_for==STORY4MESSAGE) & (db.TblStories.author_id==db.auth_user.id)
+    q = (db.TblStories.used_for==STORY4MESSAGE) & (db.TblStories.author_id==db.auth_user.id) & (db.TblStories.deleted != True)
     lst = db(q).select(orderby=~db.TblStories.last_update_date, limitby=(0, vars.limit or 100))
     result = [dict(story_text=rec.TblStories.story, 
                    name=rec.TblStories.name, 
@@ -884,6 +884,12 @@ def delete_checked_stories(vars):
     deleted = not params.deleted_stories #will undelete if the list is of deleted stories
     n = db(db.TblStories.id.belongs(checked_stories)).update(deleted=deleted)
     return dict(num_deleted=n)
+
+@serve_json
+def delete_story(vars):
+    story_id = vars.story_id
+    n = db(db.TblStories.id==story_id).update(deleted=True)
+    return dict(deleted=n==1)
     
 @serve_json
 def save_tag_merges(vars):
@@ -968,6 +974,12 @@ def save_group_members(vars):
         return save_story_members(vars.caller_id, vars.member_ids)
     else:
         return dict() #todo: implement for terms etc.
+    
+@serve_json
+def get_video_sample(vars):
+    #temporary hard coded implementation
+    lst = ['FI9taVOMLh8', '-5F0x79j2K4', 'uwACSZ890a0', 'dfJIOa6eyfg', '1g_PlRE-YwI', 'cscYO3epaIY']
+    return dict(video_list=lst)
     
 def save_story_members(story_id, member_ids):
     event = db(db.TblEvents.story_id==story_id).select().first()
