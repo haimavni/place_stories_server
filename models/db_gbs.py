@@ -240,11 +240,9 @@ db.define_table('TblPhotos',
                 Field('PageHits', type='integer'),
                 Field('PhotoDate', type='string'),
                 Field('photo_date', type='date', default=NO_DATE),
-                Field('photo_date_resolution', type='string', default='Y'), # D, M or Y for day, month, year
-                Field('photo_date_span', type='integer', default=1), # how many months or years in the range
-                Field('photo_date_str', type='string'),
-                Field('photo_date_from', type='date', default=NO_DATE),
-                Field('photo_date_to', type='date', default=FAR_FUTURE),
+                Field('photo_date_dateunit', type='string', default='Y'), # D, M or Y for day, month, year
+                Field('photo_date_datespan', type='integer', default=1), # how many months or years in the range
+                Field('photo_date_str', type='string'), #obsolete soon
                 Field('PhotoRank', type='integer'),
                 Field('Photographer', type='string'), #obsolete
                 Field('photographer_id', db.TblPhotographers),

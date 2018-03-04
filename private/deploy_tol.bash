@@ -27,6 +27,7 @@ echo -e "Deploy to branch " $BRANCH
 echo -e "Deploy to branch " $BRANCH >> ~/log/deploy_history.log
 
 pushd ~/aurelia-gbs/gbs
+git pull
 git checkout $BRANCH
 git pull
 
@@ -39,8 +40,10 @@ au build --env tmp_env
 rm tmp_env
 cp -a ./scripts ~/deployment_folder/
 ls -l ~/deployment_folder/scripts >> ~/log/deploy_history.log
+git br -v >> ~/log/deploy_history.log
 
 cp ./index.html  ~/deployment_folder
+python ~/aurelia-gbs/server/tol_server/private/shorten_bundle_name.py
 cp ./favicon.ico  ~/deployment_folder
 ##cp -a ./locales  ~/deployment_folder
 cp -a ./froala-style ~/deployment_folder

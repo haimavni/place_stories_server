@@ -660,5 +660,38 @@ def delete_detached_life_stories():
     orphans = [i for i in lifes if i not in lst]
     deleted_orphans = db(db.TblStories.id.belongs(orphans)).update(deleted=True)
     return "{} detached life stories out of {} were marked as deleted. story ids: {}".format(deleted_orphans, len(orphans), orphans)
+
+def upgrade_to_date_ranges():
+    for tblName in ['TblPhotos', 'TblEvents']:
+        tbl = db[tblName]
+        for fld in tbl:
+            if fld.type == 'date':
+                fld_str_name = fld.name + '_str'
+                if fld_str_name in tbl:
+                    for rec in db(tbl).select():
+                        fld_str = rec[fld_str_name] or '????-??-??'
+                        year, month, day = fld_str.split('-')
+                        if year == '????':
+                            formattd_date = ""
+                            span = 1
+                            unit = 'N'
+                        elif year[3] == '?':
+                            formatted_date = year[:3] + '0'
+                            span = 10
+                            unit = 'Y'
+                        elif month == '??':
+                            formatted_date = year
+                            span = 1
+                            unit = 'Y'
+                        elif day == '??':
+                            formatted_date = month + '/' + year
+                            span = 1
+                            unit = 'M'
+                        else:
+                            formatted_date = day + '/' + month + '/' + year
+                            span = 1
+                            unit = 'D'
+                        pass
+            pass
     
     

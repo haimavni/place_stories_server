@@ -2,29 +2,38 @@
 
 import datetime
 
-DATE_STR_SUFFIX = "_datestr"
-DATE_SPAN_SUFFIX = "_daterange"
+DATE_STR_SUFFIX = "_datestr" #todo: obsolete soon
+DATE_SPAN_SUFFIX = "_datespan"
+DATE_UNIT_SUFFIX = "_dateunit"
 
 def parse_date(date_str):
     if date_str:
         parts = date_str.split('/')
     else:
         parts = []
-    kind = 'NYMD'[len(parts)]
+    unit = 'NYMD'[len(parts)]
     parts.reverse() #we want it ymd
     parts = [int(p or 1) for p in parts]
     parts += [1, 1, 1]
-    return kind, datetime.date(year=parts[0], month=parts[1], day=parts[2])
+    return unit, datetime.date(year=parts[0], month=parts[1], day=parts[2])
 
 def get_all_dates(rec):
-    result = ''
-    for fld_str in rec:
-        if fld_str.endswith(DATE_STR_SUFFIX):
-            fld = fld_str[:-len(DATE_STR_SUFFIX)]
-            fld_range = fld + DATE_SPAN_SUFFIX
+    date_formats = dict(
+        Y='%Y',
+        M='%m/%Y',
+        D='%d/%m/%Y'
+    )
+    result = []
+    for fld_name in rec:
+        if fld_name.endswith(DATE_UNIT_SUFFIX):
+            unit = rec[fld_name]
+            fld = fld_name[:-len(DATE_UNIT_SUFFIX)]
+            date = rec[fld]
+            date_str = "" if unit == 'N' else date.strftime(date_formats[unit])
+            fld_span = fld + DATE_SPAN_SUFFIX
             item = dict(
-                date=rec[fld_str],
-                span=rec[fld_range]
+                date=date_str,
+                span=rec[fld_span]
             )
             result.append(item)
     return result
