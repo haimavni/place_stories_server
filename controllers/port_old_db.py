@@ -673,7 +673,7 @@ def upgrade_to_date_ranges():
                         year, month, day = fld_str.split('-')
                         if year == '????':
                             formattd_date = ""
-                            span = 1
+                            span = 0
                             unit = 'N'
                         elif year[3] == '?':
                             formatted_date = year[:3] + '0'
@@ -681,20 +681,20 @@ def upgrade_to_date_ranges():
                             unit = 'Y'
                         elif month == '??':
                             formatted_date = year
-                            span = 1
+                            span = 0
                             unit = 'Y'
                         elif day == '??':
                             formatted_date = month + '/' + year
-                            span = 1
+                            span = 0
                             unit = 'M'
                         else:
                             formatted_date = day + '/' + month + '/' + year
-                            span = 1
+                            span = 0
                             unit = 'D'
                         data = dict()
                         data[fld.name + '_dateunit'] = unit
                         data[fld.name + '_datespan'] = span
                         rec.update_record(**data)
-            pass
+    return 'date ranges were upgraded'
     
     
