@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import datetime
+from gluon.storage import Storage
 
 DATE_STR_SUFFIX = "_datestr" #todo: obsolete soon
 DATE_SPAN_SUFFIX = "_datespan"
@@ -23,7 +24,7 @@ def get_all_dates(rec):
         M='%m/%Y',
         D='%d/%m/%Y'
     )
-    result = []
+    result = Storage()
     for fld_name in rec:
         if fld_name.endswith(DATE_UNIT_SUFFIX):
             unit = rec[fld_name]
@@ -31,11 +32,11 @@ def get_all_dates(rec):
             date = rec[fld]
             date_str = "" if unit == 'N' else date.strftime(date_formats[unit])
             fld_span = fld + DATE_SPAN_SUFFIX
-            item = dict(
+            item = Storage(
                 date=date_str,
                 span=rec[fld_span]
             )
-            result.append(item)
+            result[fld] = item
     return result
 
 def date_of_date_str(date_str):

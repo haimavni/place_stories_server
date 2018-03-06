@@ -4,7 +4,7 @@ from gluon.utils import web2py_uuid
 from my_cache import Cache
 import ws_messaging
 from http_utils import json_to_storage
-from date_utils import date_of_date_str, parse_date
+from date_utils import date_of_date_str, parse_date, get_all_dates
 import datetime
 import os
 from dal_utils import insert_or_update
@@ -441,6 +441,7 @@ def update_photo_caption(vars):
 def get_photo_info(vars):
     photo_id = int(vars.photo_id)
     rec = db(db.TblPhotos.id==photo_id).select().first()
+    all_dates = get_all_dates(rec)
     if rec.photographer_id:
         photographer_rec = db(db.TblPhotographers.id==rec.photographer_id).select().first()
     else:
@@ -449,7 +450,9 @@ def get_photo_info(vars):
         name=rec.Name,
         description=rec.Description,
         photographer=photographer_rec.name,
-        date=rec.photo_date_str
+        date=rec.photo_date_str, ##todo: obsolete
+        photo_date_str = all_dates.photo_date.date,
+        photo_date_span = all_dates.photo_date.span
     )
     return result
 
