@@ -66,6 +66,16 @@ def date_of_date_str(date_str):
     d = int(ds)
     return date_str, datetime.date(day=d, month=m, year=y)
 
+def update_record_dates(rec, dates_info):
+    data = dict()
+    for date_fld in dates_info:
+        date_str, date_span = dates_info[date_fld]
+        date_unit, date = parse_date(date_str)
+        data[date_fld] = date
+        data[date_fld + '_datespan'] = date_span
+        data[date_fld + '_dateunit'] = date_unit
+    rec.update_record(**data)
+
 def string_date_to_date(s):
     p = "שנות ה"
     day = 1

@@ -4,7 +4,7 @@ from gluon.utils import web2py_uuid
 from my_cache import Cache
 import ws_messaging
 from http_utils import json_to_storage
-from date_utils import date_of_date_str, parse_date, get_all_dates
+from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates
 import datetime
 import os
 from dal_utils import insert_or_update
@@ -422,12 +422,14 @@ def get_photo_detail(vars):
     story=sm.get_story(rec.story_id)
     if not story:
         story = sm.get_empty_story(used_for=STORY4PHOTO)
-        
+    all_dates = get_all_dates(rec)        
     return dict(photo_src=photos_folder() + rec.photo_path,
                 photo_name=rec.Name,
                 height=rec.height,
                 width=rec.width,
                 photo_story=story,
+                photo_date_str = all_dates.photo_date.date,
+                photo_date_span = all_dates.photo_date.span,
                 photo_id=rec.id)
 
 @serve_json
@@ -435,6 +437,18 @@ def update_photo_caption(vars):
     photo_id = int(vars.photo_id)
     caption = vars.caption
     db(db.TblPhotos.id==photo_id).update(Name=caption)
+    return dict()
+
+@serve_json
+def update_photo_date(vars):
+    photo_date_str = vars.photo_date_str
+    photo_date_span = vars.photo_date_span
+    photo_dates_info = dict(
+        photo_date = (vars.photo_date_str, int(vars.photo_date_span))
+    )
+    rec = db(db.TblPhotos.id==int(vars.photo_id)).select().first()
+    update_record_dates(rec, photo_dates_info)
+    #todo: save in db
     return dict()
 
 @serve_json
@@ -933,6 +947,14 @@ def apply_to_selected_photos(vars):
         photographer_id = plist[0].id
     else:
         photographer_id = None
+    photos_date_str = vars.photos_date_str
+    if photos_date_str:
+        dates_info = dict(
+            photo_date = (photos_date_str, vars.photos_date_span_size)
+        )
+    else:
+        dates_info = None
+    
     st = vars.selected_topics
     added = []
     deleted = []
@@ -951,10 +973,12 @@ def apply_to_selected_photos(vars):
                 db(q).delete()
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         keywords = "; ".join(curr_tags)
-        db(db.TblPhotos.id==pid).update(KeyWords=keywords)
+        rec = db(db.TblPhotos.id==pid).select().first()
+        rec.update_record(KeyWords=keywords)
         if photographer_id:
-            db(db.TblPhotos.id==pid).update(photographer_id=photographer_id)
-                
+            rec.update_record(photographer_id=photographer_id)
+        if dates_info:
+            update_record_dates(rec, dates_info)
     ws_messaging.send_message('PHOTO-TAGS-CHANGED', added=added, deleted=deleted)
     return dict()
 
