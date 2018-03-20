@@ -1005,7 +1005,7 @@ def save_group_members(vars):
 @serve_json
 def get_video_sample(vars):
     #temporary hard coded implementation
-    lst = ['FI9taVOMLh8', '-5F0x79j2K4', 'uwACSZ890a0', 'dfJIOa6eyfg', '1g_PlRE-YwI', 'cscYO3epaIY']
+    lst = ['Cdiq5As8vCw', '-5F0x79j2K4', 'uwACSZ890a0', 'dfJIOa6eyfg', '1g_PlRE-YwI', '4I7BtUDPfcA']
     return dict(video_list=lst)
     
 def save_story_members(story_id, member_ids):
