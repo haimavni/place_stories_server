@@ -28,7 +28,7 @@ def index():
     subdomain = ''.join(lst[idx:-2])
     app = domain
     if subdomain == 'dev':
-        pass #for now gbs is the dev ap
+        app += 'dev' #for now gbs is the dev ap
     elif subdomain == 'test':
         app += '__test'
     else:

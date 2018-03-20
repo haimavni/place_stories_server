@@ -181,3 +181,15 @@ This will:
 DROP database mydb on server2, completely and permanently destroying all data in mydb on server2
 Re-CREATE database mydb on server2 from a totally empty template
 Restore the copy of mydb on server into server2
+
+Another way
+
+systemctl stop web2py-scheduler.service
+systemctl stop nginx
+systemctl stop emperor.uwsgi.service
+sudo -u postgres createdb -O postgres -T gbs__www gbs__dev
+systemctl restart memcached
+systemctl start nginx
+systemctl start emperor.uwsgi.service
+systemctl start web2py-scheduler.service
+

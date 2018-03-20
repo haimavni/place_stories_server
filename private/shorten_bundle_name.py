@@ -1,17 +1,24 @@
 from shutil import move
 import os
+import random
+import string
 
 #shorted bundle name to work around a mysterious cache bug
+def random_string():
+    return ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(6))
 
 path = "/home/haim/deployment_folder/"
 lst = os.listdir(path + 'scripts')
+vprefix = random_string()
+aprefix = random_string()
+
 for fname in lst:
     if fname.startswith('app'):
         ab_name = fname
-        new_ab_name ='ab-' + ab_name.split('-')[-1]
+        new_ab_name = aprefix + 'ab-' + ab_name.split('-')[-1]
     elif fname.startswith('vendor'):
         vb_name = fname
-        new_vb_name ='vb-' + vb_name.split('-')[-1]
+        new_vb_name = vprefix + 'vb-' + vb_name.split('-')[-1]
     #to enable debugging:
     elif fname.startswith('vb'):
         new_vb_name = fname

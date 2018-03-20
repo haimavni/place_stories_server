@@ -30,7 +30,16 @@ def get_all_dates(rec):
             unit = rec[fld_name]
             fld = fld_name[:-len(DATE_UNIT_SUFFIX)]
             date = rec[fld]
-            date_str = "" if unit == 'N' else date.strftime(date_formats[unit])
+            date_str = ""
+            if unit != 'N':
+                if date.year < 1900: #strftime does not accept dates before 1900
+                    year = date.year
+                    date = datetime.date(year=1900, month=date.month, day=date.day)
+                else:
+                    year = 0
+                date_str = date.strftime(date_formats[unit])
+                if year:
+                    date_str = date_str.replace('1900', str(year))
             fld_span = fld + DATE_SPAN_SUFFIX
             item = Storage(
                 date=date_str,

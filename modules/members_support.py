@@ -1,6 +1,7 @@
 from injections import inject
 from gluon.storage import Storage
 from photos import photos_folder
+from date_utils import get_all_dates
 
 def get_member_rec(member_id, member_rec=None, prepend_path=False):
     db = inject('db')
@@ -14,7 +15,10 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
         return None
     if rec.deleted:
         return None
+    dates = get_all_dates(rec)
     rec = Storage(rec.as_dict())
+    for d in dates:
+        rec[d] = dates[d]
     rec.full_name = member_display_name(rec, full=True)
     rec.name = member_display_name(rec, full=False)
     if prepend_path :
