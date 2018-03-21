@@ -8,6 +8,7 @@ DATE_SPAN_SUFFIX = "_datespan"
 DATE_UNIT_SUFFIX = "_dateunit"
 
 def parse_date(date_str):
+    date_str = date_str.replace('.', '/').replace('-', '/')
     if date_str:
         parts = date_str.split('/')
     else:

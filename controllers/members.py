@@ -42,8 +42,6 @@ def new_member_rec(gender=None, first_name=""):
             visibility=VIS_NOT_READY,
             date_of_death=NO_DATE,
             date_of_birth=NO_DATE,
-            date_of_death_str="????-??-??",
-            date_of_birth_str="????-??-??",
             gender=gender),
         story_info = Storage(display_version='New Story', story_versions=[], story_text='', story_id=None),
         family_connections =  Storage(
@@ -340,29 +338,18 @@ def save_member_info(vars):
         del member_info.facePhotoURL #it is saved separately, not updated in client and can only destroy here
     if member_info:
         new_member = not member_info.id
-        #--------------handle dates - old version------------------
-        date_fields = []
-        for k in member_info:
-            if k.startswith("date_of_") and k.endswith('_str'):
-                date_fields.append(k)
-        for df in date_fields:
-            k = df[:-4]
-            member_info[df], member_info[k] = date_of_date_str(member_info[df])
-        #--------------handle dates - new version------------------
+        ##--------------handle dates - new version------------------
         tbl = db.TblMembers
         for fld in tbl:
             if fld.type=='date':
-                fld_str_name = fld.name + '_string'
-                fld_span_name = fld.name + '_span_size'
-                fld_scale_name = fld.name + '_scale'
-                if fld_str_name not in tbl or fld_span_name not in tbl:
+                fld_name = fld.name
+                if fld_name + '_dateunit' not in member_info:
                     continue
-                if fld_str_name in member_info:
-                    date_scale, date = parse_date(member_info[fld_str_name])
-                    member_info[fld.name] = date
-                    member_info[fld_scale_name] = date_scale
+                unit, date = parse_date(member_info[fld_name].date)
+                member_info[fld_name] = date
+                member_info[fld_name + '_dateunit'] = unit
                     
-        #--------------handle dates - end--------------------------
+        ##--------------handle dates - end--------------------------
         result = insert_or_update(db.TblMembers, **member_info)
         if isinstance(result, dict):
             return dict(errors=result['errors'])
@@ -429,7 +416,7 @@ def get_photo_detail(vars):
                 width=rec.width,
                 photo_story=story,
                 photo_date_str = all_dates.photo_date.date,
-                photo_date_span = all_dates.photo_date.span,
+                photo_date_datespan = all_dates.photo_date.span,
                 photo_id=rec.id)
 
 @serve_json
@@ -442,9 +429,8 @@ def update_photo_caption(vars):
 @serve_json
 def update_photo_date(vars):
     photo_date_str = vars.photo_date_str
-    photo_date_span = vars.photo_date_span
     photo_dates_info = dict(
-        photo_date = (vars.photo_date_str, int(vars.photo_date_span))
+        photo_date = (vars.photo_date_str, int(vars.photo_date_datespan))
     )
     rec = db(db.TblPhotos.id==int(vars.photo_id)).select().first()
     update_record_dates(rec, photo_dates_info)
@@ -464,11 +450,24 @@ def get_photo_info(vars):
         name=rec.Name,
         description=rec.Description,
         photographer=photographer_rec.name,
-        date=rec.photo_date_str, ##todo: obsolete
         photo_date_str = all_dates.photo_date.date,
-        photo_date_span = all_dates.photo_date.span
+        photo_date_datespan = all_dates.photo_date.span,
+        photo_date_dateunit = all_dates.photo_date.unit
     )
     return result
+
+@serve_json
+def save_photo_info(vars):
+    pi = vars.photo_info
+    ###pi.photographer_id = find_or_insert(pi.photographer)
+    unit, date = parse_date(pi.photo_date_str)
+    pi.photo_date = date
+    pi.photo_date_dateunit = unit
+    del pi.photographer
+    pi.Name = pi.name
+    del pi.name
+    db(db.TblPhotos.id==vars.photo_id).update(**pi)
+    return dict()
 
 def get_member_names():
     q = (db.TblMembers.deleted != True)
@@ -735,6 +734,12 @@ def get_constants(vars):
             VIS_NOT_READY=VIS_NOT_READY,
             VIS_VISIBLE=VIS_VISIBLE,
             VIS_HIGH=VIS_HIGH          
+        ),
+        death_cause=dict(
+            DC_DIED='died',
+            DC_FELL='fell',
+            DC_KILLED='killed',
+            DC_MURDERED='murdered'
         )
     )    
 
@@ -1005,7 +1010,7 @@ def save_group_members(vars):
 @serve_json
 def get_video_sample(vars):
     #temporary hard coded implementation
-    lst = ['Cdiq5As8vCw', '-5F0x79j2K4', 'uwACSZ890a0', 'dfJIOa6eyfg', '1g_PlRE-YwI', '4I7BtUDPfcA']
+    lst = ['-5F0x79j2K4', 'uwACSZ890a0', 'dfJIOa6eyfg', '1g_PlRE-YwI', '4I7BtUDPfcA', 'Cdiq5As8vCw']
     return dict(video_list=lst)
     
 def save_story_members(story_id, member_ids):

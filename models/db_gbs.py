@@ -179,21 +179,18 @@ db.define_table('TblMembers',
                 Field('date_of_alia', type='date', default=NO_DATE),
                 Field('date_of_alia_dateunit', type='string', default='Y'),
                 Field('date_of_alia_datespan', type='integer', default=1),
-                Field('date_of_alia_str', type='string'),  #DD/MM/YYYY, MM/YYYY, YYYY or YYY0- (for decade)
                 Field('DateOfBirth', type='string'),
                 Field('date_of_birth', type='date', default=NO_DATE), 
                 Field('date_of_birth_dateunit', type='string', default='Y'), 
                 Field('date_of_birth_datespan', type='integer', default=1), 
-                Field('date_of_birth_str', type='string'),
                 Field('date_of_death', type='date', default=NO_DATE),
                 Field('date_of_death_dateunit', type='string', default='Y'),
                 Field('date_of_death_datespan', type='integer', default=1),
-                Field('date_of_death_str', type='string'),
+                Field('cause_of_death', type='string'),
                 Field('DateOfMember', type='string'),
                 Field('date_of_member', type='date', default=NO_DATE),
                 Field('date_of_member_dateunit', type='string', default='Y'),
                 Field('date_of_member_datespan', type='integer', default=1),
-                Field('date_of_member_str', type='string'),
                 Field('Education', type='string'),
                 Field('FormerName', type='string'),
                 Field('gender', type='string'), #F, M and also FM and MF for transgenders...
@@ -251,7 +248,6 @@ db.define_table('TblPhotos',
                 Field('photo_date', type='date', default=NO_DATE),
                 Field('photo_date_dateunit', type='string', default='Y'), # D, M or Y for day, month, year
                 Field('photo_date_datespan', type='integer', default=1), # how many months or years in the range
-                Field('photo_date_str', type='string'), #obsolete soon
                 Field('PhotoRank', type='integer'),
                 Field('Photographer', type='string'), #obsolete
                 Field('photographer_id', db.TblPhotographers),
@@ -286,7 +282,8 @@ db.define_table('TblVideos',
                 Field('type', type='string'),
                 Field('src', type='string'),
                 Field('topic_id', type=db.TblTopics),
-                Field('contributor', type=db.auth_user)
+                Field('contributor', type=db.auth_user),
+                Field('upload_date', type='datetime')
                 )
 
 db.define_table('TblStatuses',
