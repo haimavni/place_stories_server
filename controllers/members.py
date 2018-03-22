@@ -735,11 +735,11 @@ def get_constants(vars):
             VIS_VISIBLE=VIS_VISIBLE,
             VIS_HIGH=VIS_HIGH          
         ),
-        death_cause=dict(
-            DC_DIED='died',
-            DC_FELL='fell',
-            DC_KILLED='killed',
-            DC_MURDERED='murdered'
+        cause_of_death=dict(
+            DC_DIED=0,
+            DC_FELL=1,
+            DC_KILLED=2,
+            DC_MURDERED=3
         )
     )    
 
