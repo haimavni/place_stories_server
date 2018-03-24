@@ -43,7 +43,7 @@ ls -l ~/deployment_folder/scripts >> ~/log/deploy_history.log
 git br -v >> ~/log/deploy_history.log
 
 cp ./index.html  ~/deployment_folder
-python ~/aurelia-gbs/server/tol_server/private/shorten_bundle_name.py
+###python ~/aurelia-gbs/server/tol_server/private/shorten_bundle_name.py
 cp ./favicon.ico  ~/deployment_folder
 ##cp -a ./locales  ~/deployment_folder
 cp -a ./froala-style ~/deployment_folder

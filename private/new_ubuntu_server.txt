@@ -187,6 +187,7 @@ Another way
 systemctl stop web2py-scheduler.service
 systemctl stop nginx
 systemctl stop emperor.uwsgi.service
+sudo -u postgres dropdb gbs__dev
 sudo -u postgres createdb -O postgres -T gbs__www gbs__dev
 systemctl restart memcached
 systemctl start nginx
