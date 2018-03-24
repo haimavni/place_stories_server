@@ -162,16 +162,8 @@ def get_random_member(vars):
     lst = sorted(lst, key=lambda rec: -rec.num_photos)
     idx = random.randint(0, len(lst) / 5)
     member_data=get_member_rec(lst[idx].member_id)
-    result = dict(face_photo_url=photos_folder('profile_photos') + member_data.facePhotoURL,
-                  name=member_data.full_name,
-                  first_name=member_data.first_name,
-                  year_of_birth=member_data.date_of_birth.year if member_data.date_of_birth and member_data.date_of_birth > datetime.date(year=1000, month=1, day=1) else None,           
-                  year_of_death=member_data.date_of_death.year if member_data.date_of_death and member_data.date_of_death > datetime.date(year=1000, month=1, day=1) else None,
-                  place_of_birth=member_data.PlaceOfBirth,
-                  gender=member_data.gender,
-                  id=member_data.id
-                  )
-    return dict(member_data=result)
+    member_data.face_photo_url = photos_folder('profile_photos') + member_data.facePhotoURL
+    return dict(member_data=member_data)
 
 def get_members_stats():
     q = (db.TblMembers.id == db.TblMemberPhotos.Member_id) & \
