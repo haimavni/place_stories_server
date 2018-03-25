@@ -2,6 +2,7 @@ import os
 import zlib
 from distutils import dir_util
 from shutil import copyfile
+import datetime
 
 os.chdir("/home/haim/aurelia-gbs/gbs")
 cwd = os.getcwd()
@@ -30,23 +31,19 @@ for k in dic:
     copyfile(source, target)
     
 s = str(datetime.datetime.now())[:16]
-vs = '''
-{{
-    "version":  "{}"
-}}
-'''.format(s)
-with open('~/deployment_folder/curr_version.json') as f:
-    f.write(vs)
+
+with open('/home/haim/deployment_folder/curr_version.json', 'w') as f:
+    f.write(s)
     
 env = '''
 export default {{
     debug: false,
     testing: false,
     baseURL: '',
-    version: {},
+    version: '{}',
     i18n_ver: '{:0x}'
 }};
-'''.format(combined_crc & 0xffffffff, s) 
+'''.format(s, combined_crc & 0xffffffff) 
 
 with open('aurelia_project/environments/tmp_env.ts', mode='w') as f:
     f.write(env)
