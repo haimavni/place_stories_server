@@ -159,5 +159,10 @@ def do_change_password(vars):
         raise User_Error('Wrong Password')
     return dict(good=True)
 
+def get_curr_version():
+    with open(base_app_dir + 'static/aurelia/version.json') as f:
+        s = f.read()
+    return s
+
 
 

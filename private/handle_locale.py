@@ -29,14 +29,24 @@ for k in dic:
     dir_util.mkpath(target_path)
     copyfile(source, target)
     
+s = str(datetime.datetime.now())[:16]
+vs = '''
+{{
+    "version":  "{}"
+}}
+'''.format(s)
+with open('~/deployment_folder/curr_version.json') as f:
+    f.write(vs)
+    
 env = '''
 export default {{
     debug: false,
     testing: false,
     baseURL: '',
+    version: {},
     i18n_ver: '{:0x}'
 }};
-'''.format(combined_crc & 0xffffffff) 
+'''.format(combined_crc & 0xffffffff, s) 
 
 with open('aurelia_project/environments/tmp_env.ts', mode='w') as f:
     f.write(env)
