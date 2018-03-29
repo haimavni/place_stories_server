@@ -2,8 +2,8 @@
 
 import re
 from bs4 import BeautifulSoup
-from guess_language import guessLanguage as guess
 from langs import extract_words, language_name
+from langdetect import detect, detect_langs
 from my_cache import Cache
 from injections import inject
 #from base64 import b64decode, b64encode
@@ -43,16 +43,10 @@ def get_reisha(html, size=100):
 
 def guess_language(html):
     s = remove_all_tags(html)
-    lang = guess(s)
-    pattern = r'[א-ת]+'
-    if lang != 'he' and lang != 'en':
-        if isinstance(s, unicode):
-            s = s.encode('utf8')
-        m = re.search(pattern, s)
-        if m:
-            lang = 'he'
-    if language_name(lang).endswith('?'):
-        lang = 'UNKNOWN'
+    try:
+        lang = detect(s)
+    except:
+        return 'UNKNOWN'
     return lang
 
 def tally_words(html, dic, story_id, story_name):

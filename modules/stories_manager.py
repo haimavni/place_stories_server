@@ -19,8 +19,21 @@ class Stories:
             author_id = auth.current_user()
         self.author_id = author_id
         self.language = language
+        
+    def get_story_rec(self, story_id):
+        db = inject('db')
+        rec = db(db.TblStories.id==story_id).select().first()
+        if not rec:
+            return None
+        if self.language:  
+            if rec.language != self.language:
+                rec1 = self.find_translation(story_id, language)
+                if rec1:
+                    rec = rec1
+                # else we have to read in the original language
+        return rec
 
-    def get_story(self, story_id, from_story_version=None, to_story_version=None):
+    def get_story(self, story_id, to_story_version=None, from_story_version=None):
         db = inject('db')
         rec = db(db.TblStories.id==story_id).select().first()
         if not rec:
@@ -87,10 +100,9 @@ class Stories:
             )
         return story_info
 
-    def add_story(self, story_info, story_id=None, language=None, owner_id=None):
+    def add_story(self, story_info, story_id=None, owner_id=None):
         story_text = story_info.story_text
-        if not language: #we just found it before we called = no need to recalculate
-            language = guess_language(story_text)
+        language = guess_language(story_text)
         name = story_info.name
         story_text = story_text.replace('~1', '&').replace('~2', ';').replace('\n', '').replace('>', '>\n')
         now = datetime.datetime.now()
@@ -158,9 +170,12 @@ class Stories:
         author_name = auth.user_name(self.author_id) #name of the mblbhd, not the source
         return Storage(story_id=story_id, last_update_date=now, updater_name=author_name, author=story_info.source)
 
-    def find_translation(self, story_id, language):
+    def find_translation(self, story_id, language=None):
         db = inject('db')
-        q = (db.TblStories.translated_from==story_id) & (db.TblStories.language==language)
+        if language:
+            q = (db.TblStories.translated_from==story_id) & (db.TblStories.language==language)
+        else:
+            q = db.TblStories.id==story_id
         return db(q).select().first()
     
     def find_story(self, used_for, topic):
@@ -181,6 +196,11 @@ class Stories:
     def set_used_for(self, story_id, used_for):
         db = inject('db')
         db(db.TblStories.id==story_id).update(used_for=used_for)
+        
+    def approve_story(self, story_id, language=None):
+        story_info = self.get_story(story_id)
+        rec = self.find_translation(story_id, language)
+        
         
             
         

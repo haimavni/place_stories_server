@@ -88,15 +88,15 @@ class MyAuth(Auth):
         if not good:
             db.rollback()
             raise User_Error('cant-send-mail')
-        notify_registration(user_info)
+        self.notify_registration(user_info)
         return user
     
     def notify_registration(self, user_info):
-        db, mail = inject('db', 'mail')
+        db, mail, ACCESS_MANAGER = inject('db', 'mail', 'ACCESS_MANAGER')
         ui = user_info
         user_name = ui.first_name + ' ' + ui.last_name
         email = ui.email
-        lst = db((db.auth_membership.group_id==ADMIN)&(db.auth_user.id==db.auth_membership.user_id)).select(db.auth_user.email)
+        lst = db((db.auth_membership.group_id==ACCESS_MANAGER)&(db.auth_user.id==db.auth_membership.user_id)&(db.auth_user.id>1)).select(db.auth_user.email)
         receivers = [r.email for r in lst]    
         message = ('', '''
         {uname} has just registered to <b>GB Stories</b>.

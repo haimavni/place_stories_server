@@ -165,5 +165,9 @@ def get_curr_version(vars):
         s = f.read()
     return dict(version=s)
 
+def test_collect_mail():
+    from collect_emails import collect_mail
+    collect_mail()
+
 
 

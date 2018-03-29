@@ -453,6 +453,7 @@ def save_photo_info(vars):
     pi = vars.photo_info
     ###pi.photographer_id = find_or_insert(pi.photographer)
     unit, date = parse_date(pi.photo_date_str)
+    del pi.photo_date_str
     pi.photo_date = date
     pi.photo_date_dateunit = unit
     del pi.photographer
