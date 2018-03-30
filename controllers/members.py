@@ -742,7 +742,7 @@ def get_used_languages(vars):
 
 @serve_json
 def get_term_list(vars):
-    lst = db(db.TblStories.used_for==STORY4TERM).select()
+    lst = db((db.TblStories.used_for==STORY4TERM) & (db.TblStories.deleted!=True)).select()
     result = [dict(story_text=rec.story,
                    name=rec.name, 
                    story_id=rec.id, 
