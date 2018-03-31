@@ -125,7 +125,7 @@ def get_user_id_of_sender(sender_email, sender_name):
     return auth.user_id_of_email(sender_email)
 
 def collect_mail():
-    comment = inject('comment')
+    comment, mail = inject('comment', 'mail')
     email_photos_collector = EmailCollector()
     results = []
     for msg in email_photos_collector.collect():
@@ -136,5 +136,24 @@ def collect_mail():
                 subject=msg.subject, image_names=msg.images.keys(), sender=msg.sender_email)
         if msg.images:
             result = save_uploaded_photo_collection(msg.images, user_id)
+            results.append(result)
             comment("upload result {result}", result=result)
+        emsg = ''
+        for fld in sorted(msg):
+            if fld == "images":
+                emsg += '{} images\n'.format(len(msg.images))
+            else:
+                s = "strange text"
+                m = msg[fld]
+                if isinstance(m, unicode):
+                    s = m
+                else:
+                    try:
+                        s = m.decode('utf8')
+                    except:
+                        pass
+                emsg += fld + ': ' + s + '\n'
+        mail.send(sender="admin@gbstories.org", to="haimavni@gmail.com", subject="incoming email to gbstories", message=emsg)
+            
+        
     return results

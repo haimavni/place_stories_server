@@ -31,6 +31,8 @@ def get_all_dates(rec):
             unit = rec[fld_name]
             fld = fld_name[:-len(DATE_UNIT_SUFFIX)]
             date = rec[fld]
+            if not date:
+                unit = "N"
             date_str = ""
             if unit != 'N':
                 if date.year < 1900: #strftime does not accept dates before 1900
