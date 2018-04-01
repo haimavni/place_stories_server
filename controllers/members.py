@@ -40,8 +40,16 @@ def new_member_rec(gender=None, first_name=""):
             former_first_name="",
             former_last_name="",
             visibility=VIS_NOT_READY,
-            date_of_death=NO_DATE,
-            date_of_birth=NO_DATE,
+            date_of_death_dateunit='N',
+            date_of_death=Storage(
+                date='',
+                span=0
+            ),
+            date_of_birth_dateunit='N',
+            date_of_birth=Storage(
+                date='',
+                span=0
+            ),
             gender=gender),
         story_info = Storage(display_version='New Story', story_versions=[], story_text='', story_id=None),
         family_connections =  Storage(

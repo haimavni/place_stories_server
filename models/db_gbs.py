@@ -1,6 +1,6 @@
 import datetime
-NO_DATE = datetime.datetime(day=1, month=1, year=1)
-FAR_FUTURE = datetime.datetime(day=1, month=1, year=3000)
+NO_DATE = datetime.date(day=1, month=1, year=1)
+FAR_FUTURE = datetime.date(day=1, month=1, year=3000)
 
 STORY4MEMBER = 1
 STORY4EVENT = 2
@@ -177,20 +177,20 @@ db.define_table('TblMembers',
                 Field('former_last_name', type='string'),
                 Field('DateOfAlia', type='string'),
                 Field('date_of_alia', type='date', default=NO_DATE),
-                Field('date_of_alia_dateunit', type='string', default='Y'),
-                Field('date_of_alia_datespan', type='integer', default=1),
+                Field('date_of_alia_dateunit', type='string', default='N'),
+                Field('date_of_alia_datespan', type='integer', default=0),
                 Field('DateOfBirth', type='string'),
                 Field('date_of_birth', type='date', default=NO_DATE), 
-                Field('date_of_birth_dateunit', type='string', default='Y'), 
-                Field('date_of_birth_datespan', type='integer', default=1), 
+                Field('date_of_birth_dateunit', type='string', default='N'), 
+                Field('date_of_birth_datespan', type='integer', default=0), 
                 Field('date_of_death', type='date', default=NO_DATE),
-                Field('date_of_death_dateunit', type='string', default='Y'),
-                Field('date_of_death_datespan', type='integer', default=1),
+                Field('date_of_death_dateunit', type='string', default='N'),
+                Field('date_of_death_datespan', type='integer', default=0),
                 Field('cause_of_death', type='integer', default=0),
                 Field('DateOfMember', type='string'),
                 Field('date_of_member', type='date', default=NO_DATE),
-                Field('date_of_member_dateunit', type='string', default='Y'),
-                Field('date_of_member_datespan', type='integer', default=1),
+                Field('date_of_member_dateunit', type='string', default='N'),
+                Field('date_of_member_datespan', type='integer', default=0),
                 Field('Education', type='string'),
                 Field('FormerName', type='string'),
                 Field('gender', type='string'), #F, M and also FM and MF for transgenders...
