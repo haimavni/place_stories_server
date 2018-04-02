@@ -124,7 +124,7 @@ def schedule_collect_mail():
         stop_time=now + datetime.timedelta(days=1461),
         repeats=0,
         period=3 * 60,   # every 3 minutes
-        timeout = 5 * 60, # will time out if running for a 5 minutes
+        timeout = 5 * 60, # will time out if running for 5 minutes
     )
 
 scheduler = MyScheduler(db, __tasks)

@@ -132,7 +132,7 @@ def collect_mail():
         user_id = get_user_id_of_sender(msg.sender_email, msg.sender_name)
         user_id = user_id or 1 #todo: if we decide not to create new user
         text = msg.html_content or msg.plain_content
-        comment('New email: subject: {subject}, emages: {image_names} sent by {sender}', 
+        comment('New email: subject: {subject}, images: {image_names} sent by {sender}', 
                 subject=msg.subject, image_names=msg.images.keys(), sender=msg.sender_email)
         if msg.images:
             result = save_uploaded_photo_collection(msg.images, user_id)
@@ -153,7 +153,11 @@ def collect_mail():
                     except:
                         pass
                 emsg += fld + ': ' + s + '\n'
-        mail.send(sender="admin@gbstories.org", to="haimavni@gmail.com", subject="incoming email to gbstories", message=emsg)
+        result = mail.send(sender="admin@gbstories.org", to="haimavni@gmail.com", subject="incoming email to gbstories", message=emsg)
+        if result:
+            comment("mail was forwarded")
+        else:
+            comment("forwarding mail failed: {}", mail.error)
             
         
     return results
