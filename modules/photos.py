@@ -9,6 +9,7 @@ from cStringIO import StringIO
 from date_utils import datetime_from_str
 from gluon.storage import Storage
 import random
+import pwd
 
 MAX_WIDTH = 1200
 MAX_HEIGHT = 800
@@ -96,6 +97,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
             path = local_photos_folder("squares") + sub_folder
             dir_util.mkpath(path)
             square_img.save(path + file_name)
+            fix_owner(path + file_name)
             got_square = True
         else:
             got_square = False
@@ -105,6 +107,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
             path = local_photos_folder("oversize") + sub_folder
             dir_util.mkpath(path)
             img.save(path + file_name)
+            fix_owner(path + file_name)
             width, height = resized(width, height)
             img = img.resize((width, height), Image.LANCZOS)
         path = local_photos_folder() + sub_folder
@@ -115,6 +118,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
         else:
             photo_date = None
         img.save(path + file_name)
+        fix_owner(path + file_name)
     except Exception, e:
         log_exception("saving photo {} failed".format(original_file_name))
         return 'failed'
@@ -304,5 +308,12 @@ def add_photos_from_drive(sub_folder):
                 continue
             #delete the file. it has been saved using crc as name and was possibly resized
             os.remove(path)
-
+    
+def fix_owner(file_name):
+    request = inject('request')
+    host = request.env.http_host or "" 
+    if '8000' in host: #development
+        return
+    uid, gid = pwd.getpwnam('www-data')[2:4]
+    os.chown(file_name, uid, gid)
 
