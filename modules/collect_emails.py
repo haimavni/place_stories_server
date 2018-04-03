@@ -125,9 +125,12 @@ def get_user_id_of_sender(sender_email, sender_name):
     return auth.user_id_of_email(sender_email)
 
 def collect_mail():
-    comment, mail = inject('comment', 'mail')
+    db, comment, mail = inject('db', 'comment', 'mail')
     email_photos_collector = EmailCollector()
     results = []
+    lst = db((db.auth_membership.group_id==MAIL_WATCHER)&(db.auth_user.id==db.auth_membership.user_id)&(db.auth_user.id>1)).select(db.auth_user.email)
+    receivers = [r.email for r in lst]    
+    
     for msg in email_photos_collector.collect():
         user_id = get_user_id_of_sender(msg.sender_email, msg.sender_name)
         user_id = user_id or 1 #todo: if we decide not to create new user
@@ -153,7 +156,7 @@ def collect_mail():
                     except:
                         pass
                 emsg += fld + ': ' + s + '\n'
-        result = mail.send(sender="admin@gbstories.org", to="haimavni@gmail.com", subject="incoming email to gbstories", message=emsg)
+        result = mail.send(sender="admin@gbstories.org", to=receivers, subject="incoming email to gbstories", message=emsg)
         if result:
             comment("mail was forwarded")
         else:

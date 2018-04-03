@@ -28,8 +28,12 @@ def create_parent(vars):
     child_name = vars.child_name
     what = 'Pa ' if gender == 'M' else 'Ma '
     rec = new_member_rec(gender=gender, first_name=what + child_name)
-    parent_id = db.TblMembers.insert(**rec.member_info)
     rec.member_info.id = parent_id
+    rec.member_info.updater_id = auth.current_user()
+    rec.member_info.update_time = datetime.datetime.now()
+    rec.member_info.approved = auth.has_membership(DATA_AUDITOR)
+    parent_id = db.TblMembers.insert(**rec.member_info)
+    
     return dict(member_id=parent_id, member=rec)
 
 def new_member_rec(gender=None, first_name=""):
@@ -350,6 +354,9 @@ def save_member_info(vars):
                 member_info[fld_name + '_dateunit'] = unit
                     
         ##--------------handle dates - end--------------------------
+        member_info.update_time = datetime.datetime.now()
+        member_info.updater_id = vars.user_id
+        member_info.approved = auth.has_membership(DATA_AUDITOR, user_id=vars.user_id)
         result = insert_or_update(db.TblMembers, **member_info)
         if isinstance(result, dict):
             return dict(errors=result['errors'])
@@ -484,6 +491,7 @@ def get_member_names():
                    gender=rec.gender,
                    birth_date=rec.date_of_birth,
                    visibility=rec.visibility,
+                   approved=rec.approved,
                    has_profile_photo=bool(rec.facePhotoURL), #used in client!
                    rnd=random.randint(0, 1000000),
                    facePhotoURL=photos_folder('profile_photos') + (rec.facePhotoURL or "dummy_face.png")) for rec in lst]
@@ -1094,6 +1102,15 @@ def clean_html_format(vars):
     html = vars.html
     html = clean_html(html)
     return dict(html=html)
+
+@serve_json
+def count_hit(vars):
+    rec = db((db.TblPageHits.what==vars.what)&(db.TblPageHits.item_id==vars.item_id)).select().first()
+    if rec:
+        rec.update_record(count=rec.count+1)
+    else:
+        db.TblPageHits.insert(what=vars.what, item_id=vars.item_id, count=1)
+    return dict()
     
 def get_story_text(story_id):
     rec = db(db.TblStories.id==story_id).select().first()

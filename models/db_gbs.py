@@ -216,7 +216,10 @@ db.define_table('TblMembers',
                 Field('StatusID', type='integer'),
                 Field('Status_id', type='integer'),
                 Field('facePhotoURL', type='string'),
-                Field('deleted', type='boolean', default=False)
+                Field('deleted', type='boolean', default=False),
+                Field('update_time', type='datetime'),
+                Field('updater_id', type=db.auth_user),
+                Field('approved', type='boolean')
 )
 
 db.define_table('TblObjects',
@@ -327,16 +330,11 @@ db.define_table('TblChats',
                 Field('message', type='text')
 )
 
-db.define_table('TblUserObjectGroups',
-                Field('user_id', type=db.auth_user),
-                Field('what', type='string'), #Members, Photos, Stories
-                Field('name', type='string')
-)
-
-db.define_table('TblUserObjectGroupItems',
-                Field('group_id', db.TblUserObjectGroups),
-                Field('item_id', type='integer')
-)
+db.define_table('TblPageHits',
+                Field('what', type='string'),
+                Field('item_id', type='integer'),
+                Field('count', type='integer', default=0)
+                )
 
 def write_indexing_sql_scripts():
     '''Creates a set of indexes if they do not exist.

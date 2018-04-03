@@ -59,6 +59,9 @@ function($scope, $rootScope, $timeout, $log, ngDialog, callServerService, messag
             case 'ADVANCED':
                 cls = 'fa-certificate';
                 break;
+            case 'MAIL_WATCHER':
+                cls = 'fa-envelope';
+                break;
         }
         if (r.active)
         {

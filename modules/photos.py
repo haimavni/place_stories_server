@@ -97,6 +97,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
             path = local_photos_folder("squares") + sub_folder
             dir_util.mkpath(path)
             square_img.save(path + file_name)
+            fix_owner(path)
             fix_owner(path + file_name)
             got_square = True
         else:
@@ -107,6 +108,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
             path = local_photos_folder("oversize") + sub_folder
             dir_util.mkpath(path)
             img.save(path + file_name)
+            fix_owner(path)
             fix_owner(path + file_name)
             width, height = resized(width, height)
             img = img.resize((width, height), Image.LANCZOS)
@@ -118,6 +120,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
         else:
             photo_date = None
         img.save(path + file_name)
+        fix_owner(path)
         fix_owner(path + file_name)
     except Exception, e:
         log_exception("saving photo {} failed".format(original_file_name))

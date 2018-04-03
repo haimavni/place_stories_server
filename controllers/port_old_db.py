@@ -696,5 +696,23 @@ def upgrade_to_date_ranges():
                         data[fld.name + '_datespan'] = span
                         rec.update_record(**data)
     return 'date ranges were upgraded'
+
+def port_hit_counts():
+    db.TblPageHits.insert(what='APP', item_id=0, count=0)
+    for member in db(db.TblMembers.deleted!=True).select():
+        db.TblPageHits.insert(what='MEMBER', item_id=member.id, count=member.PageHits)
     
+    for event in db(db.TblEvents).select():
+        db.TblPageHits.insert(what='EVENT', item_id=event.id, count=event.PageHits)
+            
+    for term in db(db.TblTerms).select():
+        db.TblPageHits.insert(what='TERM', item_id=term.id, count=term.PageHits)
     
+    for photo in db(db.TblPhotos).select():
+        db.TblPageHits.insert(what='PHOTO', item_id=photo.id, count=photo.PageHits)
+        
+    return "Hit counts were ported"
+
+def approve_all_members():
+    for member in db(db.TblMembers.deleted!=True).select():
+        member.update_record(approved=True)

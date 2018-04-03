@@ -76,8 +76,7 @@ def read_privileges(vars):
     privileges = dict()
     for const_name in membership_consts:
         const_id = auth.id_group(const_name)
-        if auth.has_membership(const_id):
-            privileges[const_name] = True
+        privileges[const_name] = auth.has_membership(const_id)
     result = dict(
         privileges = privileges,
         user_id=user_id,

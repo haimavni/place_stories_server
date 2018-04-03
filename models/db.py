@@ -99,7 +99,8 @@ auth.settings.reset_password_requires_verification = True
 ## after defining tables, uncomment below to enable auditing
 # auth.enable_record_versioning(db)
 
-membership_consts = ['ADMIN', 'DEVELOPER', 'EDITOR', 'COMMENTATOR', 'PHOTO_UPLOADER', 'ACCESS_MANAGER', 'CHATTER', 'CHAT_MODERATOR', 'TEXT_AUDITOR', 'DATA_AUDITOR', 'HELP_AUTHOR', 'ADVANCED']
+membership_consts = ['ADMIN', 'DEVELOPER', 'EDITOR', 'COMMENTATOR', 'PHOTO_UPLOADER', 'ACCESS_MANAGER', 'CHATTER', 
+                     'CHAT_MODERATOR', 'TEXT_AUDITOR', 'DATA_AUDITOR', 'HELP_AUTHOR', 'ADVANCED', 'MAIL_WATCHER']
 
 def __calc_membership_consts():
 
