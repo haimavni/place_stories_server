@@ -1105,11 +1105,13 @@ def clean_html_format(vars):
 
 @serve_json
 def count_hit(vars):
-    rec = db((db.TblPageHits.what==vars.what)&(db.TblPageHits.item_id==vars.item_id)).select().first()
+    what = vars.what.upper()
+    item_id = int(vars.item_id)
+    rec = db((db.TblPageHits.what==what)&(db.TblPageHits.item_id==item_id)).select().first()
     if rec:
         rec.update_record(count=rec.count+1)
     else:
-        db.TblPageHits.insert(what=vars.what, item_id=vars.item_id, count=1)
+        db.TblPageHits.insert(what=what, item_id=item_id, count=1)
     return dict()
     
 def get_story_text(story_id):

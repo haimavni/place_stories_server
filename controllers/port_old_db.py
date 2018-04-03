@@ -700,19 +700,24 @@ def upgrade_to_date_ranges():
 def port_hit_counts():
     db.TblPageHits.insert(what='APP', item_id=0, count=0)
     for member in db(db.TblMembers.deleted!=True).select():
-        db.TblPageHits.insert(what='MEMBER', item_id=member.id, count=member.PageHits)
+        if member.PageHits:
+            db.TblPageHits.insert(what='MEMBER', item_id=member.id, count=member.PageHits)
     
     for event in db(db.TblEvents).select():
-        db.TblPageHits.insert(what='EVENT', item_id=event.id, count=event.PageHits)
+        if event.PageHits:
+            db.TblPageHits.insert(what='EVENT', item_id=event.id, count=event.PageHits)
             
     for term in db(db.TblTerms).select():
-        db.TblPageHits.insert(what='TERM', item_id=term.id, count=term.PageHits)
+        if term.PageHits:
+            db.TblPageHits.insert(what='TERM', item_id=term.id, count=term.PageHits)
     
     for photo in db(db.TblPhotos).select():
-        db.TblPageHits.insert(what='PHOTO', item_id=photo.id, count=photo.PageHits)
+        if photo.PageHits:
+            db.TblPageHits.insert(what='PHOTO', item_id=photo.id, count=photo.PageHits)
         
     return "Hit counts were ported"
 
 def approve_all_members():
     for member in db(db.TblMembers.deleted!=True).select():
         member.update_record(approved=True)
+    return "All members are now approved"
