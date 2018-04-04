@@ -143,6 +143,8 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
         random_photo_key=random.randint(1, 101)
     )
     db.commit()
+    n = db(db.TblPhotos).count()
+    comment("number of photos in the db: ", n)
     return photo_id
 
 def get_image_info(image_path):
@@ -316,10 +318,12 @@ def add_photos_from_drive(sub_folder):
             os.remove(path)
     
 def fix_owner(file_name):
-    request = inject('request')
+    request, comment = inject('request', 'comment')
+    comment("fixing {}", file_name)
     host = request.env.http_host or "" 
     if '8000' in host: #development
         return
     uid, gid = pwd.getpwnam('www-data')[2:4]
     os.chown(file_name, uid, gid)
+    comment("{} was fixed", file_name)
 
