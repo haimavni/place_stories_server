@@ -99,6 +99,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
             square_img.save(path + file_name)
             fix_owner(path)
             fix_owner(path + file_name)
+            comment("square file {} was saved", path+file_name)
             got_square = True
         else:
             got_square = False
@@ -122,6 +123,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
         img.save(path + file_name)
         fix_owner(path)
         fix_owner(path + file_name)
+        comment("file {} was saved", path+file_name)
     except Exception, e:
         log_exception("saving photo {} failed".format(original_file_name))
         return 'failed'
