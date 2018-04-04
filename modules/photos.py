@@ -142,6 +142,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
         photo_missing=False,
         random_photo_key=random.randint(1, 101)
     )
+    db.commit()
     return photo_id
 
 def get_image_info(image_path):
