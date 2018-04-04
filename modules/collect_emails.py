@@ -125,7 +125,7 @@ def get_user_id_of_sender(sender_email, sender_name):
     return auth.user_id_of_email(sender_email)
 
 def collect_mail():
-    db, comment, mail = inject('db', 'comment', 'mail')
+    db, comment, mail, MAIL_WATCHER = inject('db', 'comment', 'mail', 'MAIL_WATCHER')
     email_photos_collector = EmailCollector()
     results = []
     lst = db((db.auth_membership.group_id==MAIL_WATCHER)&(db.auth_user.id==db.auth_membership.user_id)&(db.auth_user.id>1)).select(db.auth_user.email)
