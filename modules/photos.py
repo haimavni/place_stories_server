@@ -63,7 +63,7 @@ def save_uploaded_photo_collection(collection, user_id):
                    photo_ids=photo_ids)
         
 def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
-    auth, comment, log_exception, db = inject('auth', 'comment', 'log_exception', 'db')
+    auth, log_exception, db = inject('auth', 'log_exception', 'db')
     user_id = user_id or auth.current_user()
     crc = zlib.crc32(blob)
     cnt = db(db.TblPhotos.crc==crc).count()
@@ -71,7 +71,6 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
         return 'duplicate'
     original_file_name, ext = os.path.splitext(file_name)
     file_name = '{crc:x}{ext}'.format(crc=crc & 0xffffffff, ext=ext)
-    comment('start saving {}', original_file_name)
     today = datetime.date.today()
     month = str(today)[:-3]
     if not sub_folder:
@@ -99,7 +98,6 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
             square_img.save(path + file_name)
             fix_owner(path)
             fix_owner(path + file_name)
-            comment("square file {} was saved", path+file_name)
             got_square = True
         else:
             got_square = False
@@ -123,7 +121,6 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
         img.save(path + file_name)
         fix_owner(path)
         fix_owner(path + file_name)
-        comment("file {} was saved", path+file_name)
     except Exception, e:
         log_exception("saving photo {} failed".format(original_file_name))
         return 'failed'
@@ -144,7 +141,6 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
     )
     db.commit()
     n = db(db.TblPhotos).count()
-    comment("number of photos in the db: ", n)
     return photo_id
 
 def get_image_info(image_path):
@@ -173,15 +169,13 @@ def fit_size(rec):
     return True
 
 def fit_all_sizes():
-    db, request, comment = inject('db', 'request', 'comment')
-    comment('started fitting size for chunk of photos')
+    db, request = inject('db', 'request')
     q = (db.TblPhotos.width > MAX_WIDTH) | (db.TblPhotos.height > MAX_HEIGHT)
     q &= (db.TblPhotos.photo_missing != True)
     chunk = 100
     num_failed = 0
     while True:
         n = db(q).count()
-        comment('started fitting size for chunk of photos. {} more to go.'.format(n))
         if db(q).count() == 0:
             break
         lst = db(q).select(limitby=(0, chunk))
@@ -318,12 +312,10 @@ def add_photos_from_drive(sub_folder):
             os.remove(path)
     
 def fix_owner(file_name):
-    request, comment = inject('request', 'comment')
-    comment("fixing {}", file_name)
+    request = inject('request')
     host = request.env.http_host or "" 
     if '8000' in host: #development
         return
     uid, gid = pwd.getpwnam('www-data')[2:4]
     os.chown(file_name, uid, gid)
-    comment("{} was fixed", file_name)
 

@@ -64,7 +64,7 @@ put -R *
 ssh gbstories.org rm -R -f /home/www-data/tol_server_${BRANCH}/static/aurelia_prev/*
 sftp -b ../server/tol_server/private/deploy.batch gbstories.org
 
-ssh gbstories.org bash /home/www-data/tol_server_${BRANCH}/private/update_${BRANCH}.bash
+ssh root@gbstories.org bash /home/www-data/tol_server_${BRANCH}/private/update_${BRANCH}.bash
 rm ../server/tol_server/private/deploy.batch
 
 popd
