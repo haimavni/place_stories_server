@@ -22,8 +22,8 @@ def parse_date(date_str):
 def get_all_dates(rec):
     date_formats = dict(
         Y='%Y',
-        M='%m/%Y',
-        D='%d/%m/%Y'
+        M='%m.%Y',
+        D='%d.%m.%Y'
     )
     result = Storage()
     for fld_name in rec:

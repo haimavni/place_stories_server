@@ -355,7 +355,7 @@ def save_member_info(vars):
                     
         ##--------------handle dates - end--------------------------
         member_info.update_time = datetime.datetime.now()
-        member_info.updater_id = vars.user_id
+        member_info.updater_id = vars.user_id or auth.current_user() or 2
         member_info.approved = auth.has_membership(DATA_AUDITOR, user_id=vars.user_id)
         result = insert_or_update(db.TblMembers, **member_info)
         if isinstance(result, dict):
