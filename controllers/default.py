@@ -164,6 +164,24 @@ def get_curr_version(vars):
         s = f.read()
     return dict(version=s)
 
+@serve_json
+def get_interested_contact(vars):
+    name = vars.contact_name
+    message = '''
+    <p>
+    {name} mail: {email} mobile: {mobile} contacted.
+    </p>
+    <p>
+    Message is
+    </p>
+    <p>
+    {message}
+    </p>
+    '''.format(name=vars.contact_name, email=vars.contact_email, mobile=vars.contac_mobile, message=vars.message)
+    result = mail.send(sender="admin@gbstories.org", to="haimavni@gmail.com", subject = "New Tol.Life prospect", message=message)
+    error = "" if result else mail.error
+    return dict(result=result, error=error)
+
 def test_collect_mail():
     from collect_emails import collect_mail
     collect_mail()
