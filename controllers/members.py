@@ -277,6 +277,7 @@ def get_story_detail(vars):
     story=sm.get_story(story_id)
     member_fields = [db.TblMembers.id, db.TblMembers.first_name, db.TblMembers.last_name, db.TblMembers.facePhotoURL]
     members = []
+    candidates = [] #members found in the attached photos
     photos = []
     if story.used_for == STORY4EVENT:
         event = db(db.TblEvents.story_id==story_id).select().first()
@@ -296,17 +297,18 @@ def get_story_detail(vars):
             added_members_from_photos = photo_member_set - member_set
             added_members_lst = [mid for mid in added_members_from_photos]
             added_members = db(db.TblMembers.id.belongs(added_members_lst)).select(*member_fields)
-            added_members = [m for m in added_members]
-            members += added_members
+            candidates = [m.as_dict() for m in added_members]
             members = [m.as_dict() for m in members]
-            for m in members:
-                m['full_name'] = m['first_name'] + ' ' + m['last_name']
-                if not m['facePhotoURL']:
-                    m['facePhotoURL'] = "dummy_face.png"
-                m['facePhotoURL'] = photos_folder("profile_photos") + m['facePhotoURL']
+            lst = [members, candidates]
+            for arr in lst:
+                for m in arr:
+                    m['full_name'] = m['first_name'] + ' ' + m['last_name']
+                    if not m['facePhotoURL']:
+                        m['facePhotoURL'] = "dummy_face.png"
+                    m['facePhotoURL'] = photos_folder("profile_photos") + m['facePhotoURL']
     
         #photos = [dict(photo_id=p.id, photo_path=photos_folder()+p.photo_path) for p in photos]
-    return dict(story=story, members=members, photos=photos)
+    return dict(story=story, members=members, candidates=candidates, photos=photos)
 
 def photo_member_ids(photo_id):
     qmp = (db.TblMemberPhotos.Photo_id==photo_id)
@@ -636,6 +638,11 @@ def make_photos_query(vars):
         q &= (db.TblPhotos.photo_date != NO_DATE)
     elif opt == 'undated':
         q &= (db.TblPhotos.photo_date == NO_DATE)
+    if vars.selected_member_id:
+        member_id = vars.selected_member_id
+        q1 = (db.TblMemberPhotos.Member_id==member_id) & \
+            (db.TblPhotos.id==db.TblMemberPhotos.Photo_id)
+        q &= q1
     return q
 
 @serve_json
@@ -656,6 +663,8 @@ def get_photo_list(vars):
             ##q &= (db.TblPhotos.random_photo_key <= frac)
             q &= (db.TblPhotos.random_photo_key.belongs(sample)) #we don't want to bore our uses so there are several collections
         lst = db(q).select() ###, db.TblPhotographers.id) ##, db.TblPhotographers.id)
+        if lst and 'TblMemberPhotos' in lst[0]:
+            lst = [rec.TblPhotos for rec in lst]
     if len(lst) > MAX_PHOTOS_COUNT:
         lst1 = random.sample(lst, MAX_PHOTOS_COUNT)
         lst = lst1
@@ -1034,6 +1043,14 @@ def save_story_members(story_id, member_ids):
         if m not in old_members:
             db.TblEventMembers.insert(Member_id=m, Event_id=event.id)
     
+    return dict()
+
+@serve_json
+def add_story_member(vars):
+    member_id = vars.candidate_id
+    story_id = vars.story_id
+    event = db(db.TblEvents.story_id==story_id).select().first()
+    db.TblEventMembers.insert(Member_id=member_id, Event_id=event.id)
     return dict()
 
 @serve_json

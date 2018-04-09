@@ -169,17 +169,21 @@ def get_interested_contact(vars):
     name = vars.contact_name
     message = '''
     <html>
+    <div direction="{rtltr}">
     <p>
-    {name} mail: {email} mobile: {mobile} contacted.
+    {name} contacted.<br/>
+    Mail: {email}<br/>
+    mobile: {mobile} 
     </p>
     <p>
-    Message is
+    Message is:
     </p>
     <p>
     {message}
     </p>
+    </div>
     </html>
-    '''.format(name=vars.contact_name, email=vars.contact_email, mobile=vars.contact_mobile, message=vars.contact_message)
+    '''.format(rtltr=vars.rtltr, name=vars.contact_name, email=vars.contact_email, mobile=vars.contact_mobile, message=vars.contact_message)
     result = mail.send(sender="admin@gbstories.org", to="haimavni@gmail.com", subject = "New Tol.Life prospect", message=('', message))
     error = "" if result else mail.error
     return dict(result=result, error=error)
