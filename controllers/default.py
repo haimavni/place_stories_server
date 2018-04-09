@@ -168,6 +168,7 @@ def get_curr_version(vars):
 def get_interested_contact(vars):
     name = vars.contact_name
     message = '''
+    <html>
     <p>
     {name} mail: {email} mobile: {mobile} contacted.
     </p>
@@ -177,8 +178,9 @@ def get_interested_contact(vars):
     <p>
     {message}
     </p>
-    '''.format(name=vars.contact_name, email=vars.contact_email, mobile=vars.contac_mobile, message=vars.message)
-    result = mail.send(sender="admin@gbstories.org", to="haimavni@gmail.com", subject = "New Tol.Life prospect", message=message)
+    </html>
+    '''.format(name=vars.contact_name, email=vars.contact_email, mobile=vars.contact_mobile, message=vars.contact_message)
+    result = mail.send(sender="admin@gbstories.org", to="haimavni@gmail.com", subject = "New Tol.Life prospect", message=('', message))
     error = "" if result else mail.error
     return dict(result=result, error=error)
 
