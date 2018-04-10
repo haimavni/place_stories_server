@@ -4,7 +4,7 @@ from photos import photos_folder
 from date_utils import get_all_dates
 
 def get_member_rec(member_id, member_rec=None, prepend_path=False):
-    db = inject('db')
+    db, auth = inject('db', 'auth')
     if member_rec:
         rec = member_rec #used when initially all members are loaded into the cache
     elif not member_id:
@@ -15,6 +15,8 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
         return None
     if rec.deleted:
         return None
+    if rec.updater_id:
+        rec.updater_name = auth.user_name(rec.updater_id)
     dates = get_all_dates(rec)
     rec = Storage(rec.as_dict())
     for d in dates:
