@@ -192,5 +192,11 @@ def test_collect_mail():
     from collect_emails import collect_mail
     collect_mail()
 
-
+@serve_json
+def get_hit_statistics(vars):
+    result = dict()
+    for what in ['APP', 'MEMBER', 'EVENT', 'PHOTO', 'TERM']:
+        lst = db(db.TblPageHits.what==what).select(limitby=(0,100), orderby=~db.TblPageHits.count)
+        result[what] = lst
+    return result
 
