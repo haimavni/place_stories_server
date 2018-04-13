@@ -1126,9 +1126,9 @@ def count_hit(vars):
     item_id = int(vars.item_id)
     rec = db((db.TblPageHits.what==what)&(db.TblPageHits.item_id==item_id)).select().first()
     if rec:
-        rec.update_record(count=rec.count+1)
+        rec.update_record(count=rec.count+1, new_count=(rec.new_count or 0) + 1)
     else:
-        db.TblPageHits.insert(what=what, item_id=item_id, count=1)
+        db.TblPageHits.insert(what=what, item_id=item_id, count=1, new_count=1)
     return dict()
     
 def get_story_text(story_id):

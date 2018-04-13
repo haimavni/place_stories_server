@@ -194,9 +194,19 @@ def test_collect_mail():
 
 @serve_json
 def get_hit_statistics(vars):
+    total_count = db(db.TblPageHits.what=='APP').select().first().count
+    tables = dict(
+        MEMBER=db.TblMembers,
+        EVENT=db.TblEvents,
+        PHOTO=db.TblPhotos,
+        TERM=db.TblTerms
+    )
     result = dict()
-    for what in ['APP', 'MEMBER', 'EVENT', 'PHOTO', 'TERM']:
-        lst = db(db.TblPageHits.what==what).select(limitby=(0,100), orderby=~db.TblPageHits.count)
+    for what in tables:
+        tbl = tables[what]
+        lst = db((db.TblPageHits.what==what)&(db.TblPageHits.item_id==tbl.id)).select(db.TblPageHits.count, db.TblPageHits.new_count, tbl.Name, limitby=(0,100), orderby=~db.TblPageHits.count)
+        k = str(tbl)
+        lst = [dict(count=r.TblPageHits.count, new_ount=r.TblPageHits.new_count or 0, name=r[k].Name) for r in lst]
         result[what] = lst
-    return result
+    return dict(total_count=total_count, itemized_counts=result)
 
