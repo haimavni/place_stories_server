@@ -46,7 +46,6 @@ cp ./index.html  ~/deployment_folder
 ###python ~/aurelia-gbs/server/tol_server/private/shorten_bundle_name.py
 cp ./favicon.ico  ~/deployment_folder
 ##cp -a ./locales  ~/deployment_folder
-cp -a ./froala-style ~/deployment_folder
 cp -a ./images ~/deployment_folder
 cp index-orig.html index.html
 rm index-orig.html
