@@ -549,8 +549,11 @@ def save_face(vars):
         face_photo_url = save_profile_photo(face)
     else:
         face_photo_url = None
-    q = (db.TblMemberPhotos.Photo_id==face.photo_id) & \
-        (db.TblMemberPhotos.Member_id==face.member_id)
+    if vars.old_member_id:
+        q = (db.TblMemberPhotos.Photo_id==face.photo_id) & \
+            (db.TblMemberPhotos.Member_id==vars.old_member_id)
+    else:
+        q = None
     data = dict(
         Photo_id=face.photo_id,
         Member_id=face.member_id,
@@ -558,7 +561,9 @@ def save_face(vars):
         x=face.x,
         y=face.y
     )
-    rec = db(q).select().first()
+    rec = None
+    if q:
+        rec = db(q).select().first()
     if rec:
         rec.update_record(**data)
     else:
