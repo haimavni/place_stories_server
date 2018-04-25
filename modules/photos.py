@@ -137,6 +137,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
         crc=crc,
         oversize=oversize,
         photo_missing=False,
+        deleted=False,
         random_photo_key=random.randint(1, 101)
     )
     db.commit()
@@ -171,7 +172,7 @@ def fit_size(rec):
 def fit_all_sizes():
     db, request = inject('db', 'request')
     q = (db.TblPhotos.width > MAX_WIDTH) | (db.TblPhotos.height > MAX_HEIGHT)
-    q &= (db.TblPhotos.photo_missing != True)
+    q &= (db.TblPhotos.photo_missing != True) & (db.TblPhotos.delete!=True)
     chunk = 100
     num_failed = 0
     while True:
@@ -187,7 +188,7 @@ def fit_all_sizes():
 
 def scan_all_unscanned_photos():
     db, request, comment = inject('db', 'request', 'comment')
-    q = (db.TblPhotos.crc==None) & (db.TblPhotos.photo_missing == False)
+    q = (db.TblPhotos.crc==None) & (db.TblPhotos.photo_missing == False) & (db.TblPhotos.delete!=True)
     to_scan = db(q).count()
     comment("{} photos still unscanned", to_scan)
     failed_crops = 0
@@ -219,8 +220,8 @@ def scan_all_unscanned_photos():
                 db.TblMemberPhotos.insert(Photo_id=rec.id, x=x, y=y, w=w, h=h) # for older records, merge with record photo_id-member_id
         db.commit()
         missing = db(db.TblPhotos.photo_missing==True).count()
-        done = db(db.TblPhotos.width>0).count()
-        total = db(db.TblPhotos).count()
+        done = db((db.TblPhotos.width>0) & (db.TblPhotos.delete!=True)).count()
+        total = db((db.TblPhotos) & (db.TblPhotos.delete!=True)).count()
     return dict(done=done, total=total, missing=missing, to_scan=to_scan, failed_crops=failed_crops)
 
 def photos_folder(what="orig"): 

@@ -107,7 +107,8 @@ def upload(vars):
                             upload_date=datetime.datetime.now(),
                             width=0,
                             height=0,
-                            photo_missing=False
+                            photo_missing=False,
+                            deleted=False
                             )
     return dict(success='files-loaded-successfuly')
 
@@ -145,7 +146,7 @@ def get_event_names():
     return arr
 
 def get_photo_names():
-    q = (db.TblPhotos.id > 0) & (db.TblPhotos.Name != None)
+    q = (db.TblPhotos.id > 0) & (db.TblPhotos.Name != None) & (db.TblPhotos.deleted!=True)
     lst = db(q).select(orderby=db.TblPhotos.Name)
     arr = [Storage(id=rec.id, name=rec.Name) for rec in lst]
     return arr

@@ -98,7 +98,7 @@ def consolidate_stories():
         story_id = db.TblStories.insert(story=rec.Description, used_for=STORY4EVENT)
         db(db.TblEvents.id==rec.id).update(story_id=story_id, Description='', DescriptionNoHtml='')
 
-    lst = db(db.TblPhotos.Description != '').select(db.TblPhotos.Description, db.TblPhotos.id)
+    lst = db((db.TblPhotos.Description != '') & (db.TblPhotos.deleted!=True)).select(db.TblPhotos.Description, db.TblPhotos.id)
     for rec in lst:
         story_id = db.TblStories.insert(story=rec.Description, used_for=STORY4PHOTO)
         db(db.TblPhotos.id==rec.id).update(story_id=story_id, Description='', DescriptionNoHtml='')
@@ -234,7 +234,7 @@ def guess_photographer(location):
 
 def collect_photographers():
     ###db.TblPhotographers.truncate('RESTART IDENTITY CASCADE')
-    lst = db(db.TblPhotos.width>0).select()
+    lst = db((db.TblPhotos.width>0) & (db.TblPhotos.deleted!=True)).select()
     for rec in lst:
         if not rec.Photographer:
             rec.Photographer = guess_photographer(rec.LocationInDisk)
@@ -252,7 +252,7 @@ def collect_photographers():
 def find_duplicate_photos():
     dic = {}
     dups = {}
-    lst = db(db.TblPhotos.width>0).select()
+    lst = db((db.TblPhotos.width>0)&(db.TblPhotos.deleted!=True)).select()
     for rec in lst:
         if rec.crc in dic:
             dic[rec.crc].append(rec.id)

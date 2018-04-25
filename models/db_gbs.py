@@ -264,6 +264,7 @@ db.define_table('TblPhotos',
                 Field('photo_missing', type='boolean', default=False),
                 Field('oversize', type='boolean', default=False), #If people want to download the full size they use this info
                 Field('random_photo_key', type='integer'),
+                Field('deleted', type='boolean', default=False),
                 Field('crc', type='integer')
 )
 

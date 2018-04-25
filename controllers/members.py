@@ -282,7 +282,7 @@ def get_story_detail(vars):
     if story.used_for == STORY4EVENT:
         event = db(db.TblEvents.story_id==story_id).select().first()
         if event:
-            qp = (db.TblEventPhotos.Event_id==event.id) & (db.TblPhotos.id==db.TblEventPhotos.Photo_id)
+            qp = (db.TblEventPhotos.Event_id==event.id) & (db.TblPhotos.id==db.TblEventPhotos.Photo_id) & (db.TblPhotos.deleted != True)
             photos = db(qp).select(db.TblPhotos.id, db.TblPhotos.photo_path)
             photo_ids = [photo.id for photo in photos]
             photo_member_set = photo_lst_member_ids(photo_ids)
@@ -331,7 +331,7 @@ def get_story_photo_list(vars):
     event = db(db.TblEvents.story_id==story_id).select().first()
     if not event:
         return dict(photo_list=[])
-    qp = (db.TblEventPhotos.Event_id==event.id) & (db.TblPhotos.id==db.TblEventPhotos.Photo_id)
+    qp = (db.TblEventPhotos.Event_id==event.id) & (db.TblPhotos.id==db.TblEventPhotos.Photo_id) & (db.TblPhotos.deleted!=True)
     photos = get_slides_from_photo_list(qp)
     return dict(photo_list=photos)
 
@@ -514,7 +514,8 @@ def image_url(rec):
 
 def get_member_slides(member_id):
     q = (db.TblMemberPhotos.Member_id==member_id) & \
-        (db.TblPhotos.id==db.TblMemberPhotos.Photo_id)
+        (db.TblPhotos.id==db.TblMemberPhotos.Photo_id) & \
+        (db.TblPhotos.deleted!=True)
     return get_slides_from_photo_list(q)
 
 @serve_json
@@ -606,7 +607,7 @@ def get_photo_list_with_topics(vars):
     return result
 
 def make_photos_query(vars):
-    q = (db.TblPhotos.width > 0)
+    q = (db.TblPhotos.width > 0) & (db.TblPhotos.deleted!=True)
     first_year = vars.first_year
     last_year = vars.last_year
     if vars.base_year: #time range may be defined
@@ -1062,7 +1063,7 @@ def add_story_member(vars):
 def save_photo_group(vars):
     story_id = vars.caller_id
     event = db(db.TblEvents.story_id==story_id).select().first()
-    qp = (db.TblEventPhotos.Event_id==event.id) & (db.TblEventPhotos.Photo_id==db.TblPhotos.id)
+    qp = (db.TblEventPhotos.Event_id==event.id) & (db.TblEventPhotos.Photo_id==db.TblPhotos.id) & (db.TblPhotos.delete!=True)
     old_photos = db(qp).select(db.TblPhotos.id)
     old_photos = [p.id for p in old_photos]
     photo_ids = vars.photo_ids
@@ -1135,7 +1136,20 @@ def count_hit(vars):
     else:
         db.TblPageHits.insert(what=what, item_id=item_id, count=1, new_count=1)
     return dict()
+
+@serve_json
+def delete_selected_photos(vars):
+    selected_photo_list = vars.selected_photo_list
+    db(db.TblPhotos.id.belongs(selected_photo_list)).update(deleted=True)
+    return dict()
     
+@serve_json
+def rotate_selected_photos(vars):
+    selected_photo_list = vars.selected_photo_list
+    for photo_id in selected_photo_list:
+        rotate_photo(photo_id)
+    return dict()
+
 def get_story_text(story_id):
     rec = db(db.TblStories.id==story_id).select().first()
     if rec:
@@ -1161,7 +1175,7 @@ def get_story_photo_ids(story_id):
     event_id = event_id_of_story_id(story_id)
     if not event_id:
         return []
-    qp = (db.TblEventPhotos.Event_id==event_id) & (db.TblPhotos.id==db.TblEventPhotos.Photo_id)
+    qp = (db.TblEventPhotos.Event_id==event_id) & (db.TblPhotos.id==db.TblEventPhotos.Photo_id) & (db.TblPhotos.deleted!=True)
     lst = db(qp).select(db.TblPhotos.id)
     lst = [p.id for p in lst]
     return lst
