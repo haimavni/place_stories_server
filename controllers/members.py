@@ -8,7 +8,7 @@ from date_utils import date_of_date_str, parse_date, get_all_dates, update_recor
 import datetime
 import os
 from dal_utils import insert_or_update
-from photos import get_slides_from_photo_list, photos_folder, local_photos_folder, images_folder, crop, save_uploaded_photo
+from photos import get_slides_from_photo_list, photos_folder, local_photos_folder, images_folder, crop, save_uploaded_photo, rotate_photo
 import random
 import zlib
 import re
@@ -1063,7 +1063,7 @@ def add_story_member(vars):
 def save_photo_group(vars):
     story_id = vars.caller_id
     event = db(db.TblEvents.story_id==story_id).select().first()
-    qp = (db.TblEventPhotos.Event_id==event.id) & (db.TblEventPhotos.Photo_id==db.TblPhotos.id) & (db.TblPhotos.delete!=True)
+    qp = (db.TblEventPhotos.Event_id==event.id) & (db.TblEventPhotos.Photo_id==db.TblPhotos.id) & (db.TblPhotos.deleted!=True)
     old_photos = db(qp).select(db.TblPhotos.id)
     old_photos = [p.id for p in old_photos]
     photo_ids = vars.photo_ids

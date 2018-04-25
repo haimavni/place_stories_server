@@ -172,7 +172,7 @@ def fit_size(rec):
 def fit_all_sizes():
     db, request = inject('db', 'request')
     q = (db.TblPhotos.width > MAX_WIDTH) | (db.TblPhotos.height > MAX_HEIGHT)
-    q &= (db.TblPhotos.photo_missing != True) & (db.TblPhotos.delete!=True)
+    q &= (db.TblPhotos.photo_missing != True) & (db.TblPhotos.deleted!=True)
     chunk = 100
     num_failed = 0
     while True:
@@ -188,7 +188,7 @@ def fit_all_sizes():
 
 def scan_all_unscanned_photos():
     db, request, comment = inject('db', 'request', 'comment')
-    q = (db.TblPhotos.crc==None) & (db.TblPhotos.photo_missing == False) & (db.TblPhotos.delete!=True)
+    q = (db.TblPhotos.crc==None) & (db.TblPhotos.photo_missing == False) & (db.TblPhotos.deleted!=True)
     to_scan = db(q).count()
     comment("{} photos still unscanned", to_scan)
     failed_crops = 0
@@ -219,9 +219,9 @@ def scan_all_unscanned_photos():
                 x, y, w, h = face
                 db.TblMemberPhotos.insert(Photo_id=rec.id, x=x, y=y, w=w, h=h) # for older records, merge with record photo_id-member_id
         db.commit()
-        missing = db(db.TblPhotos.photo_missing==True).count()
-        done = db((db.TblPhotos.width>0) & (db.TblPhotos.delete!=True)).count()
-        total = db((db.TblPhotos) & (db.TblPhotos.delete!=True)).count()
+        missing = db((db.TblPhotos.photo_missing==True) & (db.TblPhotos.deleted!=True)).count()
+        done = db((db.TblPhotos.width>0) & (db.TblPhotos.deleted!=True)).count()
+        total = db((db.TblPhotos) & (db.TblPhotos.deleted!=True)).count()
     return dict(done=done, total=total, missing=missing, to_scan=to_scan, failed_crops=failed_crops)
 
 def photos_folder(what="orig"): 
@@ -297,6 +297,34 @@ def crop_square(img_src, width, height, side_size):
         return False
     return True
 
+def rotate_photo(photo_id):
+    db = inject('db')
+    photo_rec = db(db.TblPhotos.id==photo_id).select().first()
+    lst = ['orig', 'squares']
+    if photo_rec.oversize:
+        lst += ['oversize']
+    for what in lst:
+        path = local_photos_folder(what)
+        file_name = path + photo_rec.photo_path
+        img = Image.open(file_name)
+        img = img.transpose(Image.ROTATE_90)
+        if what == 'orig':
+            img.save(file_name)
+            with open(file_name) as f:
+                blob = f.read()
+            crc = zlib.crc32(blob)
+            pname, fname = os.path.split(photo_rec.photo_path)
+            original_file_name, ext = os.path.splitext(fname)
+            new_fname = '{crc:x}{ext}'.format(crc=crc & 0xffffffff, ext=ext) 
+            new_photo_path = pname + new_fname
+            new_file_name = path + new_photo_path
+            os.rename(file_name, new_file_name)
+        else:
+            img.save(path + new_photo_path)
+        
+    height, width = (photo_rec.width, photo_rec.height)
+    photo_rec.update_record(width=width, height=height, photo_path=new_photo_path)
+        
 def add_photos_from_drive(sub_folder):
     folder = local_photos_folder("orig")
     root_folder = folder + sub_folder
