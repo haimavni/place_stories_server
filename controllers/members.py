@@ -1062,17 +1062,20 @@ def add_story_member(vars):
 @serve_json
 def save_photo_group(vars):
     story_id = vars.caller_id
-    event = db(db.TblEvents.story_id==story_id).select().first()
-    qp = (db.TblEventPhotos.Event_id==event.id) & (db.TblEventPhotos.Photo_id==db.TblPhotos.id) & (db.TblPhotos.deleted!=True)
+    tbl = db.TblEvents if vars.caller_type == "story" else db.TblTerms if vars.caller_type == "term" else None
+    if not tbl:
+        raise Exception('Unknown call type in save photo group')
+    item_id = db(tbl.story_id==story_id).select().first().id
+    qp = (db.TblEventPhotos.Event_id==item_id) & (db.TblEventPhotos.Photo_id==db.TblPhotos.id) & (db.TblPhotos.deleted!=True)
     old_photos = db(qp).select(db.TblPhotos.id)
     old_photos = [p.id for p in old_photos]
     photo_ids = vars.photo_ids
     for p in old_photos:
         if p not in photo_ids:
-            db((db.TblEventPhotos.Photo_id==p) & (db.TblEventPhotos.Event_id==event.id)).delete()
+            db((db.TblEventPhotos.Photo_id==p) & (db.TblEventPhotos.Event_id==item_id)).delete()
     for p in vars.photo_ids:
         if p not in old_photos:
-            db.TblEventPhotos.insert(Photo_id=p, Event_id=event.id)
+            db.TblEventPhotos.insert(Photo_id=p, Event_id=item_id)
     return dict()
     
 def get_tag_ids(item_id, item_type):
