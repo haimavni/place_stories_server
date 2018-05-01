@@ -204,9 +204,9 @@ def get_hit_statistics(vars):
     result = dict()
     for what in tables:
         tbl = tables[what]
-        lst = db((db.TblPageHits.what==what)&(db.TblPageHits.item_id==tbl.id)).select(db.TblPageHits.count, db.TblPageHits.new_count, tbl.Name, limitby=(0,100), orderby=~db.TblPageHits.count)
+        lst = db((db.TblPageHits.what==what)&(db.TblPageHits.item_id==tbl.id)).select(db.TblPageHits.count, db.TblPageHits.new_count, tbl.Name, tbl.id, limitby=(0,100), orderby=~db.TblPageHits.count)
         k = str(tbl)
-        lst = [dict(count=r.TblPageHits.count, new_ount=r.TblPageHits.new_count or 0, name=r[k].Name) for r in lst]
+        lst = [dict(count=r.TblPageHits.count, new_count=r.TblPageHits.new_count or 0, name=r[k].Name, item_id=r[k].id) for r in lst]
         result[what] = lst
     return dict(total_count=total_count, itemized_counts=result)
 

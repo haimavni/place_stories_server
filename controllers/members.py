@@ -328,10 +328,11 @@ def get_story_photo_list(vars):
     if story_id == 'new':
         return dict(photo_list=[])
     story_id = int(story_id)
-    event = db(db.TblEvents.story_id==story_id).select().first()
-    if not event:
-        return dict(photo_list=[])
-    qp = (db.TblEventPhotos.Event_id==event.id) & (db.TblPhotos.id==db.TblEventPhotos.Photo_id) & (db.TblPhotos.deleted!=True)
+    tbl = db.TblEvents if vars.story_type == "story" else db.TblTerms if vars.story_type == "term" else None
+    if not tbl:
+        raise Exception('Unknown call type in get story photo list')
+    item_id = db(tbl.story_id==story_id).select().first().id
+    qp = (db.TblEventPhotos.Event_id==item_id) & (db.TblPhotos.id==db.TblEventPhotos.Photo_id) & (db.TblPhotos.deleted!=True)
     photos = get_slides_from_photo_list(qp)
     return dict(photo_list=photos)
 
