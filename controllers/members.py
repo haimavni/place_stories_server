@@ -306,6 +306,34 @@ def get_story_detail(vars):
                     if not m['facePhotoURL']:
                         m['facePhotoURL'] = "dummy_face.png"
                     m['facePhotoURL'] = photos_folder("profile_photos") + m['facePhotoURL']
+    elif story.used_for == STORY4TERM:  #todo: try to consolidate with the above
+        term = db(db.TblTerms.story_id==story_id).select().first()
+        if term:
+            qp = (db.TblTermPhotos.term_id==term.id) & (db.TblPhotos.id==db.TblTermPhotos.Photo_id) & (db.TblPhotos.deleted != True)
+            photos = db(qp).select(db.TblPhotos.id, db.TblPhotos.photo_path)
+            photo_ids = [photo.id for photo in photos]
+            photo_member_set = photo_lst_member_ids(photo_ids)
+            
+            photos = [p.as_dict() for p in photos]
+            for p in photos:
+                p['photo_path'] = photos_folder() + p['photo_path']
+            qm = (db.TblTermMembers.term_id==term.id) & (db.TblMembers.id==db.TblTermMembers.Member_id)
+            members = db(qm).select(*member_fields)
+            members = [m for m in members]
+            member_set = set([m.id for m in members])
+            added_members_from_photos = photo_member_set - member_set
+            added_members_lst = [mid for mid in added_members_from_photos]
+            added_members = db(db.TblMembers.id.belongs(added_members_lst)).select(*member_fields)
+            candidates = [m.as_dict() for m in added_members]
+            members = [m.as_dict() for m in members]
+            lst = [members, candidates]
+            for arr in lst:
+                for m in arr:
+                    m['full_name'] = m['first_name'] + ' ' + m['last_name']
+                    if not m['facePhotoURL']:
+                        m['facePhotoURL'] = "dummy_face.png"
+                    m['facePhotoURL'] = photos_folder("profile_photos") + m['facePhotoURL']
+        
     
         #photos = [dict(photo_id=p.id, photo_path=photos_folder()+p.photo_path) for p in photos]
     return dict(story=story, members=members, candidates=candidates, photos=photos)
@@ -328,11 +356,20 @@ def get_story_photo_list(vars):
     if story_id == 'new':
         return dict(photo_list=[])
     story_id = int(story_id)
-    tbl = db.TblEvents if vars.story_type == "story" else db.TblTerms if vars.story_type == "term" else None
-    if not tbl:
+    if vars.story_type == "story":
+        tbl = db.TblEvents
+        tbl1 = db.TblEventPhotos
+    elif vars.story_type == "term":
+        tbl = db.TblTerms
+        tbl1 = db.TblTermPhotos
+    else:
         raise Exception('Unknown call type in get story photo list')
     item_id = db(tbl.story_id==story_id).select().first().id
-    qp = (db.TblEventPhotos.Event_id==item_id) & (db.TblPhotos.id==db.TblEventPhotos.Photo_id) & (db.TblPhotos.deleted!=True)
+    if vars.story_type == "story":
+        qp = (db.TblEventPhotos.Event_id==item_id) & (db.TblPhotos.id==db.TblEventPhotos.Photo_id)
+    else:
+        qp = (db.TblTermPhotos.term_id==item_id) & (db.TblPhotos.id==db.TblTermPhotos.Photo_id)
+    qp &= (db.TblPhotos.deleted!=True)
     photos = get_slides_from_photo_list(qp)
     return dict(photo_list=photos)
 
@@ -774,11 +811,12 @@ def get_used_languages(vars):
 
 @serve_json
 def get_term_list(vars):
-    lst = db((db.TblStories.used_for==STORY4TERM) & (db.TblStories.deleted!=True)).select()
-    result = [dict(story_text=rec.story,
-                   name=rec.name, 
-                   story_id=rec.id, 
-                   author=rec.source) for rec in lst]
+    lst = db((db.TblStories.used_for==STORY4TERM) & (db.TblStories.deleted!=True)&(db.TblTerms.story_id==db.TblStories.id)).select()
+    result = [dict(story_text=rec.TblStories.story,
+                   name=rec.TblStories.name, 
+                   story_id=rec.TblStories.id, 
+                   author=rec.TblStories.source,
+                   id=rec.TblTerms.id) for rec in lst]
     return dict(term_list=result)
 
 def save_profile_photo(face):
@@ -1027,10 +1065,7 @@ def calc_all_tags():
     
 @serve_json
 def save_group_members(vars):
-    if vars.caller_type == 'story':
-        return save_story_members(vars.caller_id, vars.member_ids)
-    else:
-        return dict() #todo: implement for terms etc.
+    return save_story_members(vars.caller_id, vars.caller_type, vars.member_ids)
     
 @serve_json
 def get_video_sample(vars):
@@ -1038,18 +1073,30 @@ def get_video_sample(vars):
     lst = ['-5F0x79j2K4', 'uwACSZ890a0', 'dfJIOa6eyfg', '1g_PlRE-YwI', '4I7BtUDPfcA', 'Cdiq5As8vCw']
     return dict(video_list=lst)
     
-def save_story_members(story_id, member_ids):
-    event = db(db.TblEvents.story_id==story_id).select().first()
-    qm = (db.TblEventMembers.Event_id==event.id) & (db.TblMembers.id==db.TblEventMembers.Member_id)
+def save_story_members(caller_id, caller_type, member_ids):
+    if caller_type == "story":
+        tbl = db.TblEvents
+        tbl1 = db.TblEventMembers
+        item_fld = tbl1.Event_id
+    elif caller_type == "term":
+        tbl = db.TblTerms
+        tbl1 = db.TblTermMembers
+        item_fld = db.TblTermMembers.term_id
+    else:
+        return dict()
+    item = db(tbl.story_id==caller_id).select().first()
+    qm = (item_fld==item.id) & (db.TblMembers.id==tbl1.Member_id)
     old_members = db(qm).select(db.TblMembers.id)
     old_members = [m.id for m in old_members]
     for m in old_members:
         if m not in member_ids:
-            db((db.TblEventMembers.Member_id==m) & (db.TblEventMembers.Event_id==event.id)).delete()
+            db((tbl1.Member_id==m) & (item_fld==item.id)).delete()
     for m in member_ids:
         if m not in old_members:
-            db.TblEventMembers.insert(Member_id=m, Event_id=event.id)
-    
+            if caller_type == "story":
+                tbl1.insert(Member_id=m, Event_id=item.id)
+            else:
+                tbl1.insert(Member_id=m, term_id=item.id)
     return dict()
 
 @serve_json
@@ -1073,10 +1120,16 @@ def save_photo_group(vars):
     photo_ids = vars.photo_ids
     for p in old_photos:
         if p not in photo_ids:
-            db((db.TblEventPhotos.Photo_id==p) & (db.TblEventPhotos.Event_id==item_id)).delete()
+            if vars.caller_type == "story":
+                db((db.TblEventPhotos.Photo_id==p) & (db.TblEventPhotos.Event_id==item_id)).delete()
+            elif  vars.caller_type == "term":
+                db((db.TblTermPhotos.Photo_id==p) & (db.TblTermPhotos.term_id==item_id)).delete()
     for p in vars.photo_ids:
         if p not in old_photos:
-            db.TblEventPhotos.insert(Photo_id=p, Event_id=item_id)
+            if vars.caller_type == "story":
+                db.TblEventPhotos.insert(Photo_id=p, Event_id=item_id)
+            elif vars.caller_type == "term":
+                db.TblTermPhotos.insert(Photo_id=p, term_id=item_id)
     return dict()
     
 def get_tag_ids(item_id, item_type):

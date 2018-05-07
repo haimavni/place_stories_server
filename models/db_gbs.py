@@ -127,6 +127,16 @@ db.define_table('TblEvents',
                 Field('Type_id', type='integer'),
 )
 
+db.define_table('TblTermMembers',
+                Field('term_id', type='integer'),
+                Field('Member_id', type='integer'),
+)
+
+db.define_table('TblTermPhotos',
+                Field('term_id', type='integer'),
+                Field('Photo_id', type='integer'),
+)
+
 db.define_table('TblFamilyConnectionTypes',
                 Field('Description', type='string'),
                 Field('IIDD', type='integer'),
