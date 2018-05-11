@@ -887,7 +887,11 @@ def make_stories_query(params):
     selected_story_types = [x.id for x in params.selected_story_types]
     if selected_story_types:
         q &= (db.TblStories.used_for.belongs(selected_story_types))
+        
     selected_stories = params.selected_stories
+    if (params.keywords_str):
+        selected_stories = [];
+        q &= (db.TblStories.name.contains(params.keywords_str)) | (db.TblStories.story.contains(params.keywords_str))
     if selected_stories:
         q &= (db.TblStories.id.belongs(selected_stories))
     if params.selected_languages:

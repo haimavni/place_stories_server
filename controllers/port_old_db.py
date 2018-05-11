@@ -8,6 +8,7 @@ import random
 from words import extract_tokens, guess_language, create_word_index, read_words_index
 from html_utils import clean_html
 import os, time
+from stories_manager import Stories
 
 def port_old_db():
     folder = request.vars.folder or 'gbs-bkp-jun17'
@@ -721,3 +722,14 @@ def approve_all_members():
     for member in db(db.TblMembers.deleted!=True).select():
         member.update_record(approved=True)
     return "All members are now approved"
+
+def create_stories_for_all_photos():
+    sm = Stories()
+    lst = db(db.TblPhotos.story_id==None).select()
+    for i, r in enumerate(lst):
+        story_info = sm.get_empty_story(used_for=STORY4PHOTO, story_text="", name=r.Name)
+        result = sm.add_story(story_info)
+        r.update_record(story_id=result.story_id)
+        if i % 100 == 0:
+            db.commit()
+    return "All photos have stories now"

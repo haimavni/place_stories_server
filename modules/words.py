@@ -103,7 +103,7 @@ def update_story_words_index(story_id):
     deleted_words = []
     db = inject('db')
     old_dic = retrieve_story_words(story_id)
-    new_dic = extract_story_words(story_id)
+    new_dic = extract_story_words(story_id) or {}
     new_words = {}
     for w in new_dic:
         word_id, new = find_or_insert_word(w)

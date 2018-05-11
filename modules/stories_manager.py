@@ -87,11 +87,11 @@ class Stories:
         )
         return story_info
     
-    def get_empty_story(self, used_for=2):
+    def get_empty_story(self, used_for=2, story_text="New Story", name='stories.new-story'):
         story_info = Storage(
-            story_text="New Story",
+            story_text=story_text,
             story_preview=[],
-            name='stories.new-story',
+            name=name,
             topic="",
             story_id="new",   #we always access via the master
             source="",
@@ -100,10 +100,10 @@ class Stories:
             )
         return story_info
 
-    def add_story(self, story_info, story_id=None, owner_id=None):
+    def add_story(self, story_info, story_id=None):
         story_text = story_info.story_text
-        language = guess_language(story_text)
         name = story_info.name
+        language = guess_language(name + ' ' + story_text)
         story_text = story_text.replace('~1', '&').replace('~2', ';').replace('\n', '').replace('>', '>\n')
         now = datetime.datetime.now()
         db, auth, STORY4EVENT, STORY4TERM = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM')
