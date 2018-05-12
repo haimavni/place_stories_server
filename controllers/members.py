@@ -33,7 +33,7 @@ def create_parent(vars):
     rec.member_info.update_time = datetime.datetime.now()
     rec.member_info.approved = auth.has_membership(DATA_AUDITOR)
     parent_id = db.TblMembers.insert(**rec.member_info)
-    
+
     return dict(member_id=parent_id, member=rec)
 
 def new_member_rec(gender=None, first_name=""):
@@ -48,12 +48,12 @@ def new_member_rec(gender=None, first_name=""):
             date_of_death=Storage(
                 date='',
                 span=0
-            ),
+                ),
             date_of_birth_dateunit='N',
             date_of_birth=Storage(
                 date='',
                 span=0
-            ),
+                ),
             gender=gender),
         story_info = Storage(display_version='New Story', story_versions=[], story_text='', story_id=None),
         family_connections =  Storage(
@@ -153,7 +153,7 @@ def add_photographer(vars):
     db.TblPhotographers.insert(name=photographer_name)
     ws_messaging.send_message(key='PHOTOGRAPHER_ADDED', group='ALL', photographer_name=photographer_name)
     return dict()
-    
+
 @serve_json
 def save_story_info(vars):
     user_id = vars.user_id
@@ -205,18 +205,18 @@ def calc_user_list():
         dic[rec.id] = rec
     return dic
 
-@serve_json
-def get_story_list(vars):
+def _get_story_list(params, exact):
     MAX_STORIES = 20
     story_topics = get_story_topics()
-    params = vars.params
 
     selected_topics = params.selected_topics or []
     grouped_selected_topics = params.grouped_selected_topics or []
     if selected_topics or grouped_selected_topics:
-        lst = get_story_list_with_topics(params, grouped_selected_topics, selected_topics)
+        lst = get_story_list_with_topics(params, grouped_selected_topics, selected_topics, exact)
     else:
-        q = make_stories_query(params)
+        q = make_stories_query(params, exact)
+        if not q:
+            return []
         lst = db(q).select(limitby=(0, 1000), orderby=~db.TblStories.story_len)
     if len(lst) > 100:
         lst1 = random.sample(lst, 100)
@@ -258,7 +258,22 @@ def get_story_list(vars):
                    timestamp=rec.last_update_date,
                    checked=rec.checked,
                    author=rec.source or rec.author) for rec in lst]
-    return dict(story_list=result)
+    return result
+
+@serve_json
+def get_story_list(vars):
+    result1 = _get_story_list(vars.params, exact=True)
+    result2 = _get_story_list(vars.params, exact=False)
+    arr = [result1, result2]
+    result = dict()
+    for i, r in enumerate(arr):
+        for story in r:
+            key = story['used_for'] + i * 100
+            if key not in result:
+                result[key] = [];
+            result[key].append(story)    
+    #todo: separate by used_for and exact values
+    return dict(story_list=result1 + result2, search_results=result)
 
 @serve_json
 def get_story_previews(vars):
@@ -286,7 +301,7 @@ def get_story_detail(vars):
             photos = db(qp).select(db.TblPhotos.id, db.TblPhotos.photo_path)
             photo_ids = [photo.id for photo in photos]
             photo_member_set = photo_lst_member_ids(photo_ids)
-            
+
             photos = [p.as_dict() for p in photos]
             for p in photos:
                 p['photo_path'] = photos_folder() + p['photo_path']
@@ -313,7 +328,7 @@ def get_story_detail(vars):
             photos = db(qp).select(db.TblPhotos.id, db.TblPhotos.photo_path)
             photo_ids = [photo.id for photo in photos]
             photo_member_set = photo_lst_member_ids(photo_ids)
-            
+
             photos = [p.as_dict() for p in photos]
             for p in photos:
                 p['photo_path'] = photos_folder() + p['photo_path']
@@ -333,8 +348,8 @@ def get_story_detail(vars):
                     if not m['facePhotoURL']:
                         m['facePhotoURL'] = "dummy_face.png"
                     m['facePhotoURL'] = photos_folder("profile_photos") + m['facePhotoURL']
-        
-    
+
+
         #photos = [dict(photo_id=p.id, photo_path=photos_folder()+p.photo_path) for p in photos]
     return dict(story=story, members=members, candidates=candidates, photos=photos)
 
@@ -349,7 +364,7 @@ def photo_lst_member_ids(photo_id_lst):
         member_ids = photo_member_ids(photo_id)
         result |= set(member_ids)
     return result
-    
+
 @serve_json
 def get_story_photo_list(vars):
     story_id = vars.story_id
@@ -392,7 +407,7 @@ def save_member_info(vars):
                 unit, date = parse_date(member_info[fld_name].date)
                 member_info[fld_name] = date
                 member_info[fld_name + '_dateunit'] = unit
-                    
+
         ##--------------handle dates - end--------------------------
         member_info.update_time = datetime.datetime.now()
         member_info.updater_id = vars.user_id or auth.current_user() or 2
@@ -796,7 +811,7 @@ def get_constants(vars):
             VIS_NOT_READY=VIS_NOT_READY,
             VIS_VISIBLE=VIS_VISIBLE,
             VIS_HIGH=VIS_HIGH          
-        ),
+            ),
         cause_of_death=dict(
             DC_DIED=0,
             DC_FELL=1,
@@ -881,17 +896,29 @@ def get_story_topics(refresh=False):
     c = Cache('get_story_topics')
     return c(_get_story_topics, refresh)
 
-def make_stories_query(params):
+def make_stories_query(params, exact):
     getting_live_stories = not params.deleted_stories
     q = (db.TblStories.deleted != getting_live_stories) & (db.TblStories.used_for.belongs(STORY4USER)) 
     selected_story_types = [x.id for x in params.selected_story_types]
     if selected_story_types:
         q &= (db.TblStories.used_for.belongs(selected_story_types))
-        
+
     selected_stories = params.selected_stories
     if (params.keywords_str):
         selected_stories = [];
-        q &= (db.TblStories.name.contains(params.keywords_str)) | (db.TblStories.story.contains(params.keywords_str))
+        if exact:
+            q &= (db.TblStories.name.contains(params.keywords_str)) | (db.TblStories.story.contains(params.keywords_str))
+        else:
+            keywords = params.keywords_str.split()
+            if len(keywords) == 1:
+                return None
+            for kw in keywords:
+                q &= (db.TblStories.name.contains(kw)) | (db.TblStories.story.contains(kw))
+            #prevent duplicates:
+            q &= (~db.TblStories.name.contains(params.keywords_str)) & \
+                (~db.TblStories.story.contains(params.keywords_str))
+    elif not exact:
+        return None
     if selected_stories:
         q &= (db.TblStories.id.belongs(selected_stories))
     if params.selected_languages:
@@ -905,14 +932,14 @@ def make_stories_query(params):
         q &= (db.TblStories.last_update_date>date0)
     return q
 
-def get_story_list_with_topics(params, grouped_selected_topics, selected_topics):
+def get_story_list_with_topics(params, grouped_selected_topics, selected_topics, exact):
     first = True
     grouped_selected_topics = grouped_selected_topics or []
     topic_groups = [[t.id for t in topic_group] for topic_group in grouped_selected_topics]
     for topic in selected_topics:
         topic_groups.append([topic.id])
     for topic_group in topic_groups:
-        q = make_stories_query(params) #if we do not regenerate it the query becomes accumulated and necessarily fails
+        q = make_stories_query(params, exact) #if we do not regenerate it the query becomes accumulated and necessarily fails
         q &= (db.TblItemTopics.story_id==db.TblStories.id)
         q &= (db.TblItemTopics.topic_id.belongs(topic_group))
         lst = db(q).select()
@@ -940,13 +967,13 @@ def _merge_members(mem1_id, mem2_id):
         else:
             rec.update_record(Member_id=mem1_id)
     db(db.TblMembers.id==mem2_id).update(deleted=True)
-    
+
 def merge_members():
     mem1 = int(request.vars.mem1)
     mem2 = int(request.vars.mem2)
     _merge_members(mem1, mem2)
     return "Members merged"
-    
+
 @serve_json    
 def get_theme_data(vars):
     path = images_folder()
@@ -979,7 +1006,7 @@ def delete_story(vars):
     story_id = vars.story_id
     n = db(db.TblStories.id==story_id).update(deleted=True)
     return dict(deleted=n==1)
-    
+
 @serve_json
 def save_tag_merges(vars):
     gst = vars.grouped_selected_topics
@@ -994,10 +1021,10 @@ def save_tag_merges(vars):
                 if c not in rec0.usage:
                     rec0.usage += c
                     rec0.update_record(usage=rec0.usage)
-                    
+
             db(db.TblItemTopics.topic_id==rec.id).update(topic_id=rec0.id)
             db(db.TblTopics.id==rec.id).delete()
-        
+
     gsp = vars.grouped_selected_photographers
     for p_group in gsp:
         p0 = p_group[0]
@@ -1006,10 +1033,10 @@ def save_tag_merges(vars):
             rec = db(db.TblPhotographers.id==p.id).select().first()
             db(db.TblPhotos.photographer_id==rec.id).update(photographer_id=rec0.id)
         db(db.TblPhotographers.id==rec.id).delete()
-        
+
     ws_messaging.send_message(key='TAGS_MERGED', group='ALL')
     return dict()
-    
+
 @serve_json
 def apply_to_selected_photos(vars):
     all_tags = calc_all_tags()
@@ -1026,7 +1053,7 @@ def apply_to_selected_photos(vars):
         )
     else:
         dates_info = None
-    
+
     st = vars.selected_topics
     added = []
     deleted = []
@@ -1060,23 +1087,23 @@ def promote_stories(vars):
     q = (db.TblStories.id.belongs(checked_story_list))
     today = datetime.date.today()
     db(q).update(touch_time=today)
- 
+
 def calc_all_tags():
     result = dict()
     for rec in db(db.TblTopics).select():
         result [rec.id] = rec.name
     return result
-    
+
 @serve_json
 def save_group_members(vars):
     return save_story_members(vars.caller_id, vars.caller_type, vars.member_ids)
-    
+
 @serve_json
 def get_video_sample(vars):
     #temporary hard coded implementation
     lst = ['-5F0x79j2K4', 'uwACSZ890a0', 'dfJIOa6eyfg', '1g_PlRE-YwI', '4I7BtUDPfcA', 'Cdiq5As8vCw']
     return dict(video_list=lst)
-    
+
 def save_story_members(caller_id, caller_type, member_ids):
     if caller_type == "story":
         tbl = db.TblEvents
@@ -1135,7 +1162,7 @@ def save_photo_group(vars):
             elif vars.caller_type == "term":
                 db.TblTermPhotos.insert(Photo_id=p, term_id=item_id)
     return dict()
-    
+
 def get_tag_ids(item_id, item_type):
     q = (db.TblItemTopics.item_type==item_type) & (db.TblItemTopics.item_id==item_id)
     lst = db(q).select()
@@ -1203,7 +1230,7 @@ def delete_selected_photos(vars):
     selected_photo_list = vars.selected_photo_list
     db(db.TblPhotos.id.belongs(selected_photo_list)).update(deleted=True)
     return dict()
-    
+
 @serve_json
 def rotate_selected_photos(vars):
     selected_photo_list = vars.selected_photo_list
@@ -1217,14 +1244,14 @@ def get_story_text(story_id):
         return rec.story
     else:
         return ''
-    
+
 def get_story_name(story_id):
     rec = db(db.TblStories.id==story_id).select().first()
     if rec:
         return rec.name
     else:
         return ''
-    
+
 def event_id_of_story_id(story_id):
     rec = db(db.TblEvents.story_id==story_id).select().first()
     if rec:

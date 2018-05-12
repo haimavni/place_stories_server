@@ -60,13 +60,13 @@ class AccessManager:
         return result
 
     def get_users_data(self):
-        db, auth = inject('db', 'auth')
+        db, auth, request = inject('db', 'auth', 'request')
         if auth.user:
             by_developer = auth.user.email in ['haimavni@gmail.com']
             #name = (auth.user.first_name + ' ' + auth.user.last_name).lower()
             #by_developer = name in ('haim avni', 'barak shohat')
         else:
-            by_developer = False
+            by_developer = request.env.http_origin == 'http://localhost:9000'
         result = []
         lst = db(db.auth_user).select(*self.user_fields)
         for usr in lst:
