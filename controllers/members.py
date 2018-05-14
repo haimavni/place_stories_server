@@ -262,18 +262,23 @@ def _get_story_list(params, exact):
 
 @serve_json
 def get_story_list(vars):
-    result1 = _get_story_list(vars.params, exact=True)
-    result2 = _get_story_list(vars.params, exact=False)
+    used_for_str = ['', 'member', 'event', 'photo', 'term'];
+    result1 = _get_story_list(vars.params, exact=True) #if keywords_str, only exact matches are returned, otherwise whatever the query gets
+    if vars.params.keywords_str: #find all pages containing all words in this string
+        result2 = _get_story_list(vars.params, exact=False)
+    else:
+        result2 = []
     arr = [result1, result2]
-    result = dict()
+    active_result_types = set()
     for i, r in enumerate(arr):
+        search_kind = 'exact' if i == 0 else 'nonexact'
         for story in r:
-            key = story['used_for'] + i * 100
-            if key not in result:
-                result[key] = [];
-            result[key].append(story)    
-    #todo: separate by used_for and exact values
-    return dict(story_list=result1 + result2, search_results=result)
+            k = story['used_for']
+            active_result_types |= set([k])
+            story['search_kind'] = search_kind;
+    active_result_types = [k for k in active_result_types]
+    active_result_types = sorted(active_result_types)
+    return dict(story_list=result1 + result2, active_result_types=active_result_types)
 
 @serve_json
 def get_story_previews(vars):
