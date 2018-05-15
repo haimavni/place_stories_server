@@ -10,6 +10,7 @@ from date_utils import datetime_from_str
 from gluon.storage import Storage
 import random
 import pwd
+from stories_manager import Stories
 
 MAX_WIDTH = 1200
 MAX_HEIGHT = 800
@@ -63,7 +64,7 @@ def save_uploaded_photo_collection(collection, user_id):
                    photo_ids=photo_ids)
         
 def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
-    auth, log_exception, db = inject('auth', 'log_exception', 'db')
+    auth, log_exception, db, STORY4PHOTO = inject('auth', 'log_exception', 'db', 'STORY4PHOTO')
     user_id = user_id or auth.current_user()
     crc = zlib.crc32(blob)
     cnt = db(db.TblPhotos.crc==crc).count()
@@ -124,7 +125,10 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
     except Exception, e:
         log_exception("saving photo {} failed".format(original_file_name))
         return 'failed'
-
+    sm = Stories()
+    story_info = sm.get_empty_story(used_for=STORY4PHOTO, story_text="", name=original_file_name)
+    result = sm.add_story(story_info)
+    story_id = result.story_id
     photo_id = db.TblPhotos.insert(
         photo_path=sub_folder + file_name,
         original_file_name=original_file_name,
@@ -138,6 +142,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
         oversize=oversize,
         photo_missing=False,
         deleted=False,
+        story_id=story_id,
         random_photo_key=random.randint(1, 101)
     )
     db.commit()
