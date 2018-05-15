@@ -833,6 +833,7 @@ def get_used_languages(vars):
 def get_term_list(vars):
     lst = db((db.TblStories.used_for==STORY4TERM) & (db.TblStories.deleted!=True)&(db.TblTerms.story_id==db.TblStories.id)).select()
     result = [dict(story_text=rec.TblStories.story,
+                   story_preview=get_reisha(rec.TblStories.story, size=40),
                    name=rec.TblStories.name, 
                    story_id=rec.TblStories.id, 
                    author=rec.TblStories.source,
