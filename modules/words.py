@@ -31,14 +31,17 @@ def extract_tokens(s):
     ###lst = word_regex.findall(s, re.UNICODE | re.MULTILINE)
     return re.split(r'\s+', s)
 
-def get_reisha(html, size=100):
+def get_reisha(html, size=60):
     punctuation_marks = ',.;?!'
     lst = extract_tokens(html)
     result = ''
-    for t in lst:
+    for i, t in enumerate(lst):
+        if i > size:
+            break
         if t not in punctuation_marks:
             result += ' '
         result += t
+    result += '...'
     return result
 
 def guess_language(html):
