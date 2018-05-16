@@ -196,7 +196,10 @@ def get_stories_sample(vars):
     lst2 = [rec for rec in lst2]
     if len(lst2) > 10:
         lst2 = random.sample(lst2, 10)
-    return dict(stories_sample=lst1 + lst2)
+    lst = lst1 + lst2;
+    for r in lst:
+        r.story_preview = get_reisha(r.story, 16)
+    return dict(stories_sample=lst)
 
 def calc_user_list():
     lst = db(db.auth_user).select()
@@ -878,6 +881,7 @@ def get_member_stories(member_id):
             name = story.name,
             story_id = story.id,
             story_text = story.story,
+            story_preview=get_reisha(story.story, 30),
             source = event.SSource,
             used_for=story.used_for, 
             author_id=story.author_id,
