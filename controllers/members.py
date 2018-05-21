@@ -795,7 +795,8 @@ def get_topic_list(vars):
 def get_message_list(vars):
     q = (db.TblStories.used_for==STORY4MESSAGE) & (db.TblStories.author_id==db.auth_user.id) & (db.TblStories.deleted != True)
     lst = db(q).select(orderby=~db.TblStories.last_update_date, limitby=(0, vars.limit or 100))
-    result = [dict(story_text=rec.TblStories.story, 
+    result = [dict(story_text=rec.TblStories.story,
+                   story_preview=rec.TblStories.story, #it is short anyway
                    name=rec.TblStories.name, 
                    story_id=rec.TblStories.id, 
                    timestamp=rec.TblStories.last_update_date, 
