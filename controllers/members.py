@@ -260,6 +260,7 @@ def _get_story_list(params, exact):
                    event_date=rec.creation_date, 
                    timestamp=rec.last_update_date,
                    checked=rec.checked,
+                   exact=exact and params.search_type != 'advanced',
                    author=rec.source or rec.author) for rec in lst]
     return result
 
@@ -267,7 +268,7 @@ def _get_story_list(params, exact):
 def get_story_list(vars):
     used_for_str = ['', 'member', 'event', 'photo', 'term'];
     result1 = _get_story_list(vars.params, exact=True) #if keywords_str, only exact matches are returned, otherwise whatever the query gets
-    if vars.params.keywords_str: #find all pages containing all words in this string
+    if vars.params.keywords_str or vars.params.search_type=='advanced': #find all pages containing all words in this string
         result2 = _get_story_list(vars.params, exact=False)
     else:
         result2 = []
@@ -865,6 +866,7 @@ def save_story_data(story_info, user_id):
         result = sm.update_story(story_id, story_info)
     else:
         result = sm.add_story(story_info)
+    result.story_preview = get_reisha(story_info.story_text)
     return result
 
 def get_member_stories(member_id):
@@ -915,6 +917,8 @@ def make_stories_query(params, exact):
         q &= (db.TblStories.used_for.belongs(selected_story_types))
 
     selected_stories = params.selected_stories
+    ##if exact and params.search_type != 'advanced':
+        ##return None
     if (params.keywords_str):
         selected_stories = [];
         if exact:
@@ -1229,6 +1233,18 @@ def clean_html_format(vars):
 def count_hit(vars):
     what = vars.what.upper()
     item_id = int(vars.item_id)
+    if what == 'TERM':
+        rec = db(db.TblTerms.story_id==item_id).select().first()
+        if rec:
+            item_id = rec.id
+        else:
+            return
+    elif what == 'EVENT':
+        rec = db(db.TblEvents.story_id==item_id).select().first()
+        if rec:
+            item_id = rec.id
+        else:
+            return
     rec = db((db.TblPageHits.what==what)&(db.TblPageHits.item_id==item_id)).select().first()
     if rec:
         rec.update_record(count=rec.count+1, new_count=(rec.new_count or 0) + 1)
