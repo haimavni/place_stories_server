@@ -106,7 +106,7 @@ class Stories:
         language = guess_language(name + ' ' + story_text)
         story_text = story_text.replace('~1', '&').replace('~2', ';').replace('\n', '').replace('>', '>\n')
         now = datetime.datetime.now()
-        db, auth, STORY4EVENT, STORY4TERM = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM')
+        db, auth, STORY4EVENT, STORY4TERM, STORY4PHOTO = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO')
         source = story_info.source or auth.user_name(self.author_id)
         ###todo: handle language issues here and in update_story
         story_id = db.TblStories.insert(story=story_text, 
@@ -122,15 +122,19 @@ class Stories:
         if story_info.used_for == STORY4EVENT:
             db.TblEvents.insert(
                 story_id=story_id,
+                Name=name,
                 ###event_date=
                 ###event_date_str=
             )
         elif story_info.used_for == STORY4TERM:    
             db.TblTerms.insert(
                 story_id=story_id,
+                Name=name,
                 ###event_date=
                 ###event_date_str=
             )
+        elif story_info.used_for == STORY4PHOTO:
+            pass
         
         update_story_words_index(story_id)
         return Storage(story_id=story_id, creation_date=now, author=source)
@@ -148,7 +152,7 @@ class Stories:
         else:
             language = guess_language(updated_story_text)
         updated_story_text = updated_story_text.replace('~1', '&').replace('~2', ';').replace('\n', '').replace('>', '>\n')
-        db, auth = inject('db', 'auth')
+        db, auth, STORY4EVENT, STORY4TERM, STORY4PHOTO = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO')
         rec = db(db.TblStories.id==story_id).select().first()
         #if rec.language and rec.language != language:
             #rec = self.find_translation(rec, language)
@@ -168,6 +172,17 @@ class Stories:
             rec.update_record(name=story_info.name, source=story_info.source, last_update_date=now, updater_id=self.author_id)
         update_story_words_index(story_id)
         author_name = auth.user_name(self.author_id) #name of the mblbhd, not the source
+        name = story_info.name
+        if story_info.used_for == STORY4EVENT:
+            rec = db(db.TblEvents.story_id==story_id).select().first()
+            if rec:
+                rec.update_record(Name=name)
+        elif story_info.used_for == STORY4TERM:    
+            rec = db(db.TblTerms.story_id==story_id).select().first()
+            if rec:
+                rec.update_record(Name=name)
+        elif story_info.used_for == STORY4PHOTO:
+            pass
         return Storage(story_id=story_id, last_update_date=now, updater_name=author_name, author=story_info.source)
 
     def find_translation(self, story_id, language=None):
