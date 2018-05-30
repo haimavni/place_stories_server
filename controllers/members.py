@@ -998,7 +998,7 @@ def get_theme_data(vars):
         top_background='top-background.png',
         footer_background='footer-background.png',
         founders_group_photo='founders_group_photo.jpg',
-        gb_logo_png='gb-logo.png',
+        gb_logo_png='gb-logo-blue.png',
         himnon='himnon-givat-brenner.mp3',
         content_background='bgs/body-bg.jpg',
         mayflower='bgs/mayflower.jpg'
