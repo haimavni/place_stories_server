@@ -643,12 +643,30 @@ def detach_photo_from_member(vars):
     good = db(q).delete() == 1
     return dict(photo_detached=good)
 
+def calc_grouped_selected_options(option_list):
+    groups = dict()
+    for item in option_list:
+        g = item.group_number
+        if g not in groups:
+            groups[g] = []
+        groups[g].append(item.option.id)
+    result = []
+    for g in sorted(groups):
+        result.append(groups[g])
+    return result
+
 def get_photo_list_with_topics(vars):
     first = True
-    grouped_selected_topics = vars.grouped_selected_topics or []
-    topic_groups = [[t.id for t in topic_group] for topic_group in grouped_selected_topics]
-    for topic in vars.selected_topics:
-        topic_groups.append([topic.id])
+    if vars.debugging:
+        topic_groups = calc_grouped_selected_options(vars.selected_topics)
+    else:
+        grouped_selected_topics = vars.grouped_selected_topics or []
+        topic_groups = [[t.id for t in topic_group] for topic_group in grouped_selected_topics]
+        for topic in vars.selected_topics:
+            if vars.debugging:
+                topic_groups.append([topic.option.id])
+            else:
+                topic_groups.append([topic.id])
     for topic_group in topic_groups:
         q = make_photos_query(vars) #if we do not regenerate it the query becomes accumulated and necessarily fails
         q &= (db.TblItemTopics.item_id==db.TblPhotos.id) & (db.TblItemTopics.item_type.like('%P%'))
@@ -680,7 +698,10 @@ def make_photos_query(vars):
     else:
         first_year = 0
         last_year = 0
-    photographer_list = [p.id for p in vars.selected_photographers] if vars.selected_photographers else []
+    if vars.debugging:
+        photographer_list = [p.option.id for p in vars.selected_photographers] if vars.selected_photographers else []
+    else:
+        photographer_list = [p.id for p in vars.selected_photographers] if vars.selected_photographers else []
     if len(photographer_list) > 0:
         q &= db.TblPhotos.photographer_id.belongs(photographer_list)
     if first_year:
@@ -717,7 +738,6 @@ def make_photos_query(vars):
 def get_photo_list(vars):
     selected_topics = vars.selected_topics or []
     grouped_selected_topics = vars.grouped_selected_topics or []
-    privileges = auth.get_privileges()
     mprl = vars.max_photos_per_line or 8;
     MAX_PHOTOS_COUNT = 100 + (mprl - 8) * 100
     if selected_topics or grouped_selected_topics:
@@ -999,6 +1019,7 @@ def get_theme_data(vars):
         footer_background='footer-background.png',
         founders_group_photo='founders_group_photo.jpg',
         gb_logo_png='gb-logo-grey.png',
+        gb_logo_blue='gb-logo-blue.png',
         himnon='himnon-givat-brenner.mp3',
         content_background='bgs/body-bg.jpg',
         mayflower='bgs/mayflower.jpg'
