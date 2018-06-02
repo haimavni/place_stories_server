@@ -969,10 +969,13 @@ def make_stories_query(params, exact):
 
 def get_story_list_with_topics(params, grouped_selected_topics, selected_topics, exact):
     first = True
-    grouped_selected_topics = grouped_selected_topics or []
-    topic_groups = [[t.id for t in topic_group] for topic_group in grouped_selected_topics]
-    for topic in selected_topics:
-        topic_groups.append([topic.id])
+    if params.debugging:
+        topic_groups = calc_grouped_selected_options(selected_topics)
+    else:
+        grouped_selected_topics = grouped_selected_topics or []
+        topic_groups = [[t.id for t in topic_group] for topic_group in grouped_selected_topics]
+        for topic in selected_topics:
+            topic_groups.append([topic.id])
     for topic_group in topic_groups:
         q = make_stories_query(params, exact) #if we do not regenerate it the query becomes accumulated and necessarily fails
         q &= (db.TblItemTopics.story_id==db.TblStories.id)
