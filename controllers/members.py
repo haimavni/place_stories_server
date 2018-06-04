@@ -267,7 +267,10 @@ def _get_story_list(params, exact):
 @serve_json
 def get_story_list(vars):
     used_for_str = ['', 'member', 'event', 'photo', 'term'];
-    result1 = _get_story_list(vars.params, exact=True) #if keywords_str, only exact matches are returned, otherwise whatever the query gets
+    if vars.params.search_type=='advanced':
+        result1 = []
+    else:
+        result1 = _get_story_list(vars.params, exact=True) #if keywords_str, only exact matches are returned, otherwise whatever the query gets
     if vars.params.keywords_str or vars.params.search_type=='advanced': #find all pages containing all words in this string
         result2 = _get_story_list(vars.params, exact=False)
     else:
@@ -952,8 +955,6 @@ def make_stories_query(params, exact):
             #prevent duplicates:
             q &= (~db.TblStories.name.contains(params.keywords_str)) & \
                 (~db.TblStories.story.contains(params.keywords_str))
-    elif not exact:
-        return None
     if selected_stories:
         q &= (db.TblStories.id.belongs(selected_stories))
     if params.selected_languages:
@@ -976,8 +977,12 @@ def get_story_list_with_topics(params, grouped_selected_topics, selected_topics,
         topic_groups = [[t.id for t in topic_group] for topic_group in grouped_selected_topics]
         for topic in selected_topics:
             topic_groups.append([topic.id])
+    dic = dict()
+    bag = None
     for topic_group in topic_groups:
         q = make_stories_query(params, exact) #if we do not regenerate it the query becomes accumulated and necessarily fails
+        if not q:
+            return []
         q &= (db.TblItemTopics.story_id==db.TblStories.id)
         q &= (db.TblItemTopics.topic_id.belongs(topic_group))
         lst = db(q).select()
@@ -988,9 +993,10 @@ def get_story_list_with_topics(params, grouped_selected_topics, selected_topics,
             bag = bag1
         else:
             bag &= bag1
-    dic = dict()
-    for r in lst:
-        dic[r.TblStories.id] = r
+        for r in lst:
+            dic[r.TblStories.id] = r
+    if not bag:
+        return []
     result = [dic[id] for id in bag]
     return result
 
