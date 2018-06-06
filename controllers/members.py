@@ -651,7 +651,7 @@ def calc_grouped_selected_options(option_list):
     for item in option_list:
         g = item.group_number
         if g not in groups:
-            groups[g] = []
+            groups[g] = [item.option.sign]
         groups[g].append(item.option.id)
     result = []
     for g in sorted(groups):
@@ -660,21 +660,17 @@ def calc_grouped_selected_options(option_list):
 
 def get_photo_list_with_topics(vars):
     first = True
-    if vars.debugging:
-        topic_groups = calc_grouped_selected_options(vars.selected_topics)
-    else:
-        grouped_selected_topics = vars.grouped_selected_topics or []
-        topic_groups = [[t.id for t in topic_group] for topic_group in grouped_selected_topics]
-        for topic in vars.selected_topics:
-            if vars.debugging:
-                topic_groups.append([topic.option.id])
-            else:
-                topic_groups.append([topic.id])
+    topic_groups = calc_grouped_selected_options(vars.selected_topics)
     for topic_group in topic_groups:
         q = make_photos_query(vars) #if we do not regenerate it the query becomes accumulated and necessarily fails
         q &= (db.TblItemTopics.item_id==db.TblPhotos.id) & (db.TblItemTopics.item_type.like('%P%'))
         ##topic_ids = [t.id for t in topic_group]
-        q &= (db.TblItemTopics.topic_id.belongs(topic_group))
+        sign = topic_group[0]
+        topic_group = topic_group[1:]
+        q1 = db.TblItemTopics.topic_id.belongs(topic_group)
+        if sign == 'minus':
+            q1 = ~q1
+        q &= q1
         lst = db(q).select()
         lst = [rec.TblPhotos for rec in lst]
         bag1 = set(r.id for r in lst)
@@ -701,10 +697,7 @@ def make_photos_query(vars):
     else:
         first_year = 0
         last_year = 0
-    if vars.debugging:
-        photographer_list = [p.option.id for p in vars.selected_photographers] if vars.selected_photographers else []
-    else:
-        photographer_list = [p.id for p in vars.selected_photographers] if vars.selected_photographers else []
+    photographer_list = [p.option.id for p in vars.selected_photographers] if vars.selected_photographers else []
     if len(photographer_list) > 0:
         q &= db.TblPhotos.photographer_id.belongs(photographer_list)
     if first_year:
@@ -970,13 +963,7 @@ def make_stories_query(params, exact):
 
 def get_story_list_with_topics(params, grouped_selected_topics, selected_topics, exact):
     first = True
-    if params.debugging:
-        topic_groups = calc_grouped_selected_options(selected_topics)
-    else:
-        grouped_selected_topics = grouped_selected_topics or []
-        topic_groups = [[t.id for t in topic_group] for topic_group in grouped_selected_topics]
-        for topic in selected_topics:
-            topic_groups.append([topic.id])
+    topic_groups = calc_grouped_selected_options(selected_topics)
     dic = dict()
     bag = None
     for topic_group in topic_groups:
@@ -984,7 +971,13 @@ def get_story_list_with_topics(params, grouped_selected_topics, selected_topics,
         if not q:
             return []
         q &= (db.TblItemTopics.story_id==db.TblStories.id)
-        q &= (db.TblItemTopics.topic_id.belongs(topic_group))
+        
+        sign = topic_group[0]
+        topic_group = topic_group[1:]
+        q1 = db.TblItemTopics.topic_id.belongs(topic_group)
+        if sign == 'minus':
+            q1 = ~q1
+        q &= q1
         lst = db(q).select()
         ###lst = [rec.TblStories for rec in lst]
         bag1 = set(r.TblStories.id for r in lst)
@@ -1104,7 +1097,8 @@ def apply_to_selected_photos(vars):
     deleted = []
     for pid in spl:
         curr_tag_ids = set(get_tag_ids(pid, "P"))
-        for topic in st:
+        for tpc in st:
+            topic = tpc.option
             item = dict(item_id=pid, topic_id=topic.id)
             if topic.sign=="plus" and topic.id not in curr_tag_ids:
                 new_id = db.TblItemTopics.insert(item_type="P", item_id=pid, topic_id=topic.id) #todo: story_id=???
