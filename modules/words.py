@@ -19,9 +19,10 @@ word_regex = re.compile(word_pat, re.UNICODE | re.MULTILINE)
 
 def remove_all_tags(html):
     html = html.replace('>', '> ')  #to prevent words that are separated by tags only to stick together
-    html = re.sub(r'&quot;', '"', html)
-    html = re.sub(r'&#39;', "'", html)
-    html = re.sub(r'&.{1,7};', ' ', html)
+    ##html = re.sub(r'&quot;', '"', html)
+    ##html = re.sub(r'&#39;', "'", html)
+    ##html = re.sub(r'&.{1,7};', ' ', html)
+    html = re.sub(r'&#?[a-z0-9]+;([a-z]+;)*', ' ', html)
     soup = BeautifulSoup(html)
     text = soup.get_text()
     return text
@@ -29,7 +30,20 @@ def remove_all_tags(html):
 def extract_tokens(s):
     s = remove_all_tags(s)
     ###lst = word_regex.findall(s, re.UNICODE | re.MULTILINE)
-    return re.split(r'\s+', s)
+    lst = re.split(r'\s+', s)
+    #remove quotes unless they are apostrophes
+    for qu in ['"', "'"]:
+        q0 = -1
+        for i, w in enumerate(lst):
+            if w.startswith(qu):
+                q0 = i
+            if w.endswith(qu):
+                if q0 > 0:
+                    lst[q0] = lst[q0][1:]
+                    lst[i] = w[:-1]
+            q0 = -1;
+            
+    return lst
 
 def get_reisha(html, size=60):
     punctuation_marks = ',.;?!'
