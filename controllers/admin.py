@@ -89,3 +89,9 @@ def resend_verification_email(vars):
 def unlock_user(vars):
     am = AccessManager()
     am.unlock_user(vars.user_id)
+    return dict()
+    
+@serve_json
+def reindex_words(vars):
+    db(db.TblStories.deleted != True).update(indexing_date = NO_DATE)
+    return dict()

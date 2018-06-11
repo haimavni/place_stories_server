@@ -159,6 +159,7 @@ def multi_language_word_extractor():
         s +=  pat + '|'
     ###s += get_emoticons()
     s = u"[a-z]+(?:[\'â€™]t|[\'â€™]s)|" +  s
+    s += '[0-9]+'
     ###s += '| (?P<URL>http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F])))+'
     s = s.encode('utf8')
     return re.compile(s, re.UNICODE | re.IGNORECASE)
@@ -244,14 +245,16 @@ def clean_word(w):
         k = ord(c)
         c1 = c
         for tup in _bl:
+            if '0' <= c1 <= '9':
+                continue
             if tup[0] <= k <= tup[1]:
                 c1 = ' '
                 break
         uout += c1
     #leave only qoutes that are in the middle of a word, for abbrevs
 
-    if uout.startswith("'") and uout.endswith("'"): #leave only as apostrophy
-        uout = uout[1:-1]
+    #if uout.startswith("'") and uout.endswith("'"): #leave only as apostrophy
+        #uout = uout[1:-1]
     if uout.startswith('"'):
         uout = uout[1:]
     if uout.endswith('"'):
@@ -268,23 +271,37 @@ def extract_words(s):
     if isinstance(s, unicode):
         s = s.encode('utf8')
     result0 = _pat.findall(s)
-    result = []
+    result1 = []
     for w in result0:
         if re.match(r"[a-z]+(?:\'t|\'s)", w, re.UNICODE):
-            result.append(w)
-        #elif _emoticons.match(w):
-            #result.append(w)
+            result1.append(w)
         else:
             w = clean_word(w).strip()
             if w:
-                if '"' in w:
-                    b = w.startswith('"')
-                if "'" in w:
-                    b = w.startswith("'")
                 for w1 in re.split(r'\s+', w):
-                    #if non_word_regex.match(w1):
-                        #continue
-                    result.append(w1)
+                    result1.append(w1)
+    result = []
+    quoted = False
+    zain = 'ז'
+    tsadik = 'צ'
+    zain = zain.decode('utf8')
+    tsadik = tsadik.decode('utf8')
+    for w1 in result1:
+        w = w1.decode('utf8')
+        if w.startswith("'"):
+            quoted = True
+            w = w[1:]
+        if len(w) > 3 and w[1] == "'" and w[0] != zain and w[0] != tsadik:
+            quoted = True
+            w = w[2:]
+        if w.endswith("'"):
+            if quoted:    #leave quote only if it is an apostrophe
+                w = w[:-1]
+            quoted = False
+        if w:
+            w = w.encode('utf8')
+            result.append(w)
+            
     return result
 
 def unpunctuate(unistr):

@@ -19,9 +19,8 @@ word_regex = re.compile(word_pat, re.UNICODE | re.MULTILINE)
 
 def remove_all_tags(html):
     html = html.replace('>', '> ')  #to prevent words that are separated by tags only to stick together
-    ##html = re.sub(r'&quot;', '"', html)
-    ##html = re.sub(r'&#39;', "'", html)
-    ##html = re.sub(r'&.{1,7};', ' ', html)
+    html = re.sub(r'&quot;', '"', html)
+    html = re.sub(r'&#39;', "'", html)
     html = re.sub(r'&#?[a-z0-9]+;([a-z]+;)*', ' ', html)
     soup = BeautifulSoup(html)
     text = soup.get_text()
@@ -140,6 +139,21 @@ def update_story_words_index(story_id):
     ws_messaging.send_message('WORD_INDEX_CHANGED', group='ALL', 
                               story_id=story_id, added_words=added_words, deleted_words=deleted_words, new_words=new_words)
     db(db.TblStories.id==story_id).update(indexing_date=now)
+    
+def update_word_index_all():
+    db, comment = inject('db', 'comment')
+    chunk = 100
+    comment("Start indexing story words")
+    q = db.TblStories.last_update_date > db.TblStories.indexing_date
+    while True:
+        n = db(q).count()
+        comment('Reindex words. {} stories left to reindex.', n)
+        lst = db(q).select(db.TblStories.id, limitby=(0, chunk))
+        if not lst:
+            return
+        for rec in lst:
+            update_story_words_index(rec.id)
+            db.commit()
             
 def find_or_insert_word(wrd):            
     from injections import inject

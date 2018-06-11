@@ -8,6 +8,7 @@ from my_cache import Cache
 from photos import scan_all_unscanned_photos
 from collect_emails import collect_mail
 from injections import inject
+from words import update_word_index_all
 
 def test_scheduler(msg):
     comment("test task {}", msg)
@@ -79,6 +80,7 @@ __tasks = dict(
     ###scan_all_unscanned_photos=scan_all_unscanned_photos,
     collect_mail=collect_mail,
     execute_task=execute_task,
+    update_word_index_all=update_word_index_all
 )
 
 def dict_to_json_str(dic):
@@ -127,12 +129,27 @@ def schedule_collect_mail():
         timeout = 5 * 60, # will time out if running for 5 minutes
     )
 
+def schedule_update_word_index_all():
+    now = datetime.datetime.now()
+    return db.scheduler_task.insert(
+        status='QUEUED',
+        application_name=request.application,
+        task_name = 'update word index',
+        function_name='update_word_index_all',
+        start_time=now,
+        stop_time=now + datetime.timedelta(days=1461),
+        repeats=0,
+        period=4*3600,   # every 4 hours
+        timeout = 3600, # will time out if running for an hour
+    )
+
 scheduler = MyScheduler(db, __tasks)
 
 permanent_tasks = dict(
     ##scan_all_unscanned_photos=schedule_scan_all_unscanned_photos
     #look for emailed photos and other mail
-    collect_mail=schedule_collect_mail
+    collect_mail=schedule_collect_mail,
+    update_word_index_all=schedule_update_word_index_all
 )
 
 def _verify_tasks_started():
