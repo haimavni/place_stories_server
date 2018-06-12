@@ -736,6 +736,8 @@ def create_stories_for_all_photos():
 
 def populate_empty_names():
     for member_rec in db(db.TblMembers.Name==None).select():
+        member_rec.update_record(Name="")    
+    for member_rec in db(db.TblMembers.Name=="").select():
         member_rec.update_record(Name=member_rec.first_name + ' ' + member_rec.last_name)
     for event_rec in db(db.TblEvents.Name=="").select():
         story = db(db.TblStories.id==event_rec.story_id).select(db.TblStories.name).first()
