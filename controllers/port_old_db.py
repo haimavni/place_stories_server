@@ -743,3 +743,16 @@ def populate_empty_names():
         story = db(db.TblStories.id==event_rec.story_id).select(db.TblStories.name).first()
         event_rec.update_record(Name=story.name)
     return "Empty names were populated"
+
+def delete_obsolete_words():
+    lst = db(db.TblWords).select()
+    num_deleted = 0
+    for i, wr in enumerate(lst):
+        cnt = db(db.TblWordStories.word_id==wr.id).count()
+        if not cnt:
+            db(db.TblWords.id==wr.id).delete()
+            num_deleted += 1
+        if (i % 100) == 0:
+            db.commit()
+    return '{} obsolete words were deleted'.format(num_deleted)
+    

@@ -284,21 +284,23 @@ def extract_words(s):
     quoted = False
     zain = 'ז'
     tsadik = 'צ'
+    gimel = 'ג'
     zain = zain.decode('utf8')
     tsadik = tsadik.decode('utf8')
+    gimel = gimel.decode('utf8')
     for w1 in result1:
         w = w1.decode('utf8')
         if w.startswith("'"):
             quoted = True
             w = w[1:]
-        if len(w) > 3 and w[1] == "'" and w[0] != zain and w[0] != tsadik:
+        if len(w) > 3 and w[1] == "'" and w[0] != zain and w[0] != tsadik and w[0] != gimel:
             quoted = True
             w = w[2:]
         if w.endswith("'"):
             if quoted:    #leave quote only if it is an apostrophe
                 w = w[:-1]
             quoted = False
-        if w:
+        if w and len(w) > 1:
             w = w.encode('utf8')
             result.append(w)
             
