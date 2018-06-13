@@ -852,7 +852,7 @@ def get_used_languages(vars):
 
 @serve_json
 def get_term_list(vars):
-    lst = db((db.TblStories.used_for==STORY4TERM) & (db.TblStories.deleted!=True)&(db.TblTerms.story_id==db.TblStories.id)).select()
+    lst = db((db.TblStories.used_for==STORY4TERM) & (db.TblStories.deleted!=True)&(db.TblTerms.story_id==db.TblStories.id)).select(orderby=db.TblStories.name)
     result = [dict(story_text=rec.TblStories.story,
                    story_preview=get_reisha(rec.TblStories.story, size=40),
                    name=rec.TblStories.name, 
