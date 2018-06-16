@@ -852,7 +852,7 @@ def get_used_languages(vars):
 
 @serve_json
 def get_term_list(vars):
-    lst = db((db.TblStories.used_for==STORY4TERM) & (db.TblStories.deleted!=True)&(db.TblTerms.story_id==db.TblStories.id)).select(orderby=db.TblStories.name)
+    lst = db((db.TblStories.used_for==STORY4TERM) & (db.TblStories.deleted!=True) & (db.TblTerms.story_id==db.TblStories.id)).select(orderby=db.TblStories.name)
     result = [dict(story_text=rec.TblStories.story,
                    story_preview=get_reisha(rec.TblStories.story, size=40),
                    name=rec.TblStories.name, 
@@ -1257,18 +1257,6 @@ def clean_html_format(vars):
 def count_hit(vars):
     what = vars.what.upper()
     item_id = int(vars.item_id)
-    if what == 'TERM':
-        rec = db(db.TblTerms.story_id==item_id).select().first()
-        if rec:
-            item_id = rec.id
-        else:
-            return
-    elif what == 'EVENT':
-        rec = db(db.TblEvents.story_id==item_id).select().first()
-        if rec:
-            item_id = rec.id
-        else:
-            return
     rec = db((db.TblPageHits.what==what)&(db.TblPageHits.item_id==item_id)).select().first()
     if rec:
         rec.update_record(count=rec.count+1, new_count=(rec.new_count or 0) + 1)

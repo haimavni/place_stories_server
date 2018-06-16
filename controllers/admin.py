@@ -95,3 +95,8 @@ def unlock_user(vars):
 def reindex_words(vars):
     db(db.TblStories.deleted != True).update(indexing_date = NO_DATE)
     return dict()
+
+def reindex_stories():
+    from words import update_word_index_all
+    update_word_index_all()
+

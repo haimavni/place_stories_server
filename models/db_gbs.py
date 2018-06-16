@@ -125,6 +125,7 @@ db.define_table('TblEvents',
                 Field('Status_id', type='integer'),
                 Field('TypeID', type='integer'),
                 Field('Type_id', type='integer'),
+                Field('deleted', type='boolean', default=False)
 )
 
 db.define_table('TblTermMembers',
@@ -326,6 +327,7 @@ db.define_table('TblTerms',
                 Field('StatusID', type='integer'),
                 Field('Status_id', type='integer'),
                 Field('TermTranslation', type='string'),
+                Field('deleted', type='boolean', default=False)
 )
 
 db.define_table('TblChatGroup',

@@ -197,9 +197,9 @@ def get_hit_statistics(vars):
     total_count = db(db.TblPageHits.what=='APP').select().first().count
     tables = dict(
         MEMBER=db.TblMembers,
-        EVENT=db.TblEvents,
+        EVENT=db.TblStories,
         PHOTO=db.TblPhotos,
-        TERM=db.TblTerms
+        TERM=db.TblStories
     )
     result = dict()
     if vars.order == 'NEW':
@@ -207,11 +207,12 @@ def get_hit_statistics(vars):
     else:
         fld = db.TblPageHits.count
     for what in tables:
+        name = 'name' if what in ['EVENT', 'TERM'] else 'Name'
         tbl = tables[what]
-        lst = db((db.TblPageHits.what==what)&(db.TblPageHits.item_id==tbl.id)&(fld!=None)). \
-            select(db.TblPageHits.count, db.TblPageHits.new_count, tbl.Name, tbl.id, limitby=(0,2000), orderby=~fld)
+        lst = db((db.TblPageHits.what==what)&(db.TblPageHits.item_id==tbl.id)& (tbl.deleted != True) & (fld!=None)). \
+            select(db.TblPageHits.count, db.TblPageHits.new_count, tbl[name], tbl.id, limitby=(0,2000), orderby=~fld)
         k = str(tbl)
-        lst = [dict(count=r.TblPageHits.count, new_count=r.TblPageHits.new_count or 0, name=r[k].Name, item_id=r[k].id) for r in lst]
+        lst = [dict(count=r.TblPageHits.count, new_count=r.TblPageHits.new_count or 0, name=r[k][name], item_id=r[k].id) for r in lst]
         result[what] = lst
     return dict(total_count=total_count, itemized_counts=result)
 

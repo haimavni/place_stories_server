@@ -67,13 +67,13 @@ def time_dif_str(tim, now = datetime.datetime.now()):
     return difstr + ' ago' if ago else 'in ' + difstr
 
 def execute_task(name, command):
-    ###comment('Started task {}: {}'.format(name, command))
+    comment('Started task {}: {}'.format(name, command))
     try:
         result = eval(command)
     except Exception, e:
         log_exception('Executing ' + name)
     else:
-        ###comment('Finished task {}. Returned {}.'.format(name, result))
+        comment('Finished task {}. Returned {}.'.format(name, result))
         db.commit()
 
 __tasks = dict(
