@@ -1081,7 +1081,7 @@ def apply_to_selected_photos(vars):
     spl = vars.selected_photo_list
     plist = vars.selected_photographers
     if len(plist) == 1:
-        photographer_id = plist[0].id
+        photographer_id = plist[0].option.id
     else:
         photographer_id = None
     photos_date_str = vars.photos_date_str
