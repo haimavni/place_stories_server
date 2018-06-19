@@ -139,7 +139,7 @@ def schedule_update_word_index_all():
         start_time=now,
         stop_time=now + datetime.timedelta(days=1461),
         repeats=0,
-        period=4*3600,   # every 4 hours
+        period=2*3600,   # every 2 hours
         timeout = 3600, # will time out if running for an hour
     )
 

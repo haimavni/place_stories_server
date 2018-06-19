@@ -1,4 +1,6 @@
 import logging
+from pwd import getpwnam
+import os
 logger = logging.getLogger("web2py.app.{}".format(request.application))
 logger.setLevel(logging.DEBUG)
 _debugging = request.function not in ('whats_up', 'log_file_data')
@@ -6,6 +8,17 @@ if _debugging:
     logger.debug("\n        NEW REQUEST {}".format(request.function))
 import datetime
 ###logging.disable(logging.DEBUG)
+
+def fix_log_owner(log_file_name):
+    try:
+        r_rec = getpwnam('root')
+        w_rec = getpwnam('www-data')
+        ruid, rgid = r_rec.pw_uid, r_rec.pw_gid
+        wuid, wgid = w_rec.pw_uid, w_rec.pw_gid
+        if ruid != wuid:
+            os.chown(log_file_name, wuid, wgid)
+    except:
+        pass
 
 def roll_over(base_name, max_number):
     for i in range(max_number - 1, 0, -1):
@@ -19,6 +32,7 @@ def roll_over(base_name, max_number):
     if os.path.exists(dfn):
         os.remove(dfn)
     os.rename(base_name, dfn)
+    fix_log_owner(base_name)
 
 def my_log(s, file_name="log_all"):
     size_limit = 400000
