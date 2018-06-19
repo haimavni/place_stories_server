@@ -15,11 +15,15 @@ from mammoth import convert_to_html
 class EmailCollector:
 
     def __init__(self):
-        request = inject('request')
+        request, comment = inject('request', 'comment')
         self.maildir = '/home/{}_mailbox/Maildir'.format(request.application)
+        comment('init EmailCollector')
+        
 
     def collect(self):
         maildir_new = self.maildir + '/new'
+        comment = inject('comment')
+        comment('maildir new: {}', maildir_new)
         msg_list = [join(maildir_new, f) for f in listdir(maildir_new) if isfile(join(maildir_new, f))]
         for msg_file in msg_list:
             result = self.handle_msg(msg_file)

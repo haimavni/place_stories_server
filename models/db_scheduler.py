@@ -166,8 +166,6 @@ def _verify_tasks_started():
     return True
 
 def verify_tasks_started():
-    #do NOT use memcache - it must be run once when the server starts. The memcache is NOT deleted at that time, 
-    #so the verification may never be called
     c = Cache('VERIFY_TASKS_STARTED')
     return c(lambda: _verify_tasks_started())
 

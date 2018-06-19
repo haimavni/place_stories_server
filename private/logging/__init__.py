@@ -24,6 +24,7 @@ To use, simply 'import logging' and log away!
 """
 
 import sys, os, time, cStringIO, traceback, warnings, weakref
+from pwd import getpwnam
 
 __all__ = ['BASIC_FORMAT', 'BufferingFormatter', 'CRITICAL', 'DEBUG', 'ERROR',
            'FATAL', 'FileHandler', 'Filter', 'Formatter', 'Handler', 'INFO',
@@ -872,6 +873,19 @@ class StreamHandler(Handler):
             raise
         except:
             self.handleError(record)
+            
+def fix_log_owner(log_file_name):
+    try:
+        r_rec = getpwnam('root')
+        w_rec = getpwnam('www-data')
+        ruid, rgid = r_rec.pw_uid, r_rec.pw_gid
+        wuid, wgid = w_rec.pw_uid, w_rec.pw_gid
+        if ruid != wuid:
+            os.chown(log_file_name, wuid, wgid)
+    except Exception, e:
+        path, fname = os.path.split(log_file_name)
+        with open(path + '/' + 'fix_log_owner_failed.log', 'a') as f:
+            f.write(e.message + '\n')
 
 class FileHandler(StreamHandler):
     """
@@ -916,6 +930,7 @@ class FileHandler(StreamHandler):
             stream = open(self.baseFilename, self.mode)
         else:
             stream = codecs.open(self.baseFilename, self.mode, self.encoding)
+        fix_log_owner(self.baseFilename)
         return stream
 
     def emit(self, record):
