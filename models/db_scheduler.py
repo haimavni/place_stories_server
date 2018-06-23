@@ -34,13 +34,12 @@ class MyScheduler(Scheduler):
         return task_id
 
     def on_update_task_status(self, task_id, data):
-        #comment('on update task status', log_name='dbg_scheduler')
-        comment = inject('comment')
+        logger.debug("task {} status changed: {} ".format(task_id, data))
         try:
             ###comment("task {task_id} status changed {data}", task_id=task_id, data=data)
             ws_messaging.send_message(key='task_status_changed', group='TASK_MONITOR', task_id=task_id, data=data)
         except Exception, e:
-            log_exception('failed on update task status')
+            logger.error('failed broadcasting update task status')
 
 def secs_to_dhms(t):
     s = t % 60
@@ -126,7 +125,7 @@ def schedule_collect_mail():
         stop_time=now + datetime.timedelta(days=1461),
         repeats=0,
         period=3 * 60,   # every 3 minutes
-        timeout = 5 * 60, # will time out if running for 5 minutes
+        timeout=5 * 60 , # will time out if running for 5 minutes
     )
 
 def schedule_update_word_index_all():
@@ -143,7 +142,6 @@ def schedule_update_word_index_all():
         timeout = 3600, # will time out if running for an hour
     )
 
-scheduler = MyScheduler(db, __tasks)
 
 permanent_tasks = dict(
     ##scan_all_unscanned_photos=schedule_scan_all_unscanned_photos
@@ -151,6 +149,8 @@ permanent_tasks = dict(
     collect_mail=schedule_collect_mail,
     update_word_index_all=schedule_update_word_index_all
 )
+
+scheduler = MyScheduler(db, __tasks)
 
 def _verify_tasks_started():
     

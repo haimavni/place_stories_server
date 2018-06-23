@@ -154,6 +154,8 @@ class RotatingFileHandler(BaseRotatingHandler):
         Basically, see if the supplied record would cause the file to exceed
         the size limit we have.
         """
+        if not os.path.exists(self.baseFilename):
+            self.stream = None
         if self.stream is None:                 # delay was set...
             self.stream = self._open()
         if self.maxBytes > 0:                   # are we rolling over?

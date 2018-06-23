@@ -581,8 +581,13 @@ class Scheduler(MetaScheduler):
 
         from gluon import current
         current._scheduler = self
-
-        self.define_tables(db, migrate=migrate)
+        logger.debug("about to define tables")
+        try:
+            self.define_tables(db, migrate=migrate)
+        except Exception, e:
+            logger.debug("exception in scheduler: " + e.message)
+        else:
+            logger.debug("scheduler tables defined")
 
     def __get_migrate(self, tablename, migrate=True):
         if migrate is False:
@@ -757,10 +762,10 @@ class Scheduler(MetaScheduler):
                 db.commit()
                 logger.debug('Tasks assigned...')
                 break
-            except:
+            except Exception, e:
                 self.w_stats.errors += 1
                 db.rollback()
-                logger.error('TICKER: error assigning tasks (%s)', x)
+                logger.error('TICKER: error assigning tasks (%s): ', x, exc_info=1)
                 x += 1
                 time.sleep(0.5)
 
@@ -776,11 +781,10 @@ class Scheduler(MetaScheduler):
             try:
                 rtn = self.pop_task(db)
                 return rtn
-                break
             except:
                 self.w_stats.errors += 1
                 db.rollback()
-                logger.error('    error popping tasks')
+                logger.error('    error popping tasks', exc_info=1)
                 x += 1
                 time.sleep(0.5)
 
@@ -802,7 +806,8 @@ class Scheduler(MetaScheduler):
         task = grabbed.select(limitby=(0, 1), orderby=st.next_run_time).first()
         if task:
             task.update_record(status=RUNNING, last_run_time=now)
-            self.on_update_task_status(task.id, data=dict(status=RUNNING, last_run_time=str(now)[:19]))
+            ###self.on_update_task_status(task.id, data=dict(name=task.task_name or '???', status=RUNNING, last_run_time=str(now)[:19]))
+            self.on_update_task_status(task.id, data=dict(name=task.task_name or '???', status=RUNNING, last_run_time=str(now)[:19]))
             # noone will touch my task!
             db.commit()
             logger.debug('   work to do %s', task.id)
@@ -876,7 +881,7 @@ class Scheduler(MetaScheduler):
             except:
                 self.w_stats.errors += 1
                 db.rollback()
-                logger.error('    error storing result')
+                logger.error('error storing result', exc_info=1)
                 time.sleep(0.5)
                 
     def on_update_task_status(self, task_id, data):
@@ -921,6 +926,7 @@ class Scheduler(MetaScheduler):
                      )
             db(st.id == task.task_id).update(**d)
             d['next_run_time'] = str(d['next_run_time'])[:19]
+            ###d['name'] = task.task_name or '????'
             self.on_update_task_status(task.task_id, d)
             if status == COMPLETED:
                 self.update_dependencies(db, task.task_id)
@@ -945,7 +951,8 @@ class Scheduler(MetaScheduler):
                 failed=True,
                 status=status,
                 times_failed=rec.times_failed,
-                next_run_time=str(rec.next_run_time)[:19]
+                next_run_time=str(rec.next_run_time)[:19],
+                ###name=task.task_name or '??????'
             )
             self.on_update_task_status(task.task_id, data)
         logger.info('task completed (%s)', task_report.status)
@@ -1045,15 +1052,15 @@ class Scheduler(MetaScheduler):
                     dead_workers.delete()
                     try:
                         self.is_a_ticker = self.being_a_ticker()
-                    except:
-                        logger.error('Error coordinating TICKER')
+                    except Exceptionm, e:
+                        logger.error('Error coordinating TICKER', exc_info=1)
                     if self.w_stats.status == ACTIVE:
                         self.do_assign_tasks = True
-                except:
-                    logger.error('Error cleaning up')
+                except Exception, e:
+                    logger.error('Error cleaning up', exc_info=1)
             db.commit()
         except:
-            logger.error('Error retrieving status')
+            logger.error('Error retrieving status', exc_info=1)
             db.rollback()
         self.adj_hibernation()
         self.sleep()
@@ -1188,7 +1195,8 @@ class Scheduler(MetaScheduler):
                     assigned_wn = wkgroups[gname]['workers'][myw]['name']
                     d = dict(
                         status=ASSIGNED,
-                        assigned_worker_name=assigned_wn
+                        assigned_worker_name=assigned_wn,
+                        ###name=task.task_name or task.function_name
                     )
                     if not task.task_name:
                         d['task_name'] = task.function_name

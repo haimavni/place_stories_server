@@ -23,8 +23,31 @@ Copyright (C) 2001-2010 Vinay Sajip. All Rights Reserved.
 To use, simply 'import logging' and log away!
 """
 
-import sys, os, time, cStringIO, traceback, warnings, weakref
-from pwd import getpwnam
+import sys, os, stat, time, cStringIO, traceback, warnings, weakref
+from pwd import getpwnam, getpwuid
+import getpass
+
+def find_owner(filename):
+    return getpwuid(os.stat(filename).st_uid).pw_name
+
+def fix_log_owner(log_file_name):
+    curr_user = getpass.getuser()
+    if curr_user != 'root':
+        return
+    file_owner = find_owner(log_file_name)
+    if file_owner != 'root':
+        return
+    u = log_file_name.split('/')[2]
+    try:
+        w_rec = getpwnam(u)
+        wuid, wgid = w_rec.pw_uid, w_rec.pw_gid
+        if file_owner != u:
+            os.chown(log_file_name, wuid, wgid)
+            os.chmod(log_file_name, stat.S_IRGRP | stat.S_IWGRP | stat.S_IREAD | stat.S_IWRITE | stat.S_IROTH)
+    except Exception, e:
+        path, fname = os.path.split(log_file_name)
+        with open(path + '/' + 'fix_log_owner_failed.log', 'a') as f:
+            f.write(str(e) + '\n')
 
 __all__ = ['BASIC_FORMAT', 'BufferingFormatter', 'CRITICAL', 'DEBUG', 'ERROR',
            'FATAL', 'FileHandler', 'Filter', 'Formatter', 'Handler', 'INFO',
@@ -873,19 +896,6 @@ class StreamHandler(Handler):
             raise
         except:
             self.handleError(record)
-            
-def fix_log_owner(log_file_name):
-    try:
-        r_rec = getpwnam('root')
-        w_rec = getpwnam('www-data')
-        ruid, rgid = r_rec.pw_uid, r_rec.pw_gid
-        wuid, wgid = w_rec.pw_uid, w_rec.pw_gid
-        if ruid != wuid:
-            os.chown(log_file_name, wuid, wgid)
-    except Exception, e:
-        path, fname = os.path.split(log_file_name)
-        with open(path + '/' + 'fix_log_owner_failed.log', 'a') as f:
-            f.write(e.message + '\n')
 
 class FileHandler(StreamHandler):
     """

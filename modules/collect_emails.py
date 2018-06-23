@@ -15,9 +15,10 @@ from mammoth import convert_to_html
 class EmailCollector:
 
     def __init__(self):
-        request, comment = inject('request', 'comment')
+        request, comment, logger = inject('request', 'comment', 'logger')
         self.maildir = '/home/{}_mailbox/Maildir'.format(request.application)
         comment('init EmailCollector')
+        logger.debug('init EmailCollector')
         
 
     def collect(self):
@@ -129,12 +130,12 @@ def get_user_id_of_sender(sender_email, sender_name):
     return auth.user_id_of_email(sender_email)
 
 def collect_mail():
-    db, comment, mail, MAIL_WATCHER = inject('db', 'comment', 'mail', 'MAIL_WATCHER')
+    db, comment, logger, mail, MAIL_WATCHER = inject('db', 'comment', 'logger', 'mail', 'MAIL_WATCHER')
     email_photos_collector = EmailCollector()
     results = []
     lst = db((db.auth_membership.group_id==MAIL_WATCHER)&(db.auth_user.id==db.auth_membership.user_id)&(db.auth_user.id>1)).select(db.auth_user.email)
     receivers = [r.email for r in lst]    
-    
+    logger.debug('collecting mail')
     for msg in email_photos_collector.collect():
         user_id = get_user_id_of_sender(msg.sender_email, msg.sender_name)
         user_id = user_id or 1 #todo: if we decide not to create new user

@@ -1,5 +1,5 @@
 import logging
-from pwd import getpwnam
+
 import os
 logger = logging.getLogger("web2py.app.{}".format(request.application))
 logger.setLevel(logging.DEBUG)
@@ -7,18 +7,9 @@ _debugging = request.function not in ('whats_up', 'log_file_data')
 if _debugging:
     logger.debug("\n        NEW REQUEST {}".format(request.function))
 import datetime
+from misc_utils import fix_log_owner
 ###logging.disable(logging.DEBUG)
 
-def fix_log_owner(log_file_name):
-    try:
-        r_rec = getpwnam('root')
-        w_rec = getpwnam('www-data')
-        ruid, rgid = r_rec.pw_uid, r_rec.pw_gid
-        wuid, wgid = w_rec.pw_uid, w_rec.pw_gid
-        if ruid != wuid:
-            os.chown(log_file_name, wuid, wgid)
-    except:
-        pass
 
 def roll_over(base_name, max_number):
     for i in range(max_number - 1, 0, -1):
@@ -38,12 +29,15 @@ def my_log(s, file_name="log_all"):
     size_limit = 400000
     fname = '{}{}.log'.format(log_path(), file_name)
     file_size = os.path.getsize(fname) if os.path.exists(fname) else 0
+    need_fixing = file_size == 0
     if file_size + len(s) > size_limit:
         roll_over(fname, 10)
     s1 = "{ts}: {s}\n\n".format(ts=datetime.datetime.now(), s=s)
     try:
         with open(fname, 'a') as f:
             f.write(s1)
+        if need_fixing:
+            fix_log_owner(fname)
     except:
         fname = fname = '{}{}.log'.format(log_path(), file_name.upper())
         with open(fname, 'a') as f:
