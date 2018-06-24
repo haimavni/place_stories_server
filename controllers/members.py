@@ -852,7 +852,10 @@ def get_used_languages(vars):
 
 @serve_json
 def get_term_list(vars):
-    lst = db((db.TblStories.used_for==STORY4TERM) & (db.TblStories.deleted!=True) & (db.TblTerms.story_id==db.TblStories.id)).select(orderby=db.TblStories.name)
+    lst = db((db.TblStories.used_for==STORY4TERM) & \
+             (db.TblStories.deleted!=True) & \
+             ###(db.TblTerms.deleted!=True) & \
+             (db.TblTerms.story_id==db.TblStories.id)).select(orderby=db.TblStories.name)
     result = [dict(story_text=rec.TblStories.story,
                    story_preview=get_reisha(rec.TblStories.story, size=40),
                    name=rec.TblStories.name, 
@@ -860,6 +863,14 @@ def get_term_list(vars):
                    author=rec.TblStories.source,
                    id=rec.TblTerms.id) for rec in lst]
     return dict(term_list=result)
+
+@serve_json
+def delete_term(vars):
+    rec = db(db.TblTerms.id==int(vars.term_id)).select().first()
+    rec.update(deleted=True)
+    story_id = rec.story_id
+    db(db.TblStories.id==story_id).update(deleted=True)
+    return dict()
 
 def save_profile_photo(face):
     rec = get_photo_rec(face.photo_id)
