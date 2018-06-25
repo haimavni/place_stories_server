@@ -146,6 +146,7 @@ def schedule_update_word_index_all():
 permanent_tasks = dict(
     ##scan_all_unscanned_photos=schedule_scan_all_unscanned_photos
     #look for emailed photos and other mail
+    #note that the key must also be function_name set by the keyed item
     collect_mail=schedule_collect_mail,
     update_word_index_all=schedule_update_word_index_all
 )
@@ -158,10 +159,11 @@ def _verify_tasks_started():
         return
     comment = inject('comment')
     comment("verify tasks started")
-    for task_name in permanent_tasks:
-        comment("start {}", task_name)
-        if db(db.scheduler_task.task_name==task_name).isempty():
-            permanent_tasks[task_name]()
+    for function_name in permanent_tasks:
+        if db(db.scheduler_task.function_name==function_name).isempty():
+            task_id = permanent_tasks[function_name]()
+            comment("start {}, task_id is {}", function_name, task_id)
+            db.commit()
     comment('tasks verified.')
     return True
 
