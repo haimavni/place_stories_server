@@ -290,7 +290,13 @@ def get_story_list(vars):
 @serve_json
 def get_story_previews(vars):
     lst = get_all_story_previews()
-    return dict(story_previews=license)
+    return dict(story_previews=lst)
+
+@serve_json
+def get_story(vars):
+    sm = stories_manager.Stories()
+    story_id = int(vars.story_id)
+    return dict(story=sm.get_story(story_id))
 
 @serve_json
 def get_story_detail(vars):
@@ -894,6 +900,7 @@ def save_story_data(story_info, user_id):
     else:
         result = sm.add_story(story_info)
     result.story_preview = get_reisha(story_info.story_text)
+    ws_messaging.send_message(key='STORY_WAS_SAVED', group='ALL', story_data=result)
     return result
 
 def get_member_stories(member_id):
