@@ -276,7 +276,9 @@ db.define_table('TblPhotos',
                 Field('oversize', type='boolean', default=False), #If people want to download the full size they use this info
                 Field('random_photo_key', type='integer'),
                 Field('deleted', type='boolean', default=False),
-                Field('crc', type='integer')
+                Field('crc', type='integer'),
+                Field('dhash', type='integer'),
+                Field('usage', type='integer', default=0) #1=has identified members 2=has assigned tags 3=both
 )
 
 db.define_table('TblTopics',
