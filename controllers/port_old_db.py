@@ -756,3 +756,21 @@ def delete_obsolete_words():
             db.commit()
     return '{} obsolete words were deleted'.format(num_deleted)
     
+def calc_photos_usage():
+    for p in db(db.TblPhotos.deleted!=True).select():
+        p.update_record(usage=0)
+    n = 0
+    lst = db(db.TblMemberPhotos).select(db.TblMemberPhotos.Photo_id, db.TblMemberPhotos.Photo_id.count(), groupby=[db.TblMemberPhotos.Photo_id])
+    for mp in lst:
+        if mp._extra['COUNT(TblMemberPhotos.Photo_id)'] > 0:
+            db(db.TblPhotos.id==mp.TblMemberPhotos.Photo_id).update(usage = 1)
+            n += 1
+    lst = db(db.TblItemTopics.item_type=='P').select(db.TblItemTopics.item_id, db.TblItemTopics.item_id.count(), groupby=[db.TblItemTopics.item_id])
+    for tp in lst:
+        pr = db(db.TblPhotos.id==tp.TblItemTopics.item_id).select().first()
+        x = tp._extra['COUNT(TblItemTopics.item_id)']
+        if pr.usage == 0:
+            n += 1
+            pr.update_record(usage = pr.usage + 2)
+    unused = db(db.TblPhotos.usage==0).count()
+    return "{} photos were marked as relevant, {} are not.".format(n, unused)

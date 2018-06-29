@@ -693,6 +693,8 @@ def get_photo_list_with_topics(vars):
 
 def make_photos_query(vars):
     q = (db.TblPhotos.width > 0) & (db.TblPhotos.deleted!=True)
+    if vars.relevant_only:
+        q &= (db.TblPhotos.usage > 0)
     first_year = vars.first_year
     last_year = vars.last_year
     if vars.base_year: #time range may be defined
