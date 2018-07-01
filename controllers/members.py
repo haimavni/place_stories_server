@@ -251,6 +251,7 @@ def _get_story_list(params, exact):
             r.author = ""
         r.checked = False
         lst.append(r)
+    user_list = auth.user_list()
     result = [dict(story_text=rec.story,
                    story_preview=get_reisha(rec.story),
                    name=rec.name, 
@@ -259,6 +260,7 @@ def _get_story_list(params, exact):
                    used_for=rec.used_for,
                    event_date=rec.creation_date, 
                    timestamp=rec.last_update_date,
+                   updater=user_list[rec.updater_id] if rec.updater_id and rec.updater_id in user_list else dict(),
                    checked=rec.checked,
                    exact=exact and params.search_type != 'advanced',
                    author=rec.source or rec.author) for rec in lst]

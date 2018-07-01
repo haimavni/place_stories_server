@@ -757,7 +757,7 @@ def delete_obsolete_words():
     return '{} obsolete words were deleted'.format(num_deleted)
     
 def calc_photos_usage():
-    for p in db(db.TblPhotos.deleted!=True).select():
+    for p in db((db.TblPhotos.deleted!=True)&(db.TblPhotos.usage==None)).select():
         p.update_record(usage=0)
     n = 0
     lst = db(db.TblMemberPhotos).select(db.TblMemberPhotos.Photo_id, db.TblMemberPhotos.Photo_id.count(), groupby=[db.TblMemberPhotos.Photo_id])

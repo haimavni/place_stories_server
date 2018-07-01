@@ -156,6 +156,14 @@ class MyAuth(Auth):
                 return user
         return 'wrong-password'
     
+    def user_list(self):
+        db = inject('db')
+        lst = db(db.auth_user).select()
+        result = dict()
+        for u in lst:
+            result[u.id] = dict(name = u.first_name + ' ' + u.last_name,
+                                email = u.email)
+        return result
     
         
         
