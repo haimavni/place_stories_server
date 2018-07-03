@@ -223,9 +223,8 @@ def _get_story_list(params, exact):
     story_topics = get_story_topics()
 
     selected_topics = params.selected_topics or []
-    grouped_selected_topics = params.grouped_selected_topics or []
-    if selected_topics or grouped_selected_topics:
-        lst = get_story_list_with_topics(params, grouped_selected_topics, selected_topics, exact)
+    if selected_topics:
+        lst = get_story_list_with_topics(params, selected_topics, exact)
     else:
         q = make_stories_query(params, exact)
         if not q:
@@ -676,6 +675,17 @@ def calc_grouped_selected_options(option_list):
         result.append(groups[g])
     return result
 
+def item_list_to_grouped_options(item_list):
+    groups = dict()
+    for item in item_list:
+        if item.group_number not in groups:
+            groups[item.group_number] = []
+        groups[item.group_number].append(item.option)
+    result = []
+    for g in sorted(groups):
+        result.append(groups[g])
+    return result
+
 def get_photo_list_with_topics(vars):
     first = True
     topic_groups = calc_grouped_selected_options(vars.selected_topics)
@@ -753,10 +763,9 @@ def make_photos_query(vars):
 @serve_json
 def get_photo_list(vars):
     selected_topics = vars.selected_topics or []
-    grouped_selected_topics = vars.grouped_selected_topics or []
     mprl = vars.max_photos_per_line or 8;
     MAX_PHOTOS_COUNT = 100 + (mprl - 8) * 100
-    if selected_topics or grouped_selected_topics:
+    if selected_topics:
         lst = get_photo_list_with_topics(vars)
     else:
         q = make_photos_query(vars)
@@ -993,7 +1002,7 @@ def make_stories_query(params, exact):
         q &= (db.TblStories.last_update_date>date0)
     return q
 
-def get_story_list_with_topics(params, grouped_selected_topics, selected_topics, exact):
+def get_story_list_with_topics(params, selected_topics, exact):
     first = True
     topic_groups = calc_grouped_selected_options(selected_topics)
     dic = dict()
@@ -1079,7 +1088,8 @@ def delete_story(vars):
 
 @serve_json
 def save_tag_merges(vars):
-    gst = vars.grouped_selected_topics
+    gst = vars.selected_topics
+    gst = item_list_to_grouped_options(gst)
     for topic_group in gst:
         topic0 = topic_group[0]
         rec0 = db(db.TblTopics.id==topic0.id).select().first()
@@ -1095,7 +1105,8 @@ def save_tag_merges(vars):
             db(db.TblItemTopics.topic_id==rec.id).update(topic_id=rec0.id)
             db(db.TblTopics.id==rec.id).delete()
 
-    gsp = vars.grouped_selected_photographers
+    gsp = vars.selected_photographers
+    gsp = item_list_to_grouped_options(gsp)
     for p_group in gsp:
         p0 = p_group[0]
         rec0 = db(db.TblPhotographers.id==p0.id).select().first()
