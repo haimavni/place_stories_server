@@ -149,9 +149,19 @@ def get_member_photo_list(vars):
 def add_photographer(vars):
     photographer_name = vars.photographer_name
     if not db(db.TblPhotographers.name==photographer_name).isempty():
-        raise User_Error("photos.already-exists")
+        raise User_Error("!photos.photographer-already-exists")
     db.TblPhotographers.insert(name=photographer_name)
     ws_messaging.send_message(key='PHOTOGRAPHER_ADDED', group='ALL', photographer_name=photographer_name)
+    return dict()
+
+@serve_json
+def remove_photographer(vars):
+    photographer = vars.photographer_name;
+    raise Exception('Photographer removal not ready yet')
+
+@serve_json
+def rename_photographer(vars):
+    db(db.TblPhotographers.id==int(vars.id)).update(name=vars.name)
     return dict()
 
 @serve_json
