@@ -1089,31 +1089,33 @@ def delete_story(vars):
 @serve_json
 def save_tag_merges(vars):
     gst = vars.selected_topics
-    gst = item_list_to_grouped_options(gst)
-    for topic_group in gst:
-        topic0 = topic_group[0]
-        rec0 = db(db.TblTopics.id==topic0.id).select().first()
-        for topic in topic_group[1:]:
-            rec = db(db.TblTopics.id==topic.id).select().first()
-            if not rec.usage:
-                continue
-            for c in rec.usage:
-                if c not in rec0.usage:
-                    rec0.usage += c
-                    rec0.update_record(usage=rec0.usage)
-
-            db(db.TblItemTopics.topic_id==rec.id).update(topic_id=rec0.id)
-            db(db.TblTopics.id==rec.id).delete()
+    if gst:
+        gst = item_list_to_grouped_options(gst)
+        for topic_group in gst:
+            topic0 = topic_group[0]
+            rec0 = db(db.TblTopics.id==topic0.id).select().first()
+            for topic in topic_group[1:]:
+                rec = db(db.TblTopics.id==topic.id).select().first()
+                if not rec.usage:
+                    continue
+                for c in rec.usage:
+                    if c not in rec0.usage:
+                        rec0.usage += c
+                        rec0.update_record(usage=rec0.usage)
+    
+                db(db.TblItemTopics.topic_id==rec.id).update(topic_id=rec0.id)
+                db(db.TblTopics.id==rec.id).delete()
 
     gsp = vars.selected_photographers
-    gsp = item_list_to_grouped_options(gsp)
-    for p_group in gsp:
-        p0 = p_group[0]
-        rec0 = db(db.TblPhotographers.id==p0.id).select().first()
-        for p in p_group[1:]:
-            rec = db(db.TblPhotographers.id==p.id).select().first()
-            db(db.TblPhotos.photographer_id==rec.id).update(photographer_id=rec0.id)
-        db(db.TblPhotographers.id==rec.id).delete()
+    if gsp:
+        gsp = item_list_to_grouped_options(gsp)
+        for p_group in gsp:
+            p0 = p_group[0]
+            rec0 = db(db.TblPhotographers.id==p0.id).select().first()
+            for p in p_group[1:]:
+                rec = db(db.TblPhotographers.id==p.id).select().first()
+                db(db.TblPhotos.photographer_id==rec.id).update(photographer_id=rec0.id)
+            db(db.TblPhotographers.id==rec.id).delete()
 
     ws_messaging.send_message(key='TAGS_MERGED', group='ALL')
     return dict()
