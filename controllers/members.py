@@ -89,7 +89,7 @@ def get_member_details(vars):
         mem_id += 1
     elif vars.shift == 'prev':
         mem_id -= 1
-    member_stories = get_member_stories(mem_id)
+    member_stories = get_member_stories(mem_id) + get_member_terms(mem_id)
     member_info = get_member_rec(mem_id)
     if not member_info:
         raise User_Error('No one there')
@@ -943,6 +943,31 @@ def get_member_stories(member_id):
             story_text = story.story,
             story_preview=get_reisha(story.story, 30),
             source = event.SSource,
+            used_for=story.used_for, 
+            author_id=story.author_id,
+            creation_date=story.creation_date,
+            last_update_date=story.last_update_date
+        )
+        result.append(dic)
+    return result
+
+def get_member_terms(member_id):
+    q = (db.TblTermMembers.Member_id==member_id) & \
+        (db.TblTermMembers.term_id==db.TblTerms.id) & \
+        (db.TblTerms.story_id==db.TblStories.id) & \
+        (db.TblStories.deleted==False)
+    result = []
+    lst = db(q).select()
+    for rec in lst:
+        term = rec.TblTerms
+        story = rec.TblStories
+        dic = dict(
+            topic = term.Name,
+            name = story.name,
+            story_id = story.id,
+            story_text = story.story,
+            story_preview=get_reisha(story.story, 30),
+            ###source = term.SSource,
             used_for=story.used_for, 
             author_id=story.author_id,
             creation_date=story.creation_date,
