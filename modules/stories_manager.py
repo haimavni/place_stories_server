@@ -106,7 +106,7 @@ class Stories:
         language = guess_language(name + ' ' + story_text)
         story_text = story_text.replace('~1', '&').replace('~2', ';').replace('\n', '').replace('>', '>\n')
         now = datetime.datetime.now()
-        db, auth, STORY4EVENT, STORY4TERM, STORY4PHOTO = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO')
+        db, auth, STORY4EVENT, STORY4TERM, STORY4PHOTO, TEXT_AUDITOR = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO', 'TEXT_AUDITOR')
         source = story_info.source or auth.user_name(self.author_id)
         ###todo: handle language issues here and in update_story
         story_id = db.TblStories.insert(story=story_text, 
@@ -118,6 +118,8 @@ class Stories:
                                         creation_date=now,
                                         language=language,
                                         topic=story_info.topic,
+                                        last_version=0,
+                                        approved_version=0 if auth.user_has_privilege(TEXT_AUDITOR) else -1,
                                         last_update_date=now)
         if story_info.used_for == STORY4EVENT:
             db.TblEvents.insert(
@@ -152,7 +154,7 @@ class Stories:
         else:
             language = guess_language(updated_story_text)
         updated_story_text = updated_story_text.replace('~1', '&').replace('~2', ';').replace('\n', '').replace('>', '>\n')
-        db, auth, STORY4EVENT, STORY4TERM, STORY4PHOTO = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO')
+        db, auth, STORY4EVENT, STORY4TERM, STORY4PHOTO, TEXT_AUDITOR = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO', 'TEXT_AUDITOR')
         rec = db(db.TblStories.id==story_id).select().first()
         #if rec.language and rec.language != language:
             #rec = self.find_translation(rec, language)
@@ -160,14 +162,23 @@ class Stories:
         if rec.story != updated_story_text:
             merger = mim.Merger()
             delta = merger.diff_make(rec.story, updated_story_text)
-            rec.update_record(story=updated_story_text, name=story_info.name, source=story_info.source, last_update_date=now, updater_id=self.author_id)
-            if not rec.story:
-                return
-            db.TblStoryVersions.insert(delta=delta, 
-                                       story_id=story_id, 
-                                       creation_date=now,
-                                       author_id=self.author_id
-                                       )
+            last_version = db(db.TblStoryVersions.story_id==story_id).count() + 1
+            data = dict(
+                story=updated_story_text, 
+                name=story_info.name, 
+                source=story_info.source, 
+                last_update_date=now, 
+                updater_id=self.author_id,
+                last_version=last_version
+            )
+            if auth.user_has_privilege(TEXT_AUDITOR):
+                data['approved_version'] = last_version
+            rec.update_record(**data)
+            db.TblStoryVersions.insert(
+                delta=delta, 
+                story_id=story_id, 
+                creation_date=now,
+                author_id=self.author_id)
         elif story_info.name != rec.name or story_info.source != rec.source:
             rec.update_record(name=story_info.name, source=story_info.source, last_update_date=now, updater_id=self.author_id)
         update_story_words_index(story_id)

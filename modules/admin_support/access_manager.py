@@ -54,7 +54,7 @@ class AccessManager:
         roles = []
         for grp in self.get_groups(by_developer):
             role_title = ' '.join([z.capitalize() for z in grp.role.split('_')])
-            roles.append(dict(role=grp.role, role_title=role_title, active= auth.has_membership(grp.id, usr.id)))
+            roles.append(dict(role=grp.role, role_title=role_title, active=auth.has_membership(grp.id, usr.id)))
         result.roles = roles
         result.status = 'Unconfirmed' if result.registration_key else ''        
         return result

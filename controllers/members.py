@@ -1025,6 +1025,10 @@ def make_stories_query(params, exact):
     if params.days_since_update and params.days_since_update.value:
         date0 = datetime.datetime.now() - datetime.timedelta(days=params.days_since_update.value)
         q &= (db.TblStories.last_update_date>date0)
+    if params.approval_state.id == 2:
+        q &= (db.TblStories.last_version > db.TblStories.approved_version)
+    if params.approval_state.id == 3:
+        q &= (db.TblStories.last_version == db.TblStories.approved_version)
     return q
 
 def get_story_list_with_topics(params, selected_topics, exact):
