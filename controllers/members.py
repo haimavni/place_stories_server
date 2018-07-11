@@ -1025,9 +1025,9 @@ def make_stories_query(params, exact):
     if params.days_since_update and params.days_since_update.value:
         date0 = datetime.datetime.now() - datetime.timedelta(days=params.days_since_update.value)
         q &= (db.TblStories.last_update_date>date0)
-    if params.approval_state.id == 2:
+    if params.approval_state == 2:
         q &= (db.TblStories.last_version > db.TblStories.approved_version)
-    if params.approval_state.id == 3:
+    if params.approval_state == 3:
         q &= (db.TblStories.last_version == db.TblStories.approved_version)
     return q
 
