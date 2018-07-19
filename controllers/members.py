@@ -334,7 +334,7 @@ def get_story_detail(vars):
             photos = [p.as_dict() for p in photos]
             for p in photos:
                 p['photo_path'] = photos_folder() + p['photo_path']
-            qm = (db.TblEventMembers.Event_id==event.id) & (db.TblMembers.id==db.TblEventMembers.Member_id)
+            qm = (db.TblEventMembers.Event_id==event.id) & (db.TblMembers.id==db.TblEventMembers.Member_id) & (db.TblMembers.deleted != True)
             members = db(qm).select(*member_fields)
             members = [m for m in members]
             member_set = set([m.id for m in members])
