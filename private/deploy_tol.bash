@@ -14,7 +14,7 @@ else
         else
             if [ "$1" == "nova" ]
             then
-                BRANCH1="feature/responsive"
+                BRANCH1="flex"
                 BRANCH="master"
             fi
         fi
@@ -23,7 +23,6 @@ fi
 if [ "$BRANCH1" == "0" ]
 then
     BRANCH1=$BRANCH
-    BRANCH="master"
 fi
 
 echo -e "Deploy to branch " $BRANCH
