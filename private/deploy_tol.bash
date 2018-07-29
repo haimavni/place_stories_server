@@ -12,7 +12,7 @@ else
         then
             BRANCH="www"
         else
-            if [ "$1" == "nova" ]
+            if [ "$1" == "flex" ]
             then
                 BRANCH1="flex"
                 BRANCH="master"
