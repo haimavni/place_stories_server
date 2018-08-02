@@ -106,7 +106,10 @@ class MyAuth(Auth):
         Click <a href="http://gbstories.org/gbs__www/stories">here</a> for access manager.
         '''.format(uname=user_name, uemail=email).replace('\n', '<br>'))
         mail.send(to=receivers, subject='New GB Stories registration', message=message)
-    
+        
+    def user_has_privilege(self, privilege):
+        return self.has_membership(privilege, self.current_user())
+
     def user_language(self, language=None):
         db = self.db
         uid = self.current_user()

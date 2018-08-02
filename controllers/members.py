@@ -89,7 +89,7 @@ def get_member_details(vars):
         mem_id += 1
     elif vars.shift == 'prev':
         mem_id -= 1
-    member_stories = get_member_stories(mem_id)
+    member_stories = get_member_stories(mem_id) + get_member_terms(mem_id)
     member_info = get_member_rec(mem_id)
     if not member_info:
         raise User_Error('No one there')
@@ -334,7 +334,7 @@ def get_story_detail(vars):
             photos = [p.as_dict() for p in photos]
             for p in photos:
                 p['photo_path'] = photos_folder() + p['photo_path']
-            qm = (db.TblEventMembers.Event_id==event.id) & (db.TblMembers.id==db.TblEventMembers.Member_id)
+            qm = (db.TblEventMembers.Event_id==event.id) & (db.TblMembers.id==db.TblEventMembers.Member_id) & (db.TblMembers.deleted != True)
             members = db(qm).select(*member_fields)
             members = [m for m in members]
             member_set = set([m.id for m in members])
@@ -951,6 +951,31 @@ def get_member_stories(member_id):
         result.append(dic)
     return result
 
+def get_member_terms(member_id):
+    q = (db.TblTermMembers.Member_id==member_id) & \
+        (db.TblTermMembers.term_id==db.TblTerms.id) & \
+        (db.TblTerms.story_id==db.TblStories.id) & \
+        (db.TblStories.deleted==False)
+    result = []
+    lst = db(q).select()
+    for rec in lst:
+        term = rec.TblTerms
+        story = rec.TblStories
+        dic = dict(
+            topic = term.Name,
+            name = story.name,
+            story_id = story.id,
+            story_text = story.story,
+            story_preview=get_reisha(story.story, 30),
+            ###source = term.SSource,
+            used_for=story.used_for, 
+            author_id=story.author_id,
+            creation_date=story.creation_date,
+            last_update_date=story.last_update_date
+        )
+        result.append(dic)
+    return result
+
 def _get_story_topics():
     q = (db.TblItemTopics.story_id==db.TblStories.id) & (db.TblTopics.id==db.TblItemTopics.topic_id)
     dic = dict()
@@ -1000,6 +1025,10 @@ def make_stories_query(params, exact):
     if params.days_since_update and params.days_since_update.value:
         date0 = datetime.datetime.now() - datetime.timedelta(days=params.days_since_update.value)
         q &= (db.TblStories.last_update_date>date0)
+    if params.approval_state == 2:
+        q &= (db.TblStories.last_version > db.TblStories.approved_version)
+    if params.approval_state == 3:
+        q &= (db.TblStories.last_version == db.TblStories.approved_version)
     return q
 
 def get_story_list_with_topics(params, selected_topics, exact):
@@ -1185,7 +1214,7 @@ def save_group_members(vars):
 @serve_json
 def get_video_sample(vars):
     #temporary hard coded implementation
-    lst = ['_4USxRSf-y4', '-5F0x79j2K4', 'uwACSZ890a0', 'dfJIOa6eyfg', '1g_PlRE-YwI', '4I7BtUDPfcA', 'Cdiq5As8vCw']
+    lst = ['a-oxQD7SZ6c', '-5F0x79j2K4', 'uwACSZ890a0', 'dfJIOa6eyfg', '1g_PlRE-YwI', '4I7BtUDPfcA', 'Cdiq5As8vCw']
     return dict(video_list=lst)
 
 def save_story_members(caller_id, caller_type, member_ids):

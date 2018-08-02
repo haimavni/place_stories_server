@@ -774,3 +774,13 @@ def calc_photos_usage():
             pr.update_record(usage = pr.usage + 2)
     unused = db(db.TblPhotos.usage==0).count()
     return "{} photos were marked as relevant, {} are not.".format(n, unused)
+
+def init_story_versions():
+    n = db(db.TblStories.deleted!=True).update(last_version=0, approved_version=0)
+    lst = db(db.TblStoryVersions).select(db.TblStoryVersions.story_id, db.TblStoryVersions.story_id.count(), groupby=[db.TblStoryVersions.story_id])
+    for sv in lst:
+        story_rec = db(db.TblStories.id==sv.TblStoryVersions.story_id).select().first()
+        cnt = sv._extra['COUNT(TblStoryVersions.story_id)']
+        story_rec.update(last_version=cnt, approved_version=cnt)
+    return '{} story versions were initialized'.format(len(lst))
+    

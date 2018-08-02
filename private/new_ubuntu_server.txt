@@ -194,3 +194,6 @@ systemctl start nginx
 systemctl start emperor.uwsgi.service
 systemctl start web2py-scheduler.service
 
+To push new branch to github:
+git push -u origin branch-name
+

@@ -12,23 +12,27 @@ else
         then
             BRANCH="www"
         else
-            BRANCH="0"
+            if [ "$1" == "flex" ]
+            then
+                BRANCH1="flex"
+                BRANCH="master"
+            fi
         fi
     fi
 fi
-if [ "$BRANCH" == "0" ]
+if [ "$BRANCH1" == "0" ]
 then
-    echo -e "Branch to deploy: \c "
-    read BRANCH
-    printf "\n"
+    BRANCH1=$BRANCH
 fi
 
 echo -e "Deploy to branch " $BRANCH
+echo -d "Front branch is " $BRANCH1
 echo -e "Deploy to branch " $BRANCH >> ~/log/deploy_history.log
+echo -d "Front branch is " $BRANCH1 >> ~/log/deploy_history.log
 
 pushd ~/aurelia-gbs/gbs
 git pull
-git checkout $BRANCH
+git checkout $BRANCH1
 git pull
 
 ##git checkout $BRNACH
