@@ -261,7 +261,7 @@ def _get_story_list(params, exact):
         r.checked = False
         lst.append(r)
     user_list = auth.user_list()
-    result = [dict(story_text=rec.story,
+    result = [Storage(story_text=rec.story,
                    story_preview=get_reisha(rec.story),
                    name=rec.name, 
                    story_id=rec.id,
@@ -291,12 +291,25 @@ def get_story_list(vars):
     for i, r in enumerate(arr):
         search_kind = 'exact' if i == 0 else 'nonexact'
         for story in r:
-            k = story['used_for']
+            k = story.used_for
             active_result_types |= set([k])
             story['search_kind'] = search_kind;
+    result = result1 + result2;
+    assign_photos(result)
     active_result_types = [k for k in active_result_types]
     active_result_types = sorted(active_result_types)
-    return dict(story_list=result1 + result2, active_result_types=active_result_types)
+    return dict(story_list=result, active_result_types=active_result_types)
+
+def assign_photos(story_list):
+    photo_story_list = dict()
+    for story in story_list:
+        if story.used_for == STORY4PHOTO:
+            photo_story_list[story.story_id] = story
+    photo_story_ids = photo_story_list.keys()
+    lst = db(db.TblPhotos.story_id.belongs(photo_story_ids)).select(db.TblPhotos.story_id, db.TblPhotos.photo_path)
+    for photo in lst:
+        photo_src = photos_folder('squares') + photo.photo_path
+        photo_story_list[photo.story_id].photo_src = photo_src
 
 @serve_json
 def get_story_previews(vars):
