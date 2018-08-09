@@ -39,7 +39,6 @@ git pull
 cp index.html index-orig.html
 rm -R -f scripts/*
 rm -R -f ~/deployment_folder/*
-###python ~/aurelia-gbs/server/tol_server/private/handle_locale.py
 au build --env prod
 cp -a ./scripts ~/deployment_folder/
 ls -l ~/deployment_folder/scripts >> ~/log/deploy_history.log
