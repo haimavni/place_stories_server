@@ -40,6 +40,7 @@ cp index.html index-orig.html
 rm -R -f scripts/*
 rm -R -f ~/deployment_folder/*
 au build --env prod
+python ~/aurelia-gbs/server/tol_server/private/save_curr_version.py
 cp -a ./scripts ~/deployment_folder/
 ls -l ~/deployment_folder/scripts >> ~/log/deploy_history.log
 git br -v >> ~/log/deploy_history.log
@@ -58,6 +59,7 @@ rename aurelia aurelia_prev
 mkdir aurelia
 cd aurelia
 put -R *
+mv curr_version.tmp curr_version.txt
 " > ../server/tol_server/private/deploy.batch
 
 ssh gbstories.org rm -R -f /home/www-data/tol_server_${BRANCH}/static/aurelia_prev/*
