@@ -39,17 +39,14 @@ git pull
 cp index.html index-orig.html
 rm -R -f scripts/*
 rm -R -f ~/deployment_folder/*
-python ~/aurelia-gbs/server/tol_server/private/handle_locale.py
-au build --env tmp_env
-rm tmp_env
+###python ~/aurelia-gbs/server/tol_server/private/handle_locale.py
+au build --env prod
 cp -a ./scripts ~/deployment_folder/
 ls -l ~/deployment_folder/scripts >> ~/log/deploy_history.log
 git br -v >> ~/log/deploy_history.log
 
 cp ./index.html  ~/deployment_folder
-###python ~/aurelia-gbs/server/tol_server/private/shorten_bundle_name.py
 cp ./favicon.ico  ~/deployment_folder
-##cp -a ./locales  ~/deployment_folder
 cp -a ./images ~/deployment_folder
 cp index-orig.html index.html
 rm index-orig.html
