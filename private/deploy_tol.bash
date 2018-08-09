@@ -40,7 +40,6 @@ cp index.html index-orig.html
 rm -R -f scripts/*
 rm -R -f ~/deployment_folder/*
 au build --env prod
-python ~/aurelia-gbs/server/tol_server/private/save_curr_version.py
 cp -a ./scripts ~/deployment_folder/
 ls -l ~/deployment_folder/scripts >> ~/log/deploy_history.log
 git br -v >> ~/log/deploy_history.log
@@ -65,6 +64,16 @@ rename curr_version.tmp curr_version.txt
 
 ssh gbstories.org rm -R -f /home/www-data/tol_server_${BRANCH}/static/aurelia_prev/*
 sftp -b ../server/tol_server/private/deploy.batch gbstories.org
+
+python ~/aurelia-gbs/server/tol_server/private/save_curr_version.py
+echo "
+lcd /home/haim/deployment_folder
+cd /home/www-data/tol_server_${BRANCH}/static/aurelia
+put curr_version.txt
+rename curr_version.tmp curr_version.txt
+" > ../server/tol_server/private/deploy.batch
+sftp -b ../server/tol_server/private/deploy.batch gbstories.org
+rm curr_version.txt
 
 ssh root@gbstories.org bash /home/www-data/tol_server_${BRANCH}/private/update_${BRANCH}.bash
 rm ../server/tol_server/private/deploy.batch
