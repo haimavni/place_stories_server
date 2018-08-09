@@ -59,7 +59,8 @@ rename aurelia aurelia_prev
 mkdir aurelia
 cd aurelia
 put -R *
-mv curr_version.tmp curr_version.txt
+rm curr_version.txt
+rename curr_version.tmp curr_version.txt
 " > ../server/tol_server/private/deploy.batch
 
 ssh gbstories.org rm -R -f /home/www-data/tol_server_${BRANCH}/static/aurelia_prev/*
