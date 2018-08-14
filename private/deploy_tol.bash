@@ -40,16 +40,14 @@ cp index.html index-orig.html
 rm -R -f scripts/*
 rm -R -f ~/deployment_folder/*
 python ~/aurelia-gbs/server/tol_server/private/handle_locale.py
-au build --env tmp_env
-rm tmp_env
+au build --env tmp_env tol_server
+rm tmp_env.ts
 cp -a ./scripts ~/deployment_folder/
 ls -l ~/deployment_folder/scripts >> ~/log/deploy_history.log
 git br -v >> ~/log/deploy_history.log
 
 cp ./index.html  ~/deployment_folder
-###python ~/aurelia-gbs/server/tol_server/private/shorten_bundle_name.py
 cp ./favicon.ico  ~/deployment_folder
-##cp -a ./locales  ~/deployment_folder
 cp -a ./images ~/deployment_folder
 cp index-orig.html index.html
 rm index-orig.html
@@ -65,6 +63,14 @@ put -R *
 " > ../server/tol_server/private/deploy.batch
 
 ssh gbstories.org rm -R -f /home/www-data/tol_server_${BRANCH}/static/aurelia_prev/*
+sftp -b ../server/tol_server/private/deploy.batch gbstories.org
+
+#version file is uploaded last to prevent immature updates for users
+echo "
+lcd /home/haim/
+cd /home/www-data/tol_server_${BRANCH}/static/aurelia
+put curr_version.txt
+" > ../server/tol_server/private/deploy.batch
 sftp -b ../server/tol_server/private/deploy.batch gbstories.org
 
 ssh root@gbstories.org bash /home/www-data/tol_server_${BRANCH}/private/update_${BRANCH}.bash
