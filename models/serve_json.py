@@ -25,6 +25,8 @@ def serve_json(func):
         vars = json_to_storage(vars)
         try:
             result = func(vars)
+            if result is None:
+                result = dict()
         except HTTP, e:
             if e.status == 303:
                 return response.json(e.headers)

@@ -188,6 +188,15 @@ def get_interested_contact(vars):
     error = "" if result else mail.error
     return dict(result=result, error=error)
 
+@serve_json
+def save_feedback(vars):
+    db.TblFeedback.insert(
+        fb_bad_message=vars.feedback_bad_message,
+        fb_good_message=vars.feedback_good_message,
+        fb_code_version=vars.code_version,
+        fb_email=vars.feedback_email
+    )
+  
 def test_collect_mail():
     from collect_emails import collect_mail
     collect_mail()
