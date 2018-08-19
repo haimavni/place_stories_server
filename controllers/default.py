@@ -194,11 +194,6 @@ def save_feedback(vars):
         fb_bad_message=vars.feedback_bad_message,
         fb_good_message=vars.feedback_good_message,
         fb_code_version=vars.code_version,
-<<<<<<< HEAD
-        fb_email=vars.feedback_email
-    )
-  
-=======
         fb_email=vars.feedback_email,
         fb_name=vars.feedback_name
     )
@@ -213,7 +208,6 @@ def get_feedbacks(vars):
                       version=r.fb_code_version) for r in lst]
     return dict(feedbacks=feedbacks)
 
->>>>>>> test
 def test_collect_mail():
     from collect_emails import collect_mail
     collect_mail()
