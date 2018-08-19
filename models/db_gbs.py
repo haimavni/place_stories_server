@@ -354,6 +354,13 @@ db.define_table('TblPageHits',
                 Field('new_count', type='integer', default=0)
                 )
 
+db.define_table('TblFeedback',
+                Field('fb_code_version', type='string'), 
+                Field('fb_bad_message', type='text'),
+                Field('fb_good_message', type='text'),
+                Field('fb_email', type='string')
+                )
+
 def write_indexing_sql_scripts():
     '''Creates a set of indexes if they do not exist.
        In a terminal, su postgres and issue the command
