@@ -784,3 +784,5 @@ def init_story_versions():
         story_rec.update(last_version=cnt, approved_version=cnt)
     return '{} story versions were initialized'.format(len(lst))
     
+def init_database():
+    return "database initialized"
