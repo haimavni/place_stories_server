@@ -358,7 +358,12 @@ db.define_table('TblFeedback',
                 Field('fb_code_version', type='string'), 
                 Field('fb_bad_message', type='text'),
                 Field('fb_good_message', type='text'),
+<<<<<<< HEAD
                 Field('fb_email', type='string')
+=======
+                Field('fb_email', type='string'),
+                Field('fb_name', type='string')
+>>>>>>> test
                 )
 
 def write_indexing_sql_scripts():
