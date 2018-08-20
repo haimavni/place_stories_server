@@ -195,7 +195,9 @@ def save_feedback(vars):
         fb_good_message=vars.feedback_good_message,
         fb_code_version=vars.code_version,
         fb_email=vars.feedback_email,
-        fb_name=vars.feedback_name
+        fb_name=vars.feedback_name,
+        fb_device_type=vars.device_type,
+        fb_device_details=vars.device_details
     )
 
 @serve_json
@@ -205,7 +207,9 @@ def get_feedbacks(vars):
                       email=r.fb_email,
                       bad=r.fb_bad_message,
                       good=r.fb_good_message,
-                      version=r.fb_code_version) for r in lst]
+                      version=r.fb_code_version,
+                      device_type=r.fb_device_type,
+                      device_details=r.fb_device_details) for r in lst]
     return dict(feedbacks=feedbacks)
 
 def test_collect_mail():
