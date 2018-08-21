@@ -1,5 +1,6 @@
 import PIL
 from PIL import Image, ImageFile
+import dhash
 from injections import inject
 import os
 import datetime
@@ -14,6 +15,7 @@ from stories_manager import Stories
 
 MAX_WIDTH = 1200
 MAX_HEIGHT = 800
+DHASH_SIZE = 8
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -122,6 +124,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
         img.save(path + file_name)
         fix_owner(path)
         fix_owner(path + file_name)
+        dhash_value = dhash_photo(img=img)
     except Exception, e:
         log_exception("saving photo {} failed".format(original_file_name))
         return 'failed'
@@ -139,6 +142,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
         width=width,
         height=height,
         crc=crc,
+        dhash=dhash_value,
         oversize=oversize,
         photo_missing=False,
         deleted=False,
@@ -228,6 +232,36 @@ def scan_all_unscanned_photos():
         done = db((db.TblPhotos.width>0) & (db.TblPhotos.deleted!=True)).count()
         total = db((db.TblPhotos) & (db.TblPhotos.deleted!=True)).count()
     return dict(done=done, total=total, missing=missing, to_scan=to_scan, failed_crops=failed_crops)
+
+def calc_missing_dhash_values(max_to_hash=20000):
+    db, comment = inject('db', 'comment')
+    q = (db.TblPhotos.dhash==None) & (db.TblPhotos.photo_missing == False) & (db.TblPhotos.deleted!=True)
+    to_scan = db(q).count()
+    comment("{} photos still have no dhash value", to_scan)
+    chunk = 100
+    folder = local_photos_folder()
+    done = 0
+    while True:
+        comment('started dhashing chunk of photos')
+        lst = db(q).select(limitby=(0, chunk))
+        if not len(lst):
+            comment('No more undhashed photos found!')
+            break
+        for rec in lst:
+            if not rec.photo_path:
+                continue
+            fname = folder + rec.photo_path
+            if not os.path.exists(fname):
+                rec.update_record(photo_missing=True)
+                continue
+            dhash_value = dhash_photo(photo_path=fname)
+            rec.update_record(dhash=dhash_value)
+            done += 1
+        db.commit()
+        if done > max_to_hash:
+            break
+    to_scan = db(q).count()    
+    return  '{} photo records dhashed. {} need to be dhashed.'.format(done, to_scan)
 
 def photos_folder(what="orig"): 
     #what may be orig, squares,images or profile_photos. (images is for customer-specific images such as logo)
@@ -353,3 +387,8 @@ def fix_owner(file_name):
     uid, gid = pwd.getpwnam('www-data')[2:4]
     os.chown(file_name, uid, gid)
 
+def dhash_photo(photo_path=None, img=None):
+    if not img:
+        img = Image.open(photo_path)
+    row_hash, col_hash = dhash.dhash_row_col(img)
+    return dhash.format_hex(row_hash, col_hash)

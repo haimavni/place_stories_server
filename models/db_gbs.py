@@ -279,7 +279,7 @@ db.define_table('TblPhotos',
                 Field('random_photo_key', type='integer'),
                 Field('deleted', type='boolean', default=False),
                 Field('crc', type='integer'),
-                Field('dhash', type='integer'),
+                Field('dhash', type='string'),
                 Field('usage', type='integer', default=0) #1=has identified members 2=has assigned tags 3=both
 )
 
