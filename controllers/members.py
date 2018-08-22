@@ -1271,7 +1271,10 @@ def save_photo_group(vars):
     if not tbl:
         raise Exception('Unknown call type in save photo group')
     item_id = db(tbl.story_id==story_id).select().first().id
-    qp = (db.TblEventPhotos.Event_id==item_id) & (db.TblEventPhotos.Photo_id==db.TblPhotos.id) & (db.TblPhotos.deleted!=True)
+    if vars.caller_type == "story":
+        qp = (db.TblEventPhotos.Event_id==item_id) & (db.TblEventPhotos.Photo_id==db.TblPhotos.id) & (db.TblPhotos.deleted!=True)
+    elif vars.caller_type == "term":
+        qp = (db.TblTermPhotos.term_id==item_id) & (db.TblTermPhotos.Photo_id==db.TblPhotos.id) & (db.TblPhotos.deleted!=True)
     old_photos = db(qp).select(db.TblPhotos.id)
     old_photos = [p.id for p in old_photos]
     photo_ids = vars.photo_ids

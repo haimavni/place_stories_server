@@ -202,7 +202,7 @@ def save_feedback(vars):
 
 @serve_json
 def get_feedbacks(vars):
-    lst = db(db.TblFeedback).select(limitby=(0,200))
+    lst = db(db.TblFeedback).select(limitby=(0,200), orderby=~db.TblFeedback.id)
     feedbacks = [dict(name=r.fb_name,
                       email=r.fb_email,
                       bad=r.fb_bad_message,

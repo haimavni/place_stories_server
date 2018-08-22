@@ -392,3 +392,22 @@ def dhash_photo(photo_path=None, img=None):
         img = Image.open(photo_path)
     row_hash, col_hash = dhash.dhash_row_col(img)
     return dhash.format_hex(row_hash, col_hash)
+
+def find_similar_photos():
+    dic = {}
+    dups = {}
+    db = inject('db')
+    lst = db((db.TblPhotos.width>0)&(db.TblPhotos.deleted!=True)&(db.TblPhotos.photo_missing!=True)).select()
+    for rec in lst:
+        if rec.dhash in dic:
+            dic[rec.dhash].append(rec.id)
+            dups[rec.dhash] = dic[rec.dhash]
+        else:
+            dic[rec.dhash] = [rec.id]
+    dup_list = []
+    for dh in dups:
+        pids = dups[dh]
+        lst = db(db.TblPhotos.id.belongs(pids)).select()
+        lst = [(r.photo_path, r.crc) for r in lst]
+        dup_list.append(lst)
+    return dup_list
