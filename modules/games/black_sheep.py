@@ -76,8 +76,10 @@ def main():
     white_locs = set([00,01,02,100,101,11,110,111,12,21,22])
     i = 0
     for steps in solve(white_locs, black_loc):
-        print i, ') ', steps
-        if i > 3333:
+        print '\nSolution #{}'.format(i)
+        for step in steps:
+            print '{:3} --> {:3}'.format(step[1], step[2])
+        if i > 3:
             break;
         i += 1
     print "finito"
