@@ -1,20 +1,20 @@
 raws = [
     #horizontal
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
+    [00, 01, 02],
+    [10, 11, 12],
+    [20, 21, 22],
     #vertical
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
+    [00, 10, 20],
+    [01, 11, 21],
+    [02, 12, 22],
     #diagonal nw-se
-    [0, 9, 4, 12, 8],
-    [1, 10, 5],
-    [3, 11, 7],
+    [00, 100, 11, 111, 22],
+    [01, 101, 12],
+    [10, 110, 21],
     #diagonal sw-ne
-    [2, 10, 4, 11, 6],
-    [1, 9, 3],
-    [5, 12, 7]
+    [20, 110, 11, 101, 20],
+    [01, 100, 10],
+    [12, 111, 21]
 ]
 
 def index_of_first(lst, pred):
@@ -55,9 +55,10 @@ def solve(white_locs, black_loc, steps = None):
         for step in potential_steps:
             new_white_locs, new_black_loc = apply_step(white_locs, black_loc, step)
             if len(new_white_locs) == 0:
-                emit_solution(steps + [step])
+                yield(steps + [step])
             else:
-                solve(new_white_locs, new_black_loc, steps + [step])
+                for steps in solve(new_white_locs, new_black_loc, steps + [step]):
+                    yield(steps)
 
 def apply_step(white_locs, black_loc, step):
     black, removed, remover, target = step
@@ -70,14 +71,15 @@ def apply_step(white_locs, black_loc, step):
         new_white_locs |= set([target])
     return new_white_locs, new_black_loc
 
-def emit_solution(steps):
-    print steps
-
-
 def main():
-    black_loc = 5;
-    white_locs = set([0,1,2,9,10,4,11,12,6,7,8])
-    solve(white_locs, black_loc)
+    black_loc = 12;
+    white_locs = set([00,01,02,100,101,11,110,111,12,21,22])
+    i = 0
+    for steps in solve(white_locs, black_loc):
+        print i, ') ', steps
+        if i > 3333:
+            break;
+        i += 1
     print "finito"
 
 if __name__ == "__main__"    :
