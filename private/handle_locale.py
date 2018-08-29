@@ -3,6 +3,7 @@ import zlib
 from distutils import dir_util
 from shutil import copyfile
 import datetime
+import sys
 
 os.chdir("/home/haim/aurelia-gbs/gbs")
 cwd = os.getcwd()
@@ -35,15 +36,17 @@ s = str(datetime.datetime.now())[:16]
 with open('/home/haim/curr_version.txt', 'w') as f:
     f.write(s)
     
+debug = 'true' if sys.argv[1] in ['master', 'test'] else 'false'
+    
 env = '''
 export default {{
-    debug: false,
+    debug: {},
     testing: false,
     baseURL: '',
     version: '{}',
     i18n_ver: '{:0x}'
 }};
-'''.format(s, combined_crc & 0xffffffff) 
+'''.format(debug, s, combined_crc & 0xffffffff) 
 
 with open('aurelia_project/environments/tmp_env.ts', mode='w') as f:
     f.write(env)
