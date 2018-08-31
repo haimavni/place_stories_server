@@ -12,7 +12,7 @@ raws = [
     [01, 101, 12],
     [10, 110, 21],
     #diagonal sw-ne
-    [20, 110, 11, 101, 20],
+    [20, 110, 11, 101, 02],
     [01, 100, 10],
     [12, 111, 21]
 ]
@@ -78,7 +78,7 @@ def main():
     for steps in solve(white_locs, black_loc):
         print '\nSolution #{}'.format(i)
         for step in steps:
-            print '{:3} --> {:3}'.format(step[1], step[2])
+            print '{:3} --> {:3}'.format(step[2], step[3])
         if i > 3:
             break;
         i += 1
