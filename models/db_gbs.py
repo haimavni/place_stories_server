@@ -9,7 +9,8 @@ STORY4TERM = 4
 STORY4MESSAGE = 5
 STORY4HELP = 6
 STORY4FEEDBACK = 7
-STORY4USER = [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM]
+STORY4VIDEO = 8
+STORY4USER = [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO]
 
 VIS_NEVER = 0           #for non existing members such as the child of a childless couple (it just connects them)
 VIS_NOT_READY = 1
@@ -301,7 +302,12 @@ db.define_table('TblVideos',
                 Field('type', type='string'),
                 Field('src', type='string'),
                 Field('topic_id', type=db.TblTopics),
+                Field('story_id', type=db.TblStories),
                 Field('contributor', type=db.auth_user),
+                Field('video_date', type='date', default=NO_DATE),
+                Field('video_date_dateunit', type='string', default='Y'), # D, M or Y for day, month, year
+                Field('video_date_datespan', type='integer', default=1), # how many months or years in the range
+                Field('touch_time', type='date', default=NO_DATE), #used to promote videos
                 Field('upload_date', type='datetime')
                 )
 

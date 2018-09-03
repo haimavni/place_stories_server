@@ -1230,6 +1230,28 @@ def get_video_sample(vars):
     lst = ['a-oxQD7SZ6c', '-5F0x79j2K4', 'uwACSZ890a0', 'dfJIOa6eyfg', '1g_PlRE-YwI', '4I7BtUDPfcA', 'Cdiq5As8vCw']
     return dict(video_list=lst)
 
+@serve_json
+def save_video(vars):
+    pat = r'https://www.youtube.com/watch\?v=([^&]+)'
+    m = re.search(pat, vars.video_address)
+    if not m:
+        raise Exception('videos.unknown-video-type')
+    src = m.groups()[0]
+    sm = stories_manager.Stories()
+    story_info = sm.get_empty_story(used_for=STORY4VIDEO, story_text="", name=vars.video_name)
+    result = sm.add_story(story_info)
+    story_id = result.story_id
+    data = dict(
+        type='youtube',
+        name=vars.video_name,
+        src=vars.video_address,
+        story_id=story_id,
+        contributor=vars.user_id,
+        upload_date=datetime.datetime.now()
+    )
+    db.TblVideos.insert(**data)
+    return dict()
+    
 def save_story_members(caller_id, caller_type, member_ids):
     if caller_type == "story":
         tbl = db.TblEvents
