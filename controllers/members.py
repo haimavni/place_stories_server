@@ -1232,20 +1232,24 @@ def get_video_sample(vars):
 
 @serve_json
 def save_video(vars):
+    #https://photos.app.goo.gl/TndZ4fgyih57pmzS6 - shared google photos
     pats = dict(
-        youtube=r'https://www.youtube.com/watch\?v=([^&]+)',
-        vimeo=r'https://vimeo.com/(\d+)'
+        youtube=r'https://(?:www.youtube.com/watch\?v=|youtu\.be/)(?P<code>[^&]+)',
+        vimeo=r'https://vimeo.com/(?P<code>\d+)'
     )
     src = None
     for t in pats:
         pat = pats[t]
         m = re.search(pat, vars.video_address)
         if m:
-            src = m.groups()[0]
+            src = m.groupdict()['code']
             typ = t
             break
     if not src:
-        raise Exception('videos.unknown-video-type')
+        raise User_Error('!videos.unknown-video-type')
+    q = (db.TblVideos.src==src) & (db.TblVideos.video_type==typ)
+    if db(q).count() > 0:
+        raise User_Error('!videos.duplicate')
     sm = stories_manager.Stories()
     story_info = sm.get_empty_story(used_for=STORY4VIDEO, story_text="", name=vars.video_name)
     result = sm.add_story(story_info)
@@ -1258,6 +1262,7 @@ def save_video(vars):
         contributor=vars.user_id,
         upload_date=datetime.datetime.now()
     )
+    ws_messaging.send_message(key='NEW-VIDEO', group='ALL', new_video_rec=data)
     db.TblVideos.insert(**data)
     return dict(new_video_rec=data)
 
