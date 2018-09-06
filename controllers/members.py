@@ -1276,10 +1276,36 @@ def save_video(vars):
 
 @serve_json
 def get_video_list(vars):
-    lst = db(db.TblVideos.deleted != True).select()
+    q = make_videos_query(vars)
+    lst = db(q).select()
+    ##lst = db(db.TblVideos.deleted != True).select()
     video_list = [rec for rec in lst]
     return dict(video_list=video_list)
-    
+
+def make_videos_query(vars):
+    q = (db.TblVideos.deleted!=True)
+    photographer_list = [p.option.id for p in vars.selected_photographers] if vars.selected_photographers else []
+    if len(photographer_list) > 0:
+        q &= db.TblVideos.photographer_id.belongs(photographer_list)
+    if vars.selected_days_since_upload:
+        days = vars.selected_days_since_upload.value
+        if days:
+            upload_date = datetime.datetime.today() - datetime.timedelta(days=days)
+            q &= (db.TblVideos.upload_date >= upload_date)
+    opt = vars.selected_uploader
+    if opt == 'mine':
+        q &= (db.TblVideos.uploader==vars.user_id)
+    elif opt == 'users':
+        q &= (db.TblVideos.uploader!=None)
+    opt = vars.selected_dates_option
+    if opt == 'selected_dates_option':
+        pass
+    elif opt == 'dated':
+        q &= (db.TblVideos.video_date != NO_DATE)
+    elif opt == 'undated':
+        q &= (db.TblVideos.video_date == NO_DATE)
+    return q
+
 def save_story_members(caller_id, caller_type, member_ids):
     if caller_type == "story":
         tbl = db.TblEvents
