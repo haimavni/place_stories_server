@@ -1209,7 +1209,7 @@ def apply_to_selected_photos(vars):
             kind = rec1.kind or ''
             if not 'P' in kind:
                 kind += 'P'
-                rec1.update(kind=kind)
+                rec1.update_record(kind=kind)
         if dates_info:
             update_record_dates(rec, dates_info)
     ws_messaging.send_message('PHOTO-TAGS-CHANGED', added=added, deleted=deleted)
@@ -1350,7 +1350,7 @@ def apply_to_selected_videos(vars):
             kind = rec1.kind or ''
             if not 'V' in kind:
                 kind += 'V'
-                rec1.update(kind=kind)
+                rec1.update_record(kind=kind)
         if dates_info:
             update_record_dates(rec, dates_info)
     ws_messaging.send_message('VIDEO-TAGS-CHANGED', added=added, deleted=deleted)
