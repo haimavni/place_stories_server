@@ -244,7 +244,8 @@ db.define_table('TblObjects',
 )
 
 db.define_table('TblPhotographers',
-                Field('name', type='string')
+                Field('name', type='string'),
+                Field('kind', type='string') #P=photograps, V=video, PV=both
 )
 
 db.define_table('TblPhotos',
@@ -299,9 +300,11 @@ db.define_table('TblItemTopics',
 
 db.define_table('TblVideos',
                 Field('name', type='string'),
+                Field('keywords', type='string'),
                 Field('video_type', type='string'),
                 Field('src', type='string'),
                 Field('deleted', type='boolean', default=False),
+                Field('photographer_id', db.TblPhotographers),
                 Field('topic_id', type=db.TblTopics),
                 Field('story_id', type=db.TblStories),
                 Field('contributor', type=db.auth_user),

@@ -828,7 +828,7 @@ def get_topic_list(vars):
         usage = vars.usage
     elif vars.params:
         usage = ""
-        topic_chars = 'xMEPTV'
+        topic_chars = 'xMEPTxV'
         story_types = vars.params.selected_story_types
         story_types = [st.id for st in story_types]
         for t in story_types:
@@ -846,7 +846,10 @@ def get_topic_list(vars):
         q &= q1
     topic_list = db(q).select(orderby=db.TblTopics.name)
     topic_list = [dict(name=rec.name, id=rec.id) for rec in topic_list if rec.name]
-    photographer_list = db(db.TblPhotographers).select(orderby=db.TblPhotographers.name)
+    q = db.TblPhotographers.id > 0
+    if usage in ('P', 'V'):
+        q &= (db.TblPhotographers.kind == usage)
+    photographer_list = db(q).select(orderby=db.TblPhotographers.name)
     photographer_list = [dict(name=rec.name, id=rec.id) for rec in photographer_list if rec.name]
     return dict(topic_list=topic_list, photographer_list=photographer_list)
 
@@ -1202,6 +1205,11 @@ def apply_to_selected_photos(vars):
         rec.update_record(KeyWords=keywords)
         if photographer_id:
             rec.update_record(photographer_id=photographer_id)
+            rec1 = db(db.TblPhotographers.id==photographer_id).select().first()
+            kind = rec1.kind or ''
+            if not 'P' in kind:
+                kind += 'P'
+                rec1.update(kind=kind)
         if dates_info:
             update_record_dates(rec, dates_info)
     ws_messaging.send_message('PHOTO-TAGS-CHANGED', added=added, deleted=deleted)
@@ -1296,6 +1304,56 @@ def save_story_members(caller_id, caller_type, member_ids):
                 tbl1.insert(Member_id=m, Event_id=item.id)
             else:
                 tbl1.insert(Member_id=m, term_id=item.id)
+    return dict()
+
+@serve_json
+def apply_to_selected_videos(vars):
+    all_tags = calc_all_tags()
+    svl = vars.selected_video_list
+    plist = vars.selected_photographers
+    if len(plist) == 1:
+        photographer_id = plist[0].option.id
+    else:
+        photographer_id = None
+    photos_date_str = vars.photos_date_str
+    if photos_date_str:
+        dates_info = dict(
+            photo_date = (photos_date_str, vars.photos_date_span_size)
+        )
+    else:
+        dates_info = None
+
+    st = vars.selected_topics
+    added = []
+    deleted = []
+    for vid in svl:
+        curr_tag_ids = set(get_tag_ids(vid, "V"))
+        for tpc in st:
+            topic = tpc.option
+            item = dict(item_id=vid, topic_id=topic.id)
+            if topic.sign=="plus" and topic.id not in curr_tag_ids:
+                new_id = db.TblItemTopics.insert(item_type="V", item_id=vid, topic_id=topic.id) 
+                curr_tag_ids |= set([topic.id])
+                added.append(item)
+            elif topic.sign=="minus" and topic.id in curr_tag_ids:
+                q = (db.TblItemTopics.item_type=="V") & (db.TblItemTopics.item_id==vid) & (db.TblItemTopics.topic_id==topic.id)
+                curr_tag_ids -= set([topic.id])
+                deleted.append(item)
+                db(q).delete()
+        curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
+        keywords = "; ".join(curr_tags)
+        rec = db(db.TblVideos.id==vid).select().first()
+        rec.update_record(keywords=keywords)
+        if photographer_id:
+            rec.update_record(photographer_id=photographer_id)
+            rec1 = db(db.TblPhotographers.id==photographer_id).select().first()
+            kind = rec1.kind or ''
+            if not 'V' in kind:
+                kind += 'V'
+                rec1.update(kind=kind)
+        if dates_info:
+            update_record_dates(rec, dates_info)
+    ws_messaging.send_message('VIDEO-TAGS-CHANGED', added=added, deleted=deleted)
     return dict()
 
 @serve_json
