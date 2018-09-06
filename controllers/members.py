@@ -1194,10 +1194,15 @@ def apply_to_selected_photos(vars):
                 new_id = db.TblItemTopics.insert(item_type="P", item_id=pid, topic_id=topic.id) #todo: story_id=???
                 curr_tag_ids |= set([topic.id])
                 added.append(item)
+                topic_rec = db(db.TblTopics.id==topic.id).select().first()
+                if 'P' not in topic_rec.usage:
+                    usage = topic_rec.usage + 'P'
+                    topic_rec.update_record(usage=usage)
             elif topic.sign=="minus" and topic.id in curr_tag_ids:
                 q = (db.TblItemTopics.item_type=="P") & (db.TblItemTopics.item_id==pid) & (db.TblItemTopics.topic_id==topic.id)
                 curr_tag_ids -= set([topic.id])
                 deleted.append(item)
+                #should remove 'P' from usage if it was the last one...
                 db(q).delete()
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         keywords = "; ".join(curr_tags)
@@ -1276,11 +1281,42 @@ def save_video(vars):
 
 @serve_json
 def get_video_list(vars):
-    q = make_videos_query(vars)
-    lst = db(q).select()
+    selected_topics = vars.selected_topics or []
+    if selected_topics:
+        lst = get_video_list_with_topics(vars)
+    else:
+        q = make_videos_query(vars)
+        lst = db(q).select()
     ##lst = db(db.TblVideos.deleted != True).select()
     video_list = [rec for rec in lst]
     return dict(video_list=video_list)
+
+def get_video_list_with_topics(vars):
+    first = True
+    topic_groups = calc_grouped_selected_options(vars.selected_topics)
+    for topic_group in topic_groups:
+        q = make_videos_query(vars) #if we do not regenerate it the query becomes accumulated and necessarily fails
+        q &= (db.TblItemTopics.item_id==db.TblVideos.id) & (db.TblItemTopics.item_type.like('%V%'))
+        ##topic_ids = [t.id for t in topic_group]
+        sign = topic_group[0]
+        topic_group = topic_group[1:]
+        q1 = db.TblItemTopics.topic_id.belongs(topic_group)
+        if sign == 'minus':
+            q1 = ~q1
+        q &= q1
+        lst = db(q).select()
+        lst = [rec.TblVideos for rec in lst]
+        bag1 = set(r.id for r in lst)
+        if first:
+            first = False
+            bag = bag1
+        else:
+            bag &= bag1
+    dic = {}
+    for r in lst:
+        dic[r.id] = r
+    result = [dic[id] for id in bag]
+    return result
 
 def make_videos_query(vars):
     q = (db.TblVideos.deleted!=True)
@@ -1361,6 +1397,10 @@ def apply_to_selected_videos(vars):
                 new_id = db.TblItemTopics.insert(item_type="V", item_id=vid, topic_id=topic.id) 
                 curr_tag_ids |= set([topic.id])
                 added.append(item)
+                topic_rec = db(db.TblTopics.id==topic.id).select().first()
+                if 'V' not in topic_rec.usage:
+                    usage = topic_rec.usage + 'V'
+                    topic_rec.update_record(usage=usage)
             elif topic.sign=="minus" and topic.id in curr_tag_ids:
                 q = (db.TblItemTopics.item_type=="V") & (db.TblItemTopics.item_id==vid) & (db.TblItemTopics.topic_id==topic.id)
                 curr_tag_ids -= set([topic.id])
