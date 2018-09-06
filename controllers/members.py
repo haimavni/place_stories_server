@@ -1287,6 +1287,18 @@ def get_video_list(vars):
     else:
         q = make_videos_query(vars)
         lst = db(q).select()
+    selected_video_list = vars.selected_video_list
+    result = []
+    if selected_video_list:
+        lst1 = db(db.TblVideos.id.belongs(selected_video_list)).select()
+        lst1 = [rec for rec in lst1]
+        for rec in lst1:
+            rec.selected = True
+    else:
+        lst1 = []
+    lst1_ids = [rec.id for rec in lst1]
+    lst = [rec for rec in lst if rec.id not in lst1_ids]
+    lst = lst1 + lst
     ##lst = db(db.TblVideos.deleted != True).select()
     video_list = [rec for rec in lst]
     return dict(video_list=video_list)
