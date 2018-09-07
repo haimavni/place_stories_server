@@ -4,7 +4,7 @@ from gluon.utils import web2py_uuid
 from my_cache import Cache
 import ws_messaging
 from http_utils import json_to_storage
-from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates
+from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
 import datetime
 import os
 from dal_utils import insert_or_update
@@ -848,7 +848,7 @@ def get_topic_list(vars):
     topic_list = [dict(name=rec.name, id=rec.id) for rec in topic_list if rec.name]
     q = db.TblPhotographers.id > 0
     if usage in ('P', 'V'):
-        q &= (db.TblPhotographers.kind == usage)
+        q &= db.TblPhotographers.kind.like('%' + usage + '%')
     photographer_list = db(q).select(orderby=db.TblPhotographers.name)
     photographer_list = [dict(name=rec.name, id=rec.id) for rec in photographer_list if rec.name]
     return dict(topic_list=topic_list, photographer_list=photographer_list)
@@ -1246,38 +1246,76 @@ def get_video_sample(vars):
 @serve_json
 def save_video(vars):
     #https://photos.app.goo.gl/TndZ4fgyih57pmzS6 - shared google photos
-    pats = dict(
-        youtube=r'https://(?:www.youtube.com/watch\?v=|youtu\.be/)(?P<code>[^&]+)',
-        vimeo=r'https://vimeo.com/(?P<code>\d+)'
-    )
-    src = None
-    for t in pats:
-        pat = pats[t]
-        m = re.search(pat, vars.video_address)
-        if m:
-            src = m.groupdict()['code']
-            typ = t
-            break
-    if not src:
-        raise User_Error('!videos.unknown-video-type')
-    q = (db.TblVideos.src==src) & (db.TblVideos.video_type==typ)
-    if db(q).count() > 0:
-        raise User_Error('!videos.duplicate')
-    sm = stories_manager.Stories()
-    story_info = sm.get_empty_story(used_for=STORY4VIDEO, story_text="", name=vars.video_name)
-    result = sm.add_story(story_info)
-    story_id = result.story_id
-    data = dict(
-        video_type=typ,
-        name=vars.video_name,
-        src=src,
-        story_id=story_id,
-        contributor=vars.user_id,
-        upload_date=datetime.datetime.now()
-    )
-    ws_messaging.send_message(key='NEW-VIDEO', group='ALL', new_video_rec=data)
-    db.TblVideos.insert(**data)
-    return dict(new_video_rec=data)
+    user_id = vars.user_id
+    params = vars.params
+    date_info = dict(video_date=(params.video_date_datestr, params.video_date_datespan))
+    if not params.id: #creation, not modification
+        pats = dict(
+            youtube=r'https://(?:www.youtube.com/watch\?v=|youtu\.be/)(?P<code>[^&]+)',
+            vimeo=r'https://vimeo.com/(?P<code>\d+)'
+        )
+        src = None
+        for t in pats:
+            pat = pats[t]
+            m = re.search(pat, params.src)
+            if m:
+                src = m.groupdict()['code']
+                typ = t
+                break
+        if not src:
+            raise User_Error('!videos.unknown-video-type')
+        q = (db.TblVideos.src==src) & (db.TblVideos.video_type==typ) & (db.TblVideos.deleted!=True)
+        if db(q).count() > 0:
+            raise User_Error('!videos.duplicate')
+        sm = stories_manager.Stories()
+        story_info = sm.get_empty_story(used_for=STORY4VIDEO, story_text="", name=params.name)
+        result = sm.add_story(story_info)
+        story_id = result.story_id
+        data = dict(
+            video_type=typ,
+            name=params.name,
+            src=src,
+            story_id=story_id,
+            contributor=user_id,
+            upload_date=datetime.datetime.now()
+        )
+        vid = db.TblVideos.insert(**data)
+        if params.video_date_datestr:
+            rec = db(db.TblVideos.id==vid).select().first()
+            date_data = dict(
+                video_date_datestr=params.video_date_datestr,
+                video_date_datespan=params.video_date_span
+            )
+            date_data_in = fix_record_dates_in(rec, date_data)
+            rec.update_record(**date_data_in)
+        ###update_record_dates(rec, date_info)
+        ws_messaging.send_message(key='NEW-VIDEO', group='ALL', new_video_rec=data)
+    else:
+        old_rec = db(db.TblVideos.id==params.id).select().first()
+        del params['src'] #
+        #data = dict()
+        #for fld in old_rec:
+            #if fld in ('src', 'update_record', 'delete_record'):
+                #continue
+            #if old_rec[fld] != params[fld]:
+                #data[fld] = params[fld]
+        data = params
+        if data:
+            data_in = fix_record_dates_in(old_rec, data)
+            old_rec.update_record(**data_in)
+            update_record_dates(old_rec, date_info)
+            if 'name' in data:
+                sm = stories_manager.Stories()
+                story_info = sm.get_story(old_rec.story_id)
+                story_info.name = params.name
+                sm.update_story(old_rec.story_id, story_info)
+                ws_messaging.send_message(key='VIDEO-INFO-CHANGED', group='ALL', changes=data)
+    return dict()
+
+@serve_json
+def delete_video(vars):
+    n = db(db.TblVideos.id==vars.video_id).update(deleted=True)
+    return dict()
 
 @serve_json
 def get_video_list(vars):
@@ -1301,8 +1339,10 @@ def get_video_list(vars):
     lst = lst1 + lst
     ##lst = db(db.TblVideos.deleted != True).select()
     video_list = [rec for rec in lst]
+    for rec in video_list:
+        fix_record_dates_out(rec)
     return dict(video_list=video_list)
-
+    
 def get_video_list_with_topics(vars):
     first = True
     topic_groups = calc_grouped_selected_options(vars.selected_topics)
@@ -1389,10 +1429,9 @@ def apply_to_selected_videos(vars):
         photographer_id = plist[0].option.id
     else:
         photographer_id = None
-    photos_date_str = vars.photos_date_str
-    if photos_date_str:
+    if vars.photos_date_str:
         dates_info = dict(
-            photo_date = (photos_date_str, vars.photos_date_span_size)
+            photo_date = (vars.photos_date_str, vars.photos_date_span_size)
         )
     else:
         dates_info = None

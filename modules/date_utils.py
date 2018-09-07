@@ -78,6 +78,37 @@ def date_of_date_str(date_str):
     d = int(ds)
     return date_str, datetime.date(day=d, month=m, year=y)
 
+def fix_record_dates_out(rec):
+    all_dates = get_all_dates(rec)
+    for fld in all_dates:
+        rec[fld + DATE_STR_SUFFIX] = all_dates[fld].date
+        rec[fld + DATE_SPAN_SUFFIX] = all_dates[fld].span
+        
+def fix_record_dates_in(rec, data):
+    result = dict()
+    date_fields = set([])
+    for fld_name in rec:
+        if fld_name.endswith(DATE_UNIT_SUFFIX):
+            date_fld = fld_name[:-len(DATE_UNIT_SUFFIX)]
+            span_fld = date_fld + DATE_SPAN_SUFFIX
+            date_fields |= set([fld_name, date_fld, span_fld])
+    for fld_name in rec:
+        if fld_name in date_fields:
+            if fld_name.endswith(DATE_UNIT_SUFFIX):
+                date_fld = fld_name[:-len(DATE_UNIT_SUFFIX)]
+                date_str_fld = date_fld + DATE_STR_SUFFIX
+                if date_str_fld not in data:
+                    continue
+                date_str = data[date_str_fld]
+                date_unit, date = parse_date(date_str)
+                result[fld_name] = date_unit  #unit
+                result[date_fld] = date       #base date
+                span_fld = date_fld + DATE_SPAN_SUFFIX
+                result[span_fld] = data[span_fld]
+        elif fld_name in data:
+            result[fld_name] = data[fld_name]
+    return result
+            
 def update_record_dates(rec, dates_info):
     data = dict()
     for date_fld in dates_info:
