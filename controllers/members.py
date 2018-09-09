@@ -1288,6 +1288,9 @@ def save_video(vars):
             )
             date_data_in = fix_record_dates_in(rec, date_data)
             rec.update_record(**date_data_in)
+            data.update(video_date_datestr=params.video_date_datestr, video_date_datespan=params.video_date_datespan)
+        else:
+            data.update(video_date_datestr='1', video_date_datespan=0)
         ###update_record_dates(rec, date_info)
         ws_messaging.send_message(key='NEW-VIDEO', group='ALL', new_video_rec=data)
     else:
