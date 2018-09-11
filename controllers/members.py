@@ -302,14 +302,22 @@ def get_story_list(vars):
 
 def assign_photos(story_list):
     photo_story_list = dict()
+    video_story_list = dict()
     for story in story_list:
         if story.used_for == STORY4PHOTO:
             photo_story_list[story.story_id] = story
+        elif story.used_for == STORY4VIDEO:
+            video_story_list[story.story_id] = story
     photo_story_ids = photo_story_list.keys()
     lst = db(db.TblPhotos.story_id.belongs(photo_story_ids)).select(db.TblPhotos.story_id, db.TblPhotos.photo_path)
     for photo in lst:
         photo_src = photos_folder('squares') + photo.photo_path
         photo_story_list[photo.story_id].photo_src = photo_src
+        photo_story_ids = photo_story_list.keys()
+    video_story_ids = video_story_list.keys()
+    lst = db(db.TblVideos.story_id.belongs(video_story_ids)).select(db.TblVideos.story_id, db.TblVideos.src)
+    for video in lst:
+        video_story_list[video.story_id].video_src = "//www.youtube.com/embed/" + video.src + "?wmode=opaque"
 
 @serve_json
 def get_story_previews(vars):
@@ -1442,6 +1450,7 @@ def apply_to_selected_videos(vars):
     st = vars.selected_topics
     added = []
     deleted = []
+    changes = dict()
     for vid in svl:
         curr_tag_ids = set(get_tag_ids(vid, "V"))
         for tpc in st:
@@ -1462,6 +1471,7 @@ def apply_to_selected_videos(vars):
                 db(q).delete()
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         keywords = "; ".join(curr_tags)
+        changes[vid] = dict(keywords=keywords, video_id=vid)
         rec = db(db.TblVideos.id==vid).select().first()
         rec.update_record(keywords=keywords)
         if photographer_id:
@@ -1471,9 +1481,12 @@ def apply_to_selected_videos(vars):
             if not 'V' in kind:
                 kind += 'V'
                 rec1.update_record(kind=kind)
+            changes[vid]['photographer_name'] = rec1.name
+            changes[vid]['photographer_id'] = photographer_id
         if dates_info:
             update_record_dates(rec, dates_info)
-    ws_messaging.send_message('VIDEO-TAGS-CHANGED', added=added, deleted=deleted)
+    changes = [changes[vid] for vid in svl]
+    ws_messaging.send_message('VIDEO-TAGS-CHANGED', group='ALL', changes=changes)
     return dict()
 
 @serve_json
