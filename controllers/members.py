@@ -219,7 +219,6 @@ def calc_user_list():
     return dic
 
 def _get_story_list(params, exact):
-    MAX_STORIES = 20
     story_topics = get_story_topics()
 
     selected_topics = params.selected_topics or []
@@ -229,9 +228,9 @@ def _get_story_list(params, exact):
         q = make_stories_query(params, exact)
         if not q:
             return []
-        lst = db(q).select(limitby=(0, 1000), orderby=~db.TblStories.story_len)
-    if len(lst) > 100:
-        lst1 = random.sample(lst, 100)
+        lst = db(q).select(limitby=(0, 2000), orderby=~db.TblStories.story_len)
+    if len(lst) > 1000:
+        lst1 = random.sample(lst, 1000)
     else:
         lst1 = lst
     ##lst = []
@@ -1234,6 +1233,15 @@ def promote_stories(vars):
     q = (db.TblStories.id.belongs(checked_story_list))
     today = datetime.date.today()
     db(q).update(touch_time=today)
+    return dict()
+
+@serve_json
+def promote_videos(vars):
+    selected_video_list = vars.params.selected_video_list
+    q = (db.TblVideos.id.belongs(selected_video_list))
+    today = datetime.date.today()
+    db(q).update(touch_time=today)
+    return dict()
 
 def calc_all_tags():
     result = dict()
@@ -1247,8 +1255,16 @@ def save_group_members(vars):
 
 @serve_json
 def get_video_sample(vars):
-    #temporary hard coded implementation
-    lst = ['a-oxQD7SZ6c', '-5F0x79j2K4', 'uwACSZ890a0', 'dfJIOa6eyfg', '1g_PlRE-YwI', '4I7BtUDPfcA', 'Cdiq5As8vCw']
+    q = (db.TblVideos.deleted==False)
+    q1 = q & (db.TblVideos.touch_time != NO_DATE)
+    lst1 = db(q1).select(limitby=(0, 10), orderby=~db.TblVideos.touch_time)
+    lst1 = [rec.src for rec in lst1]
+    q2 = q & (db.TblVideos.touch_time == NO_DATE)
+    lst2 = db(q2).select(limitby=(0, 200))
+    lst2 = [rec.src for rec in lst2]
+    if len(lst2) > 10:
+        lst2 = random.sample(lst2, 10)
+    lst = lst1 + lst2
     return dict(video_list=lst)
 
 @serve_json
