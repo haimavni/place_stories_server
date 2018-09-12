@@ -68,9 +68,9 @@ def get_spouses(member_id):
     children = get_children(member_id, hidden_too=True)
     member_rec = get_member_rec(member_id)
     if member_rec.gender == 'F':
-        spouses = [child.father_id for child in children if child.father_id]
+        spouses = [child.father_id for child in children if child.father_id and not child.divorced_parents]
     elif member_rec.gender == 'M':
-        spouses = [child.mother_id for child in children if child.mother_id]
+        spouses = [child.mother_id for child in children if child.mother_id and not child.divorced_parents]
     else:
         spouses = [] ##error
     spouses = [sp for sp in spouses if sp]  #to handle incomplete data
