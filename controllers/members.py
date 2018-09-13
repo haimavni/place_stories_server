@@ -229,8 +229,8 @@ def _get_story_list(params, exact):
         if not q:
             return []
         lst = db(q).select(limitby=(0, 2000), orderby=~db.TblStories.story_len)
-    if len(lst) > 1000:
-        lst1 = random.sample(lst, 1000)
+    if len(lst) > 100:
+        lst1 = random.sample(lst, 100)
     else:
         lst1 = lst
     ##lst = []
