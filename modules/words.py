@@ -86,7 +86,7 @@ def extract_story_words(story_id):
     from injections import inject
     db = inject('db')
     rec = db(db.TblStories.id==story_id).select().first()
-    if not rec:
+    if (not rec) or rec.deleted:
         return None
     story_name = rec.name
     html = rec.story

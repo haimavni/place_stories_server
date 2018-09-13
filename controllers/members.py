@@ -1341,6 +1341,9 @@ def save_video(vars):
 
 @serve_json
 def delete_video(vars):
+    story_id = db(db.TblVideos.id==vars.video_id).select().first().story_id
+    sm = stories_manager.Stories()
+    sm.delete_story(story_id)
     n = db(db.TblVideos.id==vars.video_id).update(deleted=True)
     return dict()
 

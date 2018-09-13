@@ -227,6 +227,12 @@ class Stories:
         story_info = self.get_story(story_id)
         rec = self.find_translation(story_id, language)
         
+    def delete_story(self, story_id):
+        db = inject('db')
+        db(db.TblStories.id==story_id).update(deleted=True)
+        update_story_words_index(story_id)
+    
+        
         
             
         
