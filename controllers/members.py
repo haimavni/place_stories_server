@@ -860,6 +860,34 @@ def get_topic_list(vars):
     photographer_list = [dict(name=rec.name, id=rec.id) for rec in photographer_list if rec.name]
     return dict(topic_list=topic_list, photographer_list=photographer_list)
 
+@serve_json 
+def remove_topic(vars):
+    topic_id = vars.topic_id
+    lst = db(db.TblItemTopics.topic_id==topic_id).select()
+    lst = [Storage(item_type=rec.item_type, item_id=rec.item_id) for rec in lst]
+    n = db(db.TblTopics.id==topic_id).delete()
+    for rec in lst:
+        recalc_keywords_str(rec.item_type, rec.item_id)
+    return dict()
+   
+def recalc_keywords_str(item_type, item_id):
+    tables = dict(
+        M=db.TblMembers,
+        E=db.TblEvents,
+        P=db.TblPhotos,
+        T=db.TblTerms,
+        V=db.TblVideos
+    )
+    tbl = tables[item_type]
+    q = (db.TblItemTopics.item_id==item_id) & (db.TblItemTopics.item_type==item_type) & (db.TblTopics.id==db.TblItemTopics.topic_id)
+    lst = db(q).select()
+    topic_names = [r.TblTopics.name for r in lst]
+    topics_str = ';'.join(topic_names)
+    if item_type in 'TV':
+        db(tbl.id==item_id).update(keywords=topics_str)
+    else:
+        db(tbl.id==item_id).update(KeyWords=topics_str)
+
 @serve_json
 def get_message_list(vars):
     q = (db.TblStories.used_for==STORY4MESSAGE) & (db.TblStories.author_id==db.auth_user.id) & (db.TblStories.deleted != True)

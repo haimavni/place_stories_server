@@ -283,13 +283,19 @@ db.define_table('TblPhotos',
                 Field('deleted', type='boolean', default=False),
                 Field('crc', type='integer'),
                 Field('dhash', type='string'),
-                Field('usage', type='integer', default=0) #1=has identified members 2=has assigned tags 3=both
+                Field('usage', type='integer', default=0) #1=has identified members 2=has assigned tags 3=both, #todo need to populate, then use
+                #to select only relevant photos for opening slide show
 )
 
 db.define_table('TblTopics',
                 Field('name', type='string'),
                 Field('description', type='string'),
                 Field('usage', type='string') ## made of the letters EMPTV for events, members, photos, terms and videos
+)
+
+db.define_table('TblTopicGroups',
+                Field('parent', type=db.TblTopics),
+                Field('child', type=db.TblTopics)
 )
 
 db.define_table('TblItemTopics',
@@ -336,6 +342,7 @@ db.define_table('TblTerms',
                 Field('InventedByMemberID', type='integer'),
                 Field('InventedByMember_id', type='integer'),
                 Field('Name', type='string'),
+                Field('keywords', type='string'),
                 Field('ObjectID', type='integer'),
                 Field('Object_id', type='integer'),
                 Field('PageHits', type='integer'),
