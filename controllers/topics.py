@@ -2,6 +2,7 @@ import ws_messaging
 
 @serve_json
 def get_topic_list(vars):
+    topic_groups = get_topic_groups()
     if vars.usage:
         usage = vars.usage
     elif vars.params:
@@ -22,14 +23,14 @@ def get_topic_list(vars):
             else:
                 q1 = (db.TblTopics.usage.like("%" + c + "%"))
         q &= q1
-    topic_list = db(q).select(orderby=db.TblTopics.name)
-    topic_list = [dict(name=rec.name, id=rec.id) for rec in topic_list if rec.name]
+    topic_list = db(q).select(orderby=~db.TblTopics.is_group | db.TblTopics.name)
+    topic_list = [dict(name=rec.name, id=rec.id, is_group=rec.is_group) for rec in topic_list if rec.name]
     q = db.TblPhotographers.id > 0
     if usage in ('P', 'V'):
         q &= db.TblPhotographers.kind.like('%' + usage + '%')
     photographer_list = db(q).select(orderby=db.TblPhotographers.name)
     photographer_list = [dict(name=rec.name, id=rec.id) for rec in photographer_list if rec.name]
-    return dict(topic_list=topic_list, photographer_list=photographer_list)
+    return dict(topic_list=topic_list, topic_groups=topic_groups, photographer_list=photographer_list)
 
 @serve_json 
 def remove_topic(vars):
@@ -122,3 +123,43 @@ def item_list_to_grouped_options(item_list):
     for g in sorted(groups):
         result.append(groups[g])
     return result
+
+@serve_json
+def add_topic(vars):
+    if db(db.TblTopics.name==vars.topic_name).count() > 0:
+        raise User_Error('!stories.topic-already-exists')
+    idx = db.TblTopics.insert(name=vars.topic_name, usage='')
+    return dict(new_topic_id=idx)
+
+@serve_json
+def add_topic_group(vars):
+    gst = vars.selected_topics
+    if not gst:
+        return dict()
+    gst = item_list_to_grouped_options(gst)
+    if len(gst) != 2 or len(gst[0]) != 1:
+        raise User_Error('!stories.invalid-group-data')
+    #todo: ensure no cyclic
+    topic_ids = set([topic.id for topic in gst[1]])
+    group_id = gst[0][0].id
+    old_topic_ids = db(db.TblTopicGroups.parent==group_id).select()
+    old_topic_ids = set([topic.child for topic in old_topic_ids])
+    deleted_topic_ids = old_topic_ids - topic_ids
+    new_topic_ids = topic_ids - old_topic_ids
+    for tid in new_topic_ids:
+        db.TblTopicGroups.insert(parent=group_id, child=tid)
+    for tid in deleted_topic_ids:
+        db((db.TblTopicGroups.parent==group_id) & (db.TblTopicGroups.child==tid)).delete()
+    db(db.TblTopics.id==group_id).update(is_group=True)
+    return dict()
+
+def get_topic_groups():
+    cmd = """
+        SELECT TblTopicGroups.parent, array_agg(TblTopicGroups.child)
+        FROM TblTopicGroups
+        GROUP BY TblTopicGroups.parent;
+    """
+
+    lst = db.executesql(cmd)
+    return lst
+    

@@ -257,7 +257,6 @@ def _get_story_list(params, exact):
 
 @serve_json
 def get_story_list(vars):
-    used_for_str = ['', 'member', 'event', 'photo', 'term'];
     if vars.params.search_type=='advanced':
         result1 = []
     else:
@@ -664,7 +663,20 @@ def detach_photo_from_member(vars):
     good = db(q).delete() == 1
     return dict(photo_detached=good)
 
+def flatten_option_list(option_list):
+    result = []
+    for item in option_list:
+        if item.option.is_group:
+            parent = item.option.id
+            ids = db(db.TblTopicGroups.parent==parent).select()
+            items = [Storage(group_number=item.group_number, option=Storage(sign=item.option.sign, id=r.child)) for r in ids]
+            result += flatten_option_list(items)
+        else:
+            result.append(item)
+    return result
+        
 def calc_grouped_selected_options(option_list):
+    option_list = flatten_option_list(option_list)
     groups = dict()
     for item in option_list:
         g = item.group_number
