@@ -465,29 +465,19 @@ def set_member_story_id(vars):
     return dict()
 
 @serve_json
-def upload_photos(vars):
-    uploaded_photo_ids = []
+def upload_photo(vars):
     user_id = vars.user_id or auth.current_user()
     comment("start handling uploaded files")
-    number_uploaded = 0
-    number_duplicates = 0
-    failed = []
     user_id = int(vars.user_id) if vars.user_id else auth.current_user()
-    for fn in vars:
-        if fn.startswith('user'):
-            continue
-        fil = vars[fn]
-        result = save_uploaded_photo(fil.name, fil.BINvalue, user_id)
-        if result == 'duplicate':
-            number_duplicates += 1
-            continue
-        if result == 'failed':
-            failed.append(fil.name)
-            continue
-        number_uploaded += 1
-        uploaded_photo_ids += [result]
+    fil = vars.file
+    result = save_uploaded_photo(fil.name, fil.BINvalue, user_id)
+    return dict(upload_result=result)
+
+@serve_json
+def notify_new_photos(vars):
+    uploaded_photo_ids = vars.uploaded_photo_ids
     ws_messaging.send_message(key='PHOTOS_WERE_UPLOADED', group='ALL', uploaded_photo_ids=uploaded_photo_ids)
-    return dict(number_uploaded=number_uploaded, number_duplicates=number_duplicates, failed=failed)
+    return dict()
 
 @serve_json
 def get_photo_detail(vars):
