@@ -113,6 +113,12 @@ def rename_photographer(vars):
     db(db.TblPhotographers.id==int(vars.id)).update(name=vars.name)
     return dict()
 
+@serve_json
+def rename_topic(vars):
+    db(db.TblTopics.id==int(vars.id)).update(name=vars.name)
+    #todo: update all keywords in the system...
+    return dict()
+
 def item_list_to_grouped_options(item_list):
     groups = dict()
     for item in item_list:
