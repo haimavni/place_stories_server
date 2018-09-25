@@ -7,7 +7,7 @@ def get_topic_list(vars):
         usage = vars.usage
     elif vars.params:
         usage = ""
-        topic_chars = 'xMEPTxV'
+        topic_chars = 'xMEPTxxxV'
         story_types = vars.params.selected_story_types
         story_types = [st.id for st in story_types]
         for t in story_types:

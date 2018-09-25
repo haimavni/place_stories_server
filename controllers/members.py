@@ -1135,6 +1135,43 @@ def apply_to_selected_photos(vars):
     return dict()
 
 @serve_json
+def apply_topics_to_selected_stories(vars):
+    used_for = vars.used_for
+    if used_for:
+        topic_chars = 'xMEPTxxxV'
+        usage_char = topic_chars[used_for]
+    all_tags = calc_all_tags()
+    params = vars.params
+    checked_story_list = params.checked_story_list
+    selected_topics = params.selected_topics
+    for eid in checked_story_list:
+        curr_tag_ids = set(get_tag_ids(eid, usage_char))
+        for item in selected_topics:
+            topic = item.option
+            if topic.sign=="plus" and topic.id not in curr_tag_ids:
+                new_id = db.TblItemTopics.insert(item_type=usage_char, story_id=eid, topic_id=topic.id) 
+                curr_tag_ids |= set([topic.id])
+                ###added.append(item)
+                topic_rec = db(db.TblTopics.id==topic.id).select().first()
+                if usage_char not in topic_rec.usage:
+                    usage = topic_rec.usage + usage_char
+                    topic_rec.update_record(usage=usage)
+            elif topic.sign=="minus" and topic.id in curr_tag_ids:
+                q = (db.TblItemTopics.item_type==usage_char) & (db.TblItemTopics.item_id==eid) & (db.TblItemTopics.topic_id==topic.id)
+                curr_tag_ids -= set([topic.id])
+                ###deleted.append(item)
+                #should remove usage_char from usage if it was the last one...
+                db(q).delete()
+  
+        curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
+        keywords = "; ".join(curr_tags)
+        rec = db(db.TblStories.id==eid).select().first()
+        rec.update_record(keywords=keywords)
+            
+    #todo: notify all users?
+    return dict()
+
+@serve_json
 def promote_stories(vars):
     checked_story_list = vars.params.checked_story_list
     q = (db.TblStories.id.belongs(checked_story_list))
