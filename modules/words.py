@@ -22,7 +22,7 @@ def remove_all_tags(html):
     html = re.sub(r'&quot;', '"', html)
     html = re.sub(r'&#39;', "'", html)
     html = re.sub(r'&#?[a-z0-9]+;([a-z]+;)*', ' ', html)
-    soup = BeautifulSoup(html, "html5")
+    soup = BeautifulSoup(html, "lxml")
     text = soup.get_text()
     comment = inject('comment')
     if html and not text:
