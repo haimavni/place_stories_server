@@ -25,7 +25,7 @@ def remove_all_tags(html):
     soup = BeautifulSoup(html, "lxml")
     text = soup.get_text()
     comment = inject('comment')
-    comment("text from soup: {}", text)
+    comment("len of text from soup: {}", len(text)
     return text
 
 def extract_tokens(s):
