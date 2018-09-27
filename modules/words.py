@@ -22,10 +22,11 @@ def remove_all_tags(html):
     html = re.sub(r'&quot;', '"', html)
     html = re.sub(r'&#39;', "'", html)
     html = re.sub(r'&#?[a-z0-9]+;([a-z]+;)*', ' ', html)
-    soup = BeautifulSoup(html, "lxml")
+    soup = BeautifulSoup(html, "html5")
     text = soup.get_text()
     comment = inject('comment')
-    comment("len of text from soup: {}", len(text))
+    if html and not text:
+        comment("get text failed")
     return text
 
 def extract_tokens(s):
