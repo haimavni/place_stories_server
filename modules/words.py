@@ -24,6 +24,8 @@ def remove_all_tags(html):
     html = re.sub(r'&#?[a-z0-9]+;([a-z]+;)*', ' ', html)
     soup = BeautifulSoup(html, "lxml")
     text = soup.get_text()
+    comment = inject('comment')
+    comment("text from soup: {}", text)
     return text
 
 def extract_tokens(s):
