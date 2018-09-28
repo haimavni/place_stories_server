@@ -1105,7 +1105,9 @@ def apply_to_selected_photos(vars):
             topic = tpc.option
             item = dict(item_id=pid, topic_id=topic.id)
             if topic.sign=="plus" and topic.id not in curr_tag_ids:
-                new_id = db.TblItemTopics.insert(item_type="P", item_id=pid, topic_id=topic.id) #todo: story_id=???
+                rec = db(db.TblPhotos.id==pid).select().first()
+                story_id = rec.story_id if rec else None
+                new_id = db.TblItemTopics.insert(item_type="P", item_id=pid, topic_id=topic.id, story_id=story_id)
                 curr_tag_ids |= set([topic.id])
                 added.append(item)
                 topic_rec = db(db.TblTopics.id==topic.id).select().first()

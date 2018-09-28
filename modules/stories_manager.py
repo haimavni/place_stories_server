@@ -141,35 +141,36 @@ class Stories:
         update_story_words_index(story_id)
         return Storage(story_id=story_id, creation_date=now, author=source)
 
-    def update_story(self, story_id, story_info, language=None):
+    def update_story(self, story_id, story_info, language=None, change_language=False):
+        db, auth, STORY4EVENT, STORY4TERM, STORY4PHOTO, TEXT_AUDITOR = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO', 'TEXT_AUDITOR')
         if story_id == 'new':
             return self.add_story(story_info)
         updated_story_text = story_info.story_text
         if language:
-            rec1 = self.find_translation(story_id, language)
-            if rec1:
-                return self.update_story(story_id, story_info)
-            else:
-                return self.add_story(story_info, story_id)
+            rec = self.find_translation(rec, language)
+            if not rec:
+                self.create_translation(story_id, language)
         else:
-            language = guess_language(updated_story_text)
+            rec = db(db.TblStories.id==story_id).select().first()
+        language1 = guess_language(updated_story_text)
+        if rec.language and rec.language != 'UNKNOWN' and language1 != rec.language and not change_language:
+            return dict(language_changed=True)
         updated_story_text = updated_story_text.replace('~1', '&').replace('~2', ';').replace('\n', '').replace('>', '>\n')
-        db, auth, STORY4EVENT, STORY4TERM, STORY4PHOTO, TEXT_AUDITOR = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO', 'TEXT_AUDITOR')
-        rec = db(db.TblStories.id==story_id).select().first()
         #if rec.language and rec.language != language:
             #rec = self.find_translation(rec, language)
         now = datetime.datetime.now()
         if rec.story != updated_story_text:
             merger = mim.Merger()
             delta = merger.diff_make(rec.story, updated_story_text)
-            last_version = db(db.TblStoryVersions.story_id==story_id).count() + 1
+            last_version = db((db.TblStoryVersions.story_id==story_id)&(db.TblStoryVersions.language==rec.language)).count() + 1
             data = dict(
                 story=updated_story_text, 
                 name=story_info.name, 
                 source=story_info.source, 
                 last_update_date=now, 
                 updater_id=self.author_id,
-                last_version=last_version
+                last_version=last_version,
+                language=language1
             )
             if auth.user_has_privilege(TEXT_AUDITOR):
                 data['approved_version'] = last_version
@@ -178,7 +179,8 @@ class Stories:
                 delta=delta, 
                 story_id=story_id, 
                 creation_date=now,
-                author_id=self.author_id)
+                author_id=self.author_id,
+                language=language1)
         elif story_info.name != rec.name or story_info.source != rec.source:
             rec.update_record(name=story_info.name, source=story_info.source, last_update_date=now, updater_id=self.author_id)
         update_story_words_index(story_id)
@@ -194,7 +196,7 @@ class Stories:
                 rec.update_record(Name=name)
         elif story_info.used_for == STORY4PHOTO:
             pass
-        return Storage(story_id=story_id, last_update_date=now, updater_name=author_name, author=story_info.source)
+        return Storage(story_id=story_id, last_update_date=now, updater_name=author_name, author=story_info.source, language=language)
 
     def find_translation(self, story_id, language=None):
         db = inject('db')

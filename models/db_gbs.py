@@ -47,6 +47,7 @@ db.define_table('TblStoryVersions',
                 Field('creation_date', type='datetime'),
                 Field('author_id', type=db.auth_user),
                 Field('delta', type='text'),
+                Field('language', type='string')
 )
 
 db.define_table('TblWords',
