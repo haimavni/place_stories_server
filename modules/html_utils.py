@@ -1,4 +1,5 @@
 import re
+from selectolax.parser import HTMLParser
 
 def clean_dirt(m):
     return ""
@@ -37,3 +38,21 @@ def clean_html(html, nbsp_too=True):
         html = replace_nbsps(html)
         ###html = html.replace("&nbsp;", "")
     return html
+
+# coding: utf-8
+
+def html_to_text(html):
+    tree = HTMLParser(html)
+
+    if tree.body is None:
+        return None
+
+    for tag in tree.css('script'):
+        tag.decompose()
+    for tag in tree.css('style'):
+        tag.decompose()
+
+    text = tree.body.text(separator='\n')
+    return text
+
+

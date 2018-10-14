@@ -18,20 +18,20 @@ def index():
     return auth.wiki()
     """
     s = request.env.http_host
-    s = s.split('//')[-1]
-    lst = s.split('.')
-    idx = 1
-    domain = lst[0]
-    if domain in ('gbstories', 'tol'):
-        idx = 0
     domain = 'gbs'  #for now, until more app are created
+    subdomain = ''
+    if '//' in s:
+        s = s.split('//')[-1]
+    lst = s.split('.')
+    domain = lst[0]
+    idx = 0 if domain in ('gbstories', 'tol') else 1
     subdomain = ''.join(lst[idx:-2])
     app = domain
     if subdomain == 'dev':
         app += '__dev'
     elif subdomain == 'test':
         app += '__test'
-    else:
+    elif domain == 'gbs':
         app += '__www'
     url = URL(a=app, c='default', f='index')
     redirect("/{}/static/aurelia/index.html".format(app))

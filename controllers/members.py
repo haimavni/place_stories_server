@@ -1424,6 +1424,8 @@ def apply_to_selected_videos(vars):
             if topic.sign=="plus" and topic.id not in curr_tag_ids:
                 vrec = db(db.TblVideos.id==vid).select().first()
                 story_id = vrec.story_id if vrec else None
+                if not story_id:
+                    continue
                 new_id = db.TblItemTopics.insert(item_type="V", item_id=vid, topic_id=topic.id, story_id=story_id) 
                 curr_tag_ids |= set([topic.id])
                 added.append(item)
