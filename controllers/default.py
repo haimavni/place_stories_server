@@ -240,3 +240,9 @@ def get_hit_statistics(vars):
         result[what] = lst
     return dict(total_count=total_count, itemized_counts=result)
 
+@serve_json
+def get_languages(vars):
+    s = db(db.TblConfig.id==1).select().first().languages
+    langugages=s.split(',')
+    return dict(languages=languages)
+

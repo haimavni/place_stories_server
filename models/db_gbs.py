@@ -384,6 +384,10 @@ db.define_table('TblFeedback',
                 Field('fb_device_details', type='string')
                 )
 
+db.define_table('TblConfig',
+                Field('languages', type='string', default='he,en')
+                )
+
 def write_indexing_sql_scripts():
     '''Creates a set of indexes if they do not exist.
        In a terminal, su postgres and issue the command
