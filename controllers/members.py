@@ -200,7 +200,7 @@ def calc_user_list():
     return dic
 
 def _get_story_list(params, exact):
-    story_topics = get_story_topics()
+    ###story_topics = get_story_topics()
 
     selected_topics = params.selected_topics or []
     if selected_topics:
@@ -210,11 +210,11 @@ def _get_story_list(params, exact):
         if not q:
             return []
         lst = db(q).select(limitby=(0, 2000), orderby=~db.TblStories.story_len)
-    if len(lst) > 100:
-        lst1 = random.sample(lst, 100)
-    else:
-        lst1 = lst
-    ##lst = []
+    lst1 = lst
+    #if len(lst) > 100:
+        #lst1 = random.sample(lst, 100)
+    #else:
+        #lst1 = lst
     user_list = calc_user_list()
     if params.checked_story_list:
         checked_story_list = db(db.TblStories.id.belongs(params.checked_story_list)).select()
@@ -245,7 +245,7 @@ def _get_story_list(params, exact):
                    story_preview=get_reisha(rec.story),
                    name=rec.name, 
                    story_id=rec.id,
-                   topics = '; '.join(story_topics[rec.id]) if rec.id in story_topics else "",
+                   topics = rec.keywords, ###'; '.join(story_topics[rec.id]) if rec.id in story_topics else "",
                    used_for=rec.used_for,
                    event_date=rec.creation_date, 
                    timestamp=rec.last_update_date,
@@ -1140,8 +1140,8 @@ def apply_to_selected_photos(vars):
 def apply_topics_to_selected_stories(vars):
     used_for = vars.used_for
     if used_for:
-        topic_chars = 'xMEPTxxxV'
-        usage_char = topic_chars[used_for]
+        usage_chars = 'xMEPTxxxV'
+        usage_char = usage_chars[used_for]
     all_tags = calc_all_tags()
     params = vars.params
     checked_story_list = params.checked_story_list

@@ -23,6 +23,7 @@ db.define_table('TblStories',
                 Field('name', type='string'),
                 Field('topic', type='string'),
                 Field('story', type='text'),
+                Field('preview', type='text'),
                 Field('creation_date', type='datetime'),
                 Field('historic_date', type='string'), #for old stories
                 Field('last_update_date', type='datetime'),
