@@ -210,11 +210,11 @@ def _get_story_list(params, exact):
         if not q:
             return []
         lst = db(q).select(limitby=(0, 2000), orderby=~db.TblStories.story_len)
-    lst1 = lst
-    #if len(lst) > 100:
-        #lst1 = random.sample(lst, 100)
-    #else:
-        #lst1 = lst
+    ##lst1 = lst
+    if len(lst) > 100:
+        lst1 = random.sample(lst, 100)
+    else:
+        lst1 = lst
     user_list = calc_user_list()
     if params.checked_story_list:
         checked_story_list = db(db.TblStories.id.belongs(params.checked_story_list)).select()
