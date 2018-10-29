@@ -154,7 +154,7 @@ class Stories:
             rec = db(db.TblStories.id==story_id).select().first()
         language1 = guess_language(updated_story_text)
         if rec.language and rec.language != 'UNKNOWN' and language1 != rec.language and not change_language:
-            return dict(language_changed=True)
+            return Storage(language_changed=True)
         updated_story_text = updated_story_text.replace('~1', '&').replace('~2', ';').replace('\n', '').replace('>', '>\n')
         #if rec.language and rec.language != language:
             #rec = self.find_translation(rec, language)
