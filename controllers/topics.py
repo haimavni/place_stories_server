@@ -22,7 +22,9 @@ def get_topic_list(vars):
                 q1 |= (db.TblTopics.usage.like("%" + c + "%"))
             else:
                 q1 = (db.TblTopics.usage.like("%" + c + "%"))
+        q1 |= (db.TblTopics.usage=='') #for upper-level topics
         q &= q1
+        
     topic_list = db(q).select(orderby=~db.TblTopics.is_group | db.TblTopics.name)
     topic_list = [dict(name=rec.name, id=rec.id, is_group=rec.is_group, usage=rec.usage) for rec in topic_list if rec.name]
     q = db.TblPhotographers.id > 0

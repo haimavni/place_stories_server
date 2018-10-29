@@ -41,6 +41,7 @@ export default {{
     testing: false,
     baseURL: '',
     version: '{}',
+    app: '',
     i18n_ver: '{:0x}'
 }};
 '''.format(s, combined_crc & 0xffffffff) 

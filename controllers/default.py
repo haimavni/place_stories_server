@@ -246,3 +246,24 @@ def get_languages(vars):
     langugages=s.split(',')
     return dict(languages=languages)
 
+@serve_json
+def get_locale_overrides(vars):
+    result = dict()
+    try:
+        lst = db(db.TblLocaleCustomizations).select()
+    except:
+        return dict(locale_overrides={})
+    for rec in lst:
+        if rec.lang not in result:
+            result[rec.lang] = dict()
+        keys = rec.key.split('.')
+        item = result[rec.lang]
+        for key in keys[:-1]:
+            if key not in item:
+                item[key] = dict()
+            item = item[key]
+        key = keys[-1]
+        item[key] = rec.value
+    return dict(locale_overrides=result)
+
+

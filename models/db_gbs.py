@@ -23,7 +23,7 @@ db.define_table('TblStories',
                 Field('name', type='string'),
                 Field('topic', type='string'),
                 Field('story', type='text'),
-                Field('preview', type='text'),
+                ###Field('preview', type='text'),
                 Field('creation_date', type='datetime'),
                 Field('historic_date', type='string'), #for old stories
                 Field('last_update_date', type='datetime'),
@@ -385,8 +385,14 @@ db.define_table('TblFeedback',
                 Field('fb_device_details', type='string')
                 )
 
-db.define_table('TblConfig',
+db.define_table('TblConfiguration',
                 Field('languages', type='string', default='he,en')
+                )
+
+db.define_table('TblLocaleCustomizations',
+                Field('lang', type='string'),
+                Field('key', type='string'),
+                Field('value', type='string')
                 )
 
 def write_indexing_sql_scripts():
