@@ -1050,7 +1050,6 @@ def get_theme_data(vars):
     path = images_folder()
     local_path = local_images_folder()
     files = dict(
-        ##content_background='content-background.png',
         header_background='header-background.png',
         top_background='top-background.png',
         footer_background='footer-background.png',
@@ -1063,6 +1062,8 @@ def get_theme_data(vars):
     result = dict()
     for k in files:
         result[k] = path + files[k] if os.path.exists(local_path + files[k]) else ''
+        if not os.path.exists(local_path + files[k]):
+            comment("file {} is missing", k)                   
     return dict(files=result)
 
 @serve_json
