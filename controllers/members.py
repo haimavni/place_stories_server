@@ -707,8 +707,8 @@ def get_photo_list_with_topics(vars):
 
 def make_photos_query(vars):
     q = (db.TblPhotos.width > 0) & (db.TblPhotos.deleted!=True)
-    if vars.relevant_only:
-        q &= (db.TblPhotos.usage > 0)
+    #if vars.relevant_only:
+        #q &= (db.TblPhotos.usage > 0)
     first_year = vars.first_year
     last_year = vars.last_year
     if vars.base_year: #time range may be defined
@@ -1054,15 +1054,15 @@ def get_theme_data(vars):
         top_background='top-background.png',
         footer_background='footer-background.png',
         founders_group_photo='founders_group_photo.jpg',
-        gb_logo_png='gb-logo-grey.png',
-        gb_logo_blue='gb-logo-blue.png',
+        app_logo='app-logo.png',
         himnon='himnon-givat-brenner.mp3',
         content_background='bgs/body-bg.jpg',
         mayflower='bgs/mayflower.jpg'
     )
     result = dict()
     for k in files:
-        result[k] = path + files[k]
+        fname = path + files[k]
+        result[k] = fname if os.path.exists(fname) else ''
     return dict(files=result)
 
 @serve_json
