@@ -8,7 +8,7 @@ from date_utils import date_of_date_str, parse_date, get_all_dates, update_recor
 import datetime
 import os
 from dal_utils import insert_or_update
-from photos import get_slides_from_photo_list, photos_folder, local_photos_folder, images_folder, crop, save_uploaded_photo, rotate_photo
+from photos import get_slides_from_photo_list, photos_folder, local_photos_folder, images_folder, local_images_folder, crop, save_uploaded_photo, rotate_photo
 import random
 import zlib
 import re
@@ -1048,6 +1048,7 @@ def merge_members():
 @serve_json    
 def get_theme_data(vars):
     path = images_folder()
+    local_path = local_images_folder()
     files = dict(
         ##content_background='content-background.png',
         header_background='header-background.png',
@@ -1061,8 +1062,7 @@ def get_theme_data(vars):
     )
     result = dict()
     for k in files:
-        fname = path + files[k]
-        result[k] = fname if os.path.exists(fname) else ''
+        result[k] = path + files[k] if os.path.exists(local_path + files[k]) else ''
     return dict(files=result)
 
 @serve_json

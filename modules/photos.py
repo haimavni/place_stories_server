@@ -281,6 +281,11 @@ def local_photos_folder(what="orig"):
     app = request.application.split('__')[0]  ## we want gbs__dev, gbs__test etc. all to use the same data
     return '/gb_photos/{app}/photos/{what}/'.format(app=app, what=what)
 
+def local_images_folder():
+    request = inject('request')
+    app = request.application.split('__')[0]  ## we want gbs__dev, gbs__test etc. all to use the same data
+    return '/gb_photos/{app}/images/'.format(host=request.env.http_host, app=app)
+
 def get_slides_from_photo_list(q):
     db = inject('db')
     q &= (db.TblPhotos.width > 0)
