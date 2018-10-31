@@ -146,12 +146,11 @@ class Stories:
         if story_id == 'new':
             return self.add_story(story_info)
         updated_story_text = story_info.story_text
+        rec = db(db.TblStories.id==story_id).select().first()
         if language:
             rec = self.find_translation(rec, language)
             if not rec:
                 self.create_translation(story_id, language)
-        else:
-            rec = db(db.TblStories.id==story_id).select().first()
         language1 = guess_language(updated_story_text)
         if rec.language and rec.language != 'UNKNOWN' and language1 != rec.language and not change_language:
             return Storage(language_changed=True)
@@ -195,8 +194,17 @@ class Stories:
             if rec:
                 rec.update_record(Name=name)
         elif story_info.used_for == STORY4PHOTO:
-            pass
+            photo_rec = db(db.TblPhotos.story_id==story_id).select().first()
+            photo_rec.update_record(Name=name)
         return Storage(story_id=story_id, last_update_date=now, updater_name=author_name, author=story_info.source, language=language)
+    
+    def update_story_name(self, story_id, new_name, language=None):
+        db = inject('db')
+        rec = db(db.TblStories.id==story_id).select().first()
+        if language:
+            rec = self.find_translation(rec, language)
+        if rec:
+            rec.update_record(name=new_name)
 
     def find_translation(self, story_id, language=None):
         db = inject('db')

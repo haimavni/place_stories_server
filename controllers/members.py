@@ -504,8 +504,11 @@ def get_photo_detail(vars):
 def update_photo_caption(vars):
     photo_id = int(vars.photo_id)
     caption = vars.caption
-    db(db.TblPhotos.id==photo_id).update(Name=caption)
-    return dict()
+    photo_rec = db(db.TblPhotos.id==photo_id).select().first()
+    photo_rec.update(Name=caption)
+    sm = stories_manager.Stories()
+    sm.update_story_name(photo_rec.story_id, caption)
+    return dict(bla='bla')
 
 @serve_json
 def update_photo_date(vars):
@@ -542,13 +545,17 @@ def save_photo_info(vars):
     pi = vars.photo_info
     ###pi.photographer_id = find_or_insert(pi.photographer)
     unit, date = parse_date(pi.photo_date_str)
+    photo_rec = db(db.TblPhotos.id==vars.photo_id).select().first()
+    if pi.name != photo_rec.Name:
+        sm = stories_manager.Stories(vars.user_id)
+        sm.update_story_name(photo_rec.story_id, pi.name)
     del pi.photo_date_str
     pi.photo_date = date
     pi.photo_date_dateunit = unit
     del pi.photographer
     pi.Name = pi.name
     del pi.name
-    db(db.TblPhotos.id==vars.photo_id).update(**pi)
+    photo_rec.update_record(**pi)
     return dict()
 
 def get_member_names():
@@ -887,6 +894,9 @@ def save_story_data(story_info, user_id):
     else:
         result = sm.add_story(story_info)
     result.story_preview = get_reisha(story_info.story_text)
+    if story_info.used_for == STORY4PHOTO:
+        photo_rec = db(db.TblPhotos.story_id==story_info.story_id).select().first();
+        photo_rec.update_record(Name=story_info.name)
     ws_messaging.send_message(key='STORY_WAS_SAVED', group='ALL', story_data=result)
     return result
 
