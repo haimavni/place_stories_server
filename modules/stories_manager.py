@@ -151,9 +151,13 @@ class Stories:
             rec = self.find_translation(rec, language)
             if not rec:
                 self.create_translation(story_id, language)
-        language1 = guess_language(updated_story_text)
-        if rec.language and rec.language != 'UNKNOWN' and language1 != rec.language and not change_language:
-            return Storage(language_changed=True)
+        if len(updated_story_text) > 20:
+            language1 = guess_language(updated_story_text)
+        else:
+            language1 = 'he'  #todo: use default user's language
+        #todo: the following is not yet implemented in the client, where it should as the user
+        #if rec.language and rec.language != 'UNKNOWN' and language1 != rec.language and not change_language:
+            #return Storage(language_changed=True)
         updated_story_text = updated_story_text.replace('~1', '&').replace('~2', ';').replace('\n', '').replace('>', '>\n')
         #if rec.language and rec.language != language:
             #rec = self.find_translation(rec, language)

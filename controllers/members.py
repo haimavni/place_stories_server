@@ -199,23 +199,7 @@ def calc_user_list():
         dic[rec.id] = rec
     return dic
 
-def _get_story_list(params, exact):
-    ###story_topics = get_story_topics()
-
-    selected_topics = params.selected_topics or []
-    if selected_topics:
-        lst = get_story_list_with_topics(params, selected_topics, exact)
-    else:
-        q = make_stories_query(params, exact)
-        if not q:
-            return []
-        lst = db(q).select(limitby=(0, 2000), orderby=~db.TblStories.story_len)
-    ##lst1 = lst
-    if len(lst) > 100:
-        lst1 = random.sample(lst, 100)
-    else:
-        lst1 = lst
-    user_list = calc_user_list()
+def get_checked_stories(params):
     if params.checked_story_list:
         checked_story_list = db(db.TblStories.id.belongs(params.checked_story_list)).select()
         checked_story_list = [rec for rec in checked_story_list]
@@ -225,58 +209,75 @@ def _get_story_list(params, exact):
                 rec.author = ''
     else:
         checked_story_list = []
-    lst = checked_story_list
+    return checked_story_list
+
+def _get_story_list(params, exact, checked):
+    ###story_topics = get_story_topics()
+    if checked:
+        lst1 = get_checked_stories(params)
+    else:
+        selected_topics = params.selected_topics or []
+        if selected_topics:
+            lst1 = get_story_list_with_topics(params, selected_topics, exact)
+        else:
+            q = make_stories_query(params, exact)
+            if not q:
+                return []
+            lst1 = db(q).select(limitby=(0, 1000), orderby=~db.TblStories.story_len)
+    user_list = calc_user_list()
+    lst = []
     for rec in lst1:
         if 'TblStories' in rec:
             r = rec.TblStories
         else:
             r = rec
-        if r.id in params.checked_story_list:
+        if r.id in params.checked_story_list and not checked:
             continue
         if r.author_id:
             user = user_list[r.author_id]
             r.author = user.first_name + ' ' + user.last_name
         else:
             r.author = ""
-        r.checked = False
+        r.checked = checked
+        r.search_kind = 'exact' if exact else 'nonexact'
         lst.append(r)
-    user_list = auth.user_list()
-    result = [Storage(story_text=rec.story,
-                   story_preview=get_reisha(rec.story),
-                   name=rec.name, 
-                   story_id=rec.id,
-                   topics = rec.keywords, ###'; '.join(story_topics[rec.id]) if rec.id in story_topics else "",
-                   used_for=rec.used_for,
-                   event_date=rec.creation_date, 
-                   timestamp=rec.last_update_date,
-                   updater=user_list[rec.updater_id] if rec.updater_id and rec.updater_id in user_list else dict(),
-                   checked=rec.checked,
-                   exact=exact and params.search_type != 'advanced',
-                   author=rec.source or rec.author) for rec in lst]
-    return result
+    return lst
 
 @serve_json
 def get_story_list(vars):
+    CHUNK = 100
+    result0 = _get_story_list(vars.params, exact=True, checked=True)
     if vars.params.search_type=='advanced':
         result1 = []
     else:
-        result1 = _get_story_list(vars.params, exact=True) #if keywords_str, only exact matches are returned, otherwise whatever the query gets
+        result1 = _get_story_list(vars.params, exact=True, checked=False) #if keywords_str, only exact matches are returned, otherwise whatever the query gets
     if vars.params.keywords_str or vars.params.search_type=='advanced': #find all pages containing all words in this string
-        result2 = _get_story_list(vars.params, exact=False)
+        result2 = _get_story_list(vars.params, exact=False, checked=False)
     else:
         result2 = []
-    arr = [result1, result2]
+    result = result0 + result1 + result2
+    result, leftover = result[:CHUNK], result[CHUNK:]
     active_result_types = set()
-    for i, r in enumerate(arr):
-        search_kind = 'exact' if i == 0 else 'nonexact'
-        for story in r:
-            k = story.used_for
-            active_result_types |= set([k])
-            story['search_kind'] = search_kind;
-    result = result1 + result2;
-    assign_photos(result)
+    for story in result: 
+        k = story.used_for
+        active_result_types |= set([k])
     active_result_types = [k for k in active_result_types]
     active_result_types = sorted(active_result_types)
+    user_list = auth.user_list()
+    result = [Storage(
+        story_text=rec.story,
+        story_preview=get_reisha(rec.story),
+        name=rec.name, 
+        story_id=rec.id,
+        topics = rec.keywords, ###'; '.join(story_topics[rec.id]) if rec.id in story_topics else "",
+        used_for=rec.used_for,
+        event_date=rec.creation_date, 
+        timestamp=rec.last_update_date,
+        updater=user_list[rec.updater_id] if rec.updater_id and rec.updater_id in user_list else dict(),
+        checked=rec.checked,
+        ##exact=exact and params.search_type != 'advanced',
+        author=rec.source or rec.author) for rec in result]
+    assign_photos(result)
     return dict(story_list=result, active_result_types=active_result_types)
 
 def assign_photos(story_list):
@@ -292,7 +293,6 @@ def assign_photos(story_list):
     for photo in lst:
         photo_src = photos_folder('squares') + photo.photo_path
         photo_story_list[photo.story_id].photo_src = photo_src
-        photo_story_ids = photo_story_list.keys()
     video_story_ids = video_story_list.keys()
     lst = db(db.TblVideos.story_id.belongs(video_story_ids)).select(db.TblVideos.story_id, db.TblVideos.src)
     for video in lst:
@@ -671,7 +671,7 @@ def flatten_option_list(option_list):
         else:
             result.append(item)
     return result
-        
+
 def calc_grouped_selected_options(option_list):
     option_list = flatten_option_list(option_list)
     groups = dict()
@@ -843,7 +843,8 @@ def get_constants(vars):
             DC_FELL=1,
             DC_KILLED=2,
             DC_MURDERED=3
-        )
+            ),
+        ptp_key=web2py_uuid()
     )    
 
 @serve_json
@@ -1015,7 +1016,7 @@ def get_story_list_with_topics(params, selected_topics, exact):
         if not q:
             return []
         q &= (db.TblItemTopics.story_id==db.TblStories.id)
-        
+
         sign = topic_group[0]
         topic_group = topic_group[1:]
         q1 = db.TblItemTopics.topic_id.belongs(topic_group)
@@ -1175,12 +1176,12 @@ def apply_topics_to_selected_stories(vars):
                 ###deleted.append(item)
                 #should remove usage_char from usage if it was the last one...
                 db(q).delete()
-  
+
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         keywords = "; ".join(curr_tags)
         rec = db(db.TblStories.id==eid).select().first()
         rec.update_record(keywords=keywords)
-            
+
     #todo: notify all users?
     return dict()
 
@@ -1329,7 +1330,7 @@ def get_video_list(vars):
     for rec in video_list:
         fix_record_dates_out(rec)
     return dict(video_list=video_list)
-    
+
 def get_video_list_with_topics(vars):
     first = True
     topic_groups = calc_grouped_selected_options(vars.selected_topics)
