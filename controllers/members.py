@@ -213,7 +213,13 @@ def get_checked_stories(params):
 
 def _get_story_list(params, exact, checked):
     ###story_topics = get_story_topics()
-    if checked:
+    if params.search_type == 'menu':
+        n = db(db.TblStories).count()
+        rng = range(1, n+1)
+        ids = random.sample(rng, 100)
+        q = (db.TblStories.id.belongs(ids)) & (db.TblStories.deleted != True) & (db.TblStories.used_for.belongs(STORY4USER))
+        lst1 = db(q).select()
+    elif checked:
         lst1 = get_checked_stories(params)
     else:
         selected_topics = params.selected_topics or []
@@ -247,14 +253,17 @@ def _get_story_list(params, exact, checked):
 def get_story_list(vars):
     CHUNK = 100
     result0 = _get_story_list(vars.params, exact=True, checked=True)
-    if vars.params.search_type=='advanced':
-        result1 = []
-    else:
-        result1 = _get_story_list(vars.params, exact=True, checked=False) #if keywords_str, only exact matches are returned, otherwise whatever the query gets
-    if vars.params.keywords_str or vars.params.search_type=='advanced': #find all pages containing all words in this string
-        result2 = _get_story_list(vars.params, exact=False, checked=False)
-    else:
-        result2 = []
+    result1 = []
+    result2 = []
+    if vars.params.search_type != 'menu':
+        if vars.params.search_type=='advanced':
+            result1 = []
+        else:
+            result1 = _get_story_list(vars.params, exact=True, checked=False) #if keywords_str, only exact matches are returned, otherwise whatever the query gets
+        if vars.params.keywords_str or vars.params.search_type=='advanced': #find all pages containing all words in this string
+            result2 = _get_story_list(vars.params, exact=False, checked=False)
+        else:
+            result2 = []
     result = result0 + result1 + result2
     result, leftover = result[:CHUNK], result[CHUNK:]
     active_result_types = set()
