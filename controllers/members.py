@@ -213,12 +213,13 @@ def get_checked_stories(params):
 
 def _get_story_list(params, exact, checked):
     ###story_topics = get_story_topics()
-    if params.search_type == 'menu':
+    if not query_has_data(params):
         n = db(db.TblStories).count()
         rng = range(1, n+1)
         ids = random.sample(rng, 100)
         q = (db.TblStories.id.belongs(ids)) & (db.TblStories.deleted != True) & (db.TblStories.used_for.belongs(STORY4USER))
         lst1 = db(q).select()
+        checked = False
     elif checked:
         lst1 = get_checked_stories(params)
     else:
@@ -252,10 +253,11 @@ def _get_story_list(params, exact, checked):
 @serve_json
 def get_story_list(vars):
     CHUNK = 100
-    result0 = _get_story_list(vars.params, exact=True, checked=True)
+    qhd = query_has_data(vars.params)
+    result0 = []
     result1 = []
     result2 = []
-    if vars.params.search_type != 'menu':
+    if qhd:
         if vars.params.search_type=='advanced':
             result1 = []
         else:
@@ -264,6 +266,8 @@ def get_story_list(vars):
             result2 = _get_story_list(vars.params, exact=False, checked=False)
         else:
             result2 = []
+    else:
+        result0 = _get_story_list(vars.params, exact=True, checked=True)
     result = result0 + result1 + result2
     result, leftover = result[:CHUNK], result[CHUNK:]
     active_result_types = set()
@@ -975,17 +979,18 @@ def get_story_topics(refresh=False):
     c = Cache('get_story_topics')
     return c(_get_story_topics, refresh)
 
+def query_has_data(params):
+    return params.keywords_str or params.selected_stories or (params.days_since_update and params.days_since_update.value) or \
+        params.approval_state in [2,3] or params.selected_topics or params.selected_words
+        
 def make_stories_query(params, exact):
     getting_live_stories = not params.deleted_stories
     q = (db.TblStories.deleted != getting_live_stories) & (db.TblStories.used_for.belongs(STORY4USER)) 
-    selected_story_types = [x.id for x in params.selected_story_types]
-    if selected_story_types:
-        q &= (db.TblStories.used_for.belongs(selected_story_types))
-
     selected_stories = params.selected_stories
     ##if exact and params.search_type != 'advanced':
         ##return None
-    if (params.keywords_str):
+
+    if params.keywords_str:
         selected_stories = [];
         if exact:
             q &= (db.TblStories.name.contains(params.keywords_str)) | (db.TblStories.story.contains(params.keywords_str))
@@ -1000,12 +1005,6 @@ def make_stories_query(params, exact):
                 (~db.TblStories.story.contains(params.keywords_str))
     if selected_stories:
         q &= (db.TblStories.id.belongs(selected_stories))
-    if params.selected_languages:
-        langs = [x.id for x in params.selected_languages]
-        if langs:
-            q &= (db.TblStories.language.belongs(langs))
-    if params.link_class == "primary":
-        q &= (db.TblStories.story.like("%givat-brenner.co.il%"))
     if params.days_since_update and params.days_since_update.value:
         date0 = datetime.datetime.now() - datetime.timedelta(days=params.days_since_update.value)
         q &= (db.TblStories.last_update_date>date0)
