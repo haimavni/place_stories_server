@@ -217,7 +217,7 @@ def _get_story_list(params, exact, checked):
         n = db(db.TblStories).count()
         rng = range(1, n+1)
         sample_size = n if n < 100 else 100
-        ids = random.sample(rng, 100)
+        ids = random.sample(rng, sample_size)
         q = (db.TblStories.id.belongs(ids)) & (db.TblStories.deleted != True) & (db.TblStories.used_for.belongs(STORY4USER))
         lst1 = db(q).select()
         checked = False
