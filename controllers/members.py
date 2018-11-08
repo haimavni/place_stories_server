@@ -270,6 +270,21 @@ def get_story_list(vars):
     else:
         result0 = _get_story_list(vars.params, exact=True, checked=True)
     result = result0 + result1 + result2
+    active_result_types1 = set()
+    for i in range(0, len(result), CHUNK):
+        chunk = result[i:i+CHUNK]
+        for story in chunk: 
+            k = story.used_for
+            active_result_types1 |= set([k])
+        active_result_types = [k for k in active_result_types1]
+        active_result_types = sorted(active_result_types)
+        chunk = set_story_list_data(chunk)
+        ws_messaging.send_message(key='STORY-LIST-CHUNK', 
+                                  group=vars.ptp_key, 
+                                  first=i, 
+                                  chunk_size=CHUNK, 
+                                  chunk=chunk, 
+                                  active_result_types=active_result_types)
     result, leftover = result[:CHUNK], result[CHUNK:]
     active_result_types = set()
     for story in result: 
@@ -293,6 +308,22 @@ def get_story_list(vars):
         author=rec.source or rec.author) for rec in result]
     assign_photos(result)
     return dict(story_list=result, active_result_types=active_result_types)
+
+def set_story_list_data(story_list):
+    user_list = auth.user_list()
+    return [Storage(
+        story_text=rec.story,
+        story_preview=get_reisha(rec.story),
+        name=rec.name, 
+        story_id=rec.id,
+        topics = rec.keywords, ###'; '.join(story_topics[rec.id]) if rec.id in story_topics else "",
+        used_for=rec.used_for,
+        event_date=rec.creation_date, 
+        timestamp=rec.last_update_date,
+        updater=user_list[rec.updater_id] if rec.updater_id and rec.updater_id in user_list else dict(),
+        checked=rec.checked,
+        ##exact=exact and params.search_type != 'advanced',
+        author=rec.source or rec.author) for rec in story_list]
 
 def assign_photos(story_list):
     photo_story_list = dict()
