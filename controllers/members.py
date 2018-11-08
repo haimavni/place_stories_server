@@ -311,7 +311,7 @@ def get_story_list(vars):
 
 def set_story_list_data(story_list):
     user_list = auth.user_list()
-    return [Storage(
+    result = [Storage(
         story_text=rec.story,
         story_preview=get_reisha(rec.story),
         name=rec.name, 
@@ -324,6 +324,8 @@ def set_story_list_data(story_list):
         checked=rec.checked,
         ##exact=exact and params.search_type != 'advanced',
         author=rec.source or rec.author) for rec in story_list]
+    assign_photos(result)
+    return result
 
 def assign_photos(story_list):
     photo_story_list = dict()
