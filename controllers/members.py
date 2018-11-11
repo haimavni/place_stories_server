@@ -270,10 +270,14 @@ def get_story_list(vars):
     else:
         result0 = _get_story_list(vars.params, exact=True, checked=True)
     result = result0 + result1 + result2
+    result_type_counters = dict()
     active_result_types = set()
     for story in result: 
         k = story.used_for
         active_result_types |= set([k])
+        if k not in result_type_counters:
+            result_type_counters[k] = 0
+        result_type_counters[k] += 1
     active_result_types = [k for k in active_result_types]
     active_result_types = sorted(active_result_types)
     for i in range(0, len(result), CHUNK):
@@ -281,10 +285,12 @@ def get_story_list(vars):
         chunk = set_story_list_data(chunk)
         ws_messaging.send_message(key='STORY-LIST-CHUNK', 
                                   group=vars.ptp_key, 
-                                  first=i, 
+                                  first=i,
+                                  num_stories=len(result),
                                   chunk_size=CHUNK, 
                                   chunk=chunk, 
-                                  active_result_types=active_result_types)
+                                  active_result_types=active_result_types,
+                                  result_type_counters=result_type_counters)
     return dict(no_results=len(result)==0)
 
 def set_story_list_data(story_list):
@@ -489,7 +495,7 @@ def set_member_story_id(vars):
     sm.set_used_for(vars.story_id, STORY4MEMBER)
     return dict()
 
-@serve_json
+serve_json
 def upload_photo(vars):
     user_id = vars.user_id or auth.current_user()
     comment("start handling uploaded files")
@@ -836,7 +842,7 @@ def get_photo_list(vars):
 @serve_json
 def get_message_list(vars):
     q = (db.TblStories.used_for==STORY4MESSAGE) & (db.TblStories.author_id==db.auth_user.id) & (db.TblStories.deleted != True)
-    lst = db(q).select(orderby=~db.TblStories.last_update_date, limitby=(0, vars.limit or 100))
+    lst = db(q).select(orderby=~db.TblStories.creation_date, limitby=(0, vars.limit or 100))
     result = [dict(story_text=rec.TblStories.story,
                    story_preview=rec.TblStories.story, #it is short anyway
                    name=rec.TblStories.name, 
@@ -844,6 +850,15 @@ def get_message_list(vars):
                    timestamp=rec.TblStories.last_update_date, 
                    author=rec.auth_user.first_name + ' ' + rec.auth_user.last_name) for rec in lst]
     return dict(message_list=result)
+
+@serve_json
+def push_message_up(vars):
+    sid = vars.story_id
+    rec = db(db.TblStories.id==sid).select().first()
+    now = datetime.datetime.now()
+    if rec:
+        rec.update_record(creation_date=now, last_update_date=now)
+    return dict()
 
 @serve_json
 def get_constants(vars):
