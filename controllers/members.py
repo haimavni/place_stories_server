@@ -272,14 +272,19 @@ def get_story_list(vars):
     result = result0 + result1 + result2
     result_type_counters = dict()
     active_result_types = set()
+    final_result = []
     for story in result: 
         k = story.used_for
         active_result_types |= set([k])
         if k not in result_type_counters:
             result_type_counters[k] = 0
+        if result_type_counters[k] >= 100:
+            continue
         result_type_counters[k] += 1
+        final_result.append(story)
     active_result_types = [k for k in active_result_types]
     active_result_types = sorted(active_result_types)
+    result = final_result
     for i in range(0, len(result), CHUNK):
         chunk = result[i:i+CHUNK]
         chunk = set_story_list_data(chunk)
