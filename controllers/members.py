@@ -500,7 +500,7 @@ def set_member_story_id(vars):
     sm.set_used_for(vars.story_id, STORY4MEMBER)
     return dict()
 
-serve_json
+@serve_json
 def upload_photo(vars):
     user_id = vars.user_id or auth.current_user()
     comment("start handling uploaded files")
