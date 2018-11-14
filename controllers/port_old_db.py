@@ -3,7 +3,7 @@
 from porting.create_old_db_mappings import table_fields, csv_name_to_table_name, get_records, csv_name_to_table_name
 from glob import glob
 import re
-from photos import scan_all_unscanned_photos, fit_all_sizes, local_photos_folder
+from photos_support import scan_all_unscanned_photos, fit_all_sizes, local_photos_folder
 import random
 from words import extract_tokens, guess_language, create_word_index, read_words_index
 from html_utils import clean_html

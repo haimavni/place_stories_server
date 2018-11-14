@@ -6,7 +6,7 @@ from http_utils import json_to_storage
 import datetime
 import os
 from dal_utils import insert_or_update
-from photos import get_slides_from_photo_list, crop, photos_folder
+from photos_support import photos_folder
 
 def index():
     response.view = 'stories/main.html'

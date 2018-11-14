@@ -4,7 +4,7 @@ import re
 import zlib
 from os import listdir
 from os.path import isfile, join, splitext
-from photos import save_uploaded_photo_collection
+from photos_support import save_uploaded_photo_collection
 from gluon.storage import Storage
 from email.header import decode_header
 from shutil import move

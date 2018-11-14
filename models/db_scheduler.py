@@ -5,7 +5,7 @@ from gluon.storage import Storage
 import re
 import ws_messaging
 from my_cache import Cache
-from photos import scan_all_unscanned_photos
+from photos_support import scan_all_unscanned_photos
 from collect_emails import collect_mail
 from injections import inject
 from words import update_word_index_all

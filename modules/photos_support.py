@@ -12,6 +12,7 @@ from gluon.storage import Storage
 import random
 import pwd
 from stories_manager import Stories
+from folders import url_folder, local_folder
 
 MAX_WIDTH = 1200
 MAX_HEIGHT = 800
@@ -264,27 +265,18 @@ def calc_missing_dhash_values(max_to_hash=20000):
     return  '{} photo records dhashed. {} need to be dhashed.'.format(done, to_scan)
 
 def photos_folder(what="orig"): 
-    #what may be orig, squares,images or profile_photos. (images is for customer-specific images such as logo)
-    #app appears twice: one to reach static, the other is to separate different customers
-    request = inject('request')
-    app = request.application.split('__')[0]
-    return 'http://{host}/{app}/static/gb_photos/{app}/photos/{what}/'.format(host=request.env.http_host, app=app, what=what)
+    #what may be orig, squares or profile_photos.
+    return url_folder('photos') + what + '/'
 
 def images_folder():
-    request = inject('request')
-    app = request.application.split('__')[0]  ## we want gbs__dev, gbs__test etc. all to use the same data
-    return 'http://{host}/{app}/static/gb_photos/{app}/images/'.format(host=request.env.http_host, app=app)
+    return url_folder('images')
 
 def local_photos_folder(what="orig"): 
     #what may be orig, squares,images or profile_photos. (images is for customer-specific images such as logo)
-    request = inject('request')
-    app = request.application.split('__')[0]  ## we want gbs__dev, gbs__test etc. all to use the same data
-    return '/gb_photos/{app}/photos/{what}/'.format(app=app, what=what)
+    return local_folder('photos') + what + '/'
 
 def local_images_folder():
-    request = inject('request')
-    app = request.application.split('__')[0]  ## we want gbs__dev, gbs__test etc. all to use the same data
-    return '/gb_photos/{app}/images/'.format(host=request.env.http_host, app=app)
+    return local_folder('images')
 
 def get_slides_from_photo_list(q):
     db = inject('db')

@@ -316,13 +316,29 @@ db.define_table('TblVideos',
                 Field('src', type='string'),
                 Field('deleted', type='boolean', default=False),
                 Field('photographer_id', type='integer'),
-                Field('topic_id', type=db.TblTopics),
                 Field('story_id', type=db.TblStories),
                 Field('contributor', type=db.auth_user),
                 Field('video_date', type='date', default=NO_DATE),
                 Field('video_date_dateunit', type='string', default='Y'), # D, M or Y for day, month, year
                 Field('video_date_datespan', type='integer', default=1), # how many months or years in the range
                 Field('touch_time', type='date', default=NO_DATE), #used to promote videos
+                Field('upload_date', type='datetime')
+                )
+
+db.define_table('TblDocs',
+                Field('name', type='string'),
+                Field('keywords', type='string'),
+                Field('doc_type', type='string'),
+                Field('deleted', type='boolean', default=False),
+                Field('story_id', type=db.TblStories),
+                Field('uploader', type=db.auth_user),
+                Field('doc_date', type='date', default=NO_DATE),
+                Field('doc_date_dateunit', type='string', default='Y'), # D, M or Y for day, month, year
+                Field('doc_date_datespan', type='integer', default=1), # how many months or years in the range
+                Field('touch_time', type='date', default=NO_DATE), #used to promote docs
+                Field('doc_path', type='string'),
+                Field('original_file_name', type='string'),
+                Field('crc', type='integer'),
                 Field('upload_date', type='datetime')
                 )
 

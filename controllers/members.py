@@ -8,7 +8,7 @@ from date_utils import date_of_date_str, parse_date, get_all_dates, update_recor
 import datetime
 import os
 from dal_utils import insert_or_update
-from photos import get_slides_from_photo_list, photos_folder, local_photos_folder, images_folder, local_images_folder, crop, save_uploaded_photo, rotate_photo
+from photos_support import get_slides_from_photo_list, photos_folder, local_photos_folder, images_folder, local_images_folder, crop, save_uploaded_photo, rotate_photo
 import random
 import zlib
 import re
