@@ -55,3 +55,36 @@ def member_display_name(rec=None, member_id=None, full=True):
         s += ' - {}'.format(rec.NickName)
     return s
 
+def calc_all_tags():
+    result = dict()
+    for rec in db(db.TblTopics).select():
+        result [rec.id] = rec.name
+    return result
+
+def calc_grouped_selected_options(option_list):
+    option_list = flatten_option_list(option_list)
+    groups = dict()
+    for item in option_list:
+        g = item.group_number
+        if g not in groups:
+            groups[g] = [item.option.sign]
+        groups[g].append(item.option.id)
+    result = []
+    for g in sorted(groups):
+        result.append(groups[g])
+    return result
+
+def flatten_option_list(option_list):
+    db = inject('db')
+    result = []
+    for item in option_list:
+        if item.option.is_group:
+            parent = item.option.id
+            ids = db(db.TblTopicGroups.parent==parent).select()
+            items = [Storage(group_number=item.group_number, option=Storage(sign=item.option.sign, id=r.child)) for r in ids]
+            result += flatten_option_list(items)
+        else:
+            result.append(item)
+    return result
+
+
