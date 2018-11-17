@@ -1,4 +1,4 @@
-from photos_support import get_slides_from_photo_list, photos_folder, local_photos_folder, images_folder, local_images_folder, crop, save_uploaded_photo, rotate_photo
+from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, crop, save_uploaded_photo, rotate_photo
 import ws_messaging
 import stories_manager
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
@@ -15,12 +15,6 @@ def upload_photo(vars):
     fil = vars.file
     result = save_uploaded_photo(fil.name, fil.BINvalue, user_id)
     return dict(upload_result=result)
-
-@serve_json
-def notify_new_photos(vars):
-    uploaded_photo_ids = vars.uploaded_photo_ids
-    ws_messaging.send_message(key='PHOTOS_WERE_UPLOADED', group='ALL', uploaded_photo_ids=uploaded_photo_ids)
-    return dict()
 
 @serve_json
 def get_photo_detail(vars):

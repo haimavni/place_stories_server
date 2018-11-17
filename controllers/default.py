@@ -266,4 +266,11 @@ def get_locale_overrides(vars):
         item[key] = rec.value
     return dict(locale_overrides=result)
 
+@serve_json
+def notify_new_files(vars):
+    uploaded_file_ids = vars.uploaded_file_ids
+    ws_messaging.send_message(key=vars.what +'_WERE_UPLOADED', group='ALL', uploaded_file_ids=uploaded_file_ids)
+    return dict()
+
+
 
