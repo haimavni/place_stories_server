@@ -9,6 +9,7 @@ import random
 import pwd
 from stories_manager import Stories
 from folders import url_folder, local_folder
+from pdf2text import pdf_to_text
 
 def save_uploaded_doc(file_name, blob, user_id, sub_folder=None):
     auth, log_exception, db, STORY4DOC = inject('auth', 'log_exception', 'db', 'STORY4DOC')
@@ -26,15 +27,17 @@ def save_uploaded_doc(file_name, blob, user_id, sub_folder=None):
     path = local_docs_folder() + sub_folder
     doc_date = None
     dir_util.mkpath(path)
+    doc_file_name = path + file_name
     try:
         path = local_docs_folder() + sub_folder
-        with open(path + file_name, 'w') as f:
+        with open(doc_file_name, 'w') as f:
             f.write(blob)
     except Exception, e:
         log_exception("saving doc {} failed".format(original_file_name))
         return 'failed'
     sm = Stories()
-    story_info = sm.get_empty_story(used_for=STORY4DOC, story_text="", name=original_file_name)
+    txt = pdf_to_text(doc_file_name)
+    story_info = sm.get_empty_story(used_for=STORY4DOC, story_text=text, name=original_file_name)
     result = sm.add_story(story_info)
     story_id = result.story_id
     doc_id = db.TblDocs.insert(
