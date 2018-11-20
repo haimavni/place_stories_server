@@ -37,7 +37,7 @@ def save_uploaded_doc(file_name, blob, user_id, sub_folder=None):
         return 'failed'
     sm = Stories()
     txt = pdf_to_text(doc_file_name)
-    story_info = sm.get_empty_story(used_for=STORY4DOC, story_text=text, name=original_file_name)
+    story_info = sm.get_empty_story(used_for=STORY4DOC, story_text=txt, name=original_file_name)
     result = sm.add_story(story_info)
     story_id = result.story_id
     doc_id = db.TblDocs.insert(
