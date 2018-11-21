@@ -1,6 +1,9 @@
 import datetime
 from docs_support import save_uploaded_doc
+from members_support import calc_grouped_selected_options, calc_all_tags, get_tag_ids
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
+import stories_manager
+from words import get_reisha
 
 @serve_json
 def upload_doc(vars):
@@ -13,64 +16,63 @@ def upload_doc(vars):
 
 @serve_json
 def get_doc_list(vars):
-    selected_topics = vars.selected_topics or []
+    params = vars.params
+    if params.checked_doc_list:
+        lst0 = db(db.TblDocs.story_id.belongs(params.checked_doc_list)).select()
+        lst0 = [rec for rec in lst0]
+        for rec in lst0:
+            rec.checked = True
+    else:
+        lst0 = []
+    selected_topics = params.selected_topics or []
     if selected_topics:
-        lst = get_doc_list_with_topics(vars)
+        lst = get_doc_list_with_topics(params)
     else:
-        q = make_docs_query(vars)
+        q = make_docs_query(params)
         lst = db(q).select()
-    selected_doc_list = vars.selected_doc_list
-    result = []
-    if selected_doc_list:
-        lst1 = db(db.Tbldocs.id.belongs(selected_doc_list)).select()
-        lst1 = [rec for rec in lst1]
-        for rec in lst1:
-            rec.selected = True
-    else:
-        lst1 = []
-    lst1_ids = [rec.id for rec in lst1]
-    lst = [rec for rec in lst if rec.id not in lst1_ids]
-    lst = lst1 + lst
-    ##lst = db(db.Tbldocs.deleted != True).select()
+    selected_doc_list = params.selected_doc_list
+    lst = [rec for rec in lst if rec.story_id not in params.checked_doc_list]
+    lst = lst0 + lst
     doc_list = [rec for rec in lst]
     for rec in doc_list:
         fix_record_dates_out(rec)
-    return dict(doc_list=doc_list)
+        story = get_story_by_id(rec.story_id)
+        rec.story_preview = get_reisha(story.story_text)
+    return dict(doc_list=doc_list, no_results=not doc_list)
 
 @serve_json
-def delete_selected_docs(vars):
-    selected_doc_list = vars.selected_doc_list
-    db(db.TblPhotos.id.belongs(selected_doc_list)).update(deleted=True)
+def delete_checked_docs(vars):
+    checked_doc_list = vars.params.checked_doc_list
+    db(db.TblDocs.story_id.belongs(checked_doc_list)).update(deleted=True)
     return dict()
 
 @serve_json
 def apply_to_selected_docs(vars):
     all_tags = calc_all_tags()
-    sdl = vars.selected_doc_list
-    if vars.docs_date_str:
+    params = vars.params
+    sdl = params.checked_doc_list
+    if params.docs_date_str:
         dates_info = dict(
-            doc_date = (vars.docs_date_str, vars.docs_date_span_size)
+            doc_date = (params.docs_date_str, params.docs_date_span_size)
         )
     else:
         dates_info = None
 
-    st = vars.selected_topics
+    st = params.selected_topics
     added = []
     deleted = []
     changes = dict()
-    for doc_id in sdl:
-        curr_tag_ids = set(get_tag_ids(doc_id, 'D'))
+    for story_id in sdl:
+        curr_tag_ids = set(get_tag_ids(story_id, 'D'))
         for tpc in st:
             topic = tpc.option
-            item = dict(item_id=doc_id, topic_id=topic.id)
+            ###item = dict(item_id=doc_id, topic_id=topic.id)
+            drec = db(db.TblDocs.story_id==story_id).select().first()
+            doc_id = drec.id
             if topic.sign=="plus" and topic.id not in curr_tag_ids:
-                drec = db(db.TblDocs.id==doc_id).select().first()
-                story_id = drec.story_id if drec else None
-                if not story_id:
-                    continue
                 new_id = db.TblItemTopics.insert(item_type='D', item_id=doc_id, topic_id=topic.id, story_id=story_id) 
                 curr_tag_ids |= set([topic.id])
-                added.append(item)
+                ###added.append(item)
                 topic_rec = db(db.TblTopics.id==topic.id).select().first()
                 if 'D' not in topic_rec.usage:
                     usage = topic_rec.usage + 'D'
@@ -78,7 +80,7 @@ def apply_to_selected_docs(vars):
             elif topic.sign=="minus" and topic.id in curr_tag_ids:
                 q = (db.TblItemTopics.item_type=='D') & (db.TblItemTopics.item_id==doc_id) & (db.TblItemTopics.topic_id==topic.id)
                 curr_tag_ids -= set([topic.id])
-                deleted.append(item)
+                ###deleted.append(item)
                 db(q).delete()
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         keywords = "; ".join(curr_tags)
@@ -87,8 +89,8 @@ def apply_to_selected_docs(vars):
         rec.update_record(keywords=keywords)
         if dates_info:
             update_record_dates(rec, dates_info)
-    changes = [changes[doc_id] for doc_id in sdl]
-    ws_messaging.send_message('DOC-TAGS-CHANGED', group='ALL', changes=changes)
+    ###changes = [changes[doc_id] for doc_id in sdl]
+    ###ws_messaging.send_message('DOC-TAGS-CHANGED', group='ALL', changes=changes)
     return dict()
 
 #----------------support functions-----------------
@@ -141,5 +143,8 @@ def make_docs_query(vars):
         q &= (db.TblDocs.doc_date == NO_DATE)
     return q
 
+def get_story_by_id(story_id):
+    sm = stories_manager.Stories()
+    return sm.get_story(story_id)
 
 

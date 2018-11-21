@@ -1,3 +1,5 @@
+# coding: utf-8
+
 """
 Extract PDF text using PDFMiner. Adapted from
 http://stackoverflow.com/questions/5725278/python-help-using-pdfminer-as-a-library
@@ -45,7 +47,7 @@ def pdf_to_text(pdfname):
     text2 = '<html>\n<head>\n<meta charset="utf-8">\n</head>\n<body dir="RTL">\n'
     for s in lst:
         s = reverse(s)
-        s = s.replace('(', '~~').replace(')', '(').replace('~~', ')')
+        ###s = s.replace('(', '~~').replace(')', '(').replace('~~', ')')
         s = r.sub(invert, s)
         text2 += s + '<br/>'
     text2 += '\n</body>\n</html>'

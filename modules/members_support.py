@@ -57,6 +57,7 @@ def member_display_name(rec=None, member_id=None, full=True):
 
 def calc_all_tags():
     result = dict()
+    db = inject('db')
     for rec in db(db.TblTopics).select():
         result [rec.id] = rec.name
     return result
@@ -86,5 +87,11 @@ def flatten_option_list(option_list):
         else:
             result.append(item)
     return result
+
+def get_tag_ids(item_id, item_type):
+    db = inject('db')
+    q = (db.TblItemTopics.item_type==item_type) & (db.TblItemTopics.item_id==item_id)
+    lst = db(q).select()
+    return [rec.topic_id for rec in lst]
 
 

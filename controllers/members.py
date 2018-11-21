@@ -16,6 +16,7 @@ from langs import language_name
 from words import calc_used_languages, read_words_index, get_all_story_previews, get_reisha
 from html_utils import clean_html
 from members_support import *
+from docs_support import docs_folder
 from family_connections import *
 
 @serve_json
@@ -158,6 +159,7 @@ def get_story_list(vars):
     result1 = []
     result2 = []
     if qhd:
+        result0 = _get_story_list(vars.params, exact=True, checked=True)
         if vars.params.search_type=='advanced':
             result1 = []
         else:
@@ -168,6 +170,7 @@ def get_story_list(vars):
             result2 = []
     else:
         result0 = _get_story_list(vars.params, exact=True, checked=True)
+            
     result = result0 + result1 + result2
     result_type_counters = dict()
     active_result_types = set()
@@ -180,6 +183,10 @@ def get_story_list(vars):
         if result_type_counters[k] >= 100:
             continue
         result_type_counters[k] += 1
+        if k == STORY4DOC:
+            story.doc_url = doc_url(story.id)
+        else:
+            story.doc_url = None
         final_result.append(story)
     active_result_types = [k for k in active_result_types]
     active_result_types = sorted(active_result_types)
@@ -411,7 +418,8 @@ def get_constants(vars):
             STORY4TERM=STORY4TERM,
             STORY4MESSAGE=STORY4MESSAGE,
             STORY4HELP=STORY4HELP,
-            STORY4FEEDBACK=STORY4FEEDBACK
+            STORY4FEEDBACK=STORY4FEEDBACK,
+            STORY4DOC=STORY4DOC
             ),
         visibility=dict(
             VIS_NEVER=VIS_NEVER, #for non existing members such as the child of a childless couple (it just connects the)
@@ -472,7 +480,7 @@ def delete_story(vars):
 def apply_topics_to_selected_stories(vars):
     used_for = vars.used_for
     if used_for:
-        usage_chars = 'xMEPTxxxV'
+        usage_chars = 'xMEPTxxxVD'
         usage_char = usage_chars[used_for]
     all_tags = calc_all_tags()
     params = vars.params
@@ -483,7 +491,8 @@ def apply_topics_to_selected_stories(vars):
         for item in selected_topics:
             topic = item.option
             if topic.sign=="plus" and topic.id not in curr_tag_ids:
-                new_id = db.TblItemTopics.insert(item_type=usage_char, story_id=eid, topic_id=topic.id) 
+                item_id = item_id_of_story_id(used_for, story_id)
+                new_id = db.TblItemTopics.insert(item_type=usage_char, story_id=eid, item_id=item_id, topic_id=topic.id) 
                 curr_tag_ids |= set([topic.id])
                 ###added.append(item)
                 topic_rec = db(db.TblTopics.id==topic.id).select().first()
@@ -721,6 +730,7 @@ def set_story_list_data(story_list):
         name=rec.name, 
         story_id=rec.id,
         topics = rec.keywords, ###'; '.join(story_topics[rec.id]) if rec.id in story_topics else "",
+        doc_url = rec.doc_url,
         used_for=rec.used_for,
         event_date=rec.creation_date, 
         timestamp=rec.last_update_date,
@@ -847,7 +857,7 @@ def get_story_topics(refresh=False):
     return c(_get_story_topics, refresh)
 
 def query_has_data(params):
-    return params.keywords_str or params.selected_stories or (params.days_since_update and params.days_since_update.value) or \
+    return params.keywords_str or params.checked_story_list or params.selected_stories or (params.days_since_update and params.days_since_update.value) or \
         params.approval_state in [2,3] or params.selected_topics or params.selected_words
         
 def make_stories_query(params, exact):
@@ -957,11 +967,6 @@ def save_story_members(caller_id, caller_type, member_ids):
                 tbl1.insert(Member_id=m, term_id=item.id)
     return dict()
 
-def get_tag_ids(item_id, item_type):
-    q = (db.TblItemTopics.item_type==item_type) & (db.TblItemTopics.item_id==item_id)
-    lst = db(q).select()
-    return [rec.topic_id for rec in lst]
-
 def get_story_text(story_id):
     rec = db(db.TblStories.id==story_id).select().first()
     if rec:
@@ -1001,3 +1006,29 @@ def get_story_member_ids(story_id):
     lst = [m.id for m in lst]
     return lst
 
+def doc_url(story_id):
+    folder = docs_folder()
+    rec = db(db.TblDocs.story_id==story_id).select().first()
+    path = folder + rec.doc_path
+    return path
+
+def item_id_of_story_id(used_for, story_id):
+    tbls = {
+        STORY4MEMBER: db.TblMembers,
+        STORY4EVENT: db.TblEvents,
+        STORY4PHOTO: db.TblPhotos,
+        STORY4TERM: db.TblTerms,
+        STORY4MESSAGE: None,
+        STORY4HELP: None,
+        STORY4FEEDBACK: None,
+        STORY4VIDEO: db.TblVideos,
+        STORY4DOC: db.TblDocs        
+    }
+    tbl = tbls[used_for]
+    if tbl:
+        rec = db(tbl.story_id==story_id).select().first()
+        if rec:
+            return rec.id
+    return None
+        
+    
