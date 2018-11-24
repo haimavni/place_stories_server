@@ -61,3 +61,11 @@ def docs_folder():
 def local_docs_folder(): 
     return local_folder('docs')
 
+def doc_url(story_id):
+    db = inject('db')
+    folder = docs_folder()
+    rec = db(db.TblDocs.story_id==story_id).select().first()
+    path = folder + rec.doc_path
+    return path
+
+

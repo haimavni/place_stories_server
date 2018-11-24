@@ -1,9 +1,8 @@
 import datetime
-from docs_support import save_uploaded_doc
+from docs_support import save_uploaded_doc, doc_url
 from members_support import calc_grouped_selected_options, calc_all_tags, get_tag_ids
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
 import stories_manager
-from words import get_reisha
 
 @serve_json
 def upload_doc(vars):
@@ -37,7 +36,8 @@ def get_doc_list(vars):
     for rec in doc_list:
         fix_record_dates_out(rec)
         story = get_story_by_id(rec.story_id)
-        rec.story_preview = get_reisha(story.story_text)
+        rec.story = story
+        rec.doc_url = doc_url(rec.story_id)
     return dict(doc_list=doc_list, no_results=not doc_list)
 
 @serve_json
@@ -122,25 +122,27 @@ def get_doc_list_with_topics(vars):
     result = [dic[id] for id in bag]
     return result
 
-def make_docs_query(vars):
+def make_docs_query(params):
     q = (db.TblDocs.deleted!=True)
-    if vars.selected_days_since_upload:
-        days = vars.selected_days_since_upload.value
+    if params.selected_days_since_upload:
+        days = params.selected_days_since_upload.value
         if days:
             upload_date = datetime.datetime.today() - datetime.timedelta(days=days)
             q &= (db.TblDocs.upload_date >= upload_date)
-    opt = vars.selected_uploader
+    opt = params.selected_uploader
     if opt == 'mine':
-        q &= (db.TblDocs.uploader==vars.user_id)
+        q &= (db.TblDocs.uploader==params.user_id)
     elif opt == 'users':
         q &= (db.TblDocs.uploader!=None)
-    opt = vars.selected_dates_option
+    opt = params.selected_dates_option
     if opt == 'selected_dates_option':
         pass
     elif opt == 'dated':
         q &= (db.TblDocs.doc_date != NO_DATE)
     elif opt == 'undated':
         q &= (db.TblDocs.doc_date == NO_DATE)
+    if params.selected_docs:
+        q &= (db.TblDocs.story_id.belongs(params.selected_docs))
     return q
 
 def get_story_by_id(story_id):

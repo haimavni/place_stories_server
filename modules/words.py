@@ -48,7 +48,7 @@ def extract_tokens(s):
             
     return lst
 
-def get_reisha(html, size=60):
+def get_reisha(html, size=100):
     punctuation_marks = ',.;?!'
     lst = extract_tokens(html)
     result = ''
@@ -69,8 +69,11 @@ def guess_language(html):
         return 'UNKNOWN'
     return lang
 
-def tally_words(html, dic, story_id, story_name):
-    s = story_name.decode('utf8') + ' ' + remove_all_tags(html)
+def tally_words(html, dic, story_id, story_name, preview=''):
+    s = story_name.decode('utf8') + ' '
+    if preview:
+        s += remove_all_tags(preview) + ' '
+    s += remove_all_tags(html)
     lst = extract_words(s)
     if not lst:
         return False
@@ -93,8 +96,12 @@ def extract_story_words(story_id):
     if (not rec) or rec.deleted:
         return None
     story_name = rec.name
+    preview = rec.preview
     html = rec.story
-    s = story_name.decode('utf8') + ' ' + remove_all_tags(html)
+    s = story_name.decode('utf8') + ' '
+    if preview and rec.used_for == STORY4DOC:
+        s += remove_all_tags(preview) + ' '
+    s += remove_all_tags(html)
     lst = extract_words(s)
     if not lst:
         return None
@@ -172,12 +179,13 @@ def find_or_insert_word(wrd):
 
 def tally_all_stories():   
     from injections import inject
-    db = inject('db')
+    db, STORY4DOC = inject('db', 'STORY4DOC')
     dic = dict()
     N = 0
     for rec in db(db.TblStories).select():
         html = rec.story
-        if tally_words(html, dic, rec.id, rec.name):
+        preview = rec.preview if rec.used_for == STORY4DOC else None
+        if tally_words(html, dic, rec.id, rec.name, preview):
             N += 1
     return dic
 

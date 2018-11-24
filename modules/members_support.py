@@ -93,5 +93,3 @@ def get_tag_ids(item_id, item_type):
     q = (db.TblItemTopics.item_type==item_type) & (db.TblItemTopics.item_id==item_id)
     lst = db(q).select()
     return [rec.topic_id for rec in lst]
-
-

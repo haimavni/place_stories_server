@@ -34,7 +34,7 @@ class Stories:
         return rec
 
     def get_story(self, story_id, to_story_version=None, from_story_version=None):
-        db = inject('db')
+        db, STORY4DOC = inject('db', 'STORY4DOC')
         rec = db(db.TblStories.id==story_id).select().first()
         if not rec:
             return None
@@ -71,9 +71,15 @@ class Stories:
             merger = mim.Merger()
             story_text = merger.diff_apply_bulk(story, diffs, reverse=reverse)
             display_version = story_versions[to_story_version].display_version
+        editable_preview = rec.used_for == STORY4DOC  #todo: better pass as parameter?
+        if editable_preview:
+            preview = rec.preview or get_reisha(story_text)
+        else:
+            preview = rec.preview or get_reisha(story_text) #todo: after all previews are set, can just use rec.preview
         story_info = Storage(
             story_text=story_text,
-            story_preview=get_reisha(story_text),
+            preview=preview,
+            editable_preview=editable_preview,
             name=rec.name,
             topic=rec.topic,
             story_id=story_id,   #we always access via the master
@@ -90,7 +96,7 @@ class Stories:
     def get_empty_story(self, used_for=2, story_text="New Story", name='stories.new-story'):
         story_info = Storage(
             story_text=story_text,
-            story_preview=[],
+            preview=[],
             name=name,
             topic="",
             story_id="new",   #we always access via the master
@@ -106,7 +112,7 @@ class Stories:
         language = guess_language(name + ' ' + story_text)
         story_text = story_text.replace('~1', '&').replace('~2', ';').replace('\n', '').replace('>', '>\n')
         now = datetime.datetime.now()
-        db, auth, STORY4EVENT, STORY4TERM, STORY4PHOTO, TEXT_AUDITOR = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO', 'TEXT_AUDITOR')
+        db, auth, STORY4EVENT, STORY4TERM, STORY4PHOTO, STORY4DOC, TEXT_AUDITOR = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO', 'STORY4DOC', 'TEXT_AUDITOR')
         source = story_info.source or auth.user_name(self.author_id)
         ###todo: handle language issues here and in update_story
         story_id = db.TblStories.insert(story=story_text, 
@@ -121,6 +127,8 @@ class Stories:
                                         last_version=0,
                                         approved_version=0 if auth.user_has_privilege(TEXT_AUDITOR) else -1,
                                         last_update_date=now)
+        preview = get_reisha(story_text)
+        db(db.TblStories.id==story_id).update(preview=preview)
         if story_info.used_for == STORY4EVENT:
             db.TblEvents.insert(
                 story_id=story_id,
@@ -142,7 +150,7 @@ class Stories:
         return Storage(story_id=story_id, creation_date=now, author=source)
 
     def update_story(self, story_id, story_info, language=None, change_language=False):
-        db, auth, STORY4EVENT, STORY4TERM, STORY4PHOTO, TEXT_AUDITOR = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO', 'TEXT_AUDITOR')
+        db, auth, STORY4EVENT, STORY4TERM, STORY4PHOTO, STORY4DOC, TEXT_AUDITOR = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO', 'STORY4DOC', 'TEXT_AUDITOR')
         if story_id == 'new':
             return self.add_story(story_info)
         updated_story_text = story_info.story_text
@@ -162,12 +170,17 @@ class Stories:
         #if rec.language and rec.language != language:
             #rec = self.find_translation(rec, language)
         now = datetime.datetime.now()
-        if rec.story != updated_story_text:
+        if story_info.used_for == STORY4DOC:
+            if rec.preview != story_info.preview:
+                rec.update_record(preview=story_info.preview, name=story_info.name)
+        elif rec.story != updated_story_text:
             merger = mim.Merger()
             delta = merger.diff_make(rec.story, updated_story_text)
             last_version = db((db.TblStoryVersions.story_id==story_id)&(db.TblStoryVersions.language==rec.language)).count() + 1
+            preview = get_reisha(updated_story_text)
             data = dict(
-                story=updated_story_text, 
+                story=updated_story_text,
+                preview=preview,
                 name=story_info.name, 
                 source=story_info.source, 
                 last_update_date=now, 

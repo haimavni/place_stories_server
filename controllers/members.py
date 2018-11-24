@@ -16,7 +16,7 @@ from langs import language_name
 from words import calc_used_languages, read_words_index, get_all_story_previews, get_reisha
 from html_utils import clean_html
 from members_support import *
-from docs_support import docs_folder
+from docs_support import doc_url
 from family_connections import *
 
 @serve_json
@@ -148,7 +148,7 @@ def get_stories_sample(vars):
         lst2 = random.sample(lst2, 10)
     lst = lst1 + lst2;
     for r in lst:
-        r.story_preview = get_reisha(r.story, 16)
+        r.preview = get_reisha(r.preview, 16)
     return dict(stories_sample=lst)
 
 @serve_json
@@ -392,7 +392,7 @@ def get_message_list(vars):
     q = (db.TblStories.used_for==STORY4MESSAGE) & (db.TblStories.author_id==db.auth_user.id) & (db.TblStories.deleted != True)
     lst = db(q).select(orderby=~db.TblStories.creation_date, limitby=(0, vars.limit or 100))
     result = [dict(story_text=rec.TblStories.story,
-                   story_preview=rec.TblStories.story, #it is short anyway
+                   preview=rec.TblStories.story, #it is short anyway
                    name=rec.TblStories.name, 
                    story_id=rec.TblStories.id, 
                    timestamp=rec.TblStories.last_update_date, 
@@ -447,7 +447,7 @@ def get_term_list(vars):
              ###(db.TblTerms.deleted!=True) & \
              (db.TblTerms.story_id==db.TblStories.id)).select(orderby=db.TblStories.name)
     result = [dict(story_text=rec.TblStories.story,
-                   story_preview=get_reisha(rec.TblStories.story, size=40),
+                   preview=get_reisha(rec.TblStories.preview, 40),
                    name=rec.TblStories.name, 
                    story_id=rec.TblStories.id, 
                    author=rec.TblStories.source,
@@ -726,7 +726,7 @@ def set_story_list_data(story_list):
     user_list = auth.user_list()
     result = [Storage(
         story_text=rec.story,
-        story_preview=get_reisha(rec.story),
+        preview=rec.preview,
         name=rec.name, 
         story_id=rec.id,
         topics = rec.keywords, ###'; '.join(story_topics[rec.id]) if rec.id in story_topics else "",
@@ -784,7 +784,6 @@ def save_story_data(story_info, user_id):
         result = sm.update_story(story_id, story_info)
     else:
         result = sm.add_story(story_info)
-    result.story_preview = get_reisha(story_info.story_text)
     if story_info.used_for == STORY4PHOTO:
         photo_rec = db(db.TblPhotos.story_id==story_info.story_id).select().first();
         photo_rec.update_record(Name=story_info.name)
@@ -806,7 +805,7 @@ def get_member_stories(member_id):
             name = story.name,
             story_id = story.id,
             story_text = story.story,
-            story_preview=get_reisha(story.story, 30),
+            preview=get_reisha(story.preview, 30),
             source = event.SSource,
             used_for=story.used_for, 
             author_id=story.author_id,
@@ -831,7 +830,7 @@ def get_member_terms(member_id):
             name = story.name,
             story_id = story.id,
             story_text = story.story,
-            story_preview=get_reisha(story.story, 30),
+            preview=get_reisha(story.preview, 30),
             ###source = term.SSource,
             used_for=story.used_for, 
             author_id=story.author_id,
@@ -1005,12 +1004,6 @@ def get_story_member_ids(story_id):
     lst = db(qm).select(db.TblMembers.id)
     lst = [m.id for m in lst]
     return lst
-
-def doc_url(story_id):
-    folder = docs_folder()
-    rec = db(db.TblDocs.story_id==story_id).select().first()
-    path = folder + rec.doc_path
-    return path
 
 def item_id_of_story_id(used_for, story_id):
     tbls = {
