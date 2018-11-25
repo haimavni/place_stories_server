@@ -185,8 +185,10 @@ def get_story_list(vars):
         result_type_counters[k] += 1
         if k == STORY4DOC:
             story.doc_url = doc_url(story.id)
+            story.editable_preview = True
         else:
             story.doc_url = None
+            story.editable_preview = False
         final_result.append(story)
     active_result_types = [k for k in active_result_types]
     active_result_types = sorted(active_result_types)
@@ -732,6 +734,7 @@ def set_story_list_data(story_list):
         topics = rec.keywords, ###'; '.join(story_topics[rec.id]) if rec.id in story_topics else "",
         doc_url = rec.doc_url,
         used_for=rec.used_for,
+        editable_preview=rec.editable_preview,
         event_date=rec.creation_date, 
         timestamp=rec.last_update_date,
         updater=user_list[rec.updater_id] if rec.updater_id and rec.updater_id in user_list else dict(),
