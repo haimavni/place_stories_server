@@ -13,13 +13,6 @@ from pdfminer.layout import LAParams
 from cStringIO import StringIO
 import re
 
-import textract
-
-def pdf_to_text111(pdfname):
-    text = textract.process(pdfname, method='pdfminer', language='hebrew')
-
-    return text
-
 def pdf_to_text(pdfname):
     pat = '[א-תךםןףץ]'
     pat = pat.replace('[', '[^ ').replace(']',']{2,100}')
