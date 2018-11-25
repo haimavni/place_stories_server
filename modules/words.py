@@ -91,7 +91,7 @@ def tally_words(html, dic, story_id, story_name, preview=''):
 
 def extract_story_words(story_id):
     from injections import inject
-    db = inject('db')
+    db, STORY4DOC = inject('db', 'STORY4DOC')
     rec = db(db.TblStories.id==story_id).select().first()
     if (not rec) or rec.deleted:
         return None

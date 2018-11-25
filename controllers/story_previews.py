@@ -2,13 +2,17 @@ import datetime
 import stories_manager
 from words import get_reisha
 
+'''
+python web2py.py -S gbs__www/story_previews/init_previews?time_budget=10
+'''
+
 def init_previews():
     time_budget = request.vars.time_budget or 180
     time_budget = int(time_budget)
     t0 = datetime.datetime.now()
     q = (db.TblStories.deleted != True) & (db.TblStories.preview==None)
     while True:
-        lst = db(q).select(db.TblStories.id, db.TblStories.preview, db.TblStories.story, limitby=(0, 100))
+        lst = db(q).select(db.TblStories.id, db.TblStories.preview, db.TblStories.story, limitby=(0, 10))
         if not lst:
             break
         for rec in lst:
