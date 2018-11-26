@@ -29,13 +29,33 @@ def create_parent(vars):
     child_name = vars.child_name
     what = 'Pa ' if gender == 'M' else 'Ma '
     rec = new_member_rec(gender=gender, first_name=what + child_name)
-    rec.member_info.id = parent_id
     rec.member_info.updater_id = auth.current_user()
     rec.member_info.update_time = datetime.datetime.now()
     rec.member_info.approved = auth.has_membership(DATA_AUDITOR)
+    rec.member_info.date_of_birth = NO_DATE
+    rec.member_info.date_of_death = NO_DATE
     parent_id = db.TblMembers.insert(**rec.member_info)
+    rec.member_info.id = parent_id
+    child_id = int(vars.child_id)
+    if gender == 'M':
+        db(db.TblMembers.id==child_id).update(father_id=parent_id)
+    else:
+        db(db.TblMembers.id==child_id).update(mother_id=parent_id)
 
     return dict(member_id=parent_id, member=rec)
+
+@serve_json
+def create_new_member(vars):
+    #todo: move code of photos/save_face to module and use it to complete the operation. in the client, go to the new member to edit its data
+    rec = new_member_rec(first_name='new member')
+    rec.member_info.updater_id = auth.current_user()
+    rec.member_info.update_time = datetime.datetime.now()
+    rec.member_info.approved = auth.has_membership(DATA_AUDITOR)
+    rec.member_info.date_of_birth = NO_DATE
+    rec.member_info.date_of_death = NO_DATE
+    member_id = db.TblMembers.insert(**rec.member_info)
+    rec.member_info.id = member_id
+    return dict(member_id=member_id, member=rec)
 
 @serve_json
 def get_member_details(vars):
