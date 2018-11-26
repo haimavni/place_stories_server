@@ -4,7 +4,6 @@ import time
 from gluon.storage import Storage
 import re
 import ws_messaging
-from my_cache import Cache
 from photos_support import scan_all_unscanned_photos
 from collect_emails import collect_mail
 from injections import inject
@@ -139,7 +138,7 @@ def schedule_update_word_index_all():
         stop_time=now + datetime.timedelta(days=1461),
         repeats=0,
         period=2*3600,   # every 2 hours
-        timeout = 3600, # will time out if running for an hour
+        timeout = 3 *3600, # will time out if running for 3 hours
     )
 
 
@@ -153,22 +152,14 @@ permanent_tasks = dict(
 
 scheduler = MyScheduler(db, __tasks)
 
-def _verify_tasks_started():
-    
+def verify_tasks_started():
     if db(db.auth_user).count() < 2:
         return
-    comment = inject('comment')
-    comment("verify tasks started")
     for function_name in permanent_tasks:
         if db(db.scheduler_task.function_name==function_name).isempty():
             task_id = permanent_tasks[function_name]()
             comment("start {}, task_id is {}", function_name, task_id)
             db.commit()
-    comment('tasks verified.')
     return True
-
-def verify_tasks_started():
-    c = Cache('VERIFY_TASKS_STARTED')
-    return c(lambda: _verify_tasks_started())
 
 verify_tasks_started()       

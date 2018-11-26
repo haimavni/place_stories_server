@@ -9,6 +9,7 @@ from injections import inject
 #from base64 import b64decode, b64encode
 from math import log
 import datetime
+from time import sleep
 import ws_messaging
 
 alef = "א"
@@ -124,11 +125,11 @@ def retrieve_story_words(story_id):
     return dic
 
 def update_story_words_index(story_id):
-    from injections import inject
+    db, comment = inject('db', 'comment')
+    comment("start indexing story {}", story_id)
     now = datetime.datetime.now()
     added_words = []
     deleted_words = []
-    db = inject('db')
     old_dic = retrieve_story_words(story_id)
     new_dic = extract_story_words(story_id) or {}
     new_words = {}
@@ -152,18 +153,26 @@ def update_story_words_index(story_id):
     ws_messaging.send_message('WORD_INDEX_CHANGED', group='ALL', 
                               story_id=story_id, added_words=added_words, deleted_words=deleted_words, new_words=new_words)
     db(db.TblStories.id==story_id).update(indexing_date=now)
+    comment('finished indexing story ', story_id)
     
 def update_word_index_all():
     db, comment = inject('db', 'comment')
-    chunk = 100
-    comment("Start indexing story words")
+    chunk = 10
+    comment("Start indexing story words cycle")
     q = db.TblStories.last_update_date > db.TblStories.indexing_date
+    time_budget = 2 * 3600 - 5 #will exit the loop 5 seconds before the a new cycle starts
+    t0 = datetime.datetime.now()
     while True:
+        dif = datetime.datetime.now() - t0
+        elapsed = int(dif.total_seconds())
+        if elapsed > time_budget:
+            break
         n = db(q).count()
-        comment('Reindex words. {} stories left to reindex.', n)
+        if n > 0:
+            comment('Reindex words. {} stories left to reindex.', n)
+        else:
+            sleep(5)
         lst = db(q).select(db.TblStories.id, limitby=(0, chunk))
-        if not lst:
-            return
         for rec in lst:
             update_story_words_index(rec.id)
             db.commit()

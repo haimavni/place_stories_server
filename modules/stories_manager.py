@@ -146,7 +146,7 @@ class Stories:
         elif story_info.used_for == STORY4PHOTO:
             pass
         
-        update_story_words_index(story_id)
+        ###update_story_words_index(story_id)
         return Storage(story_id=story_id, creation_date=now, author=source)
 
     def update_story(self, story_id, story_info, language=None, change_language=False):
@@ -199,7 +199,7 @@ class Stories:
                 language=language1)
         elif story_info.name != rec.name or story_info.source != rec.source:
             rec.update_record(name=story_info.name, source=story_info.source, last_update_date=now, updater_id=self.author_id)
-        update_story_words_index(story_id)
+        ###update_story_words_index(story_id)
         author_name = auth.user_name(self.author_id) #name of the mblbhd, not the source
         name = story_info.name
         if story_info.used_for == STORY4EVENT:
@@ -256,8 +256,9 @@ class Stories:
         
     def delete_story(self, story_id):
         db = inject('db')
-        db(db.TblStories.id==story_id).update(deleted=True)
-        update_story_words_index(story_id)
+        now = datetime.datetime.now()
+        db(db.TblStories.id==story_id).update(deleted=True, last_update_date=now)
+        ##update_story_words_index(story_id)
     
         
         

@@ -15,7 +15,7 @@ def save_uploaded_doc(file_name, blob, user_id, sub_folder=None):
     auth, log_exception, db, STORY4DOC = inject('auth', 'log_exception', 'db', 'STORY4DOC')
     user_id = user_id or auth.current_user()
     crc = zlib.crc32(blob)
-    cnt = db(db.TblDocs.crc==crc).count()
+    cnt = db((db.TblDocs.crc==crc) & (db.TblDocs.deleted!=True)).count()
     if cnt > 0:
         return 'duplicate'
     original_file_name, ext = os.path.splitext(file_name)
