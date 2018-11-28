@@ -10,6 +10,7 @@ import pwd
 from stories_manager import Stories
 from folders import url_folder, local_folder
 from pdf2text import pdf_to_text
+from time import sleep
 
 def save_uploaded_doc(file_name, blob, user_id, sub_folder=None):
     auth, log_exception, db, STORY4DOC = inject('auth', 'log_exception', 'db', 'STORY4DOC')
@@ -35,11 +36,11 @@ def save_uploaded_doc(file_name, blob, user_id, sub_folder=None):
     except Exception, e:
         log_exception("saving doc {} failed".format(original_file_name))
         return 'failed'
-    sm = Stories()
-    txt = pdf_to_text(doc_file_name)
-    story_info = sm.get_empty_story(used_for=STORY4DOC, story_text=txt, name=original_file_name)
-    result = sm.add_story(story_info)
-    story_id = result.story_id
+    #sm = Stories()
+    #txt = pdf_to_text(doc_file_name)
+    #story_info = sm.get_empty_story(used_for=STORY4DOC, story_text=txt, name=original_file_name)
+    #result = sm.add_story(story_info)
+    #story_id = result.story_id
     doc_id = db.TblDocs.insert(
         doc_path=sub_folder + file_name,
         original_file_name=original_file_name,
@@ -48,12 +49,65 @@ def save_uploaded_doc(file_name, blob, user_id, sub_folder=None):
         upload_date=datetime.datetime.now(),
         doc_date=doc_date,
         crc=crc,
-        deleted=False,
-        story_id=story_id
+        deleted=False
+        ###story_id=story_id
     )
     db.commit()
     n = db(db.TblDocs).count()
     return doc_id
+
+def calc_doc_story(doc_id):
+    try:
+        db, STORY4DOC, log_exception = inject('db', 'STORY4DOC', 'log_exception')
+        doc_rec = db(db.TblDocs.id==doc_id).select().first()
+        doc_file_name = local_docs_folder() + doc_rec.doc_path
+        sm = Stories()
+        good = True
+        try:
+            txt = pdf_to_text(doc_file_name)
+        except Exception, e:
+            log_exception('PDF to text error in {}. Name: {}'.format(doc_rec.doc_path, doc_rec.original_file_name))
+            txt = 'Failed to extract text from this document'
+            good = False
+        story_info = sm.get_empty_story(used_for=STORY4DOC, story_text=txt, name=doc_rec.original_file_name)
+        result = sm.add_story(story_info)
+        story_id = result.story_id
+        doc_rec.update_record(story_id=story_id)
+    except Exception, e:
+        log_exception('Error calculating {}'.format(doc_rec.doc_path))
+        return False
+    return good
+    
+def calc_doc_stories(time_budget=None):
+    db, comment, log_exception = inject('db', 'comment', 'log_exception')
+    chunk = 10
+    comment("Start calc doc stories cycle")
+    q = (db.TblDocs.story_id == None) & (db.TblDocs.deleted != True)
+    time_budget = time_budget or (2 * 3600 - 5) #will exit the loop 5 seconds before the a new cycle starts
+    t0 = datetime.datetime.now()
+    ns = 0
+    nf = 0
+    try:
+        while True:
+            dif = datetime.datetime.now() - t0
+            elapsed = int(dif.total_seconds())
+            if elapsed > time_budget:
+                break
+            n = db(q).count()
+            if n > 0:
+                comment('Calc doc stories. {} documents left to calculate.', n)
+                lst = db(q).select(db.TblDocs.id, limitby=(0, chunk))
+                for rec in lst:
+                    if calc_doc_story(rec.id):
+                        ns += 1
+                    else:
+                        nf += 1
+                db.commit()
+            else:
+                sleep(5)
+    except:
+        log_exception('Error while calculating doc stories')
+    return dict(good=ns, bad=nf)
 
 def docs_folder(): 
     return url_folder('docs')
@@ -65,6 +119,8 @@ def doc_url(story_id):
     db = inject('db')
     folder = docs_folder()
     rec = db(db.TblDocs.story_id==story_id).select().first()
+    if not rec:
+        return "Document not found"
     path = folder + rec.doc_path
     return path
 

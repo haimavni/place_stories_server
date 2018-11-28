@@ -386,7 +386,7 @@ class MetaScheduler(threading.Thread):
                             tout.rfind(CLEAROUT) + len(CLEAROUT):]
                     else:
                         task_output += tout
-        except Excetion, e:
+        except Exception, e:
             p.terminate()
             p.join()
             self.have_heartbeat = False

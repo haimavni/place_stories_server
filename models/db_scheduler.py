@@ -1,6 +1,7 @@
 from scheduler import Scheduler
 import datetime
 import time
+import random
 from gluon.storage import Storage
 import re
 import ws_messaging
@@ -8,6 +9,7 @@ from photos_support import scan_all_unscanned_photos
 from collect_emails import collect_mail
 from injections import inject
 from words import update_word_index_all
+from docs_support import calc_doc_stories
 
 def test_scheduler(msg):
     comment("test task {}", msg)
@@ -78,7 +80,8 @@ __tasks = dict(
     ###scan_all_unscanned_photos=scan_all_unscanned_photos,
     collect_mail=collect_mail,
     execute_task=execute_task,
-    update_word_index_all=update_word_index_all
+    update_word_index_all=update_word_index_all,
+    calc_doc_stories=calc_doc_stories
 )
 
 def dict_to_json_str(dic):
@@ -141,13 +144,27 @@ def schedule_update_word_index_all():
         timeout = 3 *3600, # will time out if running for 3 hours
     )
 
+def schedule_calc_doc_stories():
+    now = datetime.datetime.now()
+    return db.scheduler_task.insert(
+        status='QUEUED',
+        application_name=request.application,
+        task_name = 'calc doc stories',
+        function_name='calc_doc_stories',
+        start_time=now,
+        stop_time=now + datetime.timedelta(days=1461),
+        repeats=0,
+        period=2*3600,   # every 2 hours
+        timeout = 3 *3600, # will time out if running for 3 hours
+    )
 
 permanent_tasks = dict(
     ##scan_all_unscanned_photos=schedule_scan_all_unscanned_photos
     #look for emailed photos and other mail
     #note that the key must also be function_name set by the keyed item
     collect_mail=schedule_collect_mail,
-    update_word_index_all=schedule_update_word_index_all
+    update_word_index_all=schedule_update_word_index_all,
+    calc_doc_stories=schedule_calc_doc_stories
 )
 
 scheduler = MyScheduler(db, __tasks)
@@ -155,8 +172,15 @@ scheduler = MyScheduler(db, __tasks)
 def verify_tasks_started():
     if db(db.auth_user).count() < 2:
         return
+    if db(db.scheduler_task).count() >= len(permanent_tasks):
+        return
     for function_name in permanent_tasks:
         if db(db.scheduler_task.function_name==function_name).isempty():
+            n = random.randint(0, 1000)
+            delay = 1.0 * n / 10
+            time.sleep(delay) #prevent more than one process to create the task
+            if not db(db.scheduler_task.function_name==function_name).isempty():
+                continue
             task_id = permanent_tasks[function_name]()
             comment("start {}, task_id is {}", function_name, task_id)
             db.commit()
