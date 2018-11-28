@@ -261,9 +261,3 @@ class Stories:
         db = inject('db')
         now = datetime.datetime.now()
         db(db.TblStories.id==story_id).update(deleted=True, last_update_date=now)
-        ##update_story_words_index(story_id)
-    
-        
-        
-            
-        
