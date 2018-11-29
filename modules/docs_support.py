@@ -9,14 +9,14 @@ import random
 import pwd
 from stories_manager import Stories
 from folders import url_folder, local_folder
-from pdf2text import pdf_to_text
+from pdf_utils import pdf_to_text
 from time import sleep
 
 def save_uploaded_doc(file_name, blob, user_id, sub_folder=None):
     auth, log_exception, db, STORY4DOC = inject('auth', 'log_exception', 'db', 'STORY4DOC')
     user_id = user_id or auth.current_user()
     crc = zlib.crc32(blob)
-    cnt = db((db.TblDocs.crc==crc) & (db.TblDocs.deleted!=True)).count()
+    cnt = db((db.TblDocs.crc == crc) & (db.TblDocs.deleted != True)).count()
     if cnt > 0:
         return 'duplicate'
     original_file_name, ext = os.path.splitext(file_name)
@@ -47,7 +47,6 @@ def save_uploaded_doc(file_name, blob, user_id, sub_folder=None):
         deleted=False
     )
     db.commit()
-    n = db(db.TblDocs).count()
     return doc_id
 
 def calc_doc_story(doc_id):
