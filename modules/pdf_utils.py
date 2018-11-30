@@ -55,7 +55,7 @@ def pdf_to_text(pdfname):
                     tmp_s = LAAZ_REGEX.sub(invert, tmp_s) #reverse non-hebrew words back
             else:
                 tmp_s = HEB_REGEX.sub(invert, tmp_s)
-            result += tmp_s + '<br/>'
+            result += tmp_s + '\n'
     result += '\n</body>\n</html>'
     result = result.encode('utf-8')
     return result
@@ -81,7 +81,7 @@ def test_highlight():
     '''
     test
     '''
-    fname = "/home/haim/yoman.pdf"
+    fname = "/home/haim/pdf_tests/yoman.pdf"
     outfname = "/home/haim/yoman_highlighted.pdf"
     kw1 = "המונדיאל"
     kw2 = "המוסיקה"
@@ -93,9 +93,9 @@ def test_pdf2text():
     import sys
     fname = sys.argv[1] if len(sys.argv) > 1 else 'yoman'
     '''test pdf to text'''
-    pdfname = '/home/haim/{}.pdf'.format(fname)
+    pdfname = '/home/haim/pdf_tests/{}.pdf'.format(fname)
     html = pdf_to_text(pdfname)
-    htmlname = pdfname.replace('pdf', 'html')
+    htmlname = pdfname.replace('.pdf', '.html')
     with open(htmlname, 'w') as tmp_f:
         tmp_f.write(html)
 

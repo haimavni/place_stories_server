@@ -173,8 +173,8 @@ class Stories:
             #rec = self.find_translation(rec, language)
         now = datetime.datetime.now()
         if story_info.used_for == STORY4DOC:
-            if rec.preview != story_info.preview:
-                rec.update_record(preview=story_info.preview, name=story_info.name, last_update_date=now)
+            if rec.preview != story_info.preview or rec.name != story_info.name or rec.source!= story_info.source:
+                rec.update_record(preview=story_info.preview, name=story_info.name, last_update_date=now, source=story_info.source)
             preview = story_info.preview
         elif rec.story != updated_story_text:
             merger = mim.Merger()

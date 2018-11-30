@@ -51,15 +51,26 @@ def extract_tokens(s):
 
 def get_reisha(html, size=100):
     punctuation_marks = ',.;?!'
-    lst = extract_tokens(html)
+    lines = html.split('\n')
     result = ''
-    for i, t in enumerate(lst):
-        if i > size:
+    cnt = 0
+    for part in lines:
+        lst = extract_tokens(part)
+        for t in lst:
+            cnt += 1
+            if cnt > size:
+                break
+            if t not in punctuation_marks:
+                result += ' '
+            result += t
+        if cnt > size:
             break
-        if t not in punctuation_marks:
-            result += ' '
-        result += t
-    result += '...'
+        elif ''.join(lst):
+            result += ' * '
+    if result:
+        while result and result.endswith('.'):
+            result = result[:-1]
+        result += '...'
     return result
 
 def guess_language(html):
