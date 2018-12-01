@@ -180,7 +180,7 @@ def get_story_list(vars):
     result2 = []
     if qhd:
         result0 = _get_story_list(vars.params, exact=True, checked=True)
-        if vars.params.search_type=='advanced':
+        if vars.params.search_type == 'advanced':
             result1 = []
         else:
             result1 = _get_story_list(vars.params, exact=True, checked=False) #if keywords_str, only exact matches are returned, otherwise whatever the query gets
@@ -190,12 +190,11 @@ def get_story_list(vars):
             result2 = []
     else:
         result0 = _get_story_list(vars.params, exact=True, checked=True)
-            
     result = result0 + result1 + result2
     result_type_counters = dict()
     active_result_types = set()
     final_result = []
-    for story in result: 
+    for story in result:
         k = story.used_for
         active_result_types |= set([k])
         if k not in result_type_counters:
@@ -472,7 +471,7 @@ def get_term_list(vars):
                    preview=get_reisha(rec.TblStories.preview, 40),
                    name=rec.TblStories.name, 
                    story_id=rec.TblStories.id, 
-                   author=rec.TblStories.source,
+                   source=rec.TblStories.source,
                    id=rec.TblTerms.id) for rec in lst]
     return dict(term_list=result)
 
@@ -699,7 +698,7 @@ def get_checked_stories(params):
         for rec in checked_story_list:
             rec.checked = True
             if not rec.source:
-                rec.author = ''
+                rec.source = ''
     else:
         checked_story_list = []
     return checked_story_list

@@ -84,16 +84,16 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
     try:
         stream = StringIO(blob)
         img = Image.open(stream)
-        photo_date = None
-        exif = None
-        try:
-            exif = img._getexif()
-        except:
-            pass
-        if exif:
-            for key in [36867, 306]:
-                if key in exif:
-                    photo_date = exif[key]
+        #photo_date = None
+        #exif = None
+        #try:
+            #exif = img._getexif()
+        #except:
+            #pass
+        #if exif:
+            #for key in [36867, 306]:
+                #if key in exif:
+                    #photo_date = exif[key]
         width, height = img.size
         square_img = crop_to_square(img, width, height, 256)
         if square_img:
@@ -116,12 +116,12 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
             width, height = resized(width, height)
             img = img.resize((width, height), Image.LANCZOS)
         path = local_photos_folder() + sub_folder
-        if photo_date:
-            photo_date = datetime_from_str(photo_date, date_only=True)
-        elif os.path.isfile(path + file_name):
-            photo_date = modification_date(path + file_name)
-        else:
-            photo_date = None
+        #if photo_date:
+            #photo_date = datetime_from_str(photo_date, date_only=True)
+        #elif os.path.isfile(path + file_name):
+            #photo_date = modification_date(path + file_name)
+        #else:
+            #photo_date = None
         img.save(path + file_name)
         fix_owner(path)
         fix_owner(path + file_name)
@@ -139,7 +139,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
         Name=original_file_name,
         uploader=user_id,
         upload_date=datetime.datetime.now(),
-        photo_date=photo_date,
+        photo_date=None,
         width=width,
         height=height,
         crc=crc,
