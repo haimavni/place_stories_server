@@ -512,6 +512,7 @@ def apply_topics_to_selected_stories(vars):
         for item in selected_topics:
             topic = item.option
             if topic.sign=="plus" and topic.id not in curr_tag_ids:
+                story_id = item.option.id
                 item_id = item_id_of_story_id(used_for, story_id)
                 new_id = db.TblItemTopics.insert(item_type=usage_char, story_id=eid, item_id=item_id, topic_id=topic.id) 
                 curr_tag_ids |= set([topic.id])

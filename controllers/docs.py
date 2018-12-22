@@ -28,7 +28,7 @@ def get_doc_list(vars):
         lst = get_doc_list_with_topics(params)
     else:
         q = make_docs_query(params)
-        lst = db(q).select()
+        lst = db(q).select(orderby=~db.TblDocs.id)
     selected_doc_list = params.selected_doc_list
     lst = [rec for rec in lst if rec.story_id not in params.checked_doc_list]
     lst = lst0 + lst
@@ -108,7 +108,7 @@ def get_doc_list_with_topics(vars):
         if sign == 'minus':
             q1 = ~q1
         q &= q1
-        lst = db(q).select()
+        lst = db(q).select(orderby=~db.TblDocs.id)
         lst = [rec.TblDocs for rec in lst]
         bag1 = set(r.id for r in lst)
         if first:

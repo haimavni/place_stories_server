@@ -216,7 +216,7 @@ class Stories:
         elif story_info.used_for == STORY4PHOTO:
             photo_rec = db(db.TblPhotos.story_id==story_id).select().first()
             photo_rec.update_record(Name=name)
-        return Storage(story_id=story_id, last_update_date=now, updater_name=author_name, author=story_info.source, language=language, preview=preview)
+        return Storage(story_id=story_id, last_update_date=now, updater_name=author_name, author=story_info.source, language=language, preview=story_info.preview)
     
     def update_story_name(self, story_id, new_name, language=None):
         db = inject('db')
