@@ -22,6 +22,8 @@ def send_message(key, user=None, group=None, **data):
     send_data(group, obj)
 
 def send_data(group, obj):
+    request = inject('request')
     txt = jsondumps(obj)
     ###txt = simplejson.dumps(obj)
-    websocket_send('http://127.0.0.1:8888', txt, 'mykey', group)
+    h = 'https' if request.is_https else 'http'
+    websocket_send('{h}://127.0.0.1:8888'.format(h=h), txt, 'mykey', group)
