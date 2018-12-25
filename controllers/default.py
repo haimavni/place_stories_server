@@ -64,7 +64,8 @@ def get_tornado_host(vars):
     if ':' in host:
         host = host.split(':')[0]
     group = messaging_group(group=vars.group)
-    return dict(ws='ws://{host}:8888/realtime/{group}'.format(host=host, group=group))
+    ws = 'wss' if request.is_https else 'ws'
+    return dict(ws='{ws}://{host}:8888/realtime/{group}'.format(ws=ws, host=host, group=group))
 
 @serve_json
 def read_privileges(vars):
