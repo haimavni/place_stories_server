@@ -24,13 +24,14 @@ def send_message(key, user=None, group=None, **data):
 def send_data(group, obj):
     request = inject('request')
     txt = jsondumps(obj)
-    ###txt = simplejson.dumps(obj)
     if request.is_https:
         h = 'https'
         port = '8443'
         key = 'sslkey'
+        server_name = 'gbstories.org'
     else:
         h = 'http'
         port = '8888'
         key = 'mykey'
-    websocket_send('{h}://127.0.0.1:{port}'.format(h=h, port=port), txt, key, group)
+        server_name = '127.0.0.1'
+    websocket_send('{h}://{sn}:{port}'.format(h=h, sn=server_name, port=port), txt, key, group)
