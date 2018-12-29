@@ -28,7 +28,7 @@ def send_data(group, obj):
         h = 'https'
         port = '8443'
         key = 'sslkey'
-        server_name = 'gbstories.org'
+        server_name = request.env.http_host
     else:
         h = 'http'
         port = '8888'

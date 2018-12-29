@@ -27,7 +27,7 @@ def member_list(vars):
 def create_parent(vars):
     gender = vars.gender
     child_name = vars.child_name
-    what = 'Pa ' if gender == 'M' else 'Ma '
+    what = vars.parent_of + ' '
     rec = new_member_rec(gender=gender, first_name=what + child_name)
     rec.member_info.updater_id = auth.current_user()
     rec.member_info.update_time = datetime.datetime.now()
@@ -36,6 +36,7 @@ def create_parent(vars):
     rec.member_info.date_of_death = NO_DATE
     parent_id = db.TblMembers.insert(**rec.member_info)
     rec.member_info.id = parent_id
+    rec.face_url = photos_folder("profile_photos") + rec.facePhotoURL
     child_id = int(vars.child_id)
     if gender == 'M':
         db(db.TblMembers.id==child_id).update(father_id=parent_id)
