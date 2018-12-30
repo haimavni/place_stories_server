@@ -12,3 +12,17 @@ def local_folder(kind):
     app = request.application.split('__')[0]  ## we want gbs__dev, gbs__test etc. all to use the same data
     return '/gb_photos/{app}/{kind}/'.format(app=app, kind=kind)
 
+def photos_folder(what="orig"): 
+    #what may be orig, squares or profile_photos.
+    return url_folder('photos') + what + '/'
+
+def images_folder():
+    return url_folder('images')
+
+def local_photos_folder(what="orig"): 
+    #what may be orig, squares,images or profile_photos. (images is for customer-specific images such as logo)
+    return local_folder('photos') + what + '/'
+
+def local_images_folder():
+    return local_folder('images')
+

@@ -1,4 +1,4 @@
-from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, crop, save_uploaded_photo, rotate_photo
+from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, save_uploaded_photo, rotate_photo, save_member_face
 import ws_messaging
 import stories_manager
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
@@ -95,7 +95,6 @@ def save_photo_info(vars):
     photo_rec.update_record(**pi)
     return dict()
 
-
 @serve_json
 def get_faces(vars):
     photo_id = vars.photo_id;
@@ -122,33 +121,7 @@ def get_faces(vars):
 
 @serve_json
 def save_face(vars):
-    face = vars.face    
-    assert(face.member_id > 0)
-    if vars.make_profile_photo:
-        face_photo_url = save_profile_photo(face)
-    else:
-        face_photo_url = None
-    if vars.old_member_id:
-        q = (db.TblMemberPhotos.Photo_id==face.photo_id) & \
-            (db.TblMemberPhotos.Member_id==vars.old_member_id)
-    else:
-        q = None
-    data = dict(
-        Photo_id=face.photo_id,
-        Member_id=face.member_id,
-        r=face.r,
-        x=face.x,
-        y=face.y
-    )
-    rec = None
-    if q:
-        rec = db(q).select().first()
-    if rec:
-        rec.update_record(**data)
-    else:
-        db.TblMemberPhotos.insert(**data) 
-    member_name = member_display_name(member_id=face.member_id)
-    return dict(member_name=member_name, face_photo_url=face_photo_url)
+    return save_member_face(vars)
 
 @serve_json
 def detach_photo_from_member(vars):
@@ -564,20 +537,6 @@ def make_photos_query(vars):
             (db.TblPhotos.id==db.TblMemberPhotos.Photo_id)
         q &= q1
     return q
-
-def save_profile_photo(face):
-    rec = get_photo_rec(face.photo_id)
-    input_path = local_photos_folder() + rec.photo_path
-    rnd = random.randint(0, 1000) #if we use the same photo and just modify crop, change is not seen because of caching
-    facePhotoURL = "PP-{}-{}-{:03}.jpg".format(face.member_id, face.photo_id, rnd)
-    output_path = local_photos_folder("profile_photos") + facePhotoURL
-    crop(input_path, output_path, face)
-    db(db.TblMembers.id==face.member_id).update(facePhotoURL=facePhotoURL)
-    return photos_folder("profile_photos") + facePhotoURL
-
-def get_photo_rec(photo_id):
-    rec = db(db.TblPhotos.id==photo_id).select().first()
-    return rec
 
 def get_video_list_with_topics(vars):
     first = True

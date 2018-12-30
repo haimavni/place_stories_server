@@ -1,6 +1,6 @@
 from injections import inject
 from gluon.storage import Storage
-from photos_support import photos_folder
+from folders import *
 from date_utils import get_all_dates
 
 def get_member_rec(member_id, member_rec=None, prepend_path=False):

@@ -8,7 +8,7 @@ from date_utils import date_of_date_str, parse_date, get_all_dates, update_recor
 import datetime
 import os
 from dal_utils import insert_or_update
-from photos_support import get_slides_from_photo_list, photos_folder, images_folder
+from photos_support import get_slides_from_photo_list, photos_folder, images_folder, save_member_face
 import random
 import zlib
 import re
@@ -48,7 +48,9 @@ def create_parent(vars):
 @serve_json
 def create_new_member(vars):
     #todo: move code of photos/save_face to module and use it to complete the operation. in the client, go to the new member to edit its data
-    rec = new_member_rec(first_name='new member')
+    name = vars.name + ' ' or 'new member'
+    first_name, last_name = name.split(' ')[:2]
+    rec = new_member_rec(first_name=first_name, last_name=last_name)
     rec.member_info.updater_id = auth.current_user()
     rec.member_info.update_time = datetime.datetime.now()
     rec.member_info.approved = auth.has_membership(DATA_AUDITOR)
@@ -56,6 +58,16 @@ def create_new_member(vars):
     rec.member_info.date_of_death = NO_DATE
     member_id = db.TblMembers.insert(**rec.member_info)
     rec.member_info.id = member_id
+    params = Storage(
+        face=Storage(x=int(vars.face_x),
+                     y=int(vars.face_y),
+                     r=int(vars.face_r),
+                     photo_id=int(vars.photo_id),
+                     member_id=member_id),
+        make_profile_photo=True
+    )
+    tmp = save_member_face(params)
+    rec.member_info.face_photo_url = tmp.face_photo_url
     return dict(member_id=member_id, member=rec)
 
 @serve_json
@@ -644,11 +656,11 @@ def count_hit(vars):
 
 ###---------------------support functions
 
-def new_member_rec(gender=None, first_name=""):
+def new_member_rec(gender=None, first_name="", last_name=""):
     new_member = Storage(
         member_info=Storage(
             first_name=first_name,
-            last_name="",
+            last_name=last_name,
             former_first_name="",
             former_last_name="",
             visibility=VIS_NOT_READY,
@@ -881,8 +893,8 @@ def get_story_topics(refresh=False):
 
 def query_has_data(params):
     return params.keywords_str or params.checked_story_list or params.selected_stories or (params.days_since_update and params.days_since_update.value) or \
-        params.approval_state in [2,3] or params.selected_topics or params.selected_words
-        
+           params.approval_state in [2,3] or params.selected_topics or params.selected_words
+
 def make_stories_query(params, exact):
     getting_live_stories = not params.deleted_stories
     q = (db.TblStories.deleted != getting_live_stories) & (db.TblStories.used_for.belongs(STORY4USER)) 
@@ -1047,5 +1059,4 @@ def item_id_of_story_id(used_for, story_id):
         if rec:
             return rec.id
     return None
-        
-    
+

@@ -12,7 +12,8 @@ from gluon.storage import Storage
 import random
 import pwd
 from stories_manager import Stories
-from folders import url_folder, local_folder
+from folders import *
+from members_support import member_display_name, get_member_rec
 
 MAX_WIDTH = 1200
 MAX_HEIGHT = 800
@@ -248,20 +249,6 @@ def calc_missing_dhash_values(max_to_hash=20000):
     to_scan = db(q).count()    
     return  '{} photo records dhashed. {} need to be dhashed.'.format(done, to_scan)
 
-def photos_folder(what="orig"): 
-    #what may be orig, squares or profile_photos.
-    return url_folder('photos') + what + '/'
-
-def images_folder():
-    return url_folder('images')
-
-def local_photos_folder(what="orig"): 
-    #what may be orig, squares,images or profile_photos. (images is for customer-specific images such as logo)
-    return local_folder('photos') + what + '/'
-
-def local_images_folder():
-    return local_folder('images')
-
 def get_slides_from_photo_list(q):
     db = inject('db')
     q &= (db.TblPhotos.width > 0)
@@ -392,3 +379,71 @@ def find_similar_photos():
         lst = [(r.photo_path, r.crc) for r in lst]
         dup_list.append(lst)
     return dup_list
+
+def save_member_face(params):
+    db = inject('db')
+    face = params.face
+    assert(face.member_id > 0)
+    if params.make_profile_photo:
+        face_photo_url = save_profile_photo(face)
+    else:
+        face_photo_url = None
+    if params.old_member_id:
+        q = (db.TblMemberPhotos.Photo_id==face.photo_id) & \
+            (db.TblMemberPhotos.Member_id==params.old_member_id)
+    else:
+        q = None
+    data = dict(
+        Photo_id=face.photo_id,
+        Member_id=face.member_id,
+        r=face.r,
+        x=face.x,
+        y=face.y
+    )
+    rec = None
+    if q:
+        rec = db(q).select().first()
+    if rec:
+        rec.update_record(**data)
+    else:
+        db.TblMemberPhotos.insert(**data)
+    member_name = member_display_name(member_id=face.member_id)
+    return Storage(member_name=member_name, face_photo_url=face_photo_url)
+
+def save_profile_photo(face):
+    db = inject('db')
+    rec = get_photo_rec(face.photo_id)
+    input_path = local_photos_folder() + rec.photo_path
+    rnd = random.randint(0, 1000) #using same photo & just modify crop, change not seen - of caching
+    facePhotoURL = "PP-{}-{}-{:03}.jpg".format(face.member_id, face.photo_id, rnd)
+    output_path = local_photos_folder("profile_photos") + facePhotoURL
+    crop(input_path, output_path, face)
+    db(db.TblMembers.id == face.member_id).update(facePhotoURL=facePhotoURL)
+    return photos_folder("profile_photos") + facePhotoURL
+
+def get_photo_rec(photo_id):
+    db = inject('db')
+    rec = db(db.TblPhotos.id == photo_id).select().first()
+    return rec
+
+#function below is duplicated in members_support
+def member_display_name(rec=None, member_id=None, full=True):
+    rec = rec or get_member_rec(member_id)
+    if not rec:
+        return ''
+    if not rec.first_name:
+        return older_display_name(rec, full)
+    s = rec.first_name + ' ' + rec.last_name
+    if full and (rec.former_first_name or rec.former_last_name):
+        s += ' ('
+        if rec.former_first_name:
+            s += rec.former_first_name
+        if rec.former_last_name:
+            if rec.former_first_name:
+                s += ' '
+            s += rec.former_last_name
+        s += ')'
+    if rec.NickName:
+        s += ' - {}'.format(rec.NickName)
+    return s
+
