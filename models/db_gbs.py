@@ -294,7 +294,7 @@ db.define_table('TblPhotos',
 db.define_table('TblTopics',
                 Field('name', type='string'),
                 Field('description', type='string'),
-                Field('usage', type='string'), ## made of the letters EMPTV for events, members, photos, terms and videos
+                Field('usage', type='string'), ## made of the letters EMPTVD for events, members, photos, terms, and videos
                 Field('is_group', type='boolean', default=False)
 )
 
