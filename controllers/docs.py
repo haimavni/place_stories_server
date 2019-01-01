@@ -76,7 +76,7 @@ def apply_to_selected_docs(vars):
                 topic_rec = db(db.TblTopics.id==topic.id).select().first()
                 if 'D' not in topic_rec.usage:
                     usage = topic_rec.usage + 'D'
-                    topic_rec.update_record(usage=usage)
+                    topic_rec.update_record(usage=usage, topic_kind=2) #topic is simple 
             elif topic.sign=="minus" and topic.id in curr_tag_ids:
                 q = (db.TblItemTopics.item_type=='D') & (db.TblItemTopics.item_id==doc_id) & (db.TblItemTopics.topic_id==topic.id)
                 curr_tag_ids -= set([topic.id])

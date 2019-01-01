@@ -236,7 +236,7 @@ def apply_to_selected_photos(vars):
                 topic_rec = db(db.TblTopics.id==topic.id).select().first()
                 if 'P' not in topic_rec.usage:
                     usage = topic_rec.usage + 'P'
-                    topic_rec.update_record(usage=usage)
+                    topic_rec.update_record(usage=usage, topic_kind=2) #simple topic
             elif topic.sign=="minus" and topic.id in curr_tag_ids:
                 q = (db.TblItemTopics.item_type=="P") & (db.TblItemTopics.item_id==pid) & (db.TblItemTopics.topic_id==topic.id)
                 curr_tag_ids -= set([topic.id])
@@ -401,7 +401,7 @@ def apply_to_selected_videos(vars):
                 topic_rec = db(db.TblTopics.id==topic.id).select().first()
                 if 'V' not in topic_rec.usage:
                     usage = topic_rec.usage + 'V'
-                    topic_rec.update_record(usage=usage)
+                    topic_rec.update_record(usage=usage, topic_kind=2) #simple topic
             elif topic.sign=="minus" and topic.id in curr_tag_ids:
                 q = (db.TblItemTopics.item_type=="V") & (db.TblItemTopics.item_id==vid) & (db.TblItemTopics.topic_id==topic.id)
                 curr_tag_ids -= set([topic.id])

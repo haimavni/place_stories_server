@@ -533,7 +533,7 @@ def apply_topics_to_selected_stories(vars):
                 topic_rec = db(db.TblTopics.id==topic.id).select().first()
                 if usage_char not in topic_rec.usage:
                     usage = topic_rec.usage + usage_char
-                    topic_rec.update_record(usage=usage)
+                    topic_rec.update_record(usage=usage, topic_kind=2) #topic is simple
             elif topic.sign=="minus" and topic.id in curr_tag_ids:
                 q = (db.TblItemTopics.item_type==usage_char) & (db.TblItemTopics.item_id==eid) & (db.TblItemTopics.topic_id==topic.id)
                 curr_tag_ids -= set([topic.id])

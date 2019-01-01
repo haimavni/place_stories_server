@@ -79,7 +79,7 @@ def flatten_option_list(option_list):
     db = inject('db')
     result = []
     for item in option_list:
-        if item.option.is_group:
+        if item.option.topic_kind == 1:
             parent = item.option.id
             ids = db(db.TblTopicGroups.parent==parent).select()
             items = [Storage(group_number=item.group_number, option=Storage(sign=item.option.sign, id=r.child)) for r in ids]

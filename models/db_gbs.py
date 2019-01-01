@@ -294,8 +294,8 @@ db.define_table('TblPhotos',
 db.define_table('TblTopics',
                 Field('name', type='string'),
                 Field('description', type='string'),
-                Field('usage', type='string'), ## made of the letters EMPTVD for events, members, photos, terms, and videos
-                Field('is_group', type='boolean', default=False)
+                Field('topic_kind', type='integer', default=0), # 0=virgin, 1=group of topics 2=simple topic
+                Field('usage', type='string') ## made of the letters EMPTVD for events, members, photos, terms, and videos
 )
 
 db.define_table('TblTopicGroups',
