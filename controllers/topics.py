@@ -122,7 +122,7 @@ def add_topic_group(vars):
     #todo: ensure no cyclic
     topic_ids = set([topic.id for topic in gst[1]])
     topic_usage = [topic.usage for topic in gst[1]]
-    topic_usage = combined_usage(usage)
+    topic_usage = combined_usage(topic_usage)
     group_id = gst[0][0].id
     old_topic_ids = db(db.TblTopicGroups.parent==group_id).select()
     old_topic_ids = set([topic.child for topic in old_topic_ids])
