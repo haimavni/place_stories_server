@@ -63,29 +63,30 @@ def calc_all_tags():
     return result
 
 def calc_grouped_selected_options(option_list):
-    option_list = flatten_option_list(option_list)
     groups = dict()
     for item in option_list:
         g = item.group_number
         if g not in groups:
             groups[g] = [item.option.sign]
-        groups[g].append(item.option.id)
+        ids = flatten_option(item.option)
+        groups[g] += ids
     result = []
     for g in sorted(groups):
         result.append(groups[g])
     return result
 
-def flatten_option_list(option_list):
+def flatten_option(option):
     db = inject('db')
     result = []
-    for item in option_list:
-        if item.option.topic_kind == 1:
-            parent = item.option.id
-            ids = db(db.TblTopicGroups.parent==parent).select()
-            items = [Storage(group_number=item.group_number, option=Storage(sign=item.option.sign, id=r.child)) for r in ids]
-            result += flatten_option_list(items)
-        else:
-            result.append(item)
+    if option.topic_kind == 1:
+        parent = option.id
+        ids = db(db.TblTopicGroups.parent==parent).select()
+        ids = [itm.child for itm in ids]
+        items = db(db.TblTopics.id.belongs(ids)).select()
+        for opt in items:
+            result += flatten_option(opt)
+    else:
+        result = [option.id]
     return result
 
 def get_tag_ids(item_id, item_type):
