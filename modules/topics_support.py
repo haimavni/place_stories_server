@@ -44,8 +44,7 @@ def get_topic_groups():
 def fix_topic_groups(): #one time for upgrade
     db = inject('db')
     for r in db(db.TblTopics.usage != '').select():
-        usage = sorted(r.usage)
-        usage = ''.join(usage)
+        usage = ''.join(sorted(list(set(list(r.usage)))))
         r.update_record(usage=usage, topic_kind=2)
     lst = get_topic_groups()
     for item in lst:
