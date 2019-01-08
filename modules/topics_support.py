@@ -41,6 +41,23 @@ def get_topic_groups():
     lst = db.executesql(cmd)
     return lst
 
+def calculate_all_story_keywords():
+    db = inject('db')
+    q = (db.TblItemTopics.story_id == db.TblStories.id) 
+    q &= (db.TblTopics.id == db.TblItemTopics.topic_id)
+    q &= (db.TblTopics.topic_kind == 2)
+    lst = db(q)._select()
+    cmd = '''
+        SELECT TblItemTopics.story_id, array_agg(TblTopics.name) FROM TblTopics, TblItemTopics, TblStories 
+        WHERE ((TblItemTopics.story_id = TblStories.id) AND (TblTopics.id = TblItemTopics.topic_id))
+        GROUP BY TblItemTopics.story_id;
+    '''
+    lst = db.executesql(cmd)
+    for r in lst:
+        keywords = ';'.join(r[1])
+        db(db.TblStories.id==r[0]).update(keywords=keywords)
+    n = len(lst)
+
 def fix_topic_groups(): #one time for upgrade
     db = inject('db')
     for r in db(db.TblTopics.usage != '').select():

@@ -86,6 +86,8 @@ def apply_to_selected_docs(vars):
         keywords = "; ".join(curr_tags)
         changes[doc_id] = dict(keywords=keywords, doc_id=doc_id)
         rec = db(db.TblDocs.id==doc_id).select().first()
+        rec.update_record(keywords=keywords)  #todo: remove this line soon
+        rec = db(db.TblStories.id==rec.story_id).select().first()
         rec.update_record(keywords=keywords)
         if dates_info:
             update_record_dates(rec, dates_info)
