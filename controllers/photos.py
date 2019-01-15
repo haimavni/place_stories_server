@@ -414,7 +414,7 @@ def apply_to_selected_videos(vars):
         changes[vid] = dict(keywords=keywords, video_id=vid)
         rec = db(db.TblVideos.id==vid).select().first()
         rec.update_record(keywords=keywords) #todo: remove this line soon
-        rec1 = db(db.TblStories.id==rec.story_id)
+        rec1 = db(db.TblStories.id==rec.story_id).select().first()
         rec1.update_record(keywords=keywords)
         if photographer_id:
             rec.update_record(photographer_id=photographer_id)
