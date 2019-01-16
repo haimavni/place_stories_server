@@ -44,6 +44,7 @@ def get_doc_list(vars):
 def delete_checked_docs(vars):
     checked_doc_list = vars.params.checked_doc_list
     db(db.TblDocs.story_id.belongs(checked_doc_list)).update(deleted=True)
+    db(db.TblStories.id.belongs(checked_doc_list)).update(deleted=True)
     return dict()
 
 @serve_json
