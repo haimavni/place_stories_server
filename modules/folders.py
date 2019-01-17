@@ -1,4 +1,5 @@
 from injections import inject
+from distutils import dir_util
 
 def url_folder(kind):
     request = inject('request')
@@ -10,7 +11,9 @@ def url_folder(kind):
 def local_folder(kind):
     request = inject('request')
     app = request.application.split('__')[0]  ## we want gbs__dev, gbs__test etc. all to use the same data
-    return '/gb_photos/{app}/{kind}/'.format(app=app, kind=kind)
+    path = '/gb_photos/{app}/{kind}/'.format(app=app, kind=kind)
+    dir_util.mkpath(path)
+    return path
 
 def photos_folder(what="orig"): 
     #what may be orig, squares or profile_photos.

@@ -11,6 +11,7 @@ from stories_manager import Stories
 from folders import url_folder, local_folder
 from pdf_utils import pdf_to_text
 from time import sleep
+import ws_messaging
 
 def save_uploaded_doc(file_name, blob, user_id, sub_folder=None):
     auth, log_exception, db, STORY4DOC = inject('auth', 'log_exception', 'db', 'STORY4DOC')
@@ -51,7 +52,7 @@ def save_uploaded_doc(file_name, blob, user_id, sub_folder=None):
 
 def calc_doc_story(doc_id):
     try:
-        db, STORY4DOC, log_exception = inject('db', 'STORY4DOC', 'log_exception')
+        db, STORY4DOC, log_exception, comment = inject('db', 'STORY4DOC', 'log_exception', 'comment')
         doc_rec = db(db.TblDocs.id==doc_id).select().first()
         doc_file_name = local_docs_folder() + doc_rec.doc_path
         sm = Stories()
@@ -62,6 +63,8 @@ def calc_doc_story(doc_id):
             log_exception('PDF to text error in {}. Name: {}'.format(doc_rec.doc_path, doc_rec.original_file_name))
             txt = 'Failed to extract text from this document'
             good = False
+        if not txt:
+            txt = '- - -'
         story_info = sm.get_empty_story(used_for=STORY4DOC, story_text=txt, name=doc_rec.original_file_name)
         result = sm.add_story(story_info)
         story_id = result.story_id
@@ -87,15 +90,18 @@ def calc_doc_stories(time_budget=None):
             if elapsed > time_budget:
                 break
             n = db(q).count()
+            doc_ids = []
             if n > 0:
                 comment('Calc doc stories. {} documents left to calculate.', n)
                 lst = db(q).select(db.TblDocs.id, limitby=(0, chunk))
                 for rec in lst:
                     if calc_doc_story(rec.id):
+                        doc_ids.append(rec.id)
                         ns += 1
                     else:
                         nf += 1
                 db.commit()
+                ws_messaging.send_message('DOCS_WERE_UPLOADED', group='ALL', doc_ids=doc_ids)
             else:
                 sleep(5)
     except:

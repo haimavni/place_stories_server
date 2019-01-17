@@ -1,5 +1,6 @@
 import stories_manager
 import csv, cStringIO
+from folders import local_folder
 
 @serve_json
 def get_help(vars):
@@ -37,7 +38,7 @@ def save_help(name, topic, content):
         sm.add_story(story_info)
 
 def default_csv_name():
-    return 'applications/{}/private/help_messages.csv'.format(request.application)
+    return local_folder('help') + 'help_messages.csv'
 
 @serve_json
 def save_help_messages_to_csv(vars):
