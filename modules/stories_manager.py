@@ -172,6 +172,7 @@ class Stories:
         #if rec.language and rec.language != language:
             #rec = self.find_translation(rec, language)
         now = datetime.datetime.now()
+        preview = ''
         if story_info.used_for == STORY4DOC:
             if rec.preview != story_info.preview or rec.name != story_info.name or rec.source!= story_info.source:
                 rec.update_record(preview=story_info.preview, name=story_info.name, last_update_date=now, source=story_info.source)
