@@ -505,7 +505,20 @@ def delete_checked_stories(vars):
     params = vars.params
     checked_stories = params.checked_story_list
     deleted = not params.deleted_stories #will undelete if the list is of deleted stories
-    n = db(db.TblStories.id.belongs(checked_stories)).update(deleted=deleted)
+    q = db.TblStories.id.belongs(checked_stories)
+    n = db(q).update(deleted=deleted)
+    tbls = {STORY4MEMBER: db.TblMembers, STORY4EVENT: db.TblEvents, STORY4PHOTO: db.TblPhotos, STORY4TERM: db.TblTerms, STORY4VIDEO: db.TblVideos, STORY4DOC: db.TblDocs}
+    
+    #if story is associated with member, photo, video or document, need to skip it or delete the item too 
+    for usage in [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC]:
+        q1 = q & (db.TblStories.used_for==usage)
+        lst = db(q1).select()
+        story_ids = [rec.id for rec in lst]
+        if not story_ids:
+            continue
+        tbl = tbls[usage]
+        db(tbl.story_id.belongs(story_ids)).update(deleted=deleted)
+        
     return dict(num_deleted=n)
 
 @serve_json

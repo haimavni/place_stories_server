@@ -434,7 +434,10 @@ def apply_to_selected_videos(vars):
 @serve_json
 def delete_selected_photos(vars):
     selected_photo_list = vars.selected_photo_list
-    db(db.TblPhotos.id.belongs(selected_photo_list)).update(deleted=True)
+    a = db(db.TblPhotos.id.belongs(selected_photo_list))
+    a.update(deleted=True)
+    story_ids = [rec.story_id for rec in a.select()]
+    db(db.TblStories.id.belongs(story_ids)).update(deleted=True)
     return dict()
 
 @serve_json
