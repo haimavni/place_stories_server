@@ -145,7 +145,6 @@ def remove_duplicate_photo_members(): #todo: remove after all sites are fixed
         
 @serve_json
 def get_photo_list(vars):
-    ###remove_duplicate_photo_members()
     selected_topics = vars.selected_topics or []
     mprl = vars.max_photos_per_line or 8;
     MAX_PHOTOS_COUNT = 100 + (mprl - 8) * 100
