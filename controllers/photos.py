@@ -132,8 +132,20 @@ def detach_photo_from_member(vars):
     good = db(q).delete() == 1
     return dict(photo_detached=good)
 
+def remove_duplicate_photo_members(): #todo: remove after all sites are fixed
+    lst = db(db.TblMemberPhotos).select(orderby=db.TblMemberPhotos.Member_id | db.TblMemberPhotos.Photo_id | ~db.TblMemberPhotos.id)
+    prev_rec = Storage()
+    nd = 0
+    for rec in lst:
+        if rec.Member_id != prev_rec.Member_id or rec.Photo_id != prev_rec.Photo_id:
+            prev_rec = rec
+            continue
+        nd += db(db.TblMemberPhotos.id==rec.id).delete()
+    return '{} duplicate member/photo links were removed'.format(nd)        
+        
 @serve_json
 def get_photo_list(vars):
+    ###remove_duplicate_photo_members()
     selected_topics = vars.selected_topics or []
     mprl = vars.max_photos_per_line or 8;
     MAX_PHOTOS_COUNT = 100 + (mprl - 8) * 100
