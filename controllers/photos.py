@@ -528,7 +528,7 @@ def make_photos_query(vars):
         q &= db.TblPhotos.photographer_id.belongs(photographer_list)
     if first_year:
         from_date = datetime.date(year=first_year, month=1, day=1)
-        q &= (db.TblPhotos.photo_date >= from_date)
+        q &= (db.TblPhotos.photo_date >= from_date) #todo: use photo_date_max (computed from date fields) instead of photo_date
     if last_year:
         to_date = datetime.date(year=last_year, month=1, day=1)
         q &= (db.TblPhotos.photo_date < to_date)
