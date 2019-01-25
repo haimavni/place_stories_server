@@ -133,15 +133,11 @@ class Stories:
             db.TblEvents.insert(
                 story_id=story_id,
                 Name=name,
-                ###event_date=
-                ###event_date_str=
             )
         elif story_info.used_for == STORY4TERM:    
             db.TblTerms.insert(
                 story_id=story_id,
                 Name=name,
-                ###event_date=
-                ###event_date_str=
             )
         elif story_info.used_for == STORY4PHOTO:
             pass

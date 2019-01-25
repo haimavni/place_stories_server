@@ -2,10 +2,12 @@
 
 import datetime
 from gluon.storage import Storage
+from injections import inject
 
 DATE_STR_SUFFIX = "_datestr" #todo: obsolete soon
 DATE_SPAN_SUFFIX = "_datespan"
 DATE_UNIT_SUFFIX = "_dateunit"
+DATE_END_SUFFIX = "_dateend"
 
 def parse_date(date_str):
     date_str = date_str.replace('.', '/').replace('-', '/')
@@ -108,6 +110,11 @@ def fix_record_dates_in(rec, data):
         elif fld_name in data:
             result[fld_name] = data[fld_name]
     return result
+
+def calc_date_end(date, unit, span):
+    n = 365 if unit == 'Y' else 31 if unit == 'M' else 1
+    td = datetime.timedelta(days = n * span)
+    return date + td
             
 def update_record_dates(rec, dates_info):
     data = dict()
@@ -115,8 +122,10 @@ def update_record_dates(rec, dates_info):
         date_str, date_span = dates_info[date_fld]
         date_unit, date = parse_date(date_str)
         data[date_fld] = date
-        data[date_fld + '_datespan'] = date_span
-        data[date_fld + '_dateunit'] = date_unit
+        data[date_fld + DATE_SPAN_SUFFIX] = date_span
+        data[date_fld + DATE_UNIT_SUFFIX] = date_unit
+        date_end = calc_date_end(date, date_unit, date_span)
+        data[date_fld + DATE_END_SUFFIX] = date_end
     rec.update_record(**data)
 
 def string_date_to_date(s):
@@ -175,6 +184,26 @@ def datetime_from_str(s, date_only=False):
     parts = time.split(':')
     h,mn,s = [int(p) for p in parts]
     return datetime.datetime(year=y, month=m, day=d, hour=h, minute=mn, second=s)
+
+def fix_all_date_ends():
+    db, NO_DATE = inject('db', 'NO_DATE')
+    for tbl in [db.TblEvents, db.TblMembers, db.TblPhotos, db.TblVideos, db.TblDocs]:
+        for fld in tbl.fields():
+            if not fld.endswith(DATE_SPAN_SUFFIX):
+                continue
+            fld_date = tbl[fld].name[:-len(DATE_SPAN_SUFFIX)]
+            for rec in db(tbl.deleted != True).select():
+                try:
+                    date = rec[fld_date] or NO_DATE
+                    suf = rec[fld_date + DATE_UNIT_SUFFIX] or 'Y'
+                    span = rec[fld_date + DATE_SPAN_SUFFIX] or 1
+                    date_end = calc_date_end(date, suf, span)
+                    data = {fld_date + DATE_END_SUFFIX: date_end}
+                    rec.update_record(**data)
+                except Exception, e:
+                    print e
+            db.commit()
+    return 'All date ends fixed'
     
 if __name__ == '__main__'    :
     test()

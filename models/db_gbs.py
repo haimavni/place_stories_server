@@ -118,7 +118,7 @@ db.define_table('TblEvents',
                 Field('event_date', type='date', default=NO_DATE),
                 Field('event_date_dateunit', type='string', default='Y'),
                 Field('event_date_datespan', type='integer', default=1),
-                Field('event_date_str', type='string'),
+                Field('event_date_dateend', type='date', default=NO_DATE),
                 Field('EventRank', type='integer'),
                 Field('IIDD', type='integer'),
                 Field('KeyWords', type='string'),
@@ -197,18 +197,22 @@ db.define_table('TblMembers',
                 Field('date_of_alia', type='date', default=NO_DATE),
                 Field('date_of_alia_dateunit', type='string', default='N'),
                 Field('date_of_alia_datespan', type='integer', default=0),
+                Field('date_of_alia_dateend', type='date'),
                 Field('DateOfBirth', type='string'),
                 Field('date_of_birth', type='date', default=NO_DATE), 
                 Field('date_of_birth_dateunit', type='string', default='N'), 
                 Field('date_of_birth_datespan', type='integer', default=0), 
+                Field('date_of_birth_dateend', type='date'),
                 Field('date_of_death', type='date', default=NO_DATE),
                 Field('date_of_death_dateunit', type='string', default='N'),
                 Field('date_of_death_datespan', type='integer', default=0),
+                Field('date_of_death_dateend', type='date', default=0),
                 Field('cause_of_death', type='integer', default=0),
                 Field('DateOfMember', type='string'),
                 Field('date_of_member', type='date', default=NO_DATE),
                 Field('date_of_member_dateunit', type='string', default='N'),
                 Field('date_of_member_datespan', type='integer', default=0),
+                Field('date_of_member_dateend', type='date', default=NO_DATE),
                 Field('Education', type='string'),
                 Field('FormerName', type='string'),
                 Field('gender', type='string'), #F, M and also FM and MF for transgenders...
@@ -271,6 +275,7 @@ db.define_table('TblPhotos',
                 Field('photo_date', type='date', default=NO_DATE),
                 Field('photo_date_dateunit', type='string', default='Y'), # D, M or Y for day, month, year
                 Field('photo_date_datespan', type='integer', default=1), # how many months or years in the range
+                Field('photo_date_dateend', type='date', default=NO_DATE),
                 Field('PhotoRank', type='integer'),
                 Field('Photographer', type='string'), #obsolete
                 Field('photographer_id', type='integer'),
@@ -322,6 +327,7 @@ db.define_table('TblVideos',
                 Field('video_date', type='date', default=NO_DATE),
                 Field('video_date_dateunit', type='string', default='Y'), # D, M or Y for day, month, year
                 Field('video_date_datespan', type='integer', default=1), # how many months or years in the range
+                Field('video_date_dateend', type='date', default=NO_DATE),
                 Field('touch_time', type='date', default=NO_DATE), #used to promote videos
                 Field('upload_date', type='datetime')
                 )
@@ -336,6 +342,7 @@ db.define_table('TblDocs',
                 Field('doc_date', type='date', default=NO_DATE),
                 Field('doc_date_dateunit', type='string', default='Y'), # D, M or Y for day, month, year
                 Field('doc_date_datespan', type='integer', default=1), # how many months or years in the range
+                Field('doc_date_dateend', type='date', default=NO_DATE),
                 Field('touch_time', type='date', default=NO_DATE), #used to promote docs
                 Field('doc_path', type='string'),
                 Field('original_file_name', type='string'),
