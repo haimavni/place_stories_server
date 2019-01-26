@@ -112,9 +112,18 @@ def fix_record_dates_in(rec, data):
     return result
 
 def calc_date_end(date, unit, span):
-    n = 365 if unit == 'Y' else 31 if unit == 'M' else 1
-    td = datetime.timedelta(days = n * span)
-    return date + td
+    if unit == 'Y':
+        return datetime.date(year=date.year + span, month=1, day=1)
+    elif unit == 'M':
+        m = date.month + span - 1
+        year = date.year + m / 12
+        month = m % 12 + 1
+        return datetime.date(year=year, month=month, day=1)
+    elif unit == 'D':
+        td = datetime.timedelta(days = span)
+        return date + td
+    else:
+        raise Exception('date has no unit')
             
 def update_record_dates(rec, dates_info):
     data = dict()
@@ -188,27 +197,27 @@ def datetime_from_str(s, date_only=False):
 def fix_all_date_ends():
     db, NO_DATE = inject('db', 'NO_DATE')
     for tbl in [db.TblEvents, db.TblMembers, db.TblPhotos, db.TblVideos, db.TblDocs]:
-        for fld in tbl.fields():
-            if not fld.endswith(DATE_SPAN_SUFFIX):
-                continue
-            fld_date = tbl[fld].name[:-len(DATE_SPAN_SUFFIX)]
+        try:
             for rec in db(tbl.deleted != True).select():
-                try:
+                data = dict()
+                for fld in tbl.fields():
+                    if not fld.endswith(DATE_SPAN_SUFFIX):
+                        continue
+                    fld_date = tbl[fld].name[:-len(DATE_SPAN_SUFFIX)]
                     date = rec[fld_date] or NO_DATE
                     suf = rec[fld_date + DATE_UNIT_SUFFIX] or 'Y'
+                    if suf == 'N':
+                        data[fld_date + DATE_UNIT_SUFFIX] = 'Y'
+                        suf = 'Y'
                     span = rec[fld_date + DATE_SPAN_SUFFIX] or 1
                     date_end = calc_date_end(date, suf, span)
-                    data = {fld_date + DATE_END_SUFFIX: date_end}
-                    rec.update_record(**data)
-                except Exception, e:
-                    print e
+                    data[fld_date + DATE_END_SUFFIX] = date_end
+                rec.update_record(**data)
             db.commit()
+        except Exception, e:
+            print e
     return 'All date ends fixed'
     
 if __name__ == '__main__'    :
     test()
-    
-
-    
-
-
+ 
