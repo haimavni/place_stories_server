@@ -86,6 +86,7 @@ def save_photo_info(vars):
     if pi.name != photo_rec.Name:
         sm = stories_manager.Stories(vars.user_id)
         sm.update_story_name(photo_rec.story_id, pi.name)
+    photo_date_str = pi.photo_date_str
     del pi.photo_date_str
     pi.photo_date = date
     pi.photo_date_dateunit = unit
@@ -93,6 +94,11 @@ def save_photo_info(vars):
     pi.Name = pi.name
     del pi.name
     photo_rec.update_record(**pi)
+    if photo_date_str:
+        dates_info = dict(
+            photo_date = (photo_date_str, pi.photo_date_datespan)
+        )
+        update_record_dates(photo_rec, dates_info)
     return dict()
 
 @serve_json
@@ -528,7 +534,7 @@ def make_photos_query(vars):
         q &= db.TblPhotos.photographer_id.belongs(photographer_list)
     if first_year:
         from_date = datetime.date(year=first_year, month=1, day=1)
-        q &= (db.TblPhotos.photo_date >= from_date) #todo: use photo_date_max (computed from date fields) instead of photo_date
+        q &= (db.TblPhotos.photo_date_dateend > from_date)
     if last_year:
         to_date = datetime.date(year=last_year, month=1, day=1)
         q &= (db.TblPhotos.photo_date < to_date)
