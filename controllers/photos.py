@@ -524,7 +524,7 @@ def make_photos_query(vars):
     if vars.base_year: #time range may be defined
         if first_year < vars.base_year + 4:
             first_year = 0
-        if last_year and last_year > vars.base_year + vars.num_years  - 5:
+        if last_year and last_year > vars.base_year + vars.num_years - 5:
             last_year = 0
     else:
         first_year = 0
