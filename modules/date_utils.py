@@ -33,7 +33,7 @@ def get_all_dates(rec):
             unit = rec[fld_name]
             fld = fld_name[:-len(DATE_UNIT_SUFFIX)]
             date = rec[fld]
-            if not date:
+            if (not date) or (date.year == 1):
                 unit = "N"
             date_str = ""
             if unit != 'N':
@@ -205,13 +205,14 @@ def fix_all_date_ends():
                         continue
                     fld_date = tbl[fld].name[:-len(DATE_SPAN_SUFFIX)]
                     date = rec[fld_date] or NO_DATE
-                    suf = rec[fld_date + DATE_UNIT_SUFFIX] or 'Y'
-                    if suf == 'N':
-                        data[fld_date + DATE_UNIT_SUFFIX] = 'Y'
-                        suf = 'Y'
-                    span = rec[fld_date + DATE_SPAN_SUFFIX] or 1
-                    date_end = calc_date_end(date, suf, span)
-                    data[fld_date + DATE_END_SUFFIX] = date_end
+                    suf = rec[fld_date + DATE_UNIT_SUFFIX] or 'N'
+                    if date.year == 1:
+                        suf = 'N'
+                    data[fld_date + DATE_UNIT_SUFFIX] = suf
+                    if suf != 'N':
+                        span = rec[fld_date + DATE_SPAN_SUFFIX] or 1
+                        date_end = calc_date_end(date, suf, span)
+                        data[fld_date + DATE_END_SUFFIX] = date_end
                 rec.update_record(**data)
             db.commit()
         except Exception, e:
