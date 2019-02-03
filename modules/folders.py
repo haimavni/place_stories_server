@@ -15,16 +15,16 @@ def local_folder(kind):
     dir_util.mkpath(path)
     return path
 
-def photos_folder(what="orig"): 
+def photos_folder(what="orig"):
     #what may be orig, squares or profile_photos.
     return url_folder('photos') + what + '/'
 
 def images_folder():
     return url_folder('images')
 
-def local_photos_folder(what="orig"): 
+def local_photos_folder(what="orig"):
     #what may be orig, squares,images or profile_photos. (images is for customer-specific images such as logo)
-    return local_folder('photos') + what + '/'
+    return local_folder('photos' + '/' + what)
 
 def local_images_folder():
     return local_folder('images')

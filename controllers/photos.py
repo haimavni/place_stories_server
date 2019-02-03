@@ -1,4 +1,5 @@
-from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, save_uploaded_photo, rotate_photo, save_member_face
+from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, \
+     save_uploaded_photo, rotate_photo, save_member_face, create_zip_file
 import ws_messaging
 import stories_manager
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
@@ -6,6 +7,8 @@ from members_support import *
 import random
 import datetime
 import os
+from gluon.storage import Storage
+from gluon.utils import web2py_uuid
 
 @serve_json
 def upload_photo(vars):
@@ -198,7 +201,7 @@ def get_photo_list(vars):
         result.append(dic)
     return dict(photo_list=result)
 
-@serve_json    
+@serve_json
 def get_theme_data(vars):
     path = images_folder()
     local_path = local_images_folder()
@@ -216,7 +219,7 @@ def get_theme_data(vars):
     for k in files:
         result[k] = path + files[k] if os.path.exists(local_path + files[k]) else ''
         if not os.path.exists(local_path + files[k]):
-            comment("file {} is missing", k)                   
+            comment("file {} is missing", k)
     return dict(files=result)
 
 @serve_json
@@ -613,3 +616,20 @@ def make_videos_query(vars):
         q &= (db.TblVideos.video_date == NO_DATE)
     return q
 
+@serve_json
+def download_files(vars):
+    pl = vars.selected_photo_list
+    lst = db(db.TblPhotos.id.belongs(pl)).select()
+    folder = local_photos_folder()
+    oversize_folder = local_photos_folder("oversize")
+    uuid = web2py_uuid()
+    zip_name = "photos-" + uuid.split('-')[0]
+    photo_list = []
+    for p in lst:
+        if p.oversize:
+            photo_list.append(Storage(path=oversize_folder + p.photo_path, name=p.Name))
+        else:
+            photo_list.append(Storage(path=folder + p.photo_path, name=p.Name))
+    create_zip_file(local_photos_folder("downloads") + zip_name, photo_list)
+    download_url = photos_folder("downloads") + zip_name + ".zip"
+    return dict(download_url=download_url)

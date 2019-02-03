@@ -14,6 +14,7 @@ import pwd
 from stories_manager import Stories
 from folders import *
 from members_support import member_display_name, older_display_name, get_member_rec
+import zipfile
 
 MAX_WIDTH = 1200
 MAX_HEIGHT = 800
@@ -425,6 +426,12 @@ def get_photo_rec(photo_id):
     db = inject('db')
     rec = db(db.TblPhotos.id == photo_id).select().first()
     return rec
+
+def create_zip_file(zip_name, file_list):
+    with zipfile.ZipFile(zip_name + '.zip', 'w') as myzip:
+        for p in file_list:
+            name, ext = os.path.splitext(p.path)
+            myzip.write(p.path, arcname=p.name + ext)
 
 #function below is duplicated in members_support
 def member_display_name(rec=None, member_id=None, full=True):
