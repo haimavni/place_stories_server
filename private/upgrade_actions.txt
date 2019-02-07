@@ -1,0 +1,2 @@
+06/02/2019
+db(db.TblPhotos).update(is_back_side=False)

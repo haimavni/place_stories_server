@@ -290,10 +290,16 @@ db.define_table('TblPhotos',
                 Field('oversize', type='boolean', default=False), #If people want to download the full size they use this info
                 Field('random_photo_key', type='integer'),
                 Field('deleted', type='boolean', default=False),
+                Field('is_back_side', type='boolean', default=False),
                 Field('crc', type='integer'),
                 Field('dhash', type='string'),
                 Field('usage', type='integer', default=0) #1=has identified members 2=has assigned tags 3=both, #todo need to populate, then use
                 #to select only relevant photos for opening slide show
+)
+
+db.define_table('TblPhotoPairs',
+                Field('front_id', db.TblPhotos),
+                Field('back_id', db.TblPhotos)
 )
 
 db.define_table('TblTopics',
