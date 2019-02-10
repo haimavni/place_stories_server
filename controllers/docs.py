@@ -48,7 +48,7 @@ def delete_checked_docs(vars):
     return dict()
 
 @serve_json
-def apply_to_selected_docs(vars):
+def apply_to_checked_docs(vars):
     all_tags = calc_all_tags()
     params = vars.params
     sdl = params.checked_doc_list

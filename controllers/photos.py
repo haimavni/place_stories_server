@@ -449,7 +449,7 @@ def apply_to_selected_videos(vars):
             topic = tpc.option
             item = dict(item_id=vid, topic_id=topic.id)
             if topic.sign == "plus" and topic.id not in curr_tag_ids:
-                vrec = db(db.TblVideos.id == id).select().first()
+                vrec = db(db.TblVideos.id == vid).select().first()
                 story_id = vrec.story_id if vrec else None
                 if not story_id:
                     continue
@@ -559,6 +559,10 @@ def pair_selected_photos(vars):
 def flip_photo(vars):
     flip_photo_pair(vars.front_id, vars.back_id)
     return dict()
+
+@serve_json
+def clear_photo_group(vars):
+    pass
 
 ####---------------support functions--------------------------------------
 
