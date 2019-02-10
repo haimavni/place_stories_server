@@ -213,16 +213,20 @@ def scan_all_unscanned_photos():
                 failed_crops += 1
             for face in faces:
                 x, y, w, h = face
-                db.TblMemberPhotos.insert(Photo_id=rec.id, x=x, y=y, w=w, h=h) # for older records, merge with record photo_id-member_id
+                db.TblMemberPhotos.insert(Photo_id=rec.id, x=x, y=y, w=w, h=h) # for older records,
+                                                            # merge with record photo_id-member_id
         db.commit()
-        missing = db((db.TblPhotos.photo_missing==True) & (db.TblPhotos.deleted!=True)).count()
-        done = db((db.TblPhotos.width>0) & (db.TblPhotos.deleted!=True)).count()
-        total = db((db.TblPhotos) & (db.TblPhotos.deleted!=True)).count()
+        missing = db((db.TblPhotos.photo_missing == True) & \
+                  (db.TblPhotos.deleted != True)).count()
+        done = db((db.TblPhotos.width > 0) & (db.TblPhotos.deleted != True)).count()
+        total = db((db.TblPhotos) & (db.TblPhotos.deleted != True)).count()
     return dict(done=done, total=total, missing=missing, to_scan=to_scan, failed_crops=failed_crops)
 
 def calc_missing_dhash_values(max_to_hash=20000):
     db, comment = inject('db', 'comment')
-    q = (db.TblPhotos.dhash==None) & (db.TblPhotos.photo_missing == False) & (db.TblPhotos.deleted!=True)
+    q = (db.TblPhotos.dhash == None) & \
+        (db.TblPhotos.photo_missing == False) & \
+        (db.TblPhotos.deleted != True)
     to_scan = db(q).count()
     comment("{} photos still have no dhash value", to_scan)
     chunk = 100
@@ -231,7 +235,7 @@ def calc_missing_dhash_values(max_to_hash=20000):
     while True:
         comment('started dhashing chunk of photos')
         lst = db(q).select(limitby=(0, chunk))
-        if not len(lst):
+        if not lst:
             comment('No more undhashed photos found!')
             break
         for rec in lst:
@@ -247,7 +251,7 @@ def calc_missing_dhash_values(max_to_hash=20000):
         db.commit()
         if done > max_to_hash:
             break
-    to_scan = db(q).count()    
+    to_scan = db(q).count()
     return  '{} photo records dhashed. {} need to be dhashed.'.format(done, to_scan)
 
 def get_slides_from_photo_list(q):
@@ -269,7 +273,17 @@ def get_slides_from_photo_list(q):
     lst = lst1
 
     folder = photos_folder()
-    slides = [dict(photo_id=rec.id, src=folder + rec.photo_path, width=rec.width, height=rec.height, title=rec.Description or rec.Name) for rec in lst]
+    slides = [dict(photo_id=rec.id,
+                   side='front',
+                   front=dict(
+                       src=folder + rec.photo_path,
+                       width=rec.width,
+                       height=rec.height,
+                   ),
+                   src=folder + rec.photo_path,
+                   width=rec.width,
+                   height=rec.height,
+                   title=rec.Description or rec.Name) for rec in lst]
     return slides
 
 def crop(input_path, output_path, face, size=100):
@@ -307,7 +321,7 @@ def crop_square(img_src, width, height, side_size):
 
 def rotate_photo(photo_id):
     db = inject('db')
-    photo_rec = db(db.TblPhotos.id==photo_id).select().first()
+    photo_rec = db(db.TblPhotos.id == photo_id).select().first()
     lst = ['orig', 'squares']
     if photo_rec.oversize:
         lst += ['oversize']
@@ -323,16 +337,16 @@ def rotate_photo(photo_id):
             crc = zlib.crc32(blob)
             pname, fname = os.path.split(photo_rec.photo_path)
             original_file_name, ext = os.path.splitext(fname)
-            new_fname = '{crc:x}{ext}'.format(crc=crc & 0xffffffff, ext=ext) 
+            new_fname = '{crc:x}{ext}'.format(crc=crc & 0xffffffff, ext=ext)
             new_photo_path = pname + new_fname
             new_file_name = path + new_photo_path
             os.rename(file_name, new_file_name)
         else:
             img.save(path + new_photo_path)
-        
+
     height, width = (photo_rec.width, photo_rec.height)
     photo_rec.update_record(width=width, height=height, photo_path=new_photo_path)
-        
+
 def add_photos_from_drive(sub_folder):
     folder = local_photos_folder("orig")
     root_folder = folder + sub_folder
@@ -350,7 +364,7 @@ def add_photos_from_drive(sub_folder):
     
 def fix_owner(file_name):
     request = inject('request')
-    host = request.env.http_host or "" 
+    host = request.env.http_host or ""
     if '8000' in host: #development
         return
     uid, gid = pwd.getpwnam('www-data')[2:4]
@@ -366,7 +380,9 @@ def find_similar_photos():
     dic = {}
     dups = {}
     db = inject('db')
-    lst = db((db.TblPhotos.width>0)&(db.TblPhotos.deleted!=True)&(db.TblPhotos.photo_missing!=True)).select()
+    lst = db((db.TblPhotos.width > 0) & \
+             (db.TblPhotos.deleted != True) &\
+             (db.TblPhotos.photo_missing != True)).select()
     for rec in lst:
         if rec.dhash in dic:
             dic[rec.dhash].append(rec.id)
@@ -384,14 +400,14 @@ def find_similar_photos():
 def save_member_face(params):
     db = inject('db')
     face = params.face
-    assert(face.member_id > 0)
+    assert face.member_id > 0
     if params.make_profile_photo:
         face_photo_url = save_profile_photo(face)
     else:
         face_photo_url = None
     if params.old_member_id:
-        q = (db.TblMemberPhotos.Photo_id==face.photo_id) & \
-            (db.TblMemberPhotos.Member_id==params.old_member_id)
+        q = (db.TblMemberPhotos.Photo_id == face.photo_id) & \
+            (db.TblMemberPhotos.Member_id == params.old_member_id)
     else:
         q = None
     data = dict(

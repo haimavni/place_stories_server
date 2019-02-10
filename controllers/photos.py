@@ -23,14 +23,14 @@ def upload_photo(vars):
 def get_photo_detail(vars):
     photo_id = int(vars.photo_id)
     if vars.what == 'story': #This photo is identified by the associated story
-        rec = db(db.TblPhotos.story_id==photo_id).select().first()
+        rec = db(db.TblPhotos.story_id == photo_id).select().first()
     else:
-        rec = db(db.TblPhotos.id==photo_id).select().first()
+        rec = db(db.TblPhotos.id == photo_id).select().first()
     sm = stories_manager.Stories()
     story=sm.get_story(rec.story_id)
     if not story:
         story = sm.get_empty_story(used_for=STORY4PHOTO)
-    all_dates = get_all_dates(rec)        
+    all_dates = get_all_dates(rec)
     return dict(photo_src=photos_folder() + rec.photo_path,
                 photo_name=rec.Name,
                 height=rec.height,
@@ -63,63 +63,71 @@ def update_photo_date(vars):
 
 @serve_json
 def get_photo_info(vars):
+    '''
+    get photo info
+    '''
     photo_id = int(vars.photo_id)
-    rec = db(db.TblPhotos.id==photo_id).select().first()
+    rec = db(db.TblPhotos.id == photo_id).select().first()
     all_dates = get_all_dates(rec)
     if rec.photographer_id:
-        photographer_rec = db(db.TblPhotographers.id==rec.photographer_id).select().first()
+        photographer_rec = db(db.TblPhotographers.id == rec.photographer_id).select().first()
     else:
         photographer_rec = Storage()
     result = dict(
         name=rec.Name,
         description=rec.Description,
         photographer=photographer_rec.name,
-        photo_date_str = all_dates.photo_date.date,
-        photo_date_datespan = all_dates.photo_date.span,
-        photo_date_dateunit = all_dates.photo_date.unit
+        photo_date_str=all_dates.photo_date.date,
+        photo_date_datespan=all_dates.photo_date.span,
+        photo_date_dateunit=all_dates.photo_date.unit
     )
     return result
 
 @serve_json
 def save_photo_info(vars):
-    pi = vars.photo_info
-    ###pi.photographer_id = find_or_insert(pi.photographer)
-    unit, date = parse_date(pi.photo_date_str)
-    photo_rec = db(db.TblPhotos.id==vars.photo_id).select().first()
-    if pi.name != photo_rec.Name:
-        sm = stories_manager.Stories(vars.user_id)
-        sm.update_story_name(photo_rec.story_id, pi.name)
-    photo_date_str = pi.photo_date_str
-    del pi.photo_date_str
-    pi.photo_date = date
-    pi.photo_date_dateunit = unit
-    del pi.photographer
-    pi.Name = pi.name
-    del pi.name
-    photo_rec.update_record(**pi)
+    '''
+    save photo info
+    '''
+    pinf = vars.photo_info
+    unit, date = parse_date(pinf.photo_date_str)
+    photo_rec = db(db.TblPhotos.id == vars.photo_id).select().first()
+    if pinf.name != photo_rec.Name:
+        smgr = stories_manager.Stories(vars.user_id)
+        smgr.update_story_name(photo_rec.story_id, pinf.name)
+    photo_date_str = pinf.photo_date_str
+    del pinf.photo_date_str
+    pinf.photo_date = date
+    pinf.photo_date_dateunit = unit
+    del pinf.photographer
+    pinf.Name = pinf.name
+    del pinf.name
+    photo_rec.update_record(**pinf)
     if photo_date_str:
         dates_info = dict(
-            photo_date = (photo_date_str, pi.photo_date_datespan)
+            photo_date=(photo_date_str, pinf.photo_date_datespan)
         )
         update_record_dates(photo_rec, dates_info)
     return dict()
 
 @serve_json
 def get_faces(vars):
-    photo_id = vars.photo_id;
-    lst = db(db.TblMemberPhotos.Photo_id==photo_id).select()
+    '''
+    get all faces on photo
+    '''
+    photo_id = vars.photo_id
+    lst = db(db.TblMemberPhotos.Photo_id == photo_id).select()
     faces = []
     candidates = []
     for rec in lst:
         if rec.r == None: #found old record which has a member but no location
             if not rec.Member_id:
-                db(db.TblMemberPhotos.id==rec.id).delete()
+                db(db.TblMemberPhotos.id == rec.id).delete()
                 continue
             name = member_display_name(member_id=rec.Member_id)
             candidate = dict(member_id=rec.Member_id, name=name)
             candidates.append(candidate)
         else:
-            face = Storage(x = rec.x, y=rec.y, r=rec.r or 20, photo_id=rec.Photo_id)
+            face = Storage(x=rec.x, y=rec.y, r=rec.r or 20, photo_id=rec.Photo_id)
             if rec.Member_id:
                 face.member_id = rec.Member_id
                 face.name = member_display_name(member_id=rec.Member_id)
@@ -136,26 +144,28 @@ def save_face(vars):
 def detach_photo_from_member(vars):
     member_id = vars.member_id
     photo_id = vars.photo_id
-    q = (db.TblMemberPhotos.Photo_id==photo_id) & \
-        (db.TblMemberPhotos.Member_id==member_id)
+    q = (db.TblMemberPhotos.Photo_id == photo_id) & \
+        (db.TblMemberPhotos.Member_id == member_id)
     good = db(q).delete() == 1
     return dict(photo_detached=good)
 
 def remove_duplicate_photo_members(): #todo: remove after all sites are fixed
-    lst = db(db.TblMemberPhotos).select(orderby=db.TblMemberPhotos.Member_id | db.TblMemberPhotos.Photo_id | ~db.TblMemberPhotos.id)
+    lst = db(db.TblMemberPhotos).select(orderby=db.TblMemberPhotos.Member_id | \
+                                                db.TblMemberPhotos.Photo_id | \
+                                                ~db.TblMemberPhotos.id)
     prev_rec = Storage()
     nd = 0
     for rec in lst:
         if rec.Member_id != prev_rec.Member_id or rec.Photo_id != prev_rec.Photo_id:
             prev_rec = rec
             continue
-        nd += db(db.TblMemberPhotos.id==rec.id).delete()
-    return '{} duplicate member/photo links were removed'.format(nd)        
+        nd += db(db.TblMemberPhotos.id == rec.id).delete()
+    return '{} duplicate member/photo links were removed'.format(nd)
         
 @serve_json
 def get_photo_list(vars):
     selected_topics = vars.selected_topics or []
-    mprl = vars.max_photos_per_line or 8;
+    mprl = vars.max_photos_per_line or 8
     MAX_PHOTOS_COUNT = 100 + (mprl - 8) * 100
     if selected_topics:
         lst = get_photo_list_with_topics(vars)
@@ -166,7 +176,8 @@ def get_photo_list(vars):
             frac = max(MAX_PHOTOS_COUNT * 100 / n, 1)
             sample = random.sample(range(1, 101), frac)
             ##q &= (db.TblPhotos.random_photo_key <= frac)
-            q &= (db.TblPhotos.random_photo_key.belongs(sample)) #we don't want to bore our uses so there are several collections
+            q &= (db.TblPhotos.random_photo_key.belongs(sample)) #we don't want to bore our uses \
+                                                                 #so there are several collections
         lst = db(q).select() ###, db.TblPhotographers.id) ##, db.TblPhotographers.id)
         if lst and 'TblMemberPhotos' in lst[0]:
             lst = [rec.TblPhotos for rec in lst]
@@ -199,12 +210,20 @@ def get_photo_list(vars):
             photo_id=rec.id,
             width=rec.width,
             height=rec.height,
-            selected=rec.selected if 'selected' in rec else ''
+            selected=rec.selected if 'selected' in rec else '',
+            side='front',
+            front=dict(
+                photo_id=rec.id,
+                src=photos_folder('orig') + rec.photo_path,
+                square_src=photos_folder('squares') + rec.photo_path,
+                width=rec.width,
+                height=rec.height,
+            )
         )
         if rec.id in photo_pairs:
-            dic['backside'] = photo_pairs[rec.id]
+            dic['back'] = photo_pairs[rec.id]
             dic['flipped'] = False
-            dic['flipable'] = 'flipable' 
+            dic['flipable'] = 'flipable'
         result.append(dic)
     return dict(photo_list=result)
 
@@ -547,8 +566,10 @@ def get_photo_list_with_topics(vars):
     first = True
     topic_groups = calc_grouped_selected_options(vars.selected_topics)
     for topic_group in topic_groups:
-        q = make_photos_query(vars) #if we do not regenerate it the query becomes accumulated and necessarily fails
-        q &= (db.TblItemTopics.item_id==db.TblPhotos.id) & (db.TblItemTopics.item_type.like('%P%'))
+        q = make_photos_query(vars) #if we do not regenerate it the query becomes accumulated and \
+                                    # necessarily fails
+        q &= (db.TblItemTopics.item_id == db.TblPhotos.id) & \
+             (db.TblItemTopics.item_type.like('%P%'))
         ##topic_ids = [t.id for t in topic_group]
         sign = topic_group[0]
         topic_group = topic_group[1:]
@@ -586,7 +607,8 @@ def make_photos_query(vars):
     else:
         first_year = 0
         last_year = 0
-    photographer_list = [p.option.id for p in vars.selected_photographers] if vars.selected_photographers else []
+    photographer_list = [p.option.id for p in vars.selected_photographers] \
+        if vars.selected_photographers else []
     if len(photographer_list) > 0:
         q &= db.TblPhotos.photographer_id.belongs(photographer_list)
     if first_year:
@@ -602,9 +624,9 @@ def make_photos_query(vars):
             q &= (db.TblPhotos.upload_date >= upload_date)
     opt = vars.selected_uploader
     if opt == 'mine':
-        q &= (db.TblPhotos.uploader==vars.user_id)
+        q &= (db.TblPhotos.uploader == vars.user_id)
     elif opt == 'users':
-        q &= (db.TblPhotos.uploader!=None)
+        q &= (db.TblPhotos.uploader != None)
     opt = vars.selected_dates_option
     if opt == 'selected_dates_option':
         pass
@@ -614,8 +636,8 @@ def make_photos_query(vars):
         q &= (db.TblPhotos.photo_date == NO_DATE)
     if vars.selected_member_id:
         member_id = vars.selected_member_id
-        q1 = (db.TblMemberPhotos.Member_id==member_id) & \
-            (db.TblPhotos.id==db.TblMemberPhotos.Photo_id)
+        q1 = (db.TblMemberPhotos.Member_id == member_id) & \
+            (db.TblPhotos.id == db.TblMemberPhotos.Photo_id)
         q &= q1
     return q
 
@@ -623,8 +645,10 @@ def get_video_list_with_topics(vars):
     first = True
     topic_groups = calc_grouped_selected_options(vars.selected_topics)
     for topic_group in topic_groups:
-        q = make_videos_query(vars) #if we do not regenerate it the query becomes accumulated and necessarily fails
-        q &= (db.TblItemTopics.item_id==db.TblVideos.id) & (db.TblItemTopics.item_type.like('%V%'))
+        q = make_videos_query(vars) # if we do not regenerate it the query becomes accumulated and
+                                    # necessarily fails
+        q &= (db.TblItemTopics.item_id == db.TblVideos.id) & \
+             (db.TblItemTopics.item_type.like('%V%'))
         ##topic_ids = [t.id for t in topic_group]
         sign = topic_group[0]
         topic_group = topic_group[1:]
@@ -647,8 +671,9 @@ def get_video_list_with_topics(vars):
     return result
 
 def make_videos_query(vars):
-    q = (db.TblVideos.deleted!=True)
-    photographer_list = [p.option.id for p in vars.selected_photographers] if vars.selected_photographers else []
+    q = (db.TblVideos.deleted != True)
+    photographer_list = [p.option.id for p in vars.selected_photographers] \
+        if vars.selected_photographers else []
     if len(photographer_list) > 0:
         q &= db.TblVideos.photographer_id.belongs(photographer_list)
     if vars.selected_days_since_upload:
@@ -658,9 +683,9 @@ def make_videos_query(vars):
             q &= (db.TblVideos.upload_date >= upload_date)
     opt = vars.selected_uploader
     if opt == 'mine':
-        q &= (db.TblVideos.uploader==vars.user_id)
+        q &= (db.TblVideos.uploader == vars.user_id)
     elif opt == 'users':
-        q &= (db.TblVideos.uploader!=None)
+        q &= (db.TblVideos.uploader != None)
     opt = vars.selected_dates_option
     if opt == 'selected_dates_option':
         pass
@@ -671,31 +696,37 @@ def make_videos_query(vars):
     return q
 
 def pair_photos(front_id, back_id):
-    rec = db(db.TblPhotoPairs.front_id==front_id)
-    db(db.TblPhotos.id==rec.back_id).is_back_side = False
-    db(db.TblPhotoPairs.id==rec.id).delete()
-    db(db.TblPhotoPairs.back_id==back_id).delete()
+    rec = db(db.TblPhotoPairs.front_id == front_id).select().first()
+    if rec:
+        db(db.TblPhotos.id == rec.back_id).is_back_side = False
+        db(db.TblPhotoPairs.id == rec.id).delete()
+    db(db.TblPhotoPairs.back_id == back_id).delete()
     db.TblPhotoPairs.insert(front_id=front_id, back_id=back_id)
-    db(db.TblPhotos.id==back_id).update(is_back_side=True)
+    db(db.TblPhotos.id == back_id).update(is_back_side=True)
     
 def unpair_photos(front_id, back_id):
-    db(db.TblPhotoPairs.front_id==front_id).delete()
-    db(db.TblPhotos.id==back_id).update(is_back_side=False)
+    db(db.TblPhotoPairs.front_id == front_id).delete()
+    db(db.TblPhotos.id == back_id).update(is_back_side=False)
     
 def flip_photo_pair(front_id, back_id):
     #raise Exception("flip photo pair not ready")
     i = db(db.TblPhotoPairs.front_id == front_id).select().first().id
     db(db.TblPhotoPairs.id == i).update(front_id=back_id, back_id=front_id)
-    db(db.TblPhotos.id==front_id).update(is_back_side=True)
-    db(db.TblPhotos.id==back_id).update(is_back_side=False)
+    db(db.TblPhotos.id == front_id).update(is_back_side=True)
+    db(db.TblPhotos.id == back_id).update(is_back_side=False)
 
 def get_photo_pairs(photo_list):
-    q = (db.TblPhotoPairs.front_id.belongs(photo_list) & (db.TblPhotos.id == db.TblPhotoPairs.back_id))
-    lst = db(q).select(db.TblPhotoPairs.front_id, db.TblPhotoPairs.back_id, db.TblPhotos.photo_path)
+    q = (db.TblPhotoPairs.front_id.belongs(photo_list) & \
+        (db.TblPhotos.id == db.TblPhotoPairs.back_id))
+    lst = db(q).select(db.TblPhotoPairs.front_id, db.TblPhotoPairs.back_id,
+                       db.TblPhotos.photo_path, db.TblPhotos.width, db.TblPhotos.height)
     result = dict()
     for rec in lst:
         result[rec.TblPhotoPairs.front_id] = dict(
-            src=photos_folder('orig') + rec.TblPhotos.photo_path, 
-            square_src=photos_folder('squares') + rec.TblPhotos.photo_path, 
-            photo_id=rec.TblPhotoPairs.back_id)
+            src=photos_folder('orig') + rec.TblPhotos.photo_path,
+            square_src=photos_folder('squares') + rec.TblPhotos.photo_path,
+            photo_id=rec.TblPhotoPairs.back_id,
+            width=rec.TblPhotos.width,
+            height=rec.TblPhotos.height
+        )
     return result
