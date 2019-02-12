@@ -714,7 +714,10 @@ def unpair_photos(front_id, back_id):
     
 def flip_photo_pair(front_id, back_id):
     #raise Exception("flip photo pair not ready")
-    i = db(db.TblPhotoPairs.front_id == front_id).select().first().id
+    rec = db(db.TblPhotoPairs.front_id == front_id).select().first()
+    if not rec: #already flipped
+        return
+    i = rec.id
     db(db.TblPhotoPairs.id == i).update(front_id=back_id, back_id=front_id)
     db(db.TblPhotos.id == front_id).update(is_back_side=True)
     db(db.TblPhotos.id == back_id).update(is_back_side=False)
