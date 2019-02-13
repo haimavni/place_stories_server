@@ -417,7 +417,8 @@ db.define_table('TblFeedback',
                 )
 
 db.define_table('TblConfiguration',
-                Field('languages', type='string', default='he,en')
+                Field('languages', type='string', default='he,en'),
+                Field('fix_level', type='integer', default=0)
                 )
 
 db.define_table('TblLocaleCustomizations',
