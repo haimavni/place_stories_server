@@ -1,5 +1,5 @@
 from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, \
-     save_uploaded_photo, rotate_photo, save_member_face, create_zip_file
+     save_uploaded_photo, rotate_photo, save_member_face, create_zip_file, get_photo_pairs
 import ws_messaging
 import stories_manager
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
@@ -161,7 +161,7 @@ def remove_duplicate_photo_members(): #todo: remove after all sites are fixed
             continue
         nd += db(db.TblMemberPhotos.id == rec.id).delete()
     return '{} duplicate member/photo links were removed'.format(nd)
-        
+
 @serve_json
 def get_photo_list(vars):
     selected_topics = vars.selected_topics or []
@@ -721,19 +721,3 @@ def flip_photo_pair(front_id, back_id):
     db(db.TblPhotoPairs.id == i).update(front_id=back_id, back_id=front_id)
     db(db.TblPhotos.id == front_id).update(is_back_side=True)
     db(db.TblPhotos.id == back_id).update(is_back_side=False)
-
-def get_photo_pairs(photo_list):
-    q = (db.TblPhotoPairs.front_id.belongs(photo_list) & \
-        (db.TblPhotos.id == db.TblPhotoPairs.back_id))
-    lst = db(q).select(db.TblPhotoPairs.front_id, db.TblPhotoPairs.back_id,
-                       db.TblPhotos.photo_path, db.TblPhotos.width, db.TblPhotos.height)
-    result = dict()
-    for rec in lst:
-        result[rec.TblPhotoPairs.front_id] = dict(
-            src=photos_folder('orig') + rec.TblPhotos.photo_path,
-            square_src=photos_folder('squares') + rec.TblPhotos.photo_path,
-            photo_id=rec.TblPhotoPairs.back_id,
-            width=rec.TblPhotos.width,
-            height=rec.TblPhotos.height
-        )
-    return result

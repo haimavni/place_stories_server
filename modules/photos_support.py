@@ -271,19 +271,29 @@ def get_slides_from_photo_list(q):
         visited |= set([rec.id])
         lst1.append(rec)
     lst = lst1
-
+    
+    photo_ids = [rec.id for rec in lst]
+    photo_pairs = get_photo_pairs(photo_ids)
     folder = photos_folder()
-    slides = [dict(photo_id=rec.id,
-                   side='front',
-                   front=dict(
-                       src=folder + rec.photo_path,
-                       width=rec.width,
-                       height=rec.height,
-                   ),
-                   src=folder + rec.photo_path,
-                   width=rec.width,
-                   height=rec.height,
-                   title=rec.Description or rec.Name) for rec in lst]
+    slides = []
+    for rec in lst:
+        dic = dict(
+            photo_id=rec.id,
+            side='front',
+            front=dict(
+                src=folder + rec.photo_path,
+                width=rec.width,
+                height=rec.height,
+            ),
+            src=folder + rec.photo_path,
+            width=rec.width,
+            height=rec.height,
+            title=rec.Description or rec.Name)
+        if rec.id in photo_pairs:
+            dic['back'] = photo_pairs[rec.id]
+            dic['flipped'] = False
+            dic['flipable'] = 'flipable'
+        slides.append(dic)
     return slides
 
 def crop(input_path, output_path, face, size=100):
@@ -469,4 +479,21 @@ def member_display_name(rec=None, member_id=None, full=True):
     if rec.NickName:
         s += ' - {}'.format(rec.NickName)
     return s
+
+def get_photo_pairs(photo_list):
+    db = inject('db')
+    q = (db.TblPhotoPairs.front_id.belongs(photo_list) & \
+        (db.TblPhotos.id == db.TblPhotoPairs.back_id))
+    lst = db(q).select(db.TblPhotoPairs.front_id, db.TblPhotoPairs.back_id,
+                       db.TblPhotos.photo_path, db.TblPhotos.width, db.TblPhotos.height)
+    result = dict()
+    for rec in lst:
+        result[rec.TblPhotoPairs.front_id] = dict(
+            src=photos_folder('orig') + rec.TblPhotos.photo_path,
+            square_src=photos_folder('squares') + rec.TblPhotos.photo_path,
+            photo_id=rec.TblPhotoPairs.back_id,
+            width=rec.TblPhotos.width,
+            height=rec.TblPhotos.height
+        )
+    return result
 
