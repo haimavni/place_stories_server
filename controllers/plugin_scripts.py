@@ -32,11 +32,11 @@ def evaluate_script(vars):
         rec = db(db.scripts_table.code==code).select().first()
         now = datetime.datetime.now()
         if rec:
-            db(db.scripts_table.id==rec.id).update(last_usage_time=now)
+            rec.update_record(last_usage_time=now)
         else:
             db.scripts_table.insert(code=code, last_usage_time=now)
         return dict(results=dic)
-    
+
 @serve_json
 def prev_code(vars):
     prev_code, next_code = prev_next_code(vars.code, vars.like)
@@ -67,7 +67,7 @@ def likes_query(like):
         q1 = db.scripts_table.code.like(like)
         q = q & q1 if q else q1
     return q
-    
+
 def prev_next_code(code=None, like=None):
     rec = db(db.scripts_table.code==code).select().first() if code else None
     if not rec:
@@ -86,4 +86,4 @@ def prev_next_code(code=None, like=None):
     rec_prev = db(q_prev).select(orderby=db.scripts_table.last_usage_time).last()
     rec_next = db(q_next).select(orderby=db.scripts_table.last_usage_time).first()
     return (rec_prev.code if rec_prev else ''), (rec_next.code if rec_next else '') 
-    
+
