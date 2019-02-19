@@ -21,15 +21,8 @@ def replace_divs(s):
     result = pat.sub(replace_div, s)
     return result
 
-def replace_nbsp(m):
-    return '<i class="fa fa-square"></i>'
-
 def replace_nbsps(s):
-    ##pat_str = r'&nbsp;(\s*&nbsp;)+'
-    pat_str = r'&nbsp;(\s*&nbsp;)+'
-    pat = re.compile(pat_str)
-    result = pat.sub(replace_nbsp, s)
-    return result
+    return s.replace('&nbsp;', '&#9899;')
 
 def clean_html(html, nbsp_too=True):
     html = remove_style_defs(html)

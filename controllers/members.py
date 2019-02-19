@@ -656,8 +656,7 @@ def consolidate_stories(vars):
 
 @serve_json
 def clean_html_format(vars):
-    html = vars.html
-    html = clean_html(html)
+    html = clean_html(vars.html)
     return dict(html=html)
 
 @serve_json
