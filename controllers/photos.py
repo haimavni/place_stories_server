@@ -199,11 +199,16 @@ def get_photo_list(vars):
     photo_ids = [rec.id for rec in lst]
     photo_pairs = get_photo_pairs(photo_ids)
     for rec in lst:
+        fix_record_dates_out(rec)
+    for rec in lst:
         dic = dict(
             keywords=rec.KeyWords or "",
             description=rec.Description or "",
             name=rec.Name,
             title='{}: {}'.format(rec.Name, rec.KeyWords),
+            photo_date_datestr=rec.photo_date_datestr,
+            photo_date_span=rec.photo_date_datespan,
+            photographer_id=rec.photographer_id,
             square_src=photos_folder('squares') + rec.photo_path,
             photo_square_src=photos_folder('squares') + rec.photo_path,
             src=photos_folder('orig') + rec.photo_path,
