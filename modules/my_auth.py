@@ -103,7 +103,7 @@ class MyAuth(Auth):
         Email adddress is {uemail}.
     
     
-        Click <a href="http://gbstories.org/gbs__www/stories">here</a> for access manager.
+        Click <a href="https://gbstories.org/gbs__www/static/aurelia/index.html#/access-manager">here</a> for access manager.
         '''.format(uname=user_name, uemail=email).replace('\n', '<br>'))
         mail.send(to=receivers, subject='New GB Stories registration', message=message)
         
