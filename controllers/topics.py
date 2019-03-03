@@ -90,8 +90,13 @@ def add_photographer(vars):
 
 @serve_json
 def remove_photographer(vars):
-    photographer = vars.photographer_name
-    raise Exception('Photographer removal not ready yet')
+    pid = vars.photographer.id
+    np = db((db.TblPhotos.photographer_id==pid) & (db.TblPhotos.deleted != True)).count()
+    nv = db((db.TblVideos.photographer_id==pid) & (db.TblVideos.deleted != True)).count()
+    if np or nv:
+        raise User_Error('!photos.photographer-has-photos')
+    db(db.TblPhotographers.id==pid).delete()
+    return dict()
 
 @serve_json
 def rename_photographer(vars):
