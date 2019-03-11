@@ -188,7 +188,8 @@ class Stories:
                 last_version=last_version,
                 language=language1
             )
-            if auth.user_has_privilege(TEXT_AUDITOR):
+            text_auditor = auth.user_has_privilege(TEXT_AUDITOR)
+            if text_auditor:
                 data['approved_version'] = last_version
             rec.update_record(**data)
             db.TblStoryVersions.insert(

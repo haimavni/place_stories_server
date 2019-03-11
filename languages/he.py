@@ -214,6 +214,7 @@
 'User ID': 'User ID',
 'Videos': 'Videos',
 'View': 'View',
+'Welcome %(username)s! Click on the link %(link)s to verify your email': 'Welcome %(username)s! Click on the link %(link)s to verify your email',
 'Welcome to GBS': 'Welcome to GBS',
 'Welcome to web2py!': 'Welcome to web2py!',
 'Which called the function %s located in the file %s': 'Which called the function %s located in the file %s',

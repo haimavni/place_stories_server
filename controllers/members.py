@@ -533,17 +533,25 @@ def apply_topics_to_selected_stories(vars):
     if used_for:
         usage_chars = 'xMEPTxxxVD'
         usage_char = usage_chars[used_for]
+    else:
+        usage_char = 'x'
     all_tags = calc_all_tags()
     params = vars.params
     checked_story_list = params.checked_story_list
     selected_topics = params.selected_topics
     for eid in checked_story_list:
-        curr_tag_ids = set(get_tag_ids(eid, usage_char))
+        item_rec = item_of_story_id(used_for, eid)
+        if item_rec:
+            curr_tag_ids = set(get_tag_ids(item_rec.id, usage_char))
+        else:
+            curr_tag_ids = set([])
         for item in selected_topics:
             topic = item.option
             if topic.sign == "plus" and topic.id not in curr_tag_ids:
-                story_id = item.option.id
-                item_id = item_id_of_story_id(used_for, story_id)
+                if item_rec:
+                    item_id = item_rec.id
+                else:
+                    item_id = None
                 new_id = db.TblItemTopics.insert(item_type=usage_char, story_id=eid, item_id=item_id, topic_id=topic.id) 
                 curr_tag_ids |= set([topic.id])
                 ###added.append(item)
@@ -552,7 +560,7 @@ def apply_topics_to_selected_stories(vars):
                     usage = topic_rec.usage + usage_char
                     topic_rec.update_record(usage=usage, topic_kind=2) #topic is simple
             elif topic.sign == "minus" and topic.id in curr_tag_ids:
-                q = (db.TblItemTopics.item_type == usage_char) & (db.TblItemTopics.item_id == eid) & (db.TblItemTopics.topic_id == topic.id)
+                q = (db.TblItemTopics.item_type == usage_char) & (db.TblItemTopics.story_id == eid) & (db.TblItemTopics.topic_id == topic.id)
                 curr_tag_ids -= set([topic.id])
                 ###deleted.append(item)
                 #should remove usage_char from usage if it was the last one...
@@ -562,6 +570,11 @@ def apply_topics_to_selected_stories(vars):
         keywords = "; ".join(curr_tags)
         rec = db(db.TblStories.id == eid).select().first()
         rec.update_record(keywords=keywords)
+        if item_rec:
+            if usage_char in 'EMP':
+                item_rec.update_record(KeyWords=keywords)
+            else:
+                item_rec.update_record(keywords=keywords)
 
     #todo: notify all users?
     return dict()
@@ -910,7 +923,7 @@ def get_story_topics(refresh=False):
 
 def query_has_data(params):
     return params.keywords_str or params.checked_story_list or params.selected_stories or (params.days_since_update and params.days_since_update.value) or \
-           params.approval_state in [2,3] or params.selected_topics or params.selected_words
+           params.approval_state and params.approval_state.id in [2,3] or params.selected_topics or params.selected_words
 
 def make_stories_query(params, exact):
     getting_live_stories = not params.deleted_stories
@@ -937,10 +950,11 @@ def make_stories_query(params, exact):
     if params.days_since_update and params.days_since_update.value:
         date0 = datetime.datetime.now() - datetime.timedelta(days=params.days_since_update.value)
         q &= (db.TblStories.last_update_date>date0)
-    if params.approval_state == 2:
-        q &= (db.TblStories.last_version > db.TblStories.approved_version)
-    if params.approval_state == 3:
-        q &= (db.TblStories.last_version == db.TblStories.approved_version)
+    if params.approval_state:
+        if params.approval_state.id == 2:
+            q &= (db.TblStories.last_version > db.TblStories.approved_version)
+        if params.approval_state.id == 3:
+            q &= (db.TblStories.last_version == db.TblStories.approved_version)
     return q
 
 def get_story_list_with_topics(params, selected_topics, exact):
@@ -1058,7 +1072,7 @@ def get_story_member_ids(story_id):
     lst = [m.id for m in lst]
     return lst
 
-def item_id_of_story_id(used_for, story_id):
+def item_of_story_id(used_for, story_id):
     tbls = {
         STORY4MEMBER: db.TblMembers,
         STORY4EVENT: db.TblEvents,
@@ -1074,6 +1088,6 @@ def item_id_of_story_id(used_for, story_id):
     if tbl:
         rec = db(tbl.story_id == story_id).select().first()
         if rec:
-            return rec.id
+            return rec
     return None
 
