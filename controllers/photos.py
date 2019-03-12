@@ -27,6 +27,8 @@ def get_photo_detail(vars):
     else:
         rec = db(db.TblPhotos.id == photo_id).select().first()
     sm = stories_manager.Stories()
+    if not rec:
+        return dict(photo_name='???')
     story=sm.get_story(rec.story_id)
     if not story:
         story = sm.get_empty_story(used_for=STORY4PHOTO)

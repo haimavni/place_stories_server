@@ -497,3 +497,17 @@ def get_photo_pairs(photo_list):
         )
     return result
 
+def fix_missing_story_ids():
+    db, STORY4PHOTO = inject('db', 'STORY4PHOTO')
+    for prec in db(db.TblPhotos.deleted == None).select():
+        prec.update(deleted=False)
+    sm = Stories()
+    lst = db((db.TblPhotos.story_id == None) & (db.TblPhotos.deleted != True)).select()
+    for prec in lst:
+        story_info = sm.get_empty_story(used_for=STORY4PHOTO, story_text="", name=prec.Name)
+        result = sm.add_story(story_info)
+        story_id = result.story_id
+        prec.update_record(story_id=story_id)
+    return dict(story_less=len(lst))
+
+
