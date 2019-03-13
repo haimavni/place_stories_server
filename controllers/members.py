@@ -207,6 +207,8 @@ def get_story_list(vars):
             result2 = []
     else:
         result0 = _get_story_list(vars.params, exact=True, checked=True)
+    exact_ids = set([r.id for r in result1])
+    result2 = [r for r in result2 if r.id not in exact_ids]
     result = result0 + result1 + result2
     result_type_counters = dict()
     active_result_types = set()
@@ -782,7 +784,7 @@ def _get_story_list(params, exact, checked):
         else:
             r.author = ""
         r.checked = checked
-        r.search_kind = 'exact' if exact else 'nonexact'
+        r.exact = exact
         lst.append(r)
     return lst
 
@@ -801,6 +803,7 @@ def set_story_list_data(story_list):
         timestamp=rec.last_update_date,
         updater=user_list[rec.updater_id] if rec.updater_id and rec.updater_id in user_list else dict(),
         checked=rec.checked,
+        exact=rec.exact,
         ##exact=exact and params.search_type != 'advanced',
         author=rec.source or rec.author) for rec in story_list]
     assign_photos(result)
