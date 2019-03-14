@@ -64,11 +64,11 @@ def apply_to_checked_docs(vars):
     deleted = []
     changes = dict()
     for story_id in sdl:
-        curr_tag_ids = set(get_tag_ids(story_id, 'D'))
+        drec = db(db.TblDocs.story_id==story_id).select().first()
+        curr_tag_ids = set(get_tag_ids(drec.id, 'D'))
         for tpc in st:
             topic = tpc.option
             ###item = dict(item_id=doc_id, topic_id=topic.id)
-            drec = db(db.TblDocs.story_id==story_id).select().first()
             doc_id = drec.id
             if topic.sign=="plus" and topic.id not in curr_tag_ids:
                 new_id = db.TblItemTopics.insert(item_type='D', item_id=doc_id, topic_id=topic.id, story_id=story_id) 

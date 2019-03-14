@@ -79,7 +79,7 @@ def calc_doc_stories(time_budget=None):
     chunk = 10
     comment("Start calc doc stories cycle")
     q = (db.TblDocs.story_id == None) & (db.TblDocs.deleted != True)
-    time_budget = time_budget or (2 * 3600 - 5) #will exit the loop 5 seconds before the a new cycle starts
+    time_budget = time_budget or (2 * 3600 - 25) #will exit the loop 25 seconds before the a new cycle starts
     t0 = datetime.datetime.now()
     ns = 0
     nf = 0
