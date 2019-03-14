@@ -127,8 +127,8 @@ def get_doc_list_with_topics(vars):
 
 def make_docs_query(params):
     q = (db.TblDocs.deleted!=True)
-    if params.selected_days_since_upload:
-        days = params.selected_days_since_upload.value
+    if params.days_since_upload:
+        days = params.days_since_upload.value
         if days:
             upload_date = datetime.datetime.today() - datetime.timedelta(days=days)
             q &= (db.TblDocs.upload_date >= upload_date)
