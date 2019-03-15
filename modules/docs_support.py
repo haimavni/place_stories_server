@@ -79,6 +79,8 @@ def calc_doc_stories(time_budget=None):
     chunk = 10
     comment("Start calc doc stories cycle")
     q = (db.TblDocs.story_id == None) & (db.TblDocs.deleted != True)
+    n = db(q).count()
+    comment('Start calc doc stories. {} documents left to calculate.', n)
     time_budget = time_budget or (2 * 3600 - 25) #will exit the loop 25 seconds before the a new cycle starts
     t0 = datetime.datetime.now()
     ns = 0
@@ -101,11 +103,14 @@ def calc_doc_stories(time_budget=None):
                     else:
                         nf += 1
                 db.commit()
+                comment("{} good, {} bad uploaded", ns, nf)
                 ws_messaging.send_message('DOCS_WERE_UPLOADED', group='ALL', doc_ids=doc_ids)
             else:
                 sleep(5)
     except:
         log_exception('Error while calculating doc stories')
+    finally:
+        comment("Finished cycle of calculating doc stories")
     return dict(good=ns, bad=nf)
 
 def docs_folder(): 
