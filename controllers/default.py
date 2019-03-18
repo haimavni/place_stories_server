@@ -253,6 +253,15 @@ def get_languages(vars):
     return dict(languages=languages)
 
 @serve_json
+def set_locale_override(vars):
+    rec = db((db.TblLocaleCustomizations.lang==vars.lang) & (db.TblLocaleCustomizations.key==vars.key)).select().first()
+    if rec:
+        rec.update_record(value=vars.value)
+    else:
+        db.TblLocaleCustomizations.insert(lang=vars.lang, key=vars.key, value=vars.value)
+    return dict()
+
+@serve_json
 def get_locale_overrides(vars):
     result = dict()
     try:
