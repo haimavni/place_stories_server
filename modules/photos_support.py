@@ -392,19 +392,19 @@ def find_similar_photos():
     db = inject('db')
     lst = db((db.TblPhotos.width > 0) & \
              (db.TblPhotos.deleted != True) &\
-             (db.TblPhotos.photo_missing != True)).select()
-    for rec in lst:
-        if rec.dhash in dic:
-            dic[rec.dhash].append(rec.id)
-            dups[rec.dhash] = dic[rec.dhash]
-        else:
-            dic[rec.dhash] = [rec.id]
+             (db.TblPhotos.photo_missing != True)).select(orderby=db.TblPhotos.dhash)
+    prev_rec = Storage(dhash = 0)
     dup_list = []
-    for dh in dups:
-        pids = dups[dh]
-        lst = db(db.TblPhotos.id.belongs(pids)).select()
-        lst = [(r.photo_path, r.crc) for r in lst]
-        dup_list.append(lst)
+    ndups = 0
+    for rec in lst:
+        if rec.dhash == prev_rec.dhash:
+            if ndups == 0:
+                dup_list.append(prev_rec)
+            dup_list.append(rec)
+            ndups += 1
+        else:
+            ndups = 0
+            prev_rec = rec
     return dup_list
 
 def save_member_face(params):

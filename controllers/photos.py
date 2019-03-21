@@ -1,5 +1,5 @@
 from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, \
-     save_uploaded_photo, rotate_photo, save_member_face, create_zip_file, get_photo_pairs
+     save_uploaded_photo, rotate_photo, save_member_face, create_zip_file, get_photo_pairs, find_similar_photos
 import ws_messaging
 import stories_manager
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
@@ -187,7 +187,6 @@ def get_photo_list(vars):
         lst1 = random.sample(lst, MAX_PHOTOS_COUNT)
         lst = lst1
     selected_photo_list = vars.selected_photo_list
-    result = []
     if selected_photo_list:
         lst1 = db(db.TblPhotos.id.belongs(selected_photo_list)).select()
         lst1 = [rec for rec in lst1]
@@ -200,38 +199,7 @@ def get_photo_list(vars):
     lst = lst1 + lst
     photo_ids = [rec.id for rec in lst]
     photo_pairs = get_photo_pairs(photo_ids)
-    for rec in lst:
-        fix_record_dates_out(rec)
-    for rec in lst:
-        dic = dict(
-            keywords=rec.KeyWords or "",
-            description=rec.Description or "",
-            name=rec.Name,
-            title='{}: {}'.format(rec.Name, rec.KeyWords),
-            photo_date_datestr=rec.photo_date_datestr,
-            photo_date_span=rec.photo_date_datespan,
-            photographer_id=rec.photographer_id,
-            square_src=photos_folder('squares') + rec.photo_path,
-            photo_square_src=photos_folder('squares') + rec.photo_path,
-            src=photos_folder('orig') + rec.photo_path,
-            photo_id=rec.id,
-            width=rec.width,
-            height=rec.height,
-            selected=rec.selected if 'selected' in rec else '',
-            side='front',
-            front=dict(
-                photo_id=rec.id,
-                src=photos_folder('orig') + rec.photo_path,
-                square_src=photos_folder('squares') + rec.photo_path,
-                width=rec.width,
-                height=rec.height,
-            )
-        )
-        if rec.id in photo_pairs:
-            dic['back'] = photo_pairs[rec.id]
-            dic['flipped'] = False
-            dic['flipable'] = 'flipable'
-        result.append(dic)
+    result = process_photo_list(lst, photo_pairs)
     return dict(photo_list=result)
 
 @serve_json
@@ -571,6 +539,12 @@ def flip_photo(vars):
 def clear_photo_group(vars):
     pass
 
+@serve_json
+def find_duplicates(vars):
+    lst = find_similar_photos()
+    photo_list = process_photo_list(lst, dict())
+    return dict(photo_list=photo_list)
+
 ####---------------support functions--------------------------------------
 
 def get_photo_list_with_topics(vars):
@@ -728,3 +702,39 @@ def flip_photo_pair(front_id, back_id):
     db(db.TblPhotoPairs.id == i).update(front_id=back_id, back_id=front_id)
     db(db.TblPhotos.id == front_id).update(is_back_side=True)
     db(db.TblPhotos.id == back_id).update(is_back_side=False)
+
+def process_photo_list(lst, photo_pairs):
+    for rec in lst:
+        fix_record_dates_out(rec)
+    result = []
+    for rec in lst:
+        dic = dict(
+            keywords=rec.KeyWords or "",
+            description=rec.Description or "",
+            name=rec.Name,
+            title='{}: {}'.format(rec.Name, rec.KeyWords),
+            photo_date_datestr=rec.photo_date_datestr,
+            photo_date_span=rec.photo_date_datespan,
+            photographer_id=rec.photographer_id,
+            square_src=photos_folder('squares') + rec.photo_path,
+            photo_square_src=photos_folder('squares') + rec.photo_path,
+            src=photos_folder('orig') + rec.photo_path,
+            photo_id=rec.id,
+            width=rec.width,
+            height=rec.height,
+            selected=rec.selected if 'selected' in rec else '',
+            side='front',
+            front=dict(
+                photo_id=rec.id,
+                src=photos_folder('orig') + rec.photo_path,
+                square_src=photos_folder('squares') + rec.photo_path,
+                width=rec.width,
+                height=rec.height,
+            )
+        )
+        if rec.id in photo_pairs:
+            dic['back'] = photo_pairs[rec.id]
+            dic['flipped'] = False
+            dic['flipable'] = 'flipable'
+        result.append(dic)
+    return result
