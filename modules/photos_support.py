@@ -15,6 +15,7 @@ from stories_manager import Stories
 from folders import *
 from members_support import member_display_name, older_display_name, get_member_rec
 import zipfile
+from pybktree import BKTree, hamming_distance
 
 MAX_WIDTH = 1200
 MAX_HEIGHT = 800
@@ -509,5 +510,43 @@ def fix_missing_story_ids():
         story_id = result.story_id
         prec.update_record(story_id=story_id)
     return dict(story_less=len(lst))
+
+def find_duplicates(photo_list=None):
+    threshold = 20
+    db = inject('db')
+    tree = BKTree(hamming_distance)
+    cnt = 0
+    try:
+        for photo_rec in db(db.TblPhotos.deleted != True).select(db.TblPhotos.dhash):
+            if not photo_rec.dhash:
+                continue
+            tree.add(int(photo_rec.dhash, 16))
+            cnt += 1
+    except Exception, e:
+        print e
+        
+    result = []
+    if photo_list:
+        q = db.TblPhotos.id.belongs(photo_list)
+    else:
+        q = db.TblPhotos.deleted != True
+    cnt = 0
+    for photo_rec in db(q).select(db.TblPhotos.dhash):
+        if not photo_rec.dhash:
+            continue
+        cnt += 1
+        lst = tree.find(int(photo_rec.dhash, 16), threshold)
+        if len(lst) > 1:
+            dist = lst[1][0]
+            lst = [itm for itm in lst if itm[0] <= dist]
+            dhash_values = ['{:x}'.format(itm[1]) for itm in lst]
+            duplicate_photo_ids = db(db.TblPhotos.dhash.belongs(dhash_values)).select(db.TblPhotos.id, orderby=db.TblPhotos.id)
+            duplicate_photo_ids = [p.id for p in duplicate_photo_ids]
+            result.append(duplicate_photo_ids)
+    return result
+    
+    
+    
+    
 
 

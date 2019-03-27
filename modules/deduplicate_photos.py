@@ -20,9 +20,12 @@ def test():
               '30cfbac5.jpg', '6062f3c1.jpg', '8c073faa.jpg', 'ccc2fb52.jpg',
               '375a2516.jpg', '64823f43.jpg', '9d51e8ff.jpg', 'd13fb248.jpg']
     tree = BKTree(hamming_distance)
+    n = 0
     for fname in photos:
         path = photo_path + fname
         hv = hash_photo(path)
+        print '{:3}  {:X}'.format(n, hv)
+        n += 1
         tree.add(hv)
         
     print tree
