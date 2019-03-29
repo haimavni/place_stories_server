@@ -27,7 +27,9 @@ def evaluate_script(vars):
             if v not in old_environment or environment[v] != old_environment[v]:
                 dic[v] = environment[v]
     except Exception, e:
-        return dict(error=repr(e))
+        log_exception('Error in ad-hoc script')
+        dic = dict(error=str(e))
+        return dict(results=dic)
     else:
         rec = db(db.scripts_table.code==code).select().first()
         now = datetime.datetime.now()

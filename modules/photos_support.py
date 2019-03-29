@@ -362,7 +362,6 @@ def add_photos_from_drive(sub_folder):
     folder = local_photos_folder("orig")
     root_folder = folder + sub_folder
     for root, dirs, files in os.walk(root_folder, topdown=True):
-        print("there are", len(files), "files in", root)
         for file_name in files:
             path = root + '/' + file_name
             with open(path, 'r') as f:
@@ -386,27 +385,6 @@ def dhash_photo(photo_path=None, img=None):
         img = Image.open(photo_path)
     row_hash, col_hash = dhash.dhash_row_col(img)
     return dhash.format_hex(row_hash, col_hash)
-
-def find_similar_photos():
-    dic = {}
-    dups = {}
-    db = inject('db')
-    lst = db((db.TblPhotos.width > 0) & \
-             (db.TblPhotos.deleted != True) &\
-             (db.TblPhotos.photo_missing != True)).select(orderby=db.TblPhotos.dhash)
-    prev_rec = Storage(dhash = 0)
-    dup_list = []
-    ndups = 0
-    for rec in lst:
-        if rec.dhash == prev_rec.dhash:
-            if ndups == 0:
-                dup_list.append(prev_rec)
-            dup_list.append(rec)
-            ndups += 1
-        else:
-            ndups = 0
-            prev_rec = rec
-    return dup_list
 
 def save_member_face(params):
     db = inject('db')
@@ -511,42 +489,61 @@ def fix_missing_story_ids():
         prec.update_record(story_id=story_id)
     return dict(story_less=len(lst))
 
-def find_duplicates(photo_list=None):
-    threshold = 20
+def find_similar_photos(photo_list=None, time_budget=60):
+    threshold = 15
     db = inject('db')
     tree = BKTree(hamming_distance)
     cnt = 0
-    try:
-        for photo_rec in db(db.TblPhotos.deleted != True).select(db.TblPhotos.dhash):
-            if not photo_rec.dhash:
-                continue
-            tree.add(int(photo_rec.dhash, 16))
-            cnt += 1
-    except Exception, e:
-        print e
-        
-    result = []
+    for photo_rec in db(db.TblPhotos.deleted != True).select(db.TblPhotos.dhash):
+        if not photo_rec.dhash:
+            continue
+        tree.add(int(photo_rec.dhash, 16))
+        cnt += 1
+    dup_list = []
+    time0 = datetime.datetime.now()
     if photo_list:
         q = db.TblPhotos.id.belongs(photo_list)
     else:
-        q = db.TblPhotos.deleted != True
+        q = (db.TblPhotos.deleted != True) & (db.TblPhotos.dup_checked==None) & (db.TblPhotos.photo_missing==False)
     cnt = 0
-    for photo_rec in db(q).select(db.TblPhotos.dhash):
+    dic = dict()
+    visited = set()
+    no_dhash = 0
+    nv = 0
+    for photo_rec in db(q).select(db.TblPhotos.id, db.TblPhotos.dhash, db.TblPhotos.dup_checked):
         if not photo_rec.dhash:
+            no_dhash += 1
             continue
-        cnt += 1
+        if photo_rec.dhash in visited:
+            nv += 1
+            continue
+        dif = datetime.datetime.now() - time0
+        elapsed = int(dif.total_seconds())
+        if elapsed > time_budget:
+            break
         lst = tree.find(int(photo_rec.dhash, 16), threshold)
         if len(lst) > 1:
+            cnt += 1
+            for itm in lst:
+                visited.add(itm[1])
             dist = lst[1][0]
             lst = [itm for itm in lst if itm[0] <= dist]
-            dhash_values = ['{:x}'.format(itm[1]) for itm in lst]
+            dhash_values = ['{:032x}'.format(itm[1]) for itm in lst]
             duplicate_photo_ids = db(db.TblPhotos.dhash.belongs(dhash_values)).select(db.TblPhotos.id, orderby=db.TblPhotos.id)
             duplicate_photo_ids = [p.id for p in duplicate_photo_ids]
-            result.append(duplicate_photo_ids)
+            if duplicate_photo_ids[0] in dic:
+                continue #this group already visited
+            for pid in duplicate_photo_ids:
+                dic[pid] = cnt 
+            dup_list.append(duplicate_photo_ids)
+        else:
+            photo_rec.update_record(dup_checked = True)
+    all_dup_ids = []
+    for dup_ids in dup_list:
+        all_dup_ids += dup_ids
+    result = db(db.TblPhotos.id.belongs(all_dup_ids)).select()
+    for photo_rec in result:
+        photo_rec.dup_group = dic[photo_rec.id]
+    result = sorted(result, cmp=lambda prec1, prec2: +1 if prec1.dup_group > prec2.dup_group else -1 if prec1.dup_group < prec2.dup_group else -1 if prec1.id < prec2.id else +1)
+    
     return result
-    
-    
-    
-    
-
-
