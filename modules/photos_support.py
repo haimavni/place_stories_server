@@ -59,12 +59,12 @@ def save_uploaded_photo_collection(collection, user_id):
     photo_ids = []
     for file_name in collection:
         result = save_uploaded_photo(file_name, collection[file_name], user_id)
-        if result == 'failed':
+        if result.failed == 'failed':
             failed += [file_name]
-        elif result == 'duplicate':
-            duplicates += [file_name]
+        elif result.duplicate:
+            duplicates += [result.duplicate]
         else:
-            photo_ids.append(result)
+            photo_ids.append(result.photo_id)
     return Storage(failed=failed,
                    duplicates=duplicates,
                    photo_ids=photo_ids)
@@ -74,8 +74,9 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
     user_id = user_id or auth.current_user()
     crc = zlib.crc32(blob)
     cnt = db(db.TblPhotos.crc==crc).count()
-    if cnt > 0:
-        return 'duplicate'
+    prec = db(db.TblPhotos.crc==crc).select().first()
+    if prec:
+        return Storage(duplicate=prec.id)
     original_file_name, ext = os.path.splitext(file_name)
     file_name = '{crc:x}{ext}'.format(crc=crc & 0xffffffff, ext=ext)
     today = datetime.date.today()
@@ -115,7 +116,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
         dhash_value = dhash_photo(img=img)
     except Exception, e:
         log_exception("saving photo {} failed".format(original_file_name))
-        return 'failed'
+        return Storage(failed=1)
     sm = Stories()
     story_info = sm.get_empty_story(used_for=STORY4PHOTO, story_text="", name=original_file_name)
     result = sm.add_story(story_info)
@@ -139,7 +140,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
     )
     db.commit()
     n = db(db.TblPhotos).count()
-    return photo_id
+    return Storage(photo_id=photo_id)
 
 def get_image_info(image_path):
     img = Image.open(image_path)
@@ -367,7 +368,7 @@ def add_photos_from_drive(sub_folder):
             with open(path, 'r') as f:
                 blob = f.read()
             result = save_uploaded_photo(file_name, blob, 1, sub_folder=sub_folder)
-            if result in ('failed', 'duplicate'):
+            if result.failed or result.duplicate:
                 continue
             #delete the file. it has been saved using crc as name and was possibly resized
             os.remove(path)

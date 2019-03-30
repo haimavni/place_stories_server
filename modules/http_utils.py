@@ -48,7 +48,7 @@ def json_to_storage(data, key=None):
     if isinstance(data, dict):
         return Storage(data)
     elif isinstance(data, unicode):
-        if key and key.startswith('BIN'):
+        if key and not isinstance(key, int) and key.startswith('BIN'):
             data1 = ''
             for c in data:
                 data1 += chr(ord(c))

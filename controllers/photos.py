@@ -541,9 +541,27 @@ def clear_photo_group(vars):
 
 @serve_json
 def find_duplicates(vars):
-    lst = find_similar_photos()
-    photo_list = process_photo_list(lst, dict())
+    lst = find_similar_photos(vars.selected_photos)
+    photo_list = process_photo_list(lst)
     return dict(photo_list=photo_list)
+
+@serve_json
+def get_uploaded_info(vars):
+    similars = find_similar_photos(vars.uploaded)
+    duplicates  = vars.duplicates
+    similar_set = set([p.id for p in similars])
+    regulars = []
+    for pid in vars.uploaded:
+        if pid not in similar_set:
+            regulars.append(pid)
+    result = Storage()
+    result.similar_photos = process_photo_list(similars)
+    duplicates = db(db.TblPhotos.id.belongs(duplicates)).select()
+    result.duplicate_photos = process_photo_list(duplicates)
+    regulars = db(db.TblPhotos.id.belongs(regulars)).select()
+    result.regular_photos = process_photo_list(regulars)
+    result.photo_list = result.duplicate_photos + result.similar_photos + result.regular_photos
+    return dict(photo_list=result.photo_list)
 
 ####---------------support functions--------------------------------------
 
@@ -703,7 +721,7 @@ def flip_photo_pair(front_id, back_id):
     db(db.TblPhotos.id == front_id).update(is_back_side=True)
     db(db.TblPhotos.id == back_id).update(is_back_side=False)
 
-def process_photo_list(lst, photo_pairs):
+def process_photo_list(lst, photo_pairs=dict()):
     for rec in lst:
         fix_record_dates_out(rec)
     result = []
