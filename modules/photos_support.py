@@ -545,6 +545,6 @@ def find_similar_photos(photo_list=None, time_budget=60):
     result = db(db.TblPhotos.id.belongs(all_dup_ids)).select()
     for photo_rec in result:
         photo_rec.dup_group = dic[photo_rec.id]
-    result = sorted(result, cmp=lambda prec1, prec2: +1 if prec1.dup_group > prec2.dup_group else -1 if prec1.dup_group < prec2.dup_group else -1 if prec1.id < prec2.id else +1)
+    result = sorted(result, cmp=lambda prec1, prec2: +1 if prec1.dup_group > prec2.dup_group else -1 if prec1.dup_group < prec2.dup_group else +1 if prec1.id < prec2.id else -1)
     
     return result

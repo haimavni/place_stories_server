@@ -554,14 +554,26 @@ def get_uploaded_info(vars):
     for pid in vars.uploaded:
         if pid not in similar_set:
             regulars.append(pid)
-    result = Storage()
-    result.similar_photos = process_photo_list(similars)
+    similar_photos = process_photo_list(similars)
+    for prec in similar_photos:
+        prec['status'] = 'similar'
     duplicates = db(db.TblPhotos.id.belongs(duplicates)).select()
-    result.duplicate_photos = process_photo_list(duplicates)
+    duplicate_photos = process_photo_list(duplicates)
+    for prec in duplicate_photos:
+        prec['status'] = 'duplicate'
     regulars = db(db.TblPhotos.id.belongs(regulars)).select()
-    result.regular_photos = process_photo_list(regulars)
-    result.photo_list = result.duplicate_photos + result.similar_photos + result.regular_photos
-    return dict(photo_list=result.photo_list)
+    regular_photos = process_photo_list(regulars)
+    for prec in regular_photos:
+        prec['status'] = 'regular'
+    photo_list = duplicate_photos + similar_photos + regular_photos
+    return dict(photo_list=photo_list)
+
+@serve_json
+def replace_duplicate_photos(vars):
+    similars = find_similar_photos(vars.photos_to_keep)
+    photos_to_keep_set = set(vars.photos_to_keep)
+    #copy images from the photos_to_keep to the other if newer, rescaling faces coordinates if necessary. if older to be kept, just delete the newer
+    return dict()
 
 ####---------------support functions--------------------------------------
 
