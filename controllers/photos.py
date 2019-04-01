@@ -153,7 +153,7 @@ def detach_photo_from_member(vars):
 
 def remove_duplicate_photo_members(): #todo: remove after all sites are fixed
     lst = db(db.TblMemberPhotos).select(orderby=db.TblMemberPhotos.Member_id | \
-                                                db.TblMemberPhotos.Photo_id | \
+                                        db.TblMemberPhotos.Photo_id | \
                                                 ~db.TblMemberPhotos.id)
     prev_rec = Storage()
     nd = 0
@@ -179,7 +179,7 @@ def get_photo_list(vars):
             sample = random.sample(range(1, 101), frac)
             ##q &= (db.TblPhotos.random_photo_key <= frac)
             q &= (db.TblPhotos.random_photo_key.belongs(sample)) #we don't want to bore our uses \
-                                                                 #so there are several collections
+                                                                    #so there are several collections
         lst = db(q).select() ###, db.TblPhotographers.id) ##, db.TblPhotographers.id)
         if lst and 'TblMemberPhotos' in lst[0]:
             lst = [rec.TblPhotos for rec in lst]
@@ -470,11 +470,7 @@ def apply_to_selected_videos(vars):
 
 @serve_json
 def delete_selected_photos(vars):
-    selected_photo_list = vars.selected_photo_list
-    a = db(db.TblPhotos.id.belongs(selected_photo_list))
-    a.update(deleted=True)
-    story_ids = [rec.story_id for rec in a.select()]
-    db(db.TblStories.id.belongs(story_ids)).update(deleted=True)
+    delete_photos(selected_photo_list)
     return dict()
 
 @serve_json
@@ -543,13 +539,17 @@ def clear_photo_group(vars):
 def find_duplicates(vars):
     lst = find_similar_photos(vars.selected_photos)
     photo_list = process_photo_list(lst)
-    return dict(photo_list=photo_list)
+    for prec in photo_list:
+        prec['status'] = 'similar'
+    return dict(photo_list=photo_list, got_duplicates=len(lst) > 0)
 
 @serve_json
 def get_uploaded_info(vars):
+    uploaded_set = set(vars.uploaded)
     similars = find_similar_photos(vars.uploaded)
     duplicates  = vars.duplicates
     similar_set = set([p.id for p in similars])
+    candidates = uploaded_set & similar_set
     regulars = []
     for pid in vars.uploaded:
         if pid not in similar_set:
@@ -566,16 +566,72 @@ def get_uploaded_info(vars):
     for prec in regular_photos:
         prec['status'] = 'regular'
     photo_list = duplicate_photos + similar_photos + regular_photos
-    return dict(photo_list=photo_list)
+    photo_list = process_photo_list(photo_list)
+    return dict(photo_list=photo_list, candidates=list(candidates), got_duplicates=len(similars)>0)
 
 @serve_json
 def replace_duplicate_photos(vars):
     similars = find_similar_photos(vars.photos_to_keep)
     photos_to_keep_set = set(vars.photos_to_keep)
-    #copy images from the photos_to_keep to the other if newer, rescaling faces coordinates if necessary. if older to be kept, just delete the newer
-    return dict()
+    dup_grp = 0
+    group = []
+    photo_patches = []
+    for prec in similars:
+        if prec.dup_group != dup_grp:
+            patch = handle_dup_group(group, photos_to_keep_set)
+            if patch:
+                photo_patches.append(patch)
+            dup_grp = prec.dup_group
+            group = [prec]
+        else:
+            group.append(prec)
+    patch = handle_dup_group(group, photos_to_keep_set)
+    if patch:
+        photo_patches.append(patch)
+    delete_photos(vars.photos_to_keep) #the image data was copied to the old photo which has more extra info
+    return dict(photo_patches=photo_patches)
 
 ####---------------support functions--------------------------------------
+
+def handle_dup_group(group, photos_to_keep_set):
+    if not group:
+        return None
+    group = group[:2] #there should be no triplets but just in case...
+    new_photo, old_photo = group
+    if new_photo.id not in photos_to_keep_set:
+        group = [old_photo, new_photo]
+    data = replace_photo(group)
+    db(db.TblPhotos.id==new_photo.id).update(deleted=True) #todo: maybe just delete it...
+    return dict(data=data, photo_to_patch=old_photo.id, photo_to_delete=new_photo.id)
+
+def replace_photo(pgroup):
+    '''
+    we copy the image info from the newer, probably just uploaded, photo to the old photo record
+    '''
+    new_photo, old_photo = pgroup
+    data = dict(
+        photo_path=new_photo.photo_path,
+        original_file_name=new_photo.original_file_name,
+        width=new_photo.width,
+        height=new_photo.height,
+        uploader=new_photo.uploader,
+        upload_date=new_photo.upload_date,
+        oversize=new_photo.oversize,
+        crc=new_photo.crc,
+        dhash=new_photo.dhash,
+    )
+    db(db.TblPhotos.id==old_photo.id).update(**data)
+    ###data['status'] = 'regular'
+    if old_photo.width != new_photo.width:
+        ow, nw = old_photo.width, new_photo.width
+        for member_photo_rec in db(db.TblMemberPhotos.Photo_id==old_photo.id).select():
+            if not member_photo_rec.x:
+                continue
+            x = int(round(member_photo_rec.x * nw / ow))
+            y = int(round(member_photo_rec.y * nw / ow))
+            r = int(round(member_photo_rec.r * nw / ow))
+            member_photo_rec.update_record(x=x, y=y, r=r)
+    return data
 
 def get_photo_list_with_topics(vars):
     first = True
@@ -584,7 +640,7 @@ def get_photo_list_with_topics(vars):
         q = make_photos_query(vars) #if we do not regenerate it the query becomes accumulated and \
                                     # necessarily fails
         q &= (db.TblItemTopics.item_id == db.TblPhotos.id) & \
-             (db.TblItemTopics.item_type.like('%P%'))
+            (db.TblItemTopics.item_type.like('%P%'))
         ##topic_ids = [t.id for t in topic_group]
         sign = topic_group[0]
         topic_group = topic_group[1:]
@@ -663,7 +719,7 @@ def get_video_list_with_topics(vars):
         q = make_videos_query(vars) # if we do not regenerate it the query becomes accumulated and
                                     # necessarily fails
         q &= (db.TblItemTopics.item_id == db.TblVideos.id) & \
-             (db.TblItemTopics.item_type.like('%V%'))
+            (db.TblItemTopics.item_type.like('%V%'))
         ##topic_ids = [t.id for t in topic_group]
         sign = topic_group[0]
         topic_group = topic_group[1:]
@@ -718,11 +774,11 @@ def pair_photos(front_id, back_id):
     db(db.TblPhotoPairs.back_id == back_id).delete()
     db.TblPhotoPairs.insert(front_id=front_id, back_id=back_id)
     db(db.TblPhotos.id == back_id).update(is_back_side=True)
-    
+
 def unpair_photos(front_id, back_id):
     db(db.TblPhotoPairs.front_id == front_id).delete()
     db(db.TblPhotos.id == back_id).update(is_back_side=False)
-    
+
 def flip_photo_pair(front_id, back_id):
     #raise Exception("flip photo pair not ready")
     rec = db(db.TblPhotoPairs.front_id == front_id).select().first()
@@ -768,3 +824,9 @@ def process_photo_list(lst, photo_pairs=dict()):
             dic['flipable'] = 'flipable'
         result.append(dic)
     return result
+
+def delete_photos(photo_list):
+    a = db(db.TblPhotos.id.belongs(photo_list))
+    a.update(deleted=True)
+    story_ids = [rec.story_id for rec in a.select()]
+    db(db.TblStories.id.belongs(story_ids)).update(deleted=True)
