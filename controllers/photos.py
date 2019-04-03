@@ -803,6 +803,7 @@ def process_photo_list(lst, photo_pairs=dict()):
             photographer_id=rec.photographer_id,
             selected=rec.selected if 'selected' in rec else '',
             side='front',
+            photo_id=rec.id,
             front=Storage(
                 photo_id=rec.id,
                 src=photos_folder('orig') + rec.photo_path,
