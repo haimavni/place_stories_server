@@ -502,6 +502,8 @@ def find_similar_photos(photo_list=None, time_budget=60):
         cnt += 1
     dup_list = []
     time0 = datetime.datetime.now()
+    #if isinstance(photo_list, list) and len(photo_list) == 0: #If only preexisting photos were uploaded, do not search all similars
+        #return []
     if photo_list:
         q = db.TblPhotos.id.belongs(photo_list)
     else:

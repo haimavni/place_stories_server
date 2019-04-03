@@ -566,7 +566,6 @@ def get_uploaded_info(vars):
     for prec in regular_photos:
         prec['status'] = 'regular'
     photo_list = duplicate_photos + similar_photos + regular_photos
-    photo_list = process_photo_list(photo_list)
     return dict(photo_list=photo_list, candidates=list(candidates), got_duplicates=len(similars)>0)
 
 @serve_json
@@ -794,7 +793,7 @@ def process_photo_list(lst, photo_pairs=dict()):
         fix_record_dates_out(rec)
     result = []
     for rec in lst:
-        dic = dict(
+        dic = Storage(
             keywords=rec.KeyWords or "",
             description=rec.Description or "",
             name=rec.Name,
@@ -802,15 +801,9 @@ def process_photo_list(lst, photo_pairs=dict()):
             photo_date_datestr=rec.photo_date_datestr,
             photo_date_span=rec.photo_date_datespan,
             photographer_id=rec.photographer_id,
-            square_src=photos_folder('squares') + rec.photo_path,
-            photo_square_src=photos_folder('squares') + rec.photo_path,
-            src=photos_folder('orig') + rec.photo_path,
-            photo_id=rec.id,
-            width=rec.width,
-            height=rec.height,
             selected=rec.selected if 'selected' in rec else '',
             side='front',
-            front=dict(
+            front=Storage(
                 photo_id=rec.id,
                 src=photos_folder('orig') + rec.photo_path,
                 square_src=photos_folder('squares') + rec.photo_path,
@@ -819,9 +812,9 @@ def process_photo_list(lst, photo_pairs=dict()):
             )
         )
         if rec.id in photo_pairs:
-            dic['back'] = photo_pairs[rec.id]
-            dic['flipped'] = False
-            dic['flipable'] = 'flipable'
+            dic.back = photo_pairs[rec.id]
+            dic.flipped = False
+            dic.flipable = 'flipable'
         result.append(dic)
     return result
 
