@@ -470,7 +470,7 @@ def apply_to_selected_videos(vars):
 
 @serve_json
 def delete_selected_photos(vars):
-    delete_photos(selected_photo_list)
+    delete_photos(vars.selected_photo_list)
     return dict()
 
 @serve_json
