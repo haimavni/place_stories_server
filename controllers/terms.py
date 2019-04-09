@@ -65,6 +65,7 @@ def get_term_list(vars):
         lst = db(q).select(orderby=~db.TblTerms.id)
     selected_term_list = params.selected_term_list
     lst = [rec for rec in lst if rec.story_id not in params.checked_term_list]
+    lst = sorted(lst, cmp=lambda itm1, itm2: -1 if itm1.Name < itm2.Name else +1 if itm1.Name > itm2.Name else 0)
     lst = lst0 + lst
     term_list = [rec for rec in lst]
     for rec in term_list:
