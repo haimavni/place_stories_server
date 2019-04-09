@@ -3,14 +3,6 @@ import stories_manager
 from members_support import calc_grouped_selected_options, calc_all_tags, get_tag_ids
 
 @serve_json
-def delete_term(vars):
-    rec = db(db.TblTerms.id == int(vars.term_id)).select().first()
-    rec.update(deleted=True)
-    story_id = rec.story_id
-    db(db.TblStories.id == story_id).update(deleted=True)
-    return dict()
-
-@serve_json
 def apply_to_checked_terms(vars):
     all_tags = calc_all_tags()
     params = vars.params
@@ -111,4 +103,11 @@ def make_terms_query(params):
 def get_story_by_id(story_id):
     sm = stories_manager.Stories()
     return sm.get_story(story_id)
+
+@serve_json
+def delete_checked_terms(vars):
+    checked_term_list = vars.params.checked_term_list
+    db(db.TblTerms.story_id.belongs(checked_term_list)).update(deleted=True)
+    db(db.TblStories.id.belongs(checked_term_list)).update(deleted=True)
+    return dict()
 
