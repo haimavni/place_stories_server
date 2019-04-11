@@ -64,6 +64,7 @@ def apply_to_checked_docs(vars):
     added = []
     deleted = []
     changes = dict()
+    new_topic_was_added = False
     for story_id in sdl:
         drec = db(db.TblDocs.story_id==story_id).select().first()
         curr_tag_ids = set(get_tag_ids(drec.id, 'D'))
@@ -76,6 +77,8 @@ def apply_to_checked_docs(vars):
                 curr_tag_ids |= set([topic.id])
                 ###added.append(item)
                 topic_rec = db(db.TblTopics.id==topic.id).select().first()
+                if topic_rec.topic_kind == 0: #never used
+                    new_topic_was_added = True
                 if 'D' not in topic_rec.usage:
                     usage = topic_rec.usage + 'D'
                     topic_rec.update_record(usage=usage, topic_kind=2) #topic is simple 
@@ -95,7 +98,7 @@ def apply_to_checked_docs(vars):
             update_record_dates(rec, dates_info)
     ###changes = [changes[doc_id] for doc_id in sdl]
     ###ws_messaging.send_message('DOC-TAGS-CHANGED', group='ALL', changes=changes)
-    return dict()
+    return dict(new_topic_was_added=new_topic_was_added)
 
 #----------------support functions-----------------
 

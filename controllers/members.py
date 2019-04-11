@@ -541,6 +541,7 @@ def apply_topics_to_selected_stories(vars):
     params = vars.params
     checked_story_list = params.checked_story_list
     selected_topics = params.selected_topics
+    new_topic_was_added = False
     for eid in checked_story_list:
         item_rec = item_of_story_id(used_for, eid)
         if item_rec:
@@ -558,6 +559,8 @@ def apply_topics_to_selected_stories(vars):
                 curr_tag_ids |= set([topic.id])
                 ###added.append(item)
                 topic_rec = db(db.TblTopics.id == topic.id).select().first()
+                if topic_rec.topic_kind == 0: #never used
+                    new_topic_was_added = True;
                 if usage_char not in topic_rec.usage:
                     usage = topic_rec.usage + usage_char
                     topic_rec.update_record(usage=usage, topic_kind=2) #topic is simple
@@ -579,7 +582,7 @@ def apply_topics_to_selected_stories(vars):
                 item_rec.update_record(keywords=keywords)
 
     #todo: notify all users?
-    return dict()
+    return dict(new_topic_was_added=new_topic_was_added)
 
 @serve_json
 def promote_stories(vars):

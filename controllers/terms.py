@@ -11,6 +11,7 @@ def apply_to_checked_terms(vars):
     added = []
     deleted = []
     changes = dict()
+    new_topic_was_added = False;
     for story_id in sdl:
         trec = db(db.TblTerms.story_id==story_id).select().first()
         curr_tag_ids = set(get_tag_ids(trec.id, 'T'))
@@ -22,6 +23,8 @@ def apply_to_checked_terms(vars):
                 curr_tag_ids |= set([topic.id])
                 ###added.append(item)
                 topic_rec = db(db.TblTopics.id==topic.id).select().first()
+                if topic_rec.topic_kind == 0: #never used
+                    new_topic_was_added = True;
                 if 'T' not in topic_rec.usage:
                     usage = topic_rec.usage + 'T'
                     topic_rec.update_record(usage=usage, topic_kind=2) #topic is simple 
@@ -37,7 +40,7 @@ def apply_to_checked_terms(vars):
         rec.update_record(keywords=keywords)  #todo: remove this line soon
         rec = db(db.TblStories.id==rec.story_id).select().first()
         rec.update_record(keywords=keywords)
-    return dict()
+    return dict(new_topic_was_added=new_topic_was_added)
 
 @serve_json
 def get_term_list(vars):

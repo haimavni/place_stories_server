@@ -243,6 +243,7 @@ def apply_to_selected_photos(vars):
     st = vars.selected_topics
     added = []
     deleted = []
+    new_topic_was_added = False
     for pid in spl:
         curr_tag_ids = set(get_tag_ids(pid, "P"))
         for tpc in st:
@@ -259,6 +260,8 @@ def apply_to_selected_photos(vars):
                 curr_tag_ids |= set([topic.id])
                 added.append(item)
                 topic_rec = db(db.TblTopics.id == topic.id).select().first()
+                if topic_rec.topic_kind == 0: #never used
+                    new_topic_was_added = True
                 if 'P' not in topic_rec.usage:
                     usage = topic_rec.usage + 'P'
                     topic_rec.update_record(usage=usage, topic_kind=2) #simple topic
@@ -286,7 +289,7 @@ def apply_to_selected_photos(vars):
         if dates_info:
             update_record_dates(rec, dates_info)
     ws_messaging.send_message('PHOTO-TAGS-CHANGED', added=added, deleted=deleted)
-    return dict()
+    return dict(new_topic_was_added=new_topic_was_added)
 
 @serve_json
 def save_video(vars):
@@ -418,6 +421,7 @@ def apply_to_selected_videos(vars):
     added = []
     deleted = []
     changes = dict()
+    new_topic_was_added = False
     for vid in svl:
         curr_tag_ids = set(get_tag_ids(vid, "V"))
         for tpc in st:
@@ -436,6 +440,8 @@ def apply_to_selected_videos(vars):
                 curr_tag_ids |= set([topic.id])
                 added.append(item)
                 topic_rec = db(db.TblTopics.id == topic.id).select().first()
+                if topic_rec.topic_kind == 0: #never used
+                    new_topic_was_added = True
                 if 'V' not in topic_rec.usage:
                     usage = topic_rec.usage + 'V'
                     topic_rec.update_record(usage=usage, topic_kind=2) #simple topic
@@ -466,7 +472,7 @@ def apply_to_selected_videos(vars):
             update_record_dates(rec, dates_info)
     changes = [changes[vid] for vid in svl]
     ws_messaging.send_message('VIDEO-TAGS-CHANGED', group='ALL', changes=changes)
-    return dict()
+    return dict(new_topic_was_added=new_topic_was_added)
 
 @serve_json
 def delete_selected_photos(vars):
