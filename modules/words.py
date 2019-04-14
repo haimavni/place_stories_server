@@ -66,7 +66,7 @@ def get_reisha(html, size=100):
         if cnt > size:
             break
         elif ''.join(lst):
-            result += ' &#9899; '
+            result += ' &#9900; '
     if result:
         while result and result.endswith('.'):
             result = result[:-1]

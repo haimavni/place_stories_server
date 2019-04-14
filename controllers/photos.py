@@ -543,19 +543,19 @@ def clear_photo_group(vars):
 
 @serve_json
 def find_duplicates(vars):
-    lst = find_similar_photos(vars.selected_photos)
+    lst, candidates = find_similar_photos(vars.selected_photos)
     photo_list = process_photo_list(lst)
     for prec in photo_list:
         prec['status'] = 'similar'
-    return dict(photo_list=photo_list, got_duplicates=len(lst) > 0)
+    return dict(photo_list=photo_list, got_duplicates=len(lst) > 0, candidates=list(candidates))
 
 @serve_json
 def get_uploaded_info(vars):
     uploaded_set = set(vars.uploaded)
-    similars = find_similar_photos(vars.uploaded)
+    similars, candidates = find_similar_photos(vars.uploaded)
     duplicates  = vars.duplicates
     similar_set = set([p.id for p in similars])
-    candidates = uploaded_set & similar_set
+    candidates = candidates & similar_set
     regulars = []
     for pid in vars.uploaded:
         if pid not in similar_set:
@@ -576,8 +576,8 @@ def get_uploaded_info(vars):
 
 @serve_json
 def replace_duplicate_photos(vars):
-    similars = find_similar_photos(vars.photos_to_keep)
-    photos_to_keep_set = set(vars.photos_to_keep)
+    similars, candidates = find_similar_photos(vars.photos_to_keep)
+    photos_to_keep_set = set(vars.photos_to_keep) & candidates #we do not allow automatic change to the old photo
     dup_grp = 0
     group = []
     photo_patches = []

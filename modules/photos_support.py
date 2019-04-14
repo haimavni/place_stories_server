@@ -512,6 +512,7 @@ def find_similar_photos(photo_list=None, time_budget=60):
     else:
         return []
     cnt = 0
+    candidates = set([])
     dic = dict()
     visited = set()
     no_dhash = 0
@@ -542,6 +543,8 @@ def find_similar_photos(photo_list=None, time_budget=60):
             for pid in duplicate_photo_ids:
                 dic[pid] = cnt 
             dup_list.append(duplicate_photo_ids)
+            cand = max(duplicate_photo_ids)
+            candidates |= set([cand]) #Normally newer photos are better
         else:
             photo_rec.update_record(dup_checked = True)
     all_dup_ids = []
@@ -552,4 +555,4 @@ def find_similar_photos(photo_list=None, time_budget=60):
         photo_rec.dup_group = dic[photo_rec.id]
     result = sorted(result, cmp=lambda prec1, prec2: +1 if prec1.dup_group > prec2.dup_group else -1 if prec1.dup_group < prec2.dup_group else +1 if prec1.id < prec2.id else -1)
     
-    return result
+    return (result, candidates)
