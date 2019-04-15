@@ -415,6 +415,8 @@ def save_member_face(params):
         rec.update_record(**data)
     else:
         db.TblMemberPhotos.insert(**data)
+        if params.old_member_id and params.old_member_id != face.membe_id:
+            db(q).delete()
     member_name = member_display_name(member_id=face.member_id)
     return Storage(member_name=member_name, face_photo_url=face_photo_url)
 
