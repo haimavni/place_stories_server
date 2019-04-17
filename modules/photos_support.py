@@ -512,7 +512,7 @@ def find_similar_photos(photo_list=None, time_budget=60):
     elif photo_list:
         q = db.TblPhotos.id.belongs(photo_list)
     else:
-        return []
+        return ([], set([]))
     cnt = 0
     candidates = set([])
     dic = dict()

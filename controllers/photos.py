@@ -606,12 +606,13 @@ def handle_dup_group(group, photos_to_keep_set):
     if new_photo.id not in photos_to_keep_set:
         group = [old_photo, new_photo]
     data = replace_photo(group)
-    db(db.TblPhotos.id==new_photo.id).update(deleted=True) #todo: maybe just delete it...
+    #db(db.TblPhotos.id==new_photo.id).update(deleted=True) #todo: maybe just delete it...
     return dict(data=data, photo_to_patch=old_photo.id, photo_to_delete=new_photo.id)
 
 def replace_photo(pgroup):
     '''
-    we copy the image info from the newer, probably just uploaded, photo to the old photo record
+    we copy the image info from the newer, probably just uploaded, photo to the old photo record.
+    We keep the old photo id to keep all references valid
     '''
     new_photo, old_photo = pgroup
     data = dict(
@@ -626,6 +627,18 @@ def replace_photo(pgroup):
         dhash=new_photo.dhash,
     )
     db(db.TblPhotos.id==old_photo.id).update(**data)
+    db(db.TblPhotos.id==new_photo.id).update( #make the change undoable
+        deleted=True,
+        photo_path=old_photo.photo_path,
+        original_file_name=old_photo.original_file_name,
+        width=old_photo.width,
+        height=old_photo.height,
+        uploader=old_photo.uploader,
+        upload_date=old_photo.upload_date,
+        oversize=old_photo.oversize,
+        crc=old_photo.crc,
+        dhash=old_photo.dhash,
+    )
     ###data['status'] = 'regular'
     if old_photo.width != new_photo.width:
         ow, nw = old_photo.width, new_photo.width

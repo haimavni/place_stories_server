@@ -600,8 +600,15 @@ def save_group_members(vars):
 def add_story_member(vars):
     member_id = vars.candidate_id
     story_id = vars.story_id
-    event = db(db.TblEvents.story_id == story_id).select().first()
-    db.TblEventMembers.insert(Member_id=member_id, Event_id=event.id)
+    story = db(db.TblStories.id==story_id).select().first()
+    if story.used_for == STORY4EVENT:
+        event = db(db.TblEvents.story_id == story_id).select().first()
+        db.TblEventMembers.insert(Member_id=member_id, Event_id=event.id)
+    elif story.used_for == STORY4TERM:
+        term = db(db.TblTerms.story_id == story_id).select().first()
+        db.TblTermMembers.insert(Member_id=member_id, term_id=term.id)
+    else:
+        raise Exception("Incompatible story usage")
     return dict()
 
 @serve_json
