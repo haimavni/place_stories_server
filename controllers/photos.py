@@ -686,6 +686,8 @@ def make_photos_query(vars):
         (db.TblPhotos.is_back_side != True)
     #if vars.relevant_only:
         #q &= (db.TblPhotos.usage > 0)
+    if vars.photo_ids:
+        q &= (db.TblPhotos.id.belongs(vars.photo_ids))
     first_year = vars.first_year
     last_year = vars.last_year
     if vars.base_year: #time range may be defined
