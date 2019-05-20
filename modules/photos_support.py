@@ -400,7 +400,8 @@ def save_member_face(params):
         q = (db.TblMemberPhotos.Photo_id == face.photo_id) & \
             (db.TblMemberPhotos.Member_id == params.old_member_id)
     else:
-        q = None
+        q = (db.TblMemberPhotos.Photo_id == face.photo_id) & \
+            (db.TblMemberPhotos.Member_id == face.member_id)
     data = dict(
         Photo_id=face.photo_id,
         Member_id=face.member_id,
@@ -408,9 +409,7 @@ def save_member_face(params):
         x=face.x,
         y=face.y
     )
-    rec = None
-    if q:
-        rec = db(q).select().first()
+    rec = db(q).select().first()
     if rec:
         rec.update_record(**data)
     else:
