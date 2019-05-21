@@ -428,6 +428,15 @@ def remove_member(vars):
     return dict(deleted=deleted)
 
 @serve_json
+def remove_parent(vars):
+    member_id = vars.member_id
+    who = vars.who
+    if who == 'pa':
+        db(db.TblMembers.id==member_id).update(father_id=None)
+    elif who == 'ma':
+        db(db.TblMembers.id==member_id).update(mother_id=None)
+
+@serve_json
 def get_message_list(vars):
     q = (db.TblStories.used_for == STORY4MESSAGE) & (db.TblStories.author_id == db.auth_user.id) & (db.TblStories.deleted != True)
     lst = db(q).select(orderby=~db.TblStories.creation_date, limitby=(0, vars.limit or 100))
