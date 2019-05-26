@@ -50,6 +50,8 @@ def extract_tokens(s):
     return lst
 
 def get_reisha(html, size=100):
+    if not html:
+        return ''
     punctuation_marks = ',.;?!'
     lines = html.split('\n')
     result = ''
