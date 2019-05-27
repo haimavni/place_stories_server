@@ -290,7 +290,7 @@ def notify_new_files(vars):
     return dict()
 
 def notify_new_feedback():
-    lst = db(db.auth_membership.group_id==ADMIN).select(db.auth_user.email)
+    lst = db((db.auth_membership.group_id==ADMIN)&(db.auth_user.id==db.auth_membership.user_id)&(db.auth_user.id>1)).select(db.auth_user.email)
     receivers = [r.email for r in lst]
     app = request.application
     message = ('', '''
