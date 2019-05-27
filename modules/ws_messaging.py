@@ -22,8 +22,9 @@ def send_message(key, user=None, group=None, **data):
     send_data(group, obj)
 
 def send_data(group, obj):
-    request = inject('request')
+    request, comment = inject('request', 'comment')
     txt = jsondumps(obj)
+    comment('send message: ', txt[:40])
     if request.is_https:
         h = 'https'
         port = '8443'

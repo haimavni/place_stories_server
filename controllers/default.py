@@ -205,6 +205,8 @@ def save_feedback(vars):
         fb_device_type=vars.device_type,
         fb_device_details=vars.device_details
     )
+    notify_new_feedback()
+    return dict()
 
 @serve_json
 def get_feedbacks(vars):
@@ -287,5 +289,17 @@ def notify_new_files(vars):
     ws_messaging.send_message(key=vars.what +'_WERE_UPLOADED', group='ALL', uploaded_file_ids=uploaded_file_ids)
     return dict()
 
+def notify_new_feedback():
+    lst = db(db.auth_membership.group_id==ADMIN).select(db.auth_user.email)
+    receivers = [r.email for r in lst]
+    app = request.application
+    message = ('', '''
+    New feedback has been received.
+
+
+    Click <a href="https://gbstories.org/{app}/static/aurelia/index.html#/feedbacks">here</a> to view.
+    '''.format(app=app).replace('\n', '<br>'))
+    mail.send(to=receivers, subject='New GB Stories Feedback', message=message)
+    
 
 
