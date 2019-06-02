@@ -7,6 +7,7 @@ pdf utils:
 '''
 import re
 import fitz
+from pdf2image import convert_from_path
 
 PAT = '[א-תךםןףץ]'
 PAT_HEB = PAT.replace(']', ']{2,100}').decode('utf-8')
@@ -98,6 +99,18 @@ def test_pdf2text():
     htmlname = pdfname.replace('.pdf', '.html')
     with open(htmlname, 'w') as tmp_f:
         tmp_f.write(html)
+        
+def save_pdf_jpg(pdf_path, jpg_path)        :
+    pages = convert_from_path(pdf_path, dpi=20, last_page=1)
+    pages[0].save(jpg_path, 'JPEG')
+    
+def test_pdf_jpg():
+    import sys
+    fname = sys.argv[1] if len(sys.argv) > 1 else 'yoman'
+    '''test pdf to jpg'''
+    pdf_name = '/home/haim/pdf_tests/{}.pdf'.format(fname)
+    jpg_name = '/home/haim/pdf_tests/{}.jpg'.format(fname)
+    save_pdf_jpg(pdf_name, jpg_name)
 
 def reverse(tmp_s):
     '''reverse string'''
@@ -112,6 +125,7 @@ def invert(match):
     return reverse(tmp_s)
 
 if __name__ == '__main__':
+    test_pdf_jpg()
     test_pdf2text()
     test_highlight()
     print 'done'

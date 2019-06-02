@@ -9,7 +9,7 @@ import random
 import pwd
 from stories_manager import Stories
 from folders import url_folder, local_folder
-from pdf_utils import pdf_to_text
+from pdf_utils import pdf_to_text, save_pdf_jpg
 from time import sleep
 import ws_messaging
 
@@ -47,8 +47,30 @@ def save_uploaded_doc(file_name, blob, user_id, sub_folder=None):
         crc=crc,
         deleted=False
     )
+    pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/' + sub_folder
+    dir_util.mkpath(pdf_jpg_folder)
+    pdf_jpg_path = pdf_jpg_folder + file_name.replace('.pdf', '.jpg')
+    save_pdf_jpg(doc_file_name, pdf_jpg_path)
     db.commit()
     return doc_id
+
+def generate_jpgs_for_all_pdfs():
+    db = inject('db')
+    q = db.TblDocs.deleted != True
+    lst = db(q).select()
+    pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/'
+    dir_util.mkpath(pdf_jpg_folder)
+    for rec in lst:
+        pdf_path = local_docs_folder() + rec.doc_path
+        if not os.path.isfile(pdf_path):
+            continue
+        jpg_path = pdf_path.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', '.jpg')
+        r = jpg_path.rfind('/')
+        p = jpg_path[:r+1]
+        dir_util.mkpath(p)
+        jpg_path = pdf_jpg_folder + rec.doc_path.replace('.pdf', '.jpg')
+        save_pdf_jpg(pdf_path, jpg_path)
+    return len(lst)
 
 def calc_doc_story(doc_id):
     try:

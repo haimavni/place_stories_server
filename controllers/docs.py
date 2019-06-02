@@ -39,6 +39,7 @@ def get_doc_list(vars):
         story = get_story_by_id(rec.story_id)
         rec.story = story
         rec.doc_url = doc_url(rec.story_id)
+        rec.doc_jpg_url = rec.doc_url.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', '.jpg')
     return dict(doc_list=doc_list, no_results=not doc_list)
 
 @serve_json
