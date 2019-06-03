@@ -816,6 +816,7 @@ def set_story_list_data(story_list):
         story_id=rec.id,
         topics = rec.keywords, ###'; '.join(story_topics[rec.id]) if rec.id in story_topics else "",
         doc_url = rec.doc_url,
+        doc_jpg_url = rec.doc_url.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', '.jpg') if rec.doc_url else '',
         used_for=rec.used_for,
         editable_preview=rec.editable_preview,
         event_date=rec.creation_date,
