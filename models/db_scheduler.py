@@ -76,9 +76,21 @@ def execute_task(name, command):
         comment('Finished task {}. Returned {}.'.format(name, result))
         db.commit()
 
+def watchdog():
+    q = db.scheduler_task.status=='FAILED'
+    n = db(q).count()
+    if n < 1:
+        return
+    message = '''
+    A task failed in the scheduler. Check the log files.
+    '''
+    mail.send(sender="admin@gbstories.org", to="haimavni@gmail.com", subject = "A task failed", message=('', message))
+    db(q).delete()
+
 __tasks = dict(
     ###scan_all_unscanned_photos=scan_all_unscanned_photos,
     collect_mail=collect_mail,
+    watchdog=watchdog,
     execute_task=execute_task,
     update_word_index_all=update_word_index_all,
     calc_doc_stories=calc_doc_stories
@@ -130,18 +142,33 @@ def schedule_collect_mail():
         timeout=5 * 60 , # will time out if running for 5 minutes
     )
 
+def schedule_watchdog():
+    now = datetime.datetime.now()
+    return db.scheduler_task.insert(
+        status='QUEUED',
+        application_name=request.application,
+        task_name = 'collect mail',
+        function_name='collect_mail',
+        start_time=now,
+        stop_time=now + datetime.timedelta(days=1461),
+        repeats=0,
+        period=3 * 60,   # every 3 minutes
+        timeout=5 * 60 , # will time out if running for 5 minutes
+    )
+    
+
 def schedule_update_word_index_all():
     now = datetime.datetime.now()
     return db.scheduler_task.insert(
         status='QUEUED',
         application_name=request.application,
-        task_name = 'update word index',
-        function_name='update_word_index_all',
+        task_name = 'tasks watchdog',
+        function_name='watchdog',
         start_time=now,
         stop_time=now + datetime.timedelta(days=1461),
         repeats=0,
-        period=2*3600,   # every 2 hours
-        timeout = 3 *3600, # will time out if running for 3 hours
+        period=60,   # minute
+        timeout = 600, # will time out if running for 10 minutes
     )
 
 def schedule_calc_doc_stories():
@@ -163,6 +190,7 @@ permanent_tasks = dict(
     #look for emailed photos and other mail
     #note that the key must also be function_name set by the keyed item
     collect_mail=schedule_collect_mail,
+    watch_dog=schedule_watchdog,
     update_word_index_all=schedule_update_word_index_all,
     calc_doc_stories=schedule_calc_doc_stories
 )
