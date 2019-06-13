@@ -166,8 +166,11 @@ def do_change_password(vars):
 
 @serve_json
 def get_curr_version(vars):
-    with open(base_app_dir + 'static/aurelia/curr_version.txt') as f:
-        s = f.read()
+    try:
+        with open(base_app_dir + 'static/aurelia/curr_version.txt') as f:
+            s = f.read()
+    except:
+        s = ''
     return dict(version=s)
 
 @serve_json
