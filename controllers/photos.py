@@ -33,6 +33,8 @@ def get_photo_detail(vars):
     if not story:
         story = sm.get_empty_story(used_for=STORY4PHOTO)
     all_dates = get_all_dates(rec)
+    photographer = db(db.TblPhotographers.id==rec.photographer_id).select().first()
+    photographer_name = photographer.name if photographer else ''
     return dict(photo_src=photos_folder() + rec.photo_path,
                 photo_name=rec.Name,
                 height=rec.height,
@@ -40,6 +42,7 @@ def get_photo_detail(vars):
                 photo_story=story,
                 photo_date_str = all_dates.photo_date.date,
                 photo_date_datespan = all_dates.photo_date.span,
+                photographer_name=photographer_name,
                 photo_id=rec.id)
 
 @serve_json
