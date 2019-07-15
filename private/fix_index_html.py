@@ -10,6 +10,7 @@ with open('index.html') as f:
     m = re.search(pat, s)
     version = m.group(1)
     s = s.replace('[VERSION]', version)
+    print "version {} copied".format(version)
     
 with open('index.html', 'w') as g:
     g.write(s)
