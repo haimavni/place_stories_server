@@ -46,7 +46,7 @@ rm tmp_env.ts
 cp -a ./scripts ~/deployment_folder/
 ls -l ~/deployment_folder/scripts >> ~/log/deploy_history.log
 git br -v >> ~/log/deploy_history.log
-
+~/aurelia-gbs/server/tol_server/private/fix_index_html.py
 cp ./index.html  ~/deployment_folder
 cp ./favicon.ico  ~/deployment_folder
 cp -a ./images ~/deployment_folder
