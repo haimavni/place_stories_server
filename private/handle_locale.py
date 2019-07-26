@@ -32,7 +32,7 @@ for k in dic:
     
 s = str(datetime.datetime.now())[:16]
 
-with open('/home/haim/curr_version.txt', 'w') as f:
+with open('/home/haim/curr_version.tmp', 'w') as f:
     f.write(s)
     
 env = '''

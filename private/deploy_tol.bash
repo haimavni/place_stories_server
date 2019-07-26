@@ -70,7 +70,7 @@ sftp -b ../server/tol_server/private/deploy.batch gbstories.org
 echo "
 lcd /home/haim/
 cd /home/www-data/tol_server_${BRANCH}/static/aurelia
-put curr_version.txt
+put curr_version.tmp
 " > ../server/tol_server/private/deploy.batch
 sftp -b ../server/tol_server/private/deploy.batch gbstories.org
 
