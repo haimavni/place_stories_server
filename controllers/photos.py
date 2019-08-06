@@ -537,6 +537,16 @@ def pair_selected_photos(vars):
 
 @serve_json
 def flip_photo(vars):
+    if vars.to_unpair:
+        was_flipped = False
+        n = db(db.TblPhotoPairs.front_id==vars.back_id).delete()
+        if not n: #was flipped
+            was_flipped = True
+            db(db.TblPhotoPairs.front_id==vars.front_id).delete()
+        id = vars.back_id if was_flipped else vars.front_id
+        recf = db(db.TblPhotos.id==id).select().first()
+        recf.update_record(is_back_side = False)
+        return dict(to_unpair=True)
     flip_photo_pair(vars.front_id, vars.back_id)
     return dict()
 
