@@ -305,7 +305,14 @@ def crop(input_path, output_path, face, size=100):
     cropped_img = img.crop(area)
     resized_img = cropped_img.resize((size, size), Image.LANCZOS)
     resized_img.save(output_path)
-
+    
+def crop_a_photo(input_path, output_path, crop_left, crop_top, crop_width, crop_height):
+    img = Image.open(input_path)
+    area = (crop_left, crop_top, crop_left + crop_width, crop_top + crop_height)
+    cropped_img = img.crop(area)
+    #os.remove(input_path) #todo: for now keep the old file so changes in __test do not harm __www
+    cropped_img.save(output_path)
+    
 def crop_square(img_src, width, height, side_size):
     if width > height:
         x = (width - height) / 2

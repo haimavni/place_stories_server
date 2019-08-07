@@ -1,5 +1,5 @@
 from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, \
-     save_uploaded_photo, rotate_photo, save_member_face, create_zip_file, get_photo_pairs, find_similar_photos
+     save_uploaded_photo, rotate_photo, save_member_face, create_zip_file, get_photo_pairs, find_similar_photos,crop_a_photo
 import ws_messaging
 import stories_manager
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
@@ -551,6 +551,26 @@ def flip_photo(vars):
     return dict()
 
 @serve_json
+def crop_photo(vars):
+    faces = db(db.TblMemberPhotos.Photo_id==vars.photo_id).select()
+    crop_left = int(vars.crop_left)
+    crop_top = int(vars.crop_top)
+    crop_width = int(vars.crop_width)
+    crop_height = int(vars.crop_height)
+    for face in faces:
+        if face.x:
+            face.update_record(x=face.x - crop_left, y=face.y - crop_top)
+    rec = db(db.TblPhotos.id==vars.photo_id).select().first()
+    r = rec.photo_path.rfind('.')
+    new_photo_path = rec.photo_path[:r] + 'X' + rec.photo_path[r:] #must change name due to caching
+    path = local_photos_folder("orig") + rec.photo_path
+    new_path = local_photos_folder("orig") + new_photo_path
+    crop_a_photo(path, new_path, crop_left, crop_top, crop_width, crop_height)
+    rec.update_record(photo_path=new_photo_path, width=crop_width, height=crop_height)
+    new_path = photos_folder("orig") + new_photo_path
+    return dict(new_path=new_path)
+
+@serve_json
 def clear_photo_group(vars):
     pass
 
@@ -807,10 +827,6 @@ def pair_photos(front_id, back_id):
     db(db.TblPhotoPairs.back_id == back_id).delete()
     db.TblPhotoPairs.insert(front_id=front_id, back_id=back_id)
     db(db.TblPhotos.id == back_id).update(is_back_side=True)
-
-def unpair_photos(front_id, back_id):
-    db(db.TblPhotoPairs.front_id == front_id).delete()
-    db(db.TblPhotos.id == back_id).update(is_back_side=False)
 
 def flip_photo_pair(front_id, back_id):
     #raise Exception("flip photo pair not ready")
