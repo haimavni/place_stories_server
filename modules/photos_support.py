@@ -74,7 +74,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
     user_id = user_id or auth.current_user()
     crc = zlib.crc32(blob)
     cnt = db(db.TblPhotos.crc==crc).count()
-    prec = db(db.TblPhotos.crc==crc).select().first()
+    prec = db((db.TblPhotos.crc==crc) & (db.TblPhotos.deleted != True)).select().first()
     if prec:
         return Storage(duplicate=prec.id)
     original_file_name, ext = os.path.splitext(file_name)
