@@ -562,13 +562,15 @@ def crop_photo(vars):
             face.update_record(x=face.x - crop_left, y=face.y - crop_top)
     rec = db(db.TblPhotos.id==vars.photo_id).select().first()
     r = rec.photo_path.rfind('.')
-    new_photo_path = rec.photo_path[:r] + 'X' + rec.photo_path[r:] #must change name due to caching
+    #new_photo_path = rec.photo_path[:r] + 'X' + rec.photo_path[r:] #must change name due to caching
     path = local_photos_folder("orig") + rec.photo_path
-    new_path = local_photos_folder("orig") + new_photo_path
-    crop_a_photo(path, new_path, crop_left, crop_top, crop_width, crop_height)
-    rec.update_record(photo_path=new_photo_path, width=crop_width, height=crop_height)
-    new_path = photos_folder("orig") + new_photo_path
-    return dict(new_path=new_path)
+    #new_path = local_photos_folder("orig") + new_photo_path
+    crop_a_photo(path, path, crop_left, crop_top, crop_width, crop_height)
+    rec.update_record(width=crop_width, height=crop_height)
+    #new_path = photos_folder("orig") + new_photo_path
+    fileStatsObj = os.stat (path)
+    file_mod_time = fileStatsObj.st_mtime    
+    return dict(file_mod_time=file_mod_time)
 
 @serve_json
 def clear_photo_group(vars):
