@@ -32,7 +32,7 @@ def my_log(s, file_name="log_all"):
     need_fixing = file_size == 0
     if file_size + len(s) > size_limit:
         roll_over(fname, 10)
-    s1 = "{ts}: {s}\n\n".format(ts=datetime.datetime.now(), s=s)
+    s1 = "{ts}: {app}: {s}\n\n".format(ts=datetime.datetime.now(), s=s, app=request.application)
     try:
         with open(fname, 'a') as f:
             f.write(s1)
