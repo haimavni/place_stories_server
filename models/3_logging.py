@@ -27,19 +27,19 @@ def roll_over(base_name, max_number):
 
 def my_log(s, file_name="log_all"):
     size_limit = 400000
-    fname = '{}{}.log'.format(log_path(), file_name)
+    fname = '{p}{n}[{a}].log'.format(p=log_path(), n=file_name, a=request.application)
     file_size = os.path.getsize(fname) if os.path.exists(fname) else 0
     need_fixing = file_size == 0
     if file_size + len(s) > size_limit:
         roll_over(fname, 10)
-    s1 = "{ts}: {app}: {s}\n\n".format(ts=datetime.datetime.now(), s=s, app=request.application)
+    s1 = "{ts}: {s}\n\n".format(ts=datetime.datetime.now(), s=s)
     try:
         with open(fname, 'a') as f:
             f.write(s1)
         if need_fixing:
             fix_log_owner(fname)
     except:
-        fname = fname = '{}{}.log'.format(log_path(), file_name.upper())
+        fname = fname = '{p}{n}[{a}].log'.format(p=log_path(), n=file_name.upper(), a=request.application)
         with open(fname, 'a') as f:
             f.write(s1)
 

@@ -443,13 +443,13 @@ def write_indexing_sql_scripts():
     ]
 
     path = 'applications/' + request.application + '/logs/'
-    fname = path + 'indexes_created.txt'
+    fname = path + 'indexes_created[{a}].txt'.format(a=request.application)
     if os.path.exists(fname):
         return
     with open(fname, 'w') as f:
         f.write('Indexes create/drop sql scripts already created.\nDo not delete this file.')
-    with open(path + 'create_indexes.sql', mode='w') as f:
-        with open(path + 'delete_indexes.sql', mode='w') as g:
+    with open(path + 'create_indexes[{a}].sql'.format(a=request.application), mode='w') as f:
+        with open(path + 'delete_indexes[{a}].sql'.format(a=request.application), mode='w') as g:
             for tcc in indexes:
                 table = tcc[0]
                 fields = ', '.join(tcc[1:])
