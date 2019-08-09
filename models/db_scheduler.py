@@ -147,8 +147,8 @@ def schedule_watchdog():
     return db.scheduler_task.insert(
         status='QUEUED',
         application_name=request.application,
-        task_name = 'collect mail',
-        function_name='collect_mail',
+        task_name = 'tasks watchdog',
+        function_name='watchdog',
         start_time=now,
         stop_time=now + datetime.timedelta(days=1461),
         repeats=0,
@@ -162,8 +162,8 @@ def schedule_update_word_index_all():
     return db.scheduler_task.insert(
         status='QUEUED',
         application_name=request.application,
-        task_name = 'tasks watchdog',
-        function_name='watchdog',
+        task_name = 'update word index all',
+        function_name='update_word_index_all',
         start_time=now,
         stop_time=now + datetime.timedelta(days=1461),
         repeats=0,
@@ -212,6 +212,5 @@ def verify_tasks_started():
         task_id = permanent_tasks[function_name]()
         comment("start {}, task_id is {}", function_name, task_id)
         db.commit()
-        
 
 verify_tasks_started()       
