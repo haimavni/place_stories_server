@@ -200,18 +200,18 @@ scheduler = MyScheduler(db, __tasks)
 def verify_tasks_started():
     if db(db.auth_user).count() < 2:
         return
-    if db(db.scheduler_task).count() >= len(permanent_tasks):
+    lock_file_name = '{p}[{a}.{t}'.format(p=log_path(), a=request.application, t='tasks.lock')
+    if db(db.scheduler_task).isempty() and os.path.isfile(lock_file_name):
+        os.remove(lock_file_name)
+    if os.path.isfile(lock_file_name):
         return
+    with open(lock_file_name, 'w') as f:
+        f.write('locked')
     for function_name in permanent_tasks:
-        if db(db.scheduler_task.function_name==function_name).isempty():
-            n = random.randint(0, 1000)
-            delay = 1.0 * n / 10
-            time.sleep(delay) #prevent more than one process to create the task
-            if not db(db.scheduler_task.function_name==function_name).isempty():
-                continue
-            task_id = permanent_tasks[function_name]()
-            comment("start {}, task_id is {}", function_name, task_id)
-            db.commit()
-    return True
+        ###if db(db.scheduler_task.function_name==function_name).isempty():
+        task_id = permanent_tasks[function_name]()
+        comment("start {}, task_id is {}", function_name, task_id)
+        db.commit()
+        
 
 verify_tasks_started()       
