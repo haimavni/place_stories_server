@@ -173,7 +173,7 @@ def update_word_index_all():
     chunk = 10
     comment("Start indexing story words cycle")
     q = db.TblStories.last_update_date > db.TblStories.indexing_date
-    time_budget = 2 * 3600 - 5 #will exit the loop 5 seconds before the a new cycle starts
+    time_budget = 600 - 15 #will exit the loop 15 seconds before the a new cycle starts
     t0 = datetime.datetime.now()
     while True:
         dif = datetime.datetime.now() - t0

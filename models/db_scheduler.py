@@ -77,13 +77,13 @@ def execute_task(name, command):
         db.commit()
 
 def watchdog():
-    q = db.scheduler_task.status=='FAILED'
-    n = db(q).count()
-    if n < 1:
+    q = (db.scheduler_task.status.belongs(['FAILED', 'TIMEOUT']))
+    tsk = db(q).select().first() 
+    if not tsk:
         return
     message = '''
-    A task failed in the scheduler. Check the log files.
-    '''
+    A task of {app} {status} in the scheduler. Check the log files.
+    '''.format(app=request.application, status=tsk.status)
     mail.send(sender="admin@gbstories.org", to="haimavni@gmail.com", subject = "A task failed", message=('', message))
     for tsk in db(q):
         comment('Task {} failed', tsk.function_name)
@@ -156,9 +156,8 @@ def schedule_watchdog():
         stop_time=now + datetime.timedelta(days=1461),
         repeats=0,
         period=3 * 60,   # every 3 minutes
-        timeout=5 * 60 , # will time out if running for 5 minutes
+        timeout=2 * 60 , # will time out if running for 2 minutes
     )
-    
 
 def schedule_update_word_index_all():
     now = datetime.datetime.now()
@@ -184,8 +183,8 @@ def schedule_calc_doc_stories():
         start_time=now,
         stop_time=now + datetime.timedelta(days=1461),
         repeats=0,
-        period=2*3600,   # every 2 hours
-        timeout = 3 *3600, # will time out if running for 3 hours
+        period=600,   # every 10 minutes
+        timeout = 500, # will time out if running for 500 seconds
     )
 
 permanent_tasks = dict(
@@ -215,5 +214,11 @@ def verify_tasks_started():
         task_id = permanent_tasks[function_name]()
         comment("start {}, task_id is {}", function_name, task_id)
         db.commit()
+        
+def promote_task(function_name):
+    tsk = db(db.scheduler_task.function_name==function_name).select().first()
+    if tsk.status in ['ASSIGNED', 'RUNNING']:
+        return
+    tsk.update_record(status='QUEUED', next_run_time=datetime.datetime.now())
 
 verify_tasks_started()       

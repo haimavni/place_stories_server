@@ -103,7 +103,9 @@ def calc_doc_stories(time_budget=None):
     q = (db.TblDocs.story_id == None) & (db.TblDocs.deleted != True)
     n = db(q).count()
     comment('Start calc doc stories. {} documents left to calculate.', n)
-    time_budget = time_budget or (2 * 3600 - 25) #will exit the loop 25 seconds before the a new cycle starts
+    if not n:
+        return
+    time_budget = time_budget or (500 - 25) #will exit the loop 25 seconds before the a new cycle starts
     t0 = datetime.datetime.now()
     ns = 0
     nf = 0
