@@ -85,7 +85,10 @@ def watchdog():
     A task failed in the scheduler. Check the log files.
     '''
     mail.send(sender="admin@gbstories.org", to="haimavni@gmail.com", subject = "A task failed", message=('', message))
-    db(q).delete()
+    for tsk in db(q):
+        comment('Task {} failed', tsk.function_name)
+    db(q).update(status='QUEUED')
+    db.commit()
 
 __tasks = dict(
     ###scan_all_unscanned_photos=scan_all_unscanned_photos,
