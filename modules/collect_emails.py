@@ -130,42 +130,46 @@ def get_user_id_of_sender(sender_email, sender_name):
     return auth.user_id_of_email(sender_email)
 
 def collect_mail():
-    db, comment, logger, mail, MAIL_WATCHER = inject('db', 'comment', 'logger', 'mail', 'MAIL_WATCHER')
-    email_photos_collector = EmailCollector()
-    results = []
-    lst = db((db.auth_membership.group_id==MAIL_WATCHER)&(db.auth_user.id==db.auth_membership.user_id)&(db.auth_user.id>1)).select(db.auth_user.email)
-    receivers = [r.email for r in lst]    
-    logger.debug('collecting mail')
-    for msg in email_photos_collector.collect():
-        user_id = get_user_id_of_sender(msg.sender_email, msg.sender_name)
-        user_id = user_id or 1 #todo: if we decide not to create new user
-        text = msg.html_content or msg.plain_content
-        comment('New email: subject: {subject}, images: {image_names} sent by {sender}', 
-                subject=msg.subject, image_names=msg.images.keys(), sender=msg.sender_email)
-        if msg.images:
-            result = save_uploaded_photo_collection(msg.images, user_id)
-            results.append(result)
-            comment("upload result {result}", result=result)
-        emsg = ''
-        for fld in sorted(msg):
-            if fld == "images":
-                emsg += '{} images\n'.format(len(msg.images))
-            else:
-                s = "strange text"
-                m = msg[fld]
-                if isinstance(m, unicode):
-                    s = m
+    try:
+        db, comment, logger, mail, MAIL_WATCHER, log_exception = inject('db', 'comment', 'logger', 'mail', 'MAIL_WATCHER', 'log_exception')
+        email_photos_collector = EmailCollector()
+        results = []
+        lst = db((db.auth_membership.group_id==MAIL_WATCHER)&(db.auth_user.id==db.auth_membership.user_id)&(db.auth_user.id>1)).select(db.auth_user.email)
+        receivers = [r.email for r in lst]    
+        logger.debug('collecting mail')
+        for msg in email_photos_collector.collect():
+            user_id = get_user_id_of_sender(msg.sender_email, msg.sender_name)
+            user_id = user_id or 1 #todo: if we decide not to create new user
+            text = msg.html_content or msg.plain_content
+            comment('New email: subject: {subject}, images: {image_names} sent by {sender}', 
+                    subject=msg.subject, image_names=msg.images.keys(), sender=msg.sender_email)
+            if msg.images:
+                result = save_uploaded_photo_collection(msg.images, user_id)
+                results.append(result)
+                comment("upload result {result}", result=result)
+            emsg = ''
+            for fld in sorted(msg):
+                if fld == "images":
+                    emsg += '{} images\n'.format(len(msg.images))
                 else:
-                    try:
-                        s = m.decode('utf8')
-                    except:
-                        pass
-                emsg += fld + ': ' + s + '\n'
-        result = mail.send(sender="admin@gbstories.org", to=receivers, subject="incoming email to gbstories", message=emsg)
-        if result:
-            comment("mail was forwarded")
-        else:
-            comment("forwarding mail failed: {}", mail.error)
+                    s = "strange text"
+                    m = msg[fld]
+                    if isinstance(m, unicode):
+                        s = m
+                    else:
+                        try:
+                            s = m.decode('utf8')
+                        except:
+                            pass
+                    emsg += fld + ': ' + s + '\n'
+            result = mail.send(sender="admin@gbstories.org", to=receivers, subject="incoming email to gbstories", message=emsg)
+            if result:
+                comment("mail was forwarded")
+            else:
+                comment("forwarding mail failed: {}", mail.error)
+    except Exception, e:
+        log_exception('Error collecting mail')
+        raise
             
         
     return results

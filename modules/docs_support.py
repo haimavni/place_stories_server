@@ -97,44 +97,48 @@ def calc_doc_story(doc_id):
     return good
     
 def calc_doc_stories(time_budget=None):
-    db, comment, log_exception = inject('db', 'comment', 'log_exception')
-    chunk = 10
-    comment("Start calc doc stories cycle")
-    q = (db.TblDocs.story_id == None) & (db.TblDocs.deleted != True)
-    n = db(q).count()
-    comment('Start calc doc stories. {} documents left to calculate.', n)
-    if not n:
-        return
-    time_budget = time_budget or (500 - 25) #will exit the loop 25 seconds before the a new cycle starts
-    t0 = datetime.datetime.now()
-    ns = 0
-    nf = 0
     try:
-        while True:
-            dif = datetime.datetime.now() - t0
-            elapsed = int(dif.total_seconds())
-            if elapsed > time_budget:
-                break
-            n = db(q).count()
-            doc_ids = []
-            if n > 0:
-                comment('Calc doc stories. {} documents left to calculate.', n)
-                lst = db(q).select(db.TblDocs.id, limitby=(0, chunk))
-                for rec in lst:
-                    if calc_doc_story(rec.id):
-                        doc_ids.append(rec.id)
-                        ns += 1
-                    else:
-                        nf += 1
-                db.commit()
-                comment("{} good, {} bad uploaded", ns, nf)
-                ws_messaging.send_message('DOCS_WERE_UPLOADED', group='ALL', doc_ids=doc_ids)
-            else:
-                sleep(5)
-    except:
-        log_exception('Error while calculating doc stories')
-    finally:
-        comment("Finished cycle of calculating doc stories")
+        db, comment, log_exception = inject('db', 'comment', 'log_exception')
+        chunk = 10
+        comment("Start calc doc stories cycle")
+        q = (db.TblDocs.story_id == None) & (db.TblDocs.deleted != True)
+        n = db(q).count()
+        comment('Start calc doc stories. {} documents left to calculate.', n)
+        if not n:
+            return
+        time_budget = time_budget or (500 - 25) #will exit the loop 25 seconds before the a new cycle starts
+        t0 = datetime.datetime.now()
+        ns = 0
+        nf = 0
+        try:
+            while True:
+                dif = datetime.datetime.now() - t0
+                elapsed = int(dif.total_seconds())
+                if elapsed > time_budget:
+                    break
+                n = db(q).count()
+                doc_ids = []
+                if n > 0:
+                    comment('Calc doc stories. {} documents left to calculate.', n)
+                    lst = db(q).select(db.TblDocs.id, limitby=(0, chunk))
+                    for rec in lst:
+                        if calc_doc_story(rec.id):
+                            doc_ids.append(rec.id)
+                            ns += 1
+                        else:
+                            nf += 1
+                    db.commit()
+                    comment("{} good, {} bad uploaded", ns, nf)
+                    ws_messaging.send_message('DOCS_WERE_UPLOADED', group='ALL', doc_ids=doc_ids)
+                else:
+                    sleep(5)
+        except:
+            log_exception('Error while calculating doc stories')
+        finally:
+            comment("Finished cycle of calculating doc stories")
+    except Exception, e:
+        log_exception('Error calculating doc stories')
+        raise
     return dict(good=ns, bad=nf)
 
 def docs_folder(): 

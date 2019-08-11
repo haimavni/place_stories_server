@@ -169,26 +169,30 @@ def update_story_words_index(story_id):
     comment('finished indexing story ', story_id)
     
 def update_word_index_all():
-    db, comment = inject('db', 'comment')
-    chunk = 10
-    comment("Start indexing story words cycle")
-    q = db.TblStories.last_update_date > db.TblStories.indexing_date
-    time_budget = 600 - 15 #will exit the loop 15 seconds before the a new cycle starts
-    t0 = datetime.datetime.now()
-    while True:
-        dif = datetime.datetime.now() - t0
-        elapsed = int(dif.total_seconds())
-        if elapsed > time_budget:
-            break
-        n = db(q).count()
-        if n > 0:
-            comment('Reindex words. {} stories left to reindex.', n)
-        else:
-            sleep(5)
-        lst = db(q).select(db.TblStories.id, limitby=(0, chunk))
-        for rec in lst:
-            update_story_words_index(rec.id)
-            db.commit()
+    try:
+        db, comment, log_exception = inject('db', 'comment', 'log_exception')
+        chunk = 10
+        comment("Start indexing story words cycle")
+        q = db.TblStories.last_update_date > db.TblStories.indexing_date
+        time_budget = 600 - 15 #will exit the loop 15 seconds before the a new cycle starts
+        t0 = datetime.datetime.now()
+        while True:
+            dif = datetime.datetime.now() - t0
+            elapsed = int(dif.total_seconds())
+            if elapsed > time_budget:
+                break
+            n = db(q).count()
+            if n > 0:
+                comment('Reindex words. {} stories left to reindex.', n)
+            else:
+                sleep(5)
+            lst = db(q).select(db.TblStories.id, limitby=(0, chunk))
+            for rec in lst:
+                update_story_words_index(rec.id)
+                db.commit()
+    except Exeption, e:
+        log_exception('Error updating word index')
+        raise
             
 def find_or_insert_word(wrd):            
     from injections import inject

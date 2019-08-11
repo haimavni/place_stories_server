@@ -91,15 +91,6 @@ def watchdog():
     db(q).update(status='QUEUED')
     db.commit()
 
-__tasks = dict(
-    ###scan_all_unscanned_photos=scan_all_unscanned_photos,
-    collect_mail=collect_mail,
-    watchdog=watchdog,
-    execute_task=execute_task,
-    update_word_index_all=update_word_index_all,
-    calc_doc_stories=calc_doc_stories
-)
-
 def dict_to_json_str(dic):
     return response.json(dic)
 
@@ -200,6 +191,14 @@ maildir = '/home/{}_mailbox/Maildir'.format(request.application)
 if os.path.isdir(maildir):
     permanent_tasks['collect_mail'] = schedule_collect_mail
 
+__tasks = dict(
+    ###scan_all_unscanned_photos=scan_all_unscanned_photos,
+    collect_mail=collect_mail,
+    watchdog=watchdog,
+    update_word_index_all=update_word_index_all,
+    calc_doc_stories=calc_doc_stories
+)
+
 scheduler = MyScheduler(db, __tasks)
 
 def verify_tasks_started():
@@ -220,6 +219,8 @@ def verify_tasks_started():
         
 def promote_task(function_name):
     tsk = db(db.scheduler_task.function_name==function_name).select().first()
+    if not tsk:
+        return
     if tsk.status in ['ASSIGNED', 'RUNNING']:
         return
     tsk.update_record(status='QUEUED', next_run_time=datetime.datetime.now())
