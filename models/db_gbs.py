@@ -286,6 +286,8 @@ db.define_table('TblPhotos',
                 Field('height', type='integer', default=0),
                 Field('uploader', type=db.auth_user),
                 Field('upload_date', type='datetime'),
+                Field('last_mod_time', type='datetime'),
+                Field.Virtual('stamped_photo_path', lambda rec: rec.photo_path + str(rec.last_mod_time)[:19] if rec.last_mod_time else ''),
                 Field('photo_missing', type='boolean', default=False),
                 Field('oversize', type='boolean', default=False), #If people want to download the full size they use this info
                 Field('random_photo_key', type='integer'),

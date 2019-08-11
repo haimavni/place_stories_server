@@ -6,6 +6,7 @@ from date_utils import date_of_date_str, parse_date, get_all_dates, update_recor
 from members_support import *
 import random
 import datetime
+import time
 import os
 from gluon.storage import Storage
 from gluon.utils import web2py_uuid
@@ -35,7 +36,7 @@ def get_photo_detail(vars):
     all_dates = get_all_dates(rec)
     photographer = db(db.TblPhotographers.id==rec.photographer_id).select().first()
     photographer_name = photographer.name if photographer else ''
-    return dict(photo_src=photos_folder() + rec.photo_path,
+    return dict(photo_src=photos_folder() + timestamped_photo_path(rec),
                 photo_name=rec.Name,
                 height=rec.height,
                 width=rec.width,
@@ -561,13 +562,11 @@ def crop_photo(vars):
         if face.x:
             face.update_record(x=face.x - crop_left, y=face.y - crop_top)
     rec = db(db.TblPhotos.id==vars.photo_id).select().first()
-    r = rec.photo_path.rfind('.')
     path = local_photos_folder("orig") + rec.photo_path
     crop_a_photo(path, path, crop_left, crop_top, crop_width, crop_height)
-    rec.update_record(width=crop_width, height=crop_height)
-    fileStatsObj = os.stat (path)
-    file_mod_time = fileStatsObj.st_mtime    
-    return dict(file_mod_time=file_mod_time)
+    last_mod_time = request.now
+    rec.update_record(width=crop_width, height=crop_height, last_mod_time=last_mod_time)
+    return dict(photo_src=photos_folder('orig') + timestamped_photo_path(rec))
 
 @serve_json
 def clear_photo_group(vars):
@@ -654,6 +653,7 @@ def replace_photo(pgroup):
         height=new_photo.height,
         uploader=new_photo.uploader,
         upload_date=new_photo.upload_date,
+        last_mod_time=request.now,
         oversize=new_photo.oversize,
         crc=new_photo.crc,
         dhash=new_photo.dhash,
@@ -667,6 +667,7 @@ def replace_photo(pgroup):
         height=old_photo.height,
         uploader=old_photo.uploader,
         upload_date=old_photo.upload_date,
+        last_mod_time=request.now,
         oversize=old_photo.oversize,
         crc=old_photo.crc,
         dhash=old_photo.dhash,
@@ -854,13 +855,13 @@ def process_photo_list(lst, photo_pairs=dict()):
             side='front',
             photo_id=rec.id,
             src=photos_folder('orig') + rec.photo_path,
-            square_src=photos_folder('squares') + rec.photo_path,
+            square_src=photos_folder('squares') + timestamped_photo_path(rec),
             width=rec.width,
             height=rec.height,
             front=Storage(
                 photo_id=rec.id,
-                src=photos_folder('orig') + rec.photo_path,
-                square_src=photos_folder('squares') + rec.photo_path,
+                src=photos_folder('orig') + timestamped_photo_path(rec),
+                square_src=photos_folder('squares') + timestamped_photo_path(rec),
                 width=rec.width,
                 height=rec.height,
             )
@@ -870,6 +871,13 @@ def process_photo_list(lst, photo_pairs=dict()):
             dic.flipped = False
             dic.flipable = 'flipable'
         result.append(dic)
+    return result
+
+def timestamped_photo_path(photo_rec):
+    result = photo_rec.photo_path
+    if photo_rec.last_mod_time:
+        utime = time.mktime(photo_rec.last_mod_time.timetuple())
+        result += '?' + str(utime)
     return result
 
 def delete_photos(photo_list):
