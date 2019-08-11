@@ -628,9 +628,10 @@ def save_photo_group(vars):
         raise Exception('Unknown call type in save photo group')
     item_id = db(tbl.story_id == story_id).select().first().id
     if vars.caller_type == "story":
-        qp = (db.TblEventPhotos.Event_id == item_id) & (db.TblEventPhotos.Photo_id == db.TblPhotos.id) & (db.TblPhotos.deleted != True)
+        qp = (db.TblEventPhotos.Event_id == item_id) & (db.TblEventPhotos.Photo_id == db.TblPhotos.id)
     elif vars.caller_type == "term":
-        qp = (db.TblTermPhotos.term_id == item_id) & (db.TblTermPhotos.Photo_id == db.TblPhotos.id) & (db.TblPhotos.deleted != True)
+        qp = (db.TblTermPhotos.term_id == item_id) & (db.TblTermPhotos.Photo_id == db.TblPhotos.id)
+    qp &= (db.TblPhotos.deleted != True)
     old_photos = db(qp).select(db.TblPhotos.id)
     old_photos = [p.id for p in old_photos]
     photo_ids = vars.photo_ids
@@ -838,7 +839,8 @@ def assign_photos(story_list):
         elif story.used_for == STORY4VIDEO:
             video_story_list[story.story_id] = story
     photo_story_ids = photo_story_list.keys()
-    lst = db(db.TblPhotos.story_id.belongs(photo_story_ids)).select(db.TblPhotos.story_id, db.TblPhotos.photo_path, db.TblPhotos.id)
+    q = db.TblPhotos.story_id.belongs(photo_story_ids) & (db.TblPhotos.deleted != True)
+    lst = db(q).select(db.TblPhotos.story_id, db.TblPhotos.photo_path, db.TblPhotos.id)
     for photo in lst:
         photo_src = photos_folder('squares') + photo.photo_path
         photo_story_list[photo.story_id].photo_src = photo_src
@@ -875,7 +877,7 @@ def save_story_data(story_info, user_id):
     else:
         result = sm.add_story(story_info)
     if story_info.used_for == STORY4PHOTO:
-        photo_rec = db(db.TblPhotos.story_id == story_info.story_id).select().first();
+        photo_rec = db((db.TblPhotos.story_id == story_info.story_id) & (db.TblPhotos.deleted != True)).select().first();
         photo_rec.update_record(Name=story_info.name)
     ws_messaging.send_message(key='STORY_WAS_SAVED', group='ALL', story_data=result)
     return result

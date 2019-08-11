@@ -341,7 +341,7 @@ def crop_square(img_src, width, height, side_size):
 
 def rotate_photo(photo_id):
     db = inject('db')
-    photo_rec = db(db.TblPhotos.id == photo_id).select().first()
+    photo_rec = db((db.TblPhotos.id == photo_id) & (db.TblPhotos.deleted != True)).select().first()
     lst = ['orig', 'squares']
     if photo_rec.oversize:
         lst += ['oversize']
@@ -439,7 +439,7 @@ def save_profile_photo(face):
 
 def get_photo_rec(photo_id):
     db = inject('db')
-    rec = db(db.TblPhotos.id == photo_id).select().first()
+    rec = db((db.TblPhotos.id == photo_id) & (db.TblPhotos.deleted != True)).select().first()
     return rec
 
 def create_zip_file(zip_name, file_list):
@@ -472,7 +472,8 @@ def member_display_name(rec=None, member_id=None, full=True):
 def get_photo_pairs(photo_list):
     db = inject('db')
     q = (db.TblPhotoPairs.front_id.belongs(photo_list) & \
-        (db.TblPhotos.id == db.TblPhotoPairs.back_id))
+        (db.TblPhotos.id == db.TblPhotoPairs.back_id) & \
+        (db.TblPhotos.deleted != True))
     lst = db(q).select(db.TblPhotoPairs.front_id, db.TblPhotoPairs.back_id,
                        db.TblPhotos.photo_path, db.TblPhotos.width, db.TblPhotos.height)
     result = dict()
@@ -516,7 +517,7 @@ def find_similar_photos(photo_list=None, time_budget=60):
     if photo_list == None:
         q = (db.TblPhotos.deleted != True) & (db.TblPhotos.dup_checked==None) & (db.TblPhotos.photo_missing==False)
     elif photo_list:
-        q = db.TblPhotos.id.belongs(photo_list)
+        q = db.TblPhotos.id.belongs(photo_list) & (db.TblPhotos.deleted != True)
     else:
         return ([], set([]))
     cnt = 0
@@ -544,7 +545,7 @@ def find_similar_photos(photo_list=None, time_budget=60):
             dist = lst[1][0]
             lst = [itm for itm in lst if itm[0] <= dist]
             dhash_values = ['{:032x}'.format(itm[1]) for itm in lst]
-            duplicate_photo_ids = db(db.TblPhotos.dhash.belongs(dhash_values)).select(db.TblPhotos.id, orderby=db.TblPhotos.id)
+            duplicate_photo_ids = db((db.TblPhotos.dhash.belongs(dhash_values)) & (db.TblPhotos.deleted != True)).select(db.TblPhotos.id, orderby=db.TblPhotos.id)
             duplicate_photo_ids = [p.id for p in duplicate_photo_ids]
             if duplicate_photo_ids[0] in dic:
                 continue #this group already visited
@@ -558,7 +559,7 @@ def find_similar_photos(photo_list=None, time_budget=60):
     all_dup_ids = []
     for dup_ids in dup_list:
         all_dup_ids += dup_ids
-    result = db(db.TblPhotos.id.belongs(all_dup_ids)).select()
+    result = db((db.TblPhotos.id.belongs(all_dup_ids)) & (db.TblPhotos.deleted != True)).select()
     for photo_rec in result:
         photo_rec.dup_group = dic[photo_rec.id]
     result = sorted(result, cmp=lambda prec1, prec2: +1 if prec1.dup_group > prec2.dup_group else -1 if prec1.dup_group < prec2.dup_group else +1 if prec1.id < prec2.id else -1)

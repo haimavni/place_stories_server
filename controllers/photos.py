@@ -23,9 +23,9 @@ def upload_photo(vars):
 def get_photo_detail(vars):
     photo_id = int(vars.photo_id)
     if vars.what == 'story': #This photo is identified by the associated story
-        rec = db(db.TblPhotos.story_id == photo_id).select().first()
+        rec = db((db.TblPhotos.story_id == photo_id) & (db.TblPhotos.deleted != True)).select().first()
     else:
-        rec = db(db.TblPhotos.id == photo_id).select().first()
+        rec = db((db.TblPhotos.id == photo_id) & (db.TblPhotos.deleted != True)).select().first()
     sm = stories_manager.Stories()
     if not rec:
         return dict(photo_name='???')
@@ -49,7 +49,7 @@ def get_photo_detail(vars):
 def update_photo_caption(vars):
     photo_id = int(vars.photo_id)
     caption = vars.caption
-    photo_rec = db(db.TblPhotos.id==photo_id).select().first()
+    photo_rec = db((db.TblPhotos.id==photo_id) & (db.TblPhotos.deleted != True)).select().first()
     photo_rec.update(Name=caption)
     sm = stories_manager.Stories()
     sm.update_story_name(photo_rec.story_id, caption)
@@ -61,7 +61,7 @@ def update_photo_date(vars):
     photo_dates_info = dict(
         photo_date = (vars.photo_date_str, int(vars.photo_date_datespan))
     )
-    rec = db(db.TblPhotos.id==int(vars.photo_id)).select().first()
+    rec = db((db.TblPhotos.id==int(vars.photo_id)) & (db.TblPhotos.deleted != True)).select().first()
     update_record_dates(rec, photo_dates_info)
     #todo: save in db
     return dict()
@@ -95,7 +95,7 @@ def save_photo_info(vars):
     '''
     pinf = vars.photo_info
     unit, date = parse_date(pinf.photo_date_str)
-    photo_rec = db(db.TblPhotos.id == vars.photo_id).select().first()
+    photo_rec = db((db.TblPhotos.id == vars.photo_id) & (db.TblPhotos.deleted != True)).select().first()
     if pinf.name != photo_rec.Name:
         smgr = stories_manager.Stories(vars.user_id)
         smgr.update_story_name(photo_rec.story_id, pinf.name)
@@ -819,7 +819,7 @@ def make_videos_query(vars):
     return q
 
 def pair_photos(front_id, back_id):
-    rec = db(db.TblPhotoPairs.front_id == front_id).select().first()
+    rec = db((db.TblPhotoPairs.front_id == front_id) & (db.TblPhotos.deleted != True)).select().first()
     if rec:
         db(db.TblPhotos.id == rec.back_id).is_back_side = False
         db(db.TblPhotoPairs.id == rec.id).delete()
@@ -829,7 +829,7 @@ def pair_photos(front_id, back_id):
 
 def flip_photo_pair(front_id, back_id):
     #raise Exception("flip photo pair not ready")
-    rec = db(db.TblPhotoPairs.front_id == front_id).select().first()
+    rec = db((db.TblPhotoPairs.front_id == front_id) & (db.TblPhotos.deleted != True)).select().first()
     if not rec: #already flipped
         return
     i = rec.id
