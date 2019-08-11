@@ -10,6 +10,7 @@ from collect_emails import collect_mail
 from injections import inject
 from words import update_word_index_all
 from docs_support import calc_doc_stories
+import os
 
 def test_scheduler(msg):
     comment("test task {}", msg)
@@ -191,11 +192,13 @@ permanent_tasks = dict(
     ##scan_all_unscanned_photos=schedule_scan_all_unscanned_photos
     #look for emailed photos and other mail
     #note that the key must also be function_name set by the keyed item
-    collect_mail=schedule_collect_mail,
     watch_dog=schedule_watchdog,
     update_word_index_all=schedule_update_word_index_all,
     calc_doc_stories=schedule_calc_doc_stories
 )
+maildir = '/home/{}_mailbox/Maildir'.format(request.application)
+if os.path.isdir(maildir):
+    permanent_tasks['collect_mail'] = schedule_collect_mail
 
 scheduler = MyScheduler(db, __tasks)
 
