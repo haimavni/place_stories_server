@@ -20,6 +20,13 @@ VIS_HIGH = 3            #
 
 T.force('he')
 
+db.define_table('TblChatGroup',
+                Field('name', type='string'),
+                Field('key', type='string'),
+                Field('moderator_id', type=db.auth_user),
+                Field('public', type='boolean', default=True)
+)
+
 db.define_table('TblStories',
                 Field('name', type='string'),
                 Field('topic', type='string'),
@@ -41,7 +48,8 @@ db.define_table('TblStories',
                 Field('deleted', type='boolean', default=False),
                 Field('touch_time', type='date', default=NO_DATE), #used to promote stories
                 Field('last_version', type='integer'),
-                Field('approved_version', type='integer')
+                Field('approved_version', type='integer'),
+                Field('chatroom_id', type=db.TblChatGroup)
 )                
 
 db.define_table('TblStoryVersions',
@@ -255,13 +263,6 @@ db.define_table('TblObjects',
 db.define_table('TblPhotographers',
                 Field('name', type='string'),
                 Field('kind', type='string') #P=photograps, V=video, PV=both
-)
-
-db.define_table('TblChatGroup',
-                Field('name', type='string'),
-                Field('key', type='string'),
-                Field('moderator_id', type=db.auth_user),
-                Field('public', type='boolean', default=True)
 )
 
 db.define_table('TblChats',

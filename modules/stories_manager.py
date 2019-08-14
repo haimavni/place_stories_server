@@ -44,6 +44,7 @@ class Stories:
                 if rec1:
                     rec = rec1
                 # else we have to read in the original language
+        chatroom_id = rec.chatroom_id
         rec = Storage(rec)
         story = rec.story
         q = (db.TblStoryVersions.story_id==story_id)
@@ -89,7 +90,8 @@ class Stories:
             language=rec.language,
             story_curr_version=to_story_version,
             story_versions=story_versions,
-            display_version=display_version
+            display_version=display_version,
+            chatroom_id=rec.chatroom_id
         )
         return story_info
     

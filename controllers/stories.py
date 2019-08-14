@@ -125,6 +125,11 @@ def add_face(vars):
     db.TblMemberPhotos.insert(**data)
     return dict()
 
+@serve_json
+def save_chatroom_id(vars):
+    db(db.TblStories.id==vars.story_id).update(chatroom_id=int(vars.chatroom_id))
+    return dict()
+
 #------------------------Support functions------------------------------
 
 def get_story_names():
