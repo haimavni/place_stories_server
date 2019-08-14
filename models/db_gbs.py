@@ -257,6 +257,20 @@ db.define_table('TblPhotographers',
                 Field('kind', type='string') #P=photograps, V=video, PV=both
 )
 
+db.define_table('TblChatGroup',
+                Field('name', type='string'),
+                Field('key', type='string'),
+                Field('moderator_id', type=db.auth_user),
+                Field('public', type='boolean', default=True)
+)
+
+db.define_table('TblChats',
+                Field('chat_group', type=db.TblChatGroup),
+                Field('author', type=db.auth_user),
+                Field('timestamp', type='datetime'),
+                Field('message', type='text')
+)
+
 db.define_table('TblPhotos',
                 Field('ArchiveNum', type='string'),
                 Field('Description', type='text'),
@@ -296,6 +310,7 @@ db.define_table('TblPhotos',
                 Field('crc', type='integer'),
                 Field('dhash', type='string'),
                 Field('dup_checked', type='boolean'),  #to be used only once, to detect all old dups. 
+                Field('chatroom_id', type=db.TblChatGroup),
                 Field('usage', type='integer', default=0) #1=has identified members 2=has assigned tags 3=both, #todo need to populate, then use
                 #to select only relevant photos for opening slide show
 )
@@ -387,19 +402,6 @@ db.define_table('TblTerms',
                 Field('Status_id', type='integer'),
                 Field('TermTranslation', type='string'),
                 Field('deleted', type='boolean', default=False)
-)
-
-db.define_table('TblChatGroup',
-                Field('name', type='string'),
-                Field('moderator_id', type=db.auth_user),
-                Field('public', type='boolean', default=True)
-)
-
-db.define_table('TblChats',
-                Field('chat_group', type=db.TblChatGroup),
-                Field('author', type=db.auth_user),
-                Field('timestamp', type='datetime'),
-                Field('message', type='text')
 )
 
 db.define_table('TblPageHits',

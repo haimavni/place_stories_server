@@ -44,7 +44,8 @@ def get_photo_detail(vars):
                 photo_date_str = all_dates.photo_date.date,
                 photo_date_datespan = all_dates.photo_date.span,
                 photographer_name=photographer_name,
-                photo_id=rec.id)
+                photo_id=rec.id,
+                chatroom_id=rec.chatroom_id)
 
 @serve_json
 def update_photo_caption(vars):
@@ -626,6 +627,11 @@ def replace_duplicate_photos(vars):
         photo_patches.append(patch)
     delete_photos(vars.photos_to_keep) #the image data was copied to the old photo which has more extra info
     return dict(photo_patches=photo_patches)
+
+@serve_json
+def save_chatroom_id(vars):
+    db(db.TblPhotos.id==vars.photo_id).update(chatroom_id=int(vars.chatroom_id))
+    return dict()
 
 ####---------------support functions--------------------------------------
 
