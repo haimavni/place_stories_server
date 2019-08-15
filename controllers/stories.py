@@ -6,7 +6,7 @@ from http_utils import json_to_storage
 import datetime
 import os
 from dal_utils import insert_or_update
-from photos_support import photos_folder
+from photos_support import photos_folder, timestamped_photo_path
 
 def index():
     response.view = 'stories/main.html'
@@ -83,7 +83,7 @@ def save_story(vars):
 @serve_json
 def get_photo_info(vars):
     rec = get_photo_rec(vars.photo_id)
-    rec.photo_url = photos_folder() + rec.photo_path
+    rec.photo_url = photos_folder() + timestamped_photo_path(rec)
     sm = stories_manager.Stories()
     story_info = sm.get_story(rec.story_id)
     rec.name = rec.Name or story_info.name

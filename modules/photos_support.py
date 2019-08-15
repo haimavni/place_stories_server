@@ -16,6 +16,7 @@ from folders import *
 from members_support import member_display_name, older_display_name, get_member_rec
 import zipfile
 from pybktree import BKTree, hamming_distance
+import time
 
 MAX_WIDTH = 1200
 MAX_HEIGHT = 800
@@ -284,11 +285,11 @@ def get_slides_from_photo_list(q):
             side='front',
             front=dict(
                 photo_id=rec.id,
-                src=folder + rec.photo_path,
+                src=folder + timestamped_photo_path(rec),
                 width=rec.width,
                 height=rec.height,
             ),
-            src=folder + rec.photo_path,
+            src=folder + timestamped_photo_path(rec),
             width=rec.width,
             height=rec.height,
             title=rec.Description or rec.Name)
@@ -565,3 +566,11 @@ def find_similar_photos(photo_list=None, time_budget=60):
     result = sorted(result, cmp=lambda prec1, prec2: +1 if prec1.dup_group > prec2.dup_group else -1 if prec1.dup_group < prec2.dup_group else +1 if prec1.id < prec2.id else -1)
     
     return (result, candidates)
+
+def timestamped_photo_path(photo_rec):
+    result = photo_rec.photo_path
+    if photo_rec.last_mod_time:
+        utime = time.mktime(photo_rec.last_mod_time.timetuple())
+        result += '?' + str(utime)
+    return result
+

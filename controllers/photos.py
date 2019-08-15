@@ -1,12 +1,12 @@
 from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, \
-     save_uploaded_photo, rotate_photo, save_member_face, create_zip_file, get_photo_pairs, find_similar_photos,crop_a_photo
+     save_uploaded_photo, rotate_photo, save_member_face, create_zip_file, get_photo_pairs, find_similar_photos, \
+     timestamped_photo_path, crop_a_photo
 import ws_messaging
 import stories_manager
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
 from members_support import *
 import random
 import datetime
-import time
 import os
 from gluon.storage import Storage
 from gluon.utils import web2py_uuid
@@ -877,13 +877,6 @@ def process_photo_list(lst, photo_pairs=dict()):
             dic.flipped = False
             dic.flipable = 'flipable'
         result.append(dic)
-    return result
-
-def timestamped_photo_path(photo_rec):
-    result = photo_rec.photo_path
-    if photo_rec.last_mod_time:
-        utime = time.mktime(photo_rec.last_mod_time.timetuple())
-        result += '?' + str(utime)
     return result
 
 def delete_photos(photo_list):
