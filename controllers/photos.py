@@ -178,14 +178,21 @@ def get_photo_list(vars):
         lst = get_photo_list_with_topics(vars)
     else:
         q = make_photos_query(vars)
-        n = db(q).count()
-        if n > MAX_PHOTOS_COUNT:
-            frac = max(MAX_PHOTOS_COUNT * 100 / n, 1)
-            sample = random.sample(range(1, 101), frac)
-            ##q &= (db.TblPhotos.random_photo_key <= frac)
-            q &= (db.TblPhotos.random_photo_key.belongs(sample)) #we don't want to bore our uses \
-                                                                    #so there are several collections
-        lst = db(q).select() ###, db.TblPhotographers.id) ##, db.TblPhotographers.id)
+        if vars.selected_order_option == 'upload-time-order':    #so there are several collections
+            n = 200
+            MAX_PHOTOS_COUNT = n
+            last_photo_time = vars.last_photo_time or datetime.datetime.now()
+            q &= (db.TblPhotos.upload_date < last_photo_time)
+            lst = db(q).select(orderby=~db.TblPhotos.upload_date, limitby=(0, n))
+        else:
+            n = db(q).count()
+            if n > MAX_PHOTOS_COUNT:
+                frac = max(MAX_PHOTOS_COUNT * 100 / n, 1)
+                sample = random.sample(range(1, 101), frac)
+                ##q &= (db.TblPhotos.random_photo_key <= frac)
+                q &= (db.TblPhotos.random_photo_key.belongs(sample)) #we don't want to bore our uses 
+            lst = db(q).select() ###, db.TblPhotographers.id) ##, db.TblPhotographers.id)
+            last_photo_time = None
         if lst and 'TblMemberPhotos' in lst[0]:
             lst = [rec.TblPhotos for rec in lst]
     if len(lst) > MAX_PHOTOS_COUNT:
@@ -205,7 +212,8 @@ def get_photo_list(vars):
     photo_ids = [rec.id for rec in lst]
     photo_pairs = get_photo_pairs(photo_ids)
     result = process_photo_list(lst, photo_pairs)
-    return dict(photo_list=result)
+    last_photo_time = lst[-1].upload_date if lst else None
+    return dict(photo_list=result, last_photo_time=last_photo_time)
 
 @serve_json
 def get_theme_data(vars):
