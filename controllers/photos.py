@@ -178,11 +178,12 @@ def get_photo_list(vars):
         lst = get_photo_list_with_topics(vars)
     else:
         q = make_photos_query(vars)
-        if vars.selected_order_option == 'upload-time-order':    #so there are several collections
+        if vars.selected_order_option == 'upload-time-order': 
             n = 200
             MAX_PHOTOS_COUNT = n
-            last_photo_time = vars.last_photo_time or datetime.datetime.now()
-            q &= (db.TblPhotos.upload_date < last_photo_time)
+            last_photo_time = vars.last_photo_time
+            if last_photo_time: 
+                q &= (db.TblPhotos.upload_date < last_photo_time)
             lst = db(q).select(orderby=~db.TblPhotos.id, limitby=(0, n))
         else:
             n = db(q).count()
@@ -212,7 +213,10 @@ def get_photo_list(vars):
     photo_ids = [rec.id for rec in lst]
     photo_pairs = get_photo_pairs(photo_ids)
     result = process_photo_list(lst, photo_pairs)
-    last_photo_time = lst[-1].upload_date if lst else None
+    if vars.selected_order_option == 'upload-time-order' and lst:
+        last_photo_time = lst[-1].upload_date
+    else:
+        last_photo_time = None
     return dict(photo_list=result, last_photo_time=last_photo_time)
 
 @serve_json
