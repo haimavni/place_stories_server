@@ -183,7 +183,7 @@ def get_photo_list(vars):
             MAX_PHOTOS_COUNT = n
             last_photo_time = vars.last_photo_time or datetime.datetime.now()
             q &= (db.TblPhotos.upload_date < last_photo_time)
-            lst = db(q).select(orderby=~db.TblPhotos.upload_date, limitby=(0, n))
+            lst = db(q).select(orderby=~db.TblPhotos.id, limitby=(0, n))
         else:
             n = db(q).count()
             if n > MAX_PHOTOS_COUNT:
