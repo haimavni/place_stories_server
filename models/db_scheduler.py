@@ -204,7 +204,7 @@ scheduler = MyScheduler(db, __tasks)
 def verify_tasks_started():
     if db(db.auth_user).count() < 2:
         return
-    lock_file_name = '{p}[{a}.{t}'.format(p=log_path(), a=request.application, t='tasks.lock')
+    lock_file_name = '{p}tasks[{a}].lock'.format(p=log_path(), a=request.application)
     if db(db.scheduler_task).isempty() and os.path.isfile(lock_file_name):
         os.remove(lock_file_name)
     if os.path.isfile(lock_file_name):
