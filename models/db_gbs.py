@@ -24,6 +24,7 @@ db.define_table('TblChatGroup',
                 Field('name', type='string'),
                 Field('key', type='string'),
                 Field('moderator_id', type=db.auth_user),
+                Field('story_id', type='integer'), 
                 Field('public', type='boolean', default=True)
 )
 
@@ -49,7 +50,8 @@ db.define_table('TblStories',
                 Field('touch_time', type='date', default=NO_DATE), #used to promote stories
                 Field('last_version', type='integer'),
                 Field('approved_version', type='integer'),
-                Field('chatroom_id', type=db.TblChatGroup)
+                Field('chatroom_id', type=db.TblChatGroup),
+                Field('last_chat_time', type='datetime', default=NO_DATE)
 )                
 
 db.define_table('TblStoryVersions',
@@ -311,7 +313,6 @@ db.define_table('TblPhotos',
                 Field('crc', type='integer'),
                 Field('dhash', type='string'),
                 Field('dup_checked', type='boolean'),  #to be used only once, to detect all old dups. 
-                Field('chatroom_id', type=db.TblChatGroup),
                 Field('usage', type='integer', default=0) #1=has identified members 2=has assigned tags 3=both, #todo need to populate, then use
                 #to select only relevant photos for opening slide show
 )

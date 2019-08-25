@@ -770,13 +770,20 @@ def get_checked_stories(params):
 
 def _get_story_list(params, exact, checked):
     ###story_topics = get_story_topics()
-    if not query_has_data(params):
+    order_option = params.order_option.value if params.order_option else 'normal'
+    if order_option == 'by-chats':
+        q = (db.TblStories.deleted != True) & (db.TblStories.chatroom_id != None)
+        lst1 = db(q).select(orderby=~db.TblStories.last_chat_time)
+    elif not query_has_data(params):
         n = db(db.TblStories).count()
         rng = range(1, n+1)
         sample_size = n if n < 100 else 100
         ids = random.sample(rng, sample_size)
         q = (db.TblStories.id.belongs(ids)) & (db.TblStories.deleted != True) & (db.TblStories.used_for.belongs(STORY4USER))
+        ###if params.order_option == 'normal':
         lst1 = db(q).select()
+        ###elif params.order_option == 'from-old-to-new':
+            ###lst1 = db(q).select(orderby=db.TblStories.)
         checked = False
     elif checked:
         lst1 = get_checked_stories(params)

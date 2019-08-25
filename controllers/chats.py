@@ -24,15 +24,25 @@ def read_chatrooms(vars):
 
 @serve_json
 def add_chatroom(vars):
-    chatroom_id = db.TblChatGroup.insert(name=vars.new_chatroom_name,
-                                         moderator_id=auth.current_user())
+    story_id = int(vars.story_id) if vars.story_id else None
+    chatroom_id = None
+    if story_id:
+        chatroom = db(db.TblChatGroup.story_id==story_id).select().first()
+        chatroom_id = chatroom.id if chatroom else None
+    if not chatroom_id:
+        chatroom_id = db.TblChatGroup.insert(name=vars.new_chatroom_name,
+                                            moderator_id=auth.current_user(),
+                                            story_id=story_id)
+    if story_id:
+        db(db.TblStories.id==story_id).update(chatroom_id=chatroom_id)
     return dict(chatroom_id=chatroom_id)
 
 @serve_json
 def send_message(vars):
+    chatroom_id = int(vars.room_number)
     now = datetime.datetime.now()
-    user_id = auth.current_user() or vars.user_id or 2
-    db.TblChats.insert(chat_group=int(vars.room_number),
+    user_id = auth.current_user() or int(vars.user_id) if vars.user_id else 2
+    db.TblChats.insert(chat_group=chatroom_id,
                        author=user_id,
                        timestamp=now,
                        message=vars.user_message)
@@ -42,6 +52,7 @@ def send_message(vars):
                               timestamp=str(now)[:19],
                               sender_name=auth.user_name(user_id),
                               message=vars.user_message.replace('\n', '<br/>'))
+    notify_chatters(user_id, chatroom_id)
     return dict(good=True)
 
 @serve_json
@@ -61,3 +72,24 @@ def update_message(vars):
     )
     return dict()
 
+def notify_chatters(user_id, chatroom_id):
+    messages = db(db.TblChats.id==chatroom_id).select() #todo: also ignore very recent ones?
+    chatroom = db(db.TblChatGroup.id==chatroom_id).select().first()
+    now = datetime.datetime.now()
+    if chatroom.story_id:
+        story = db(db.TblStories.id==chatroom.story_id)
+        story.update_record(last_chat_time=now)
+        #url by story usage
+    hour_ago = now - datetime.timedelta(hours=1)
+    msgs = [msg for msg in messages if (msg.timestamp < hour_ago) and (msg.author != user_id)]
+    users = [msg.author for msg in msgs]
+    if not users:
+        return
+    users = set(users)
+    receivers = db(db.auth_user.id.belongs(users)).select(db.auth_user.email)
+    receivers = [r.email for r in receivers]
+    message = ('', '''
+    New activity in a discussion group
+    ''')
+    mail.send(to=receivers, subject='New activity in chatroom', app=request.application, message=message)
+    #todo: collect relevant chatters. email them that a message was added. include link to the relevant page.
