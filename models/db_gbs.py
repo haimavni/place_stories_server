@@ -36,6 +36,10 @@ db.define_table('TblStories',
                 Field('auto_preview', type='boolean', default=True),
                 Field('creation_date', type='datetime'),
                 Field('historic_date', type='string'), #for old stories
+                Field('story_date', type='date', default=NO_DATE),
+                Field('story_date_dateunit', type='string', default='Y'), # D, M or Y for day, month, year
+                Field('story_date_datespan', type='integer', default=1), # how many months or years in the range
+                Field('story_date_dateend', type='date', default=NO_DATE),
                 Field('last_update_date', type='datetime'),
                 Field('source', type='string'),
                 Field('author_id', type=db.auth_user),

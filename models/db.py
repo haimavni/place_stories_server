@@ -122,7 +122,8 @@ def __calc_membership_consts():
             calc_membership_const(name)
         db.commit()
     finally:  
-        os.remove(lock_file_name)
+        if os.path.isfile(lock_file_name):
+            os.remove(lock_file_name)
 
 __calc_membership_consts() 
 
