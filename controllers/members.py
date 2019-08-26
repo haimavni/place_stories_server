@@ -772,8 +772,12 @@ def _get_story_list(params, exact, checked):
     ###story_topics = get_story_topics()
     order_option = params.order_option.value if params.order_option else 'normal'
     if order_option == 'by-chats':
+        checked = False
         q = (db.TblStories.deleted != True) & (db.TblStories.chatroom_id != None)
         lst1 = db(q).select(orderby=~db.TblStories.last_chat_time)
+        lst1 = [r for r in lst1 if r.last_chat_time]
+        ###lst1 = sorted(lst1, key=lambda item: item.last_chat_time)
+        
     elif not query_has_data(params):
         n = db(db.TblStories).count()
         rng = range(1, n+1)

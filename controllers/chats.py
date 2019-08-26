@@ -77,7 +77,7 @@ def notify_chatters(user_id, chatroom_id):
     chatroom = db(db.TblChatGroup.id==chatroom_id).select().first()
     now = datetime.datetime.now()
     if chatroom.story_id:
-        story = db(db.TblStories.id==chatroom.story_id)
+        story = db(db.TblStories.id==chatroom.story_id).select().first()
         story.update_record(last_chat_time=now)
         #url by story usage
     hour_ago = now - datetime.timedelta(hours=1)
