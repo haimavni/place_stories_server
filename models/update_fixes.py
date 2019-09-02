@@ -1,6 +1,6 @@
 import random
 import time
-from date_utils import fix_all_date_ends
+from date_utils import fix_all_date_ends, init_story_dates
 
 def _delay():
     n = random.randint(0, 1000000)
@@ -14,7 +14,7 @@ def _init_configuration_table():
             db.TblConfiguration.insert()
             db.commit()
 
-def _apply_fixes():
+def __apply_fixes():
     if db(db.TblConfiguration).isempty():
         return
     last_fix = sorted(_fixes)[-1]
@@ -28,15 +28,35 @@ def _apply_fixes():
     db(db.TblConfiguration.id==1).update(fix_level=last_fix + 1000)        
     for f in sorted(_fixes):
         if f > last_applied_fix:
-            _fixes[f]()
-    db(db.TblConfiguration.id==1).update(fix_level=last_fix)
+            try:
+                _fixes[f]()
+            except Exception, e:
+                log_exception('Error applying fixes')
+                break
+            else:
+                db(db.TblConfiguration.id==1).update(fix_level=f)
+                db.commit()
+                
+    
+def _apply_fixes():    
+    lock_file_name = '{p}apply-fixes[{a}].lock'.format(p=log_path(), a=request.application)
+    if os.path.isfile(lock_file_name):
+        return
+    with open(lock_file_name, 'w') as f:
+        f.write('locked')
+    try:
+        __apply_fixes()
+    finally:  
+        if os.path.isfile(lock_file_name):
+            os.remove(lock_file_name)
 
 def init_photo_back_sides():
     db(db.TblPhotos.is_back_side==None).update(is_back_side=False)
 
 _fixes = {
     1: init_photo_back_sides,
-    2: fix_all_date_ends
+    2: fix_all_date_ends,
+    3: init_story_dates
 }
 
 _init_configuration_table()
