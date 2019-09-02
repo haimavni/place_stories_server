@@ -25,7 +25,6 @@ def __apply_fixes():
     last_applied_fix = db(db.TblConfiguration.id==1).select().first().fix_level or 0
     if last_applied_fix >= last_fix:
         return
-    db(db.TblConfiguration.id==1).update(fix_level=last_fix + 1000)        
     for f in sorted(_fixes):
         if f > last_applied_fix:
             try:

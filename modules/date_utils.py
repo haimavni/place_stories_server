@@ -225,33 +225,25 @@ def init_story_dates():
     for story_rec in db((db.TblStories.deleted != True) & (db.TblStories.story_date == None)).select(db.TblStories.id, db.TblStories.story_date):
         story_rec.update_record(story_date=NO_DATE)
     for photo_rec in db(db.TblPhotos.deleted != True).select():
-        story_rec = db(db.TblStories.id==photo_rec.story_id).select().first()
-        if story_rec:
-            data = dict()
-            for date_suffix in ('', DATE_UNIT_SUFFIX, DATE_SPAN_SUFFIX, DATE_END_SUFFIX):
-                data['story_date' + date_suffix] = photo_rec['photo_date' + date_suffix]
-            story_rec.update_reord(**data)
+        data = dict()
+        for date_suffix in ('', DATE_UNIT_SUFFIX, DATE_SPAN_SUFFIX, DATE_END_SUFFIX):
+            data['story_date' + date_suffix] = photo_rec['photo_date' + date_suffix]
+        db(db.TblStories.id==photo_rec.story_id).update(**data)
     for event_rec in db(db.TblEvents.deleted != True).select():
-        story_rec = db(db.TblStories.id==event_rec.story_id).select().first()
-        if story_rec:
-            data = dict()
-            for date_suffix in ('', DATE_UNIT_SUFFIX, DATE_SPAN_SUFFIX, DATE_END_SUFFIX):
-                data['story_date' + date_suffix] = event_rec['event_date' + date_suffix]
-            story_rec.update_reord(**data)
+        data = dict()
+        for date_suffix in ('', DATE_UNIT_SUFFIX, DATE_SPAN_SUFFIX, DATE_END_SUFFIX):
+            data['story_date' + date_suffix] = event_rec['event_date' + date_suffix]
+        db(db.TblStories.id==event_rec.story_id).update(**data)
     for doc_rec in db(db.TblDocs.deleted != True).select():
-        story_rec = db(db.TblStories.id==doc_rec.story_id).select().first()
-        if story_rec:
-            data = dict()
-            for date_suffix in ('', DATE_UNIT_SUFFIX, DATE_SPAN_SUFFIX, DATE_END_SUFFIX):
-                data['story_date' + date_suffix] = doc_rec['doc_date' + date_suffix]
-            story_rec.update_reord(**data)
+        data = dict()
+        for date_suffix in ('', DATE_UNIT_SUFFIX, DATE_SPAN_SUFFIX, DATE_END_SUFFIX):
+            data['story_date' + date_suffix] = doc_rec['doc_date' + date_suffix]
+        db(db.TblStories.id==doc_rec.story_id).update(**data)
     for video_rec in db(db.TblVideos.deleted != True).select():
-        story_rec = db(db.TblStories.id==video_rec.story_id).select().first()
-        if story_rec:
-            data = dict()
-            for date_suffix in ('', DATE_UNIT_SUFFIX, DATE_SPAN_SUFFIX, DATE_END_SUFFIX):
-                data['story_date' + date_suffix] = video_rec['video_date' + date_suffix]
-                story_rec.update_reord(**data)
+        data = dict()
+        for date_suffix in ('', DATE_UNIT_SUFFIX, DATE_SPAN_SUFFIX, DATE_END_SUFFIX):
+            data['story_date' + date_suffix] = video_rec['video_date' + date_suffix]
+        db(db.TblStories.id==video_rec.story_id).update(**data)
     comment('End initializing story dates')
         
 if __name__ == '__main__'    :
