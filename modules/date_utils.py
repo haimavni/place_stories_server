@@ -126,6 +126,7 @@ def calc_date_end(date, unit, span):
         raise Exception('date has no unit')
             
 def update_record_dates(rec, dates_info):
+    db = inject('db')
     data = dict()
     for date_fld in dates_info:
         date_str, date_span = dates_info[date_fld]
@@ -135,6 +136,12 @@ def update_record_dates(rec, dates_info):
         data[date_fld + DATE_UNIT_SUFFIX] = date_unit
         date_end = calc_date_end(date, date_unit, date_span)
         data[date_fld + DATE_END_SUFFIX] = date_end
+        if date_fld in ('photo_date', 'event_date', 'doc_date', 'video_date'):
+            #currently photo_date, doc_date and event_date are duplicated in story_date, so we have to copy the new values:
+            data1 = dict()
+            for sfx in ['', DATE_SPAN_SUFFIX, DATE_UNIT_SUFFIX, DATE_END_SUFFIX]:
+                data1['story_date' + sfx] = data[date_fld + sfx]
+            db(db.TblStories.id==rec.story_id).update(**data1)
     rec.update_record(**data)
 
 def string_date_to_date(s):

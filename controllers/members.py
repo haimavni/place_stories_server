@@ -548,6 +548,14 @@ def apply_topics_to_selected_stories(vars):
         usage_char = 'x'
     all_tags = calc_all_tags()
     params = vars.params
+    stories_date_str = params.stories_date_str
+    if stories_date_str:
+        dates_info = dict(
+            story_date=(stories_date_str, params.stories_date_span_size)
+        )
+    else:
+        dates_info = None
+
     checked_story_list = params.checked_story_list
     selected_topics = params.selected_topics
     new_topic_was_added = False
@@ -579,6 +587,10 @@ def apply_topics_to_selected_stories(vars):
                 ###deleted.append(item)
                 #should remove usage_char from usage if it was the last one...
                 db(q).delete()
+        if dates_info:
+            story_rec = db(db.TblStories.id==eid).select().first()
+            update_record_dates(story_rec, dates_info)
+            copy_story_date_to_object_date(story_rec)
 
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         keywords = "; ".join(curr_tags)
@@ -1128,3 +1140,32 @@ def item_of_story_id(used_for, story_id):
             return rec
     return None
 
+def copy_story_date_to_object_date(story_rec):
+    if story_rec.used_for == STORY4EVENT:
+        event_rec = db(db.TblEvents.story_id==story_rec.id).select().first()
+        event_rec.update_record(event_date=story_rec.story_date, 
+                                event_date_dateunit=story_rec.story_date_dateunit,
+                                event_date_datespan=story_rec.story_date_datespan,
+                                event_date_dateend=story_rec.story_date_dateend,
+                                )
+    elif story_rec.used_for == STORY4PHOTO:
+        photo_rec = db(db.TblPhotos.story_id==story_rec.id).select().first()
+        photo_rec.update_record(photo_date=story_rec.story_date, 
+                                photo_date_dateunit=story_rec.story_date_dateunit,
+                                photo_date_datespan=story_rec.story_date_datespan,
+                                photo_date_dateend=story_rec.story_date_dateend,
+                                )
+    elif story_rec.used_for == STORY4VIDEO:
+        video_rec = db(db.TblVideos.story_id==story_rec.id).select().first()
+        video_rec.update_record(video_date=story_rec.story_date, 
+                                video_date_dateunit=story_rec.story_date_dateunit,
+                                video_date_datespan=story_rec.story_date_datespan,
+                                video_date_dateend=story_rec.story_date_dateend,
+                                )
+    elif story_rec.used_for == STORY4DOC:
+        doc_rec = db(db.TblDocs.story_id==story_rec.id).select().first()
+        doc_rec.update_record(doc_date=story_rec.story_date, 
+                              doc_date_dateunit=story_rec.story_date_dateunit,
+                              doc_date_datespan=story_rec.story_date_datespan,
+                              doc_date_dateend=story_rec.story_date_dateend,
+                              )
