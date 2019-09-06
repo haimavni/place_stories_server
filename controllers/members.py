@@ -1007,13 +1007,6 @@ def make_stories_query(params, exact):
         if params.approval_state.id == 3:
             q &= (db.TblStories.last_version == db.TblStories.approved_version)
     first_year, last_year = calc_years_range(params)
-    #first_year = params.first_year
-    #last_year = params.last_year
-    #if params.base_year: #time range may be defined
-        #if first_year < params.base_year + 4:
-            #first_year = 0
-        #if last_year and last_year > params.base_year + params.num_years - 5:
-            #last_year = 0
     if first_year:
         from_date = datetime.date(year=first_year, month=1, day=1)
         q &= (db.TblStories.story_date_dateend > from_date)
