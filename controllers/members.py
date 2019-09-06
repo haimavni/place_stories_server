@@ -971,7 +971,9 @@ def get_story_topics(refresh=False):
     return c(_get_story_topics, refresh)
 
 def query_has_data(params):
-    return params.keywords_str or params.checked_story_list or params.selected_stories or (params.days_since_update and params.days_since_update.value) or \
+    first_year, last_year = calc_years_range(params)
+    return params.keywords_str or params.checked_story_list or params.selected_stories or \
+           (params.days_since_update and params.days_since_update.value) or first_year or last_year or \
            params.approval_state and params.approval_state.id in [2,3] or params.selected_topics or params.selected_words
 
 def make_stories_query(params, exact):
@@ -1004,7 +1006,31 @@ def make_stories_query(params, exact):
             q &= (db.TblStories.last_version > db.TblStories.approved_version)
         if params.approval_state.id == 3:
             q &= (db.TblStories.last_version == db.TblStories.approved_version)
+    first_year, last_year = calc_years_range(params)
+    #first_year = params.first_year
+    #last_year = params.last_year
+    #if params.base_year: #time range may be defined
+        #if first_year < params.base_year + 4:
+            #first_year = 0
+        #if last_year and last_year > params.base_year + params.num_years - 5:
+            #last_year = 0
+    if first_year:
+        from_date = datetime.date(year=first_year, month=1, day=1)
+        q &= (db.TblStories.story_date_dateend > from_date)
+    if last_year:
+        to_date = datetime.date(year=last_year, month=1, day=1)
+        q &= (db.TblStories.story_date < to_date)
     return q
+
+def calc_years_range(params):
+    first_year = params.first_year
+    last_year = params.last_year
+    if params.base_year: #time range may be defined
+        if first_year < params.base_year + 4:
+            first_year = 0
+        if last_year and last_year > params.base_year + params.num_years - 5:
+            last_year = 0
+    return (first_year, last_year)
 
 def get_story_list_with_topics(params, selected_topics, exact):
     first = True
