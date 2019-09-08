@@ -813,7 +813,11 @@ def _get_story_list(params, exact, checked):
             q = make_stories_query(params, exact)
             if not q:
                 return []
-            lst1 = db(q).select(limitby=(0, 1000), orderby=~db.TblStories.story_len)
+            lst1 = []
+            for used_for in STORY4USER:
+                q1 = q & (db.TblStories.used_for==used_for)
+                lst0 = db(q1).select(limitby=(0, 1000), orderby=~db.TblStories.story_len)
+                lst1 += lst0
     user_list = calc_user_list()
     lst = []
     for rec in lst1:
