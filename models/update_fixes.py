@@ -13,7 +13,7 @@ def _init_configuration_table():
         if db(db.TblConfiguration).isempty():
             db.TblConfiguration.insert()
             db.commit()
-
+            
 def __apply_fixes():
     if db(db.TblConfiguration).isempty():
         return
@@ -52,10 +52,16 @@ def _apply_fixes():
 def init_photo_back_sides():
     db(db.TblPhotos.is_back_side==None).update(is_back_side=False)
 
+def init_sampling():
+    for story_rec in db((db.TblStories.deleted!= True) & (db.TblStories.sampling_id==None)).select():
+        story_rec.update_record(sampling_id=random.randint(1, SAMPLING_SIZE))
+    db.commit()
+
 _fixes = {
     1: init_photo_back_sides,
     2: fix_all_date_ends,
-    3: init_story_dates
+    3: init_story_dates,
+    4: init_sampling
 }
 
 _init_configuration_table()

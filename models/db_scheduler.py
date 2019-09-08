@@ -90,6 +90,11 @@ def watchdog():
         comment('Task {t} failed', t=tsk.function_name)
     db(q).update(status='QUEUED')
     db.commit()
+    
+def randomize_story_sampling():
+    for story_rec in db(db.TblStories.deleted!= True).select():
+        story_rec.update_record(sampling_id=random.randint(1, SAMPLING_SIZE))
+    db.commit()
 
 def dict_to_json_str(dic):
     return response.json(dic)
@@ -151,6 +156,20 @@ def schedule_watchdog():
         timeout=2 * 60 , # will time out if running for 2 minutes
     )
 
+def schedule_randomize_story_sampling():
+    now = datetime.datetime.now()
+    return db.scheduler_task.insert(
+        status='QUEUED',
+        application_name=request.application,
+        task_name = 'tasks randomize story sampling',
+        function_name='randomize_story_sampling',
+        start_time=now,
+        stop_time=now + datetime.timedelta(days=1461),
+        repeats=0,
+        period=3600,   # every hour
+        timeout=5 * 60 , # will time out if running for 5 minutes
+    )
+
 def schedule_update_word_index_all():
     now = datetime.datetime.now()
     return db.scheduler_task.insert(
@@ -184,6 +203,7 @@ permanent_tasks = dict(
     #look for emailed photos and other mail
     #note that the key must also be function_name set by the keyed item
     watch_dog=schedule_watchdog,
+    randomize_story_sampling=schedule_randomize_story_sampling,
     update_word_index_all=schedule_update_word_index_all,
     calc_doc_stories=schedule_calc_doc_stories
 )
@@ -195,6 +215,7 @@ __tasks = dict(
     ###scan_all_unscanned_photos=scan_all_unscanned_photos,
     collect_mail=collect_mail,
     watchdog=watchdog,
+    randomize_story_sampling=randomize_story_sampling,
     update_word_index_all=update_word_index_all,
     calc_doc_stories=calc_doc_stories
 )

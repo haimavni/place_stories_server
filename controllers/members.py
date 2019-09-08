@@ -791,15 +791,17 @@ def _get_story_list(params, exact, checked):
         ###lst1 = sorted(lst1, key=lambda item: item.last_chat_time)
         
     elif not query_has_data(params):
-        n = db(db.TblStories).count()
-        rng = range(1, n+1)
-        sample_size = n if n < 100 else 100
-        ids = random.sample(rng, sample_size)
-        q = (db.TblStories.id.belongs(ids)) & (db.TblStories.deleted != True) & (db.TblStories.used_for.belongs(STORY4USER))
-        ###if params.order_option == 'normal':
-        lst1 = db(q).select()
-        ###elif params.order_option == 'from-old-to-new':
-            ###lst1 = db(q).select(orderby=db.TblStories.)
+        lst1 = []
+        for used_for in STORY4USER:
+            q = (db.TblStories.deleted != True) & (db.TblStories.used_for==used_for)
+            n = db(q).count()
+            if not n:
+                continue
+            sample_size = n if n < 100 else 100
+            threshold = SAMPLING_SIZE * sample_size / n
+            q &= (db.TblStories.sampling_id < threshold)
+            lst0 = db(q).select()
+            lst1 += lst0
         checked = False
     elif checked:
         lst1 = get_checked_stories(params)
@@ -974,7 +976,7 @@ def query_has_data(params):
     first_year, last_year = calc_years_range(params)
     return params.keywords_str or params.checked_story_list or params.selected_stories or \
            (params.days_since_update and params.days_since_update.value) or first_year or last_year or \
-           params.approval_state and params.approval_state.id in [2,3] or params.selected_topics or params.selected_words
+           (params.approval_state and params.approval_state.id in [2,3]) or params.selected_topics or params.selected_words
 
 def make_stories_query(params, exact):
     getting_live_stories = not params.deleted_stories

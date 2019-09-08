@@ -1,6 +1,8 @@
 import datetime
+import random
 NO_DATE = datetime.date(day=1, month=1, year=1)
 FAR_FUTURE = datetime.date(day=1, month=1, year=3000)
+SAMPLING_SIZE = 10000
 
 STORY4MEMBER = 1
 STORY4EVENT = 2
@@ -54,6 +56,7 @@ db.define_table('TblStories',
                 Field('touch_time', type='date', default=NO_DATE), #used to promote stories
                 Field('last_version', type='integer'),
                 Field('approved_version', type='integer'),
+                Field('sampling_id', type='integer', default=random.randint(1, SAMPLING_SIZE)),
                 Field('chatroom_id', type=db.TblChatGroup),
                 Field('last_chat_time', type='datetime', default=NO_DATE)
 )                
