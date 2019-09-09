@@ -102,30 +102,25 @@ auth.settings.reset_password_requires_verification = True
 membership_consts = ['ADMIN', 'DEVELOPER', 'EDITOR', 'COMMENTATOR', 'PHOTO_UPLOADER', 'ACCESS_MANAGER', 'CHATTER', 
                      'CHAT_MODERATOR', 'TEXT_AUDITOR', 'DATA_AUDITOR', 'HELP_AUTHOR', 'ADVANCED', 'MAIL_WATCHER', 'ARCHIVER']
 
-def __calc_membership_consts():
-
-    def calc_membership_const(const_name):
-        display_name = ' '.join([z.capitalize() for z in const_name.split('_')])
-        const_id = auth.id_group(const_name)
-        if not const_id:
+def __calc_membership_const(const_name):
+    display_name = ' '.join([z.capitalize() for z in const_name.split('_')])
+    const_id = auth.id_group(const_name)
+    if not const_id:
+        lock_file_name = '{p}membership[{a}].lock'.format(p=log_path(), a=request.application)
+        if os.path.isfile(lock_file_name):
+            return
+        with open(lock_file_name, 'w') as f:
+            f.write('locked')
+        try:
             const_id = auth.add_group(const_name, display_name)
             db.commit()
-        globals()[const_name] = const_id
-
-    lock_file_name = '{p}membership[{a}].lock'.format(p=log_path(), a=request.application)
-    if os.path.isfile(lock_file_name):
-        return
-    with open(lock_file_name, 'w') as f:
-        f.write('locked')
-    try:
-        for name in membership_consts:
-            calc_membership_const(name)
-        db.commit()
-    finally:  
-        if os.path.isfile(lock_file_name):
-            os.remove(lock_file_name)
-
-__calc_membership_consts() 
+        finally:  
+            if os.path.isfile(lock_file_name):
+                os.remove(lock_file_name)
+    globals()[const_name] = const_id
+    
+for membership_name in membership_consts:
+    __calc_membership_const(membership_name)
 
 def no_admin():
     return db(db.auth_user.email=='admin@gbs.com').isempty()

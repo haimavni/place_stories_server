@@ -22,7 +22,7 @@ def toggle_membership(vars):
     role = eval(role_name)
     active = vars.active != 'true'
     am.modify_membership(vars.id, role, active)
-    ws_messaging.send_message(key='ROLE_CHANGED', user=vars.id, role=role_name, active=active) 
+    ws_messaging.send_message(key='ROLE_CHANGED', group='ALL', user_id=vars.id, role=role_name, active=active) 
     return dict(id=vars.id, 
                 role=vars.role, 
                 active=active)
