@@ -789,7 +789,16 @@ def _get_story_list(params, exact, checked):
         lst1 = db(q).select(orderby=~db.TblStories.last_chat_time)
         lst1 = [r for r in lst1 if r.last_chat_time]
         ###lst1 = sorted(lst1, key=lambda item: item.last_chat_time)
-        
+    elif order_option == 'new-to-old':
+        checked = False
+        q = make_stories_query(params, exact) & (db.TblStories.story_date != NO_DATE)
+        lst1 = db(q).select(orderby=~db.TblStories.story_date)
+        lst1 = [r for r in lst1]
+    elif order_option == 'old-to-new':
+        checked = False
+        q = make_stories_query(params, exact) & (db.TblStories.story_date != NO_DATE)
+        lst1 = db(q).select(orderby=db.TblStories.story_date)
+        lst1 = [r for r in lst1]
     elif not query_has_data(params):
         lst1 = []
         for used_for in STORY4USER:
