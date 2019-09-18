@@ -2,7 +2,7 @@ import os
 
 def create_all_app_indexes():
     os.system('echo create all indexii>../logs/create_indexii.log')
-    path = '../../web2py/applications/'
+    path = '../web2py/applications/'
     apps = os.listdir(path)
     apps = [app for app in apps if os.path.islink(os.path.join(path, app))]
     for app in apps:
