@@ -1,6 +1,7 @@
 from admin_support.access_manager import AccessManager
 from admin_support.task_monitor import TaskMonitor
 import ws_messaging
+import os
 
 #---------------------------------------------------------------------------
 # Access Manager
@@ -100,3 +101,24 @@ def reindex_stories():
     from words import update_word_index_all
     update_word_index_all()
 
+def create_app_index():
+    app = request.application
+    path = 'applications/{app}/static/aurelia/'.format(app=app)
+    src = path + 'index.html'
+    dst = path + 'index-{}.html'.format(request.application)
+    if os.path.isfile(dst):
+        return '{dst} already exists'.format(dst=dst)
+    with open(src, 'r') as f:
+        s = f.read()
+    pat = r'<title>.*?</title>'
+    s1 = re.sub(pat, replace_title, s)
+    with open(dst, 'w') as f:
+        f.write(s1)
+    return '{} was created'.format(dst)
+
+def replace_title(m):
+    rec = db((db.TblLocaleCustomizations.lang=='he') & (db.TblLocaleCustomizations.key=='app-title')).select().first()
+    if rec:
+        return '<title>' + rec.value + '</title>'
+    else:
+        return m.group(0)
