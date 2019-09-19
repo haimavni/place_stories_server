@@ -34,7 +34,7 @@ def index():
     elif domain == 'gbs':
         app += '__www'
     url = URL(a=app, c='default', f='index')
-    redirect("/{app}/static/aurelia/index.html-{app}".format(app=app))
+    redirect("/{app}/static/aurelia/index-{app}.html".format(app=app))
 
 def user():
     """
