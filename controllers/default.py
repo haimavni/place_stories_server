@@ -10,6 +10,7 @@ from admin_support.access_manager import AccessManager
 ## - user is required for authentication and authorization
 ## - download is for downloading files uploaded in the db (does streaming)
 #########################################################################
+import os
 
 def index():
     """
@@ -19,7 +20,12 @@ def index():
     if you need a simple wiki simply replace the two lines below with:
     return auth.wiki()
     """
-    redirect("/{}/static/aurelia/index.html".format(request.application))
+    app = request.application
+    fname = '/{app}/static/aurelia/index.html'.format(app=app)
+    fname1 = '{app}/static/aurelia/index-{app}.html'.format(app=app)
+    if os.path.isfile('./applications/' + fname1):
+        fname = '/' + fname1
+    redirect("{}".format(fname))
 
 
 def user():
