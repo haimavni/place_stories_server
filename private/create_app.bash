@@ -10,9 +10,9 @@ else
     vars="?email=$email&password=$password"
 fi
 echo vars is $vars
-server="tol_server_dev"
+server="tol_server_master"
 #uncomment below when ready
-#server=tol_server_www
+#server="tol_server_www"
 #create database
 sudo -u postgres createdb $app_name
 #create photos and other resources folder
