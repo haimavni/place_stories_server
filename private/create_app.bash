@@ -1,17 +1,18 @@
 #!/bin/bash
 
-app_name = $1
-email = $2
-password = $3
-if [-z $2]
+app_name=$1
+email=$2
+password=$3
+if [ -z "$2" ]
 then
-    vars = ""
+    vars=""
 else
-    vars = "?email=" + $email + "&password=" + $password
+    vars="?email=$email&password=$password"
 fi
-server = "tol_server_dev"
+echo vars is $vars
+server="tol_server_dev"
 #uncomment below when ready
-###server = "tol_server_www"
+#server=tol_server_www
 #create database
 sudo -u postgres createdb $app_name
 #create photos and other resources folder
@@ -21,6 +22,6 @@ chown -R www-data:www-data /gb_photos/$app_name
 ln --symbolic -T /home/www-data/$server /home/www-data/web2py/applications/$app_name
 #add the new app to the scheduler
 #to do
-#init the database. create owner's account with all privileges
-python /www-data/web2py/webwpy.py -S $app_name/init_app/init_database$vars
+#init the database. create owners account with all privileges
+python /www-data/web2py/web2py.py -S $app_name/init_app/init_database$vars
 
