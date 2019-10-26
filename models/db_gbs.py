@@ -53,6 +53,7 @@ db.define_table('TblStories',
                 Field('language', type='string'),
                 Field('translated_from', type='integer'), ##db.TblStories 
                 Field('deleted', type='boolean', default=False),
+                Field('visibility', type='integer'),
                 Field('touch_time', type='date', default=NO_DATE), #used to promote stories
                 Field('last_version', type='integer'),
                 Field('approved_version', type='integer'),
@@ -432,7 +433,10 @@ db.define_table('TblFeedback',
 
 db.define_table('TblConfiguration',
                 Field('languages', type='string', default='he,en'),
-                Field('fix_level', type='integer', default=0)
+                Field('fix_level', type='integer', default=0),
+                Field('enable_auto_registration', type='boolean', default=False),
+                Field('initial_privileges', type='string', default='EDITOR;PHOTO_UPLOADER;CHATTER'),
+                Field('expiration_date', type='date')
                 )
 
 db.define_table('TblLocaleCustomizations',
