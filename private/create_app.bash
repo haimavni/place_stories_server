@@ -23,5 +23,5 @@ ln --symbolic -T /home/www-data/$server /home/www-data/web2py/applications/$app_
 #add the new app to the scheduler
 #to do
 #init the database. create owners account with all privileges
-python /www-data/web2py/web2py.py -S $app_name/init_app/init_database$vars
+python /home/www-data/web2py/web2py.py -S $app_name/init_app/init_database$vars
 
