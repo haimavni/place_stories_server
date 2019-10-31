@@ -26,4 +26,8 @@ ln --symbolic -T ../../$server $app_name
 #init the database. create owners account with all privileges
 cd ..
 python web2py.py -S $app_name/init_app/init_database$vars
+#update scheduler service
+python /home/$server/private add_app_to_scheduler.py
+systemctl start web2py-scheduler.service
+systemctl daemon-reload
 
