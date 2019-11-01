@@ -1,5 +1,6 @@
 import csv, cStringIO
 from folders import local_folder
+import stories_manager
 
 def init_database():
     password = request.vars.password
