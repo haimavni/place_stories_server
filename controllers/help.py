@@ -46,6 +46,7 @@ def save_help_messages_to_csv(vars):
     rows = db(db.TblStories.used_for==STORY4HELP).select(db.TblStories.name, db.TblStories.topic, db.TblStories.story)
     with open(csv_name, 'w') as f:
         rows.export_to_csv_file(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
+    return dict(good=True)
 
 @serve_json
 def load_help_messages_from_csv(vars):
@@ -53,6 +54,8 @@ def load_help_messages_from_csv(vars):
     for rec in get_records(csv_name):
         name, topic, content = rec
         save_help(name, topic, content)
+    db.commit()
+    return dict(good=True)
 
 def get_records(csv_name):
     with open(csv_name, 'rb') as csvfile:
