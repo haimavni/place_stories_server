@@ -10,7 +10,7 @@ else
     vars="?email=$email&password=$password"
 fi
 echo vars is $vars
-server="tol_server_master"
+server="tol_server_test"
 #uncomment below when ready
 #server="tol_server_www"
 #create database

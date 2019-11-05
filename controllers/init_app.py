@@ -1,7 +1,13 @@
+from admin_support.access_manager import register_new_user, AccessManager
+
 def init_database():
-    password = request.vars.password
     email = request.vars.email
-    #these values are passed from the hub application. if they exist, create the owner account with all privileges
+    password = request.vars.password
+    last_name = request.vars.last_name or 'admin'
+    first_name = request.vars.first_name or 'admin'
+    usr_id = register_new_user(email, password, first_name, last_name)
+    am = AccessManager()
+    am.enable_all_roles(usr_id)
     return "database initialized"
 
 
