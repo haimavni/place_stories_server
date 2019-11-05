@@ -4,6 +4,10 @@ app_name=$1
 ver=$2
 email=$3
 password=$4
+if [-z "$ver"]
+then
+    ver="master"
+fi
 if [ -z "$email" ]
 then
     vars=""
@@ -12,10 +16,6 @@ else
     server="tol_server_$ver"
 fi
 echo vars is $vars
-if [-z "$ver"]
-then
-    ver="master"
-fi
 #uncomment below when ready
 #server="tol_server_www"
 #create database
