@@ -1,16 +1,21 @@
 #!/bin/bash
 
 app_name=$1
-email=$2
-password=$3
-if [ -z "$2" ]
+ver=$2
+email=$3
+password=$4
+if [ -z "$email" ]
 then
     vars=""
 else
     vars="?email=$email&password=$password"
+    server="tol_server_$ver"
 fi
 echo vars is $vars
-server="tol_server_test"
+if [-z "$ver"]
+then
+    ver="master"
+fi
 #uncomment below when ready
 #server="tol_server_www"
 #create database
