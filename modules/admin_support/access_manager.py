@@ -83,8 +83,8 @@ class AccessManager:
             
     def enable_all_roles(self, usr_id):
         groups = self.get_groups(False)
-        for grp_id in groups:
-            self.add_membership(grp_id, usr_id)
+        for grp in groups:
+            self.modify_membership(usr_id, grp.id, True)
 
     def add_or_update_user_bare(self, user_data):
         db, auth, User_Error = inject('db', 'auth', 'User_Error')

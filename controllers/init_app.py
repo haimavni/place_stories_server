@@ -1,14 +1,11 @@
 from admin_support.access_manager import register_new_user, AccessManager
 
 def init_database():
-    email = request.vars.email
-    password = request.vars.password
-    last_name = request.vars.last_name or 'admin'
-    first_name = request.vars.first_name or 'admin'
+    if len(request.args) < 4:
+        return "database initialized without admin"
+    email,password,first_name,last_name = request.args
     usr_id = register_new_user(email, password, first_name, last_name)
     am = AccessManager()
     am.enable_all_roles(usr_id)
+    db.commit()
     return "database initialized"
-
-
-
