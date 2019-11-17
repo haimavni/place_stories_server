@@ -445,6 +445,15 @@ db.define_table('TblLocaleCustomizations',
                 Field('value', type='string')
                 )
 
+db.define_table('TblCustomers',
+                Field('first_name', type='string'),
+                Field('last_name', type='string'),
+                Field('email', type='string'),
+                Field('app_name', type='string'),
+                Field('confirmation_key', type='string'),
+                Field('created', type='boolean', default=False)
+                )
+
 def write_indexing_sql_scripts():
     '''Creates a set of indexes if they do not exist.
        In a terminal, su postgres and issue the command
