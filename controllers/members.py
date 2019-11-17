@@ -88,7 +88,7 @@ def get_member_details(vars):
         if rec:
             mem_id = rec.id
         else:
-            raise Exception('No member for this story')
+            raise Exception('No member for this story {mid}', mem_id)
     if vars.shift == 'next':
         mem_id += 1
     elif vars.shift == 'prev':
