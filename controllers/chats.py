@@ -100,9 +100,9 @@ def notify_chatters(user_id, chatroom_id):
     
 def calc_url(story):
     if story.used_for == STORY4EVENT:
-        return '/{app}/static/aurelia/index.html#/story-detail/{sid}/*?search_type=simple&what=story'.format(app=request.application, sid=story.id)
+        return '/{app}/static/aurelia/index-{app}.html#/story-detail/{sid}/*?search_type=simple&what=story'.format(app=request.application, sid=story.id)
     if story.used_for == STORY4TERM:
-        return '/{app}/static/aurelia/index.html#/term-detail/{sid}/*?what=term'.format(app=request.application, sid=story.id)
+        return '/{app}/static/aurelia/index-{app}.html#/term-detail/{sid}/*?what=term'.format(app=request.application, sid=story.id)
     if story.used_for == STORY4PHOTO:
         photo = db(db.TblPhotos.story_id==story.id).select().first()
         pid = photo.id
