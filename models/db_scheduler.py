@@ -5,9 +5,10 @@ import random
 from gluon.storage import Storage
 import re
 import ws_messaging
+from injections import inject
 from photos_support import scan_all_unscanned_photos
 from collect_emails import collect_mail
-from injections import inject
+from create_app import create_pending_apps
 from words import update_word_index_all
 from docs_support import calc_doc_stories
 import os
@@ -198,6 +199,20 @@ def schedule_calc_doc_stories():
         timeout = 500, # will time out if running for 500 seconds
     )
 
+def schedule_create_pending_apps():
+    now = datetime.datetime.now()
+    return db.scheduler_task.insert(
+        status='QUEUED',
+        application_name=request.application,
+        task_name = 'create pending apps',
+        function_name='create_pending_apps',
+        start_time=now,
+        stop_time=now + datetime.timedelta(days=1461),
+        repeats=0,
+        period=600,   # every 10 minutes
+        timeout = 300, # will time out if running for 500 seconds
+    )
+
 permanent_tasks = dict(
     ##scan_all_unscanned_photos=schedule_scan_all_unscanned_photos
     #look for emailed photos and other mail
@@ -205,7 +220,8 @@ permanent_tasks = dict(
     watch_dog=schedule_watchdog,
     randomize_story_sampling=schedule_randomize_story_sampling,
     update_word_index_all=schedule_update_word_index_all,
-    calc_doc_stories=schedule_calc_doc_stories
+    calc_doc_stories=schedule_calc_doc_stories,
+    create_pending_apps=schedule_create_pending_apps
 )
 maildir = '/home/{}_mailbox/Maildir'.format(request.application)
 if os.path.isdir(maildir):
@@ -217,7 +233,8 @@ __tasks = dict(
     watchdog=watchdog,
     randomize_story_sampling=randomize_story_sampling,
     update_word_index_all=update_word_index_all,
-    calc_doc_stories=calc_doc_stories
+    calc_doc_stories=calc_doc_stories,
+    create_pending_apps=create_pending_apps
 )
 
 scheduler = MyScheduler(db, __tasks)
@@ -240,10 +257,12 @@ def verify_tasks_started():
         
 def promote_task(function_name):
     tsk = db(db.scheduler_task.function_name==function_name).select().first()
-    if not tsk:
-        return
-    if tsk.status in ['ASSIGNED', 'RUNNING']:
-        return
-    tsk.update_record(status='QUEUED', next_run_time=datetime.datetime.now())
+    if tsk:
+        if tsk.status in ['ASSIGNED', 'RUNNING']:
+            return
+        tsk.update_record(status='QUEUED', next_run_time=datetime.datetime.now())
+    elif function_name in permanent_tasks:
+        func = permanent_tasks[funcion_name]
+        func()
 
 verify_tasks_started()       

@@ -45,4 +45,5 @@ def confirm_new_app(vars):
     if customer_rec.confirmation_key != vars.confirmation_key:
         raise Exception('Confirmation key mismatch')
     customer_rec.update_record(confirmation_key='')
+    promote_task('create_pending_apps')
     return dict()

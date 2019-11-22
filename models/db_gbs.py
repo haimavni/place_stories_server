@@ -449,6 +449,7 @@ db.define_table('TblCustomers',
                 Field('first_name', type='string'),
                 Field('last_name', type='string'),
                 Field('email', type='string'),
+                Field('password', type='string'),
                 Field('app_name', type='string'),
                 Field('confirmation_key', type='string'),
                 Field('created', type='boolean', default=False)

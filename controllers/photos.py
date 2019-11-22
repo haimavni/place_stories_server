@@ -856,6 +856,7 @@ def process_photo_list(lst, photo_pairs=dict()):
         fix_record_dates_out(rec)
     result = []
     for rec in lst:
+        tpp = timestamped_photo_path(rec)
         dic = Storage(
             keywords=rec.KeyWords or "",
             description=rec.Description or "",
@@ -867,14 +868,14 @@ def process_photo_list(lst, photo_pairs=dict()):
             selected=rec.selected if 'selected' in rec else '',
             side='front',
             photo_id=rec.id,
-            src=photos_folder('orig') + rec.photo_path,
-            square_src=photos_folder('squares') + timestamped_photo_path(rec),
+            src=photos_folder('orig') + tpp,
+            square_src=photos_folder('squares') + tpp,
             width=rec.width,
             height=rec.height,
             front=Storage(
                 photo_id=rec.id,
-                src=photos_folder('orig') + timestamped_photo_path(rec),
-                square_src=photos_folder('squares') + timestamped_photo_path(rec),
+                src=photos_folder('orig') + tpp,
+                square_src=photos_folder('squares') + tpp,
                 width=rec.width,
                 height=rec.height,
             )
