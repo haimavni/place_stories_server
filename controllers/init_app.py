@@ -40,6 +40,7 @@ def request_new_app(vars):
         result = mail.send(to=vars.email, subject='Your new site', message=mail_message)
         if not result:
             error_message = mail.error.strerror
+        comment('confirmation mail was sent to {email} with result {result}', email=vars.email, result=result)
     return dict(error_message=error_message)
 
 @serve_json
