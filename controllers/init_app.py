@@ -22,6 +22,7 @@ def request_new_app(vars):
             first_name=vars.first_name,
             last_name=vars.last_name,
             email=vars.email,
+            password=vars.password,
             app_name=vars.app_name,
             confirmation_key=confirmation_key
         )

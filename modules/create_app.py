@@ -39,4 +39,3 @@ def create_pending_apps():
     except Exception, e:
         log_exception('Error creating apps')
         raise
-        
