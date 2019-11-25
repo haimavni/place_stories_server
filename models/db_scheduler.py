@@ -262,7 +262,7 @@ def promote_task(function_name):
             return
         tsk.update_record(status='QUEUED', next_run_time=datetime.datetime.now())
     elif function_name in permanent_tasks:
-        func = permanent_tasks[funcion_name]
+        func = permanent_tasks[function_name]
         func()
 
 verify_tasks_started()       
