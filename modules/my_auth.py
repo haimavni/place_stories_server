@@ -105,8 +105,8 @@ class MyAuth(Auth):
     
     
         Click <a href="https://gbstories.org/{app}/static/aurelia/index.html#/access-manager">here</a> for access manager.
-        '''.format(uname=user_name, uemail=email).replace('\n', '<br>'))
-        mail.send(to=receivers, subject='New GB Stories registration', app=app, message=message)
+        '''.format(uname=user_name, uemail=email, app=app).replace('\n', '<br>'))
+        mail.send(to=receivers, subject='New GB Stories registration', message=message)
         
     def user_has_privilege(self, privilege):
         return self.has_membership(privilege, self.current_user())

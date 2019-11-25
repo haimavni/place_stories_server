@@ -31,13 +31,15 @@ def request_new_app(vars):
         confirmation_url = '/{app}/init_app/confirm_new_app?app_name={app_name}&confirmation_key={confirmation_key}'. \
             format(app=request.application, app_name=vars.app_name, confirmation_key=confirmation_key)
         confirmation_link = '<a href="{host}{confirmation_url}">Here</a>'.format(host=host, confirmation_url=confirmation_url)
-        mail_message = ('', '''''
+        mail_message = ('', '''
         Hi {first_name} {last_name},
         
         Click {link} to activate your new site.
         
         '''.format(first_name=vars.first_name, last_name=vars.last_name, link=confirmation_link))
-        mail.send(to=vars.email, subject='Your new site', message=mail_message)
+        result = mail.send(to=vars.email, subject='Your new site', message=mail_message)
+        if not result:
+            error_message = mail.error.strerror
     return dict(error_message=error_message)
 
 @serve_json

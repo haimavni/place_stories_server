@@ -1,3 +1,5 @@
+# coding: utf-8
+
 import re
 from selectolax.parser import HTMLParser
 
@@ -32,7 +34,14 @@ def clean_html(html, nbsp_too=True):
         ###html = html.replace("&nbsp;", "")
     return html
 
-# coding: utf-8
+def unlink_all(html):
+    pat_str = r'<a.*?>(.*?)</a>'
+    pat = re.compile(pat_str, re.IGNORECASE)
+    result = pat.sub(replace_a, html)
+    return result
+
+def replace_a(m):
+    return m.group(1)
 
 def html_to_text(html):
     tree = HTMLParser(html)
