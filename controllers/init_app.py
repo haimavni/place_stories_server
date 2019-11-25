@@ -30,7 +30,7 @@ def request_new_app(vars):
         host=request.env.http_host.split(':')[0]
         confirmation_url = '/{app}/init_app/confirm_new_app?app_name={app_name}&confirmation_key={confirmation_key}'. \
             format(app=request.application, app_name=vars.app_name, confirmation_key=confirmation_key)
-        confirmation_link = '<a href="{host}{confirmation_url}">Here</a>'.format(host=host, confirmation_url=confirmation_url)
+        confirmation_link = '{host}{confirmation_url}'.format(host=host, confirmation_url=confirmation_url)
         mail_message = ('', '''
         Hi {first_name} {last_name},
         
