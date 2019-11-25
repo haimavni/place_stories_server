@@ -49,7 +49,8 @@ def create_parent(vars):
 def create_new_member(vars):
     #todo: move code of photos/save_face to module and use it to complete the operation. in the client, go to the new member to edit its data
     name = (vars.name or vars.default_name).strip() + ' '
-    first_name, last_name = name.split(' ')[:2]
+    lst = name.split(' ')
+    first_name, last_name = lst[0], ' '.join(lst[1:])
     rec = new_member_rec(first_name=first_name, last_name=last_name)
     rec.member_info.updater_id = auth.current_user()
     rec.member_info.update_time = datetime.datetime.now()
