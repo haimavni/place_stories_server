@@ -6,6 +6,6 @@ with open(service_name, 'r') as f:
     txt = f.read()
 with open(service_name + '.bak', 'w') as f:
     f.write(txt)
-txt = txt.replace(' -K ', ' -K {}, {}, '.format(app, app))
+txt = txt.replace(' -K ', ' -K {},{},'.format(app, app))
 with open(service_name, 'w') as f:
     f.write(txt)
