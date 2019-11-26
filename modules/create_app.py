@@ -7,7 +7,6 @@ def create_an_app(rec):
     rec.update_record(created=True)  #if failed will need to set it to False    request,comment = inject('request', 'comment')
     folder = os.path.abspath(request.folder)
     path = folder + '/private'
-    comment("folder is {f}".format(f=folder))
     log_path = folder + '/logs/create-{app}.log'.format(app=rec.app_name)
     os.chdir(path)
     command = 'bash create_app.bash {app_name} test {email} {password} {first_name} {last_name}'. \
