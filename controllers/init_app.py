@@ -46,6 +46,8 @@ def request_new_app(vars):
 @serve_json
 def confirm_new_app(vars):
     customer_rec = db(db.TblCustomers.app_name==vars.app_name).select().first()
+    if not rec.confirmation_key:
+        return dict()
     if customer_rec.confirmation_key != vars.confirmation_key:
         comment('customer rec key: {crk}, vars.conf key: {vck}', crk=customer_rec.confirmation_key, vck=vars.confirmation_key)
         raise Exception('Confirmation key mismatch')

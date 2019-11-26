@@ -3,6 +3,7 @@ import os
 import subprocess
 
 def create_an_app(rec):
+    request = inject('request')
     rec.update_record(created=True)  #if failed will need to set it to False    request,comment = inject('request', 'comment')
     folder = os.path.abspath(request.folder)
     path = folder + '/private'
