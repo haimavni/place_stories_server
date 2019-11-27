@@ -8,7 +8,6 @@ def create_an_app(rec):
     path = folder + '/private'
     log_path = folder + '/logs/create-{app}.log'.format(app=rec.app_name)
     comment('in create app. path: {p}, folder: {f}, request.folder: {rf}', p=path, f=folder, ref=request.folder)
-    return
     orig_dir = os.getcwd()
     os.chdir(path)
     command = 'bash create_app.bash {app_name} test {email} {password} {first_name} {last_name}'. \
