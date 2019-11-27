@@ -11,10 +11,10 @@ def encrypt_password(password):
     return '%s$%s$%s' % (digest_alg, salt, h)
 
 def register_new_user(email, password, first_name, last_name, registration_key=''):
-    db = inject('db')
+    db,User_Error = inject('db','User_Error')
     cpassword = encrypt_password(password)
     if not db(db.auth_user.email==email).isempty():
-        raise UserError('User "{em}" already exists!'.format(em=email))
+        raise User_Error('User "{em}" already exists!'.format(em=email))
     fields = dict(
         email=email,
         first_name=first_name, 
