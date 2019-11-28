@@ -24,7 +24,7 @@ def create_an_app(rec):
     return code
 
 def notify_customer(rec):
-    mail = inject('mail')
+    mail, comment = inject('mail', 'comment')
     manual_link = 'https://docs.google.com/document/d/1IoE3xIN3QZvqk-YZZH55PLzMnASVHsxs0_HuSjYRySc/edit?usp=sharing'
     message = ('', '''
     Welcome to your new stories site!
@@ -32,15 +32,18 @@ def notify_customer(rec):
     You can read some useful information in the link below
     {ml}
     '''.format(ml=manual_link))
-    mail.send(to=rec.email, message=message, subject='Starting your new site')
+    result = mail.send(to=rec.email, message=message, subject='Starting your new site')
+    comment('mail sent to customer? {}', result)
 
 def notify_developer(rec, success):
-    mail = inject('mail')
+    mail, comment = inject('mail', 'comment')
+    comment('about to nofity me')
     status = 'was successfuly created ' if success else 'had errors while being created'
     message = ('', '''
     New site {site_name} {status}.
     '''.format(site_name=rec.app_name, status=status))
-    mail.send(to='haimavni@gmail.com', message=message, subject='New app')
+    result = mail.send(to='haimavni@gmail.com', message=message, subject='New app')
+    comment('mail sent to developer? {}', result)
 
 def create_pending_apps():
     db, log_exception = inject('db', 'log_exception')
