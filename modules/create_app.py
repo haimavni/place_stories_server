@@ -15,10 +15,11 @@ def create_an_app(rec):
         format(app_name=rec.app_name, email=rec.email, password=rec.password, first_name=rec.first_name, last_name=rec.last_name)
     with open(log_path, 'w') as log_file:
         code = subprocess.call(command, stdout=log_file, stderr=log_file, shell=True)
+    comment('finished creation of {}', rec.app_name)
     os.chdir(orig_dir)
     if code == 0:
-        notify_customer(rec)
         notify_developer(rec, True)
+        notify_customer(rec)
     else:
         notify_developer(rec, False)
     return code
