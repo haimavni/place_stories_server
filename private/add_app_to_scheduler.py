@@ -5,7 +5,7 @@ def main():
     service_name = '/etc/systemd/system/web2py-scheduler.service'
     with open(service_name, 'r') as f:
         txt = f.read()
-    if '{},'.format(app) in text:
+    if '{},'.format(app) in txt:
         return
     with open(service_name + '.bak', 'w') as f:
         f.write(txt)
