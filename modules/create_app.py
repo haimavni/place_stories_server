@@ -22,13 +22,18 @@ def create_an_app(rec):
         notify_customer(rec)
     else:
         notify_developer(rec, False)
+    command = 'systemctl restart web2py-scheduler'
+    with open(log_path, 'a') as log_file:
+        log_file.write('before systemctl restart')
+        code = subprocess.call(command, stdout=log_file, stderr=log_file, shell=True)
+        log_file.write('after systemctl restart')                       
     return code
 
 def notify_customer(rec):
     mail, comment, request = inject('mail', 'comment', 'request')
     manual_link = 'https://docs.google.com/document/d/1IoE3xIN3QZvqk-YZZH55PLzMnASVHsxs0_HuSjYRySc/edit?usp=sharing'
     host=request.env.http_host.split(':')[0]
-    link = 'https://' + 'host' + '/' + rec.app_name
+    link = 'https://' + host + '/' + rec.app_name
     message = ('', '''
     Welcome to your new stories site!
     
