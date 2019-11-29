@@ -450,6 +450,7 @@ db.define_table('TblCustomers',
                 Field('last_name', type='string'),
                 Field('email', type='string'),
                 Field('password', type='string'),
+                Field('host', type='string', default=request.env.http_host.split(':')[0]),
                 Field('app_name', type='string'),
                 Field('confirmation_key', type='string'),
                 Field('created', type='boolean', default=False)

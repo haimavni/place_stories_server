@@ -43,8 +43,8 @@ def request_new_app(vars):
         comment('confirmation mail was sent to {email} with result {result}. message: {msg}', email=vars.email, result=result, msg=mail_message)
     return dict(error_message=error_message)
 
-@serve_json
-def confirm_new_app(vars):
+def confirm_new_app():
+    vars = request.vars
     customer_rec = db(db.TblCustomers.app_name==vars.app_name).select().first()
     if not customer_rec.confirmation_key:
         return dict()

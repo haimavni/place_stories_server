@@ -32,7 +32,8 @@ def create_an_app(rec):
 def notify_customer(rec):
     mail, comment, request = inject('mail', 'comment', 'request')
     manual_link = 'https://docs.google.com/document/d/1IoE3xIN3QZvqk-YZZH55PLzMnASVHsxs0_HuSjYRySc/edit?usp=sharing'
-    host=request.env.http_host.split(':')[0]
+    ####host=request.env.http_host.split(':')[0]
+    host = rec.host
     link = 'https://' + host + '/' + rec.app_name
     message = ('', '''
     Welcome to your new stories site!
