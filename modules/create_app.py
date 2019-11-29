@@ -25,14 +25,18 @@ def create_an_app(rec):
     return code
 
 def notify_customer(rec):
-    mail, comment = inject('mail', 'comment')
+    mail, comment, request = inject('mail', 'comment', 'request')
     manual_link = 'https://docs.google.com/document/d/1IoE3xIN3QZvqk-YZZH55PLzMnASVHsxs0_HuSjYRySc/edit?usp=sharing'
+    host=request.env.http_host.split(':')[0]
+    link = 'https://' + 'host' + '/' + rec.app_name
     message = ('', '''
     Welcome to your new stories site!
+    
+    Click {link} to visit.
 
     You can read some useful information in the link below
     {ml}
-    '''.format(ml=manual_link))
+    '''.format(ml=manual_link, link=link))
     result = mail.send(to=rec.email, message=message, subject='Starting your new site')
     comment('mail sent to customer? {}', result)
 

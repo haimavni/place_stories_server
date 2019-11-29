@@ -62,5 +62,5 @@ python /home/www-data/$server/private/add_app_to_scheduler.py $app_name
 echo daemon reload
 systemctl daemon-reload
 echo restart scheduler
-systemctl restart web2py-scheduler.service
+##todo: it hangs! systemctl restart web2py-scheduler.service
 echo finished creation of $app_name
