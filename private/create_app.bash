@@ -59,6 +59,8 @@ python web2py.py -S $app_name/help/load_help_messages_from_csv
 
 #update scheduler service
 python /home/www-data/$server/private/add_app_to_scheduler.py $app_name
-systemctl restart web2py-scheduler.service
+echo daemon reload
 systemctl daemon-reload
-
+echo restart scheduler
+systemctl restart web2py-scheduler.service
+echo finished creation of $app_name
