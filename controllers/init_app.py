@@ -54,3 +54,11 @@ def confirm_new_app():
     customer_rec.update_record(confirmation_key='')
     promote_task('create_pending_apps')
     return dict()
+
+@serve_json
+def get_frame_list(vars):
+    result = []
+    for rec in db(db.TblCustomers).select():
+        url = 'https://{host}/{app}'.format(host = rec.host, app=rec.app_name)
+        result.append(dict(url=url))
+    return dict(frame_urls=result)
