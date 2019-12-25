@@ -98,6 +98,16 @@ def reindex_words(vars):
     db(db.TblStories.deleted != True).update(indexing_date = NO_DATE)
     return dict()
 
+@serve_json
+def set_user_registration_options(vars):
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    enable_auto_reg = vars.option == 'user.auto-reg'
+    config_rec.update_record(enable_auto_registration=enable_auto_reg)
+    return dict()
+
 def reindex_stories():
     from words import update_word_index_all
     update_word_index_all()
