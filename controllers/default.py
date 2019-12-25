@@ -80,9 +80,13 @@ def get_tornado_host(vars):
 
 @serve_json
 def read_privileges(vars):
-    user_id = auth.current_user();
+    user_id = auth.current_user()
+    config = dict(enable_auto_registration = True)
+    config_rec = db(db.TblConfiguration).select().first()
+    if config_rec:
+        config['enable_auto_registration'] = config_rec.enable_auto_registration
     if not user_id:
-        return dict(user_id=0, privileges={}, user_name="")
+        return dict(user_id=0, privileges={}, user_name="", config=config)
     ###emails_suspended = rec.emails_suspended if rec else False
     user_name = auth.user_name(user_id)
     privileges = dict()
@@ -92,7 +96,8 @@ def read_privileges(vars):
     result = dict(
         privileges = privileges,
         user_id=user_id,
-        user_name=user_name
+        user_name=user_name,
+        config=config
     )
     return result
 

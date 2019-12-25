@@ -45,7 +45,7 @@ class AccessManager:
     def get_groups(self, by_developer):
         db, auth = inject('db', 'auth')
         groups = AccessManager.auth_groups()
-        forbidden_group_set = [] if by_developer else set(['DEVELOPER', 'LINGUIST'])
+        forbidden_group_set = [] if by_developer else set(['DEVELOPER', 'TESTER'])
         return [grp for grp in groups if grp.role not in forbidden_group_set]
 
     def user_data(self, usr, by_developer=False):
@@ -84,6 +84,8 @@ class AccessManager:
     def enable_all_roles(self, usr_id):
         groups = self.get_groups(False)
         for grp in groups:
+            if grp.role == 'ARCHIVER':
+                continue
             self.modify_membership(usr_id, grp.id, True)
 
     def add_or_update_user_bare(self, user_data):
