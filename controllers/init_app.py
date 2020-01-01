@@ -32,9 +32,9 @@ def request_new_app(vars):
             format(app=request.application, app_name=vars.app_name, confirmation_key=confirmation_key)
         confirmation_link = '{host}{confirmation_url}'.format(host=host, confirmation_url=confirmation_url)
         mail_message = ('', '''
-        Hi {first_name} {last_name},
+        Hi {first_name} {last_name},<br><br>
         
-        Click {link} to activate your new site.
+        Click {link} to activate your new site.<br><br>
         
         '''.format(first_name=vars.first_name, last_name=vars.last_name, link=confirmation_link))
         result = mail.send(to=vars.email, subject='Your new site', message=mail_message)

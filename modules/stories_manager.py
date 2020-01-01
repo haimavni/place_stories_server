@@ -145,6 +145,7 @@ class Stories:
             pass
         
         ###update_story_words_index(story_id)
+        promote_word_indexing()
         return Storage(story_id=story_id, creation_date=now, author=source, preview=preview)
 
     def update_story(self, story_id, story_info, language=None, change_language=False):
@@ -216,6 +217,7 @@ class Stories:
         elif story_info.used_for == STORY4PHOTO:
             photo_rec = db(db.TblPhotos.story_id==story_id).select().first()
             photo_rec.update_record(Name=name)
+        promote_word_indexing()
         return Storage(story_id=story_id, last_update_date=now, updater_name=author_name, author=story_info.source, language=language, preview=preview)
     
     def update_story_name(self, story_id, new_name, language=None):
@@ -225,7 +227,8 @@ class Stories:
             rec = self.find_translation(rec, language)
         if rec:
             rec.update_record(name=new_name)
-
+        #promote indexing task
+        
     def find_translation(self, story_id, language=None):
         db = inject('db')
         if language:
@@ -261,3 +264,8 @@ class Stories:
         db = inject('db')
         now = datetime.datetime.now()
         db(db.TblStories.id==story_id).update(deleted=True, last_update_date=now)
+        promote_word_indexing()
+        
+def promote_word_indexing():
+    promote_task = inject('promote_task')
+    promote_task('update_word_index_all')

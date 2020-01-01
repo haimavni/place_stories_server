@@ -174,6 +174,8 @@ def update_word_index_all():
         chunk = 10
         comment("Start indexing story words cycle")
         q = db.TblStories.last_update_date > db.TblStories.indexing_date
+        if db(q).isempty():
+            return
         time_budget = 600 - 15 #will exit the loop 15 seconds before the a new cycle starts
         t0 = datetime.datetime.now()
         while True:
@@ -185,7 +187,9 @@ def update_word_index_all():
             if n > 0:
                 comment('Reindex words. {} stories left to reindex.', n)
             else:
-                sleep(5)
+                comment('No more stories to index at this time.')
+                break
+                ###sleep(5)
             lst = db(q).select(db.TblStories.id, limitby=(0, chunk))
             for rec in lst:
                 update_story_words_index(rec.id)

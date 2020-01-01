@@ -36,11 +36,11 @@ def notify_customer(rec):
     host = rec.host
     link = 'https://' + host + '/' + rec.app_name
     message = ('', '''
-    Welcome to your new stories site!
+    Welcome to your new stories site!<br><br>
     
-    Click {link} to visit.
+    Click {link} to visit.<br><br>
 
-    You can read some useful information in the link below
+    You can read some useful information in the link below<br>
     {ml}
     '''.format(ml=manual_link, link=link))
     result = mail.send(to=rec.email, message=message, subject='Starting your new site')
