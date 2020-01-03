@@ -14,6 +14,11 @@ def init_database():
 @serve_json
 def request_new_app(vars):
     #check uniqueness first
+    app = request.application
+    r = app.find('_')
+    if r >= 0:
+        app = app[:r]
+    app_name = app + '_' + vars.app_name
     if not db(db.TblCustomers.app_name==vars.app_name).isempty():
         error_message = "admin.duplicate-app-name"
     else:
@@ -23,13 +28,13 @@ def request_new_app(vars):
             last_name=vars.last_name,
             email=vars.email,
             password=vars.password,
-            app_name=vars.app_name,
+            app_name=app_name,
             confirmation_key=confirmation_key
         )
         error_message = ""
         host=request.env.http_host.split(':')[0]
         confirmation_url = '/{app}/init_app/confirm_new_app?app_name={app_name}&confirmation_key={confirmation_key}'. \
-            format(app=request.application, app_name=vars.app_name, confirmation_key=confirmation_key)
+            format(app=request.application, app_name=app_name, confirmation_key=confirmation_key)
         confirmation_link = '{host}{confirmation_url}'.format(host=host, confirmation_url=confirmation_url)
         mail_message = ('', '''
         Hi {first_name} {last_name},<br><br>
