@@ -453,7 +453,8 @@ db.define_table('TblCustomers',
                 Field('host', type='string', default=request.env.http_host.split(':')[0]),
                 Field('app_name', type='string'),
                 Field('confirmation_key', type='string'),
-                Field('created', type='boolean', default=False)
+                Field('created', type='boolean', default=False),
+                Field('locale', type='string')
                 )
 
 def write_indexing_sql_scripts():
