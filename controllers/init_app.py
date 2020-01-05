@@ -71,7 +71,7 @@ def confirm_new_app():
     customer_rec.update_record(confirmation_key='')
     promote_task('create_pending_apps')
     lang = '_he' if customer_rec.locale == 'he' else ''
-    response.view = "%s/%s.%s".format(request.controller, request.function + lang, request.extension)
+    response.view = "{c}/{f}.{e}".format(c=request.controller, f=request.function + lang, e=request.extension)
     return dict()
 
 @serve_json
