@@ -1,3 +1,5 @@
+# coding: utf-8
+
 from injections import inject
 import os
 import subprocess
@@ -35,14 +37,26 @@ def notify_customer(rec):
     ####host=request.env.http_host.split(':')[0]
     host = rec.host
     link = 'https://' + host + '/' + rec.app_name
-    message = ('', '''
+    if rec.locale == 'he':
+        message_fmt = '''<div dir="rtl">
+        אתר הסיפורים החדש שלך מוכן!<br><br>
+
+        הקלק {link} כדי להיכנס לאתר.<br><br>
+
+        להדרכה בנושא התאמת האתר ועריכת תוכנו הקלק על הקישור הבא:<br>
+        {ml}
+        </div>
+        '''
+    else:
+        message_fmt = '''
     Welcome to your new stories site!<br><br>
     
     Click {link} to visit.<br><br>
 
     You can read some useful information in the link below<br>
     {ml}
-    '''.format(ml=manual_link, link=link))
+    '''
+    message = ('', message_fmt.format(ml=manual_link, link=link))
     result = mail.send(to=rec.email, message=message, subject='Starting your new site')
     comment('mail sent to customer? {}', result)
 

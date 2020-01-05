@@ -70,6 +70,8 @@ def confirm_new_app():
         raise Exception('Confirmation key mismatch')
     customer_rec.update_record(confirmation_key='')
     promote_task('create_pending_apps')
+    lang = '_he' if customer_rec.locale == 'he' else ''
+    response.view = "%s/%s.%s".format(request.controller, request.function + lang, request.extension)
     return dict()
 
 @serve_json
