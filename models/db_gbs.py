@@ -454,7 +454,8 @@ db.define_table('TblCustomers',
                 Field('app_name', type='string'),
                 Field('confirmation_key', type='string'),
                 Field('created', type='boolean', default=False),
-                Field('locale', type='string')
+                Field('locale', type='string'),
+                Field('creation_time', type='datetime', default=request.now)
                 )
 
 def write_indexing_sql_scripts():

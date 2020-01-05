@@ -25,7 +25,7 @@ def request_new_app(vars):
         error_message = "admin.duplicate-app-name"
     else:
         confirmation_key=web2py_uuid()
-        db.TblCustomers.insert(
+        id = db.TblCustomers.insert(
             first_name=vars.first_name,
             last_name=vars.last_name,
             email=vars.email,
@@ -58,6 +58,8 @@ def request_new_app(vars):
         if not result:
             error_message = mail.error.strerror
         comment('confirmation mail was sent to {email} with result {result}. message: {msg}', email=vars.email, result=result, msg=mail_message)
+        customer_rec = db(db.TblCustomers.id==id).select().first()
+        notify_developer(customer_rec)
     return dict(error_message=error_message)
 
 def confirm_new_app():
@@ -81,3 +83,15 @@ def get_frame_list(vars):
         url = 'https://{host}/{app}'.format(host = rec.host, app=rec.app_name)
         result.append(dict(url=url))
     return dict(frame_urls=result)
+
+def notify_developer(rec):
+    mail, comment = inject('mail', 'comment')
+    comment('about to nofity me about new customer')
+    name = rec.first_name + ' ' + rec.last_name
+    message = ('', '''
+    New site {site_name} was requested by {name} {email}.
+    '''.format(site_name=rec.app_name, name=name, email=rec.email))
+    result = mail.send(to='haimavni@gmail.com', message=message, subject='New app requested')
+    comment('mail sent to developer? {}', result)
+
+    
