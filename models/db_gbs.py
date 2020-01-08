@@ -203,6 +203,7 @@ db.define_table('TblMemberPhotos',
                 Field('x', type='integer'),   #location of face in the picture
                 Field('y', type='integer'),
                 Field('r', type='integer'),
+                Field('who_identified', type=db.auth_user)
 )
 
 db.define_table('TblMembers',
@@ -436,7 +437,8 @@ db.define_table('TblConfiguration',
                 Field('fix_level', type='integer', default=0),
                 Field('enable_auto_registration', type='boolean', default=False),
                 Field('initial_privileges', type='string', default='EDITOR;PHOTO_UPLOADER;CHATTER'),
-                Field('expiration_date', type='date')
+                Field('expiration_date', type='date'),
+                Field('expose_new_app_button', type='boolean', default=True)
                 )
 
 db.define_table('TblLocaleCustomizations',

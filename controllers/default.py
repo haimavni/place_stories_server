@@ -153,7 +153,7 @@ def logout(vars):
     auth.logout_bare()
     return dict(logged_out=True)
 
-def reset_password():
+def reset_password_old():
     response.file = 'login.html'
     user = db(db.auth_user.email==request.vars.email).select().first()
     status = 'error'
@@ -310,6 +310,35 @@ def notify_new_files(vars):
     uploaded_file_ids = vars.uploaded_file_ids
     ws_messaging.send_message(key=vars.what +'_WERE_UPLOADED', group='ALL', uploaded_file_ids=uploaded_file_ids)
     return dict()
+
+@serve_json
+def reset_password(vars):
+    user_rec = db(db.auth_user.email==vars.email).select().first()
+    am = AccessManager()
+    app_name = request.application
+    host=request.env.http_host.split(':')[0]
+    registration_key = am.replace_password(user_rec.id, vars.password)
+    confirmation_url = '/{app}/default/confirm_password_reset?app_name={app_name}&registration_key={registration_key}'. \
+        format(app=request.application, app_name=app_name, registration_key=registration_key)
+    confirmation_link = '{host}{confirmation_url}'.format(host=host, confirmation_url=confirmation_url)
+    mail_message_fmt = '''
+    Hi {first_name} {last_name},<br><br>
+    
+    Click {link} to confirm your new password.<br><br>
+    
+    '''
+    mail_message = ('', mail_message_fmt.format(first_name=user_rec.first_name, last_name=user_rec.last_name, link=confirmation_link))
+    result = mail.send(to=vars.email, subject='New password', message=mail_message)
+    if not result:
+        error_message = mail.error.strerror
+
+def confirm_password_reset():
+    user_rec = db(db.auth_user.email==vars.email).select().first()
+    if user_rec.registration_key != vars.registration_key:
+        raise Exception("Registration key mismatch")
+    user_rec.update_record(registration_key="")
+    return "Please close this window"
+    
 
 def notify_new_feedback():
     lst = db((db.auth_membership.group_id==ADMIN)&(db.auth_user.id==db.auth_membership.user_id)&(db.auth_user.id>1)).select(db.auth_user.email)

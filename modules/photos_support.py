@@ -397,7 +397,7 @@ def dhash_photo(photo_path=None, img=None):
     return dhash.format_hex(row_hash, col_hash)
 
 def save_member_face(params):
-    db = inject('db')
+    db, auth = inject('db', 'auth')
     face = params.face
     assert face.member_id > 0
     if params.make_profile_photo:
@@ -410,12 +410,14 @@ def save_member_face(params):
     else:
         q = (db.TblMemberPhotos.Photo_id == face.photo_id) & \
             (db.TblMemberPhotos.Member_id == face.member_id)
+    who_identified = auth.current_user()
     data = dict(
         Photo_id=face.photo_id,
         Member_id=face.member_id,
         r=face.r,
         x=face.x,
-        y=face.y
+        y=face.y,
+        who_identified=who_identified
     )
     rec = db(q).select().first()
     if rec:

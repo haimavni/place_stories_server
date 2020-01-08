@@ -7,8 +7,10 @@ def init_database():
     if len(request.args) < 4:
         return "database initialized without admin"
     email,password,first_name,last_name = request.args
+    admin_id = register_new_user('admin@gbs.com', '931632', 'admin', 'admin')
     usr_id = register_new_user(email, password, first_name, last_name)
     am = AccessManager()
+    am.enable_roles(admin_id, [ACCESS_MANAGER])
     am.enable_all_roles(usr_id)
     db.commit()
     return "database initialized"

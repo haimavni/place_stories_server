@@ -2,6 +2,7 @@ from injections import inject
 from gluon.storage import Storage
 from gluon.utils import simple_hash, web2py_uuid    
 import datetime
+from gluon.utils import web2py_uuid
 
 def encrypt_password(password):
     salt = str(web2py_uuid()).replace('-', '')[-16:]
@@ -81,6 +82,11 @@ class AccessManager:
         else:
             auth.del_membership(grp_id, usr_id)
             
+    def enable_roles(self, user_id, grp_ids):
+        auth = inject('auth')
+        for grp_id in grp_ids:
+            auth.add_membership(grp_id, usr_id)
+            
     def enable_all_roles(self, usr_id):
         groups = self.get_groups(False)
         for grp in groups:
@@ -131,6 +137,13 @@ class AccessManager:
     def add_or_update_user(self, user_data):
         usr, is_new_user = self.add_or_update_user_bare(user_data)
         return self.user_data(usr), is_new_user
+    
+    def replace_password(self, uid, new_password):
+        db = inject('db')
+        cpassword = encrypt_password(new_password)
+        registration_key = web2py_uuid()
+        db(db.auth_user.id==uid).update(registration_key=registration_key, password=cpassword)
+        return registration_key
 
     def delete_user(self, uid):
         db = inject('db')
