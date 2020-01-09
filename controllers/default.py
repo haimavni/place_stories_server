@@ -331,8 +331,12 @@ def reset_password(vars):
     result = mail.send(to=vars.email, subject='New password', message=mail_message)
     if not result:
         error_message = mail.error.strerror
+        raise Exception("Email could not be sent - {em}".format(em=error_message))
+    else:
+        return dict()
 
 def confirm_password_reset():
+    vars = request.vars
     user_rec = db(db.auth_user.email==vars.email).select().first()
     if user_rec.registration_key != vars.registration_key:
         raise Exception("Registration key mismatch")
