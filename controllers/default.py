@@ -98,10 +98,11 @@ def read_privileges(vars):
 
 @serve_json
 def read_configuration(vars):
-    config = dict(enable_auto_registration = False)
+    config = dict(enable_auto_registration=False, expose_new_app_button=False)
     config_rec = db(db.TblConfiguration).select().first()
     if config_rec:
         config['enable_auto_registration'] = config_rec.enable_auto_registration
+        config['expose_new_app_button'] = config_rec.expose_new_app_button
     return dict(config=config)
 
 @serve_json
@@ -341,7 +342,7 @@ def confirm_password_reset():
     if user_rec.registration_key != vars.registration_key:
         raise Exception("Registration key mismatch")
     user_rec.update_record(registration_key="")
-    return "Please close this window"
+    return dict()
     
 
 def notify_new_feedback():

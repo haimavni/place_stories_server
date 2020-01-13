@@ -460,6 +460,21 @@ db.define_table('TblCustomers',
                 Field('creation_time', type='datetime', default=request.now)
                 )
 
+db.define_table('TblQuestions',
+                Field('kind', type='string'),
+                Field('question', type='string')
+                )
+
+db.define_table('TblAnswers',
+                Field('question_id', type=db.TblQuestions),
+                Field('answer', type='string')
+                )
+
+db.define_table('TblMemberAnswers',
+                Field('answer_id', type=db.TblAnswers),
+                Field('item_id', type='integer') #ensure only one answer per question
+                )
+
 def write_indexing_sql_scripts():
     '''Creates a set of indexes if they do not exist.
        In a terminal, su postgres and issue the command

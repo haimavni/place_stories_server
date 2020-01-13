@@ -108,6 +108,16 @@ def set_user_registration_options(vars):
     config_rec.update_record(enable_auto_registration=enable_auto_reg)
     return dict()
 
+@serve_json
+def set_new_app_options(vars):
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    expose_new_app_button = vars.option == 'user.new-app-enabled'
+    config_rec.update_record(expose_new_app_button=expose_new_app_button)
+    return dict()
+
 def reindex_stories():
     from words import update_word_index_all
     update_word_index_all()
