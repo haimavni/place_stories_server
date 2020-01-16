@@ -476,7 +476,8 @@ db.define_table('TblAnswers',
 
 db.define_table('TblItemAnswers',
                 Field('answer_id', type=db.TblAnswers),
-                Field('item_id', type='integer') #ensure only one answer per question
+                Field('item_id', type='integer'), #ensure only one answer per question
+                Field('checked', type='boolean', default=False)
                 )
 
 def write_indexing_sql_scripts():
