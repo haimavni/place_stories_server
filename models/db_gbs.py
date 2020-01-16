@@ -460,17 +460,21 @@ db.define_table('TblCustomers',
                 Field('creation_time', type='datetime', default=request.now)
                 )
 
+db.define_table('TblMenus',
+                Field('name', type='string')
+                )
+
 db.define_table('TblQuestions',
-                Field('kind', type='string'),
-                Field('question', type='string')
+                Field('menu_id', type=db.TblMenus),
+                Field('prompt', type='string')
                 )
 
 db.define_table('TblAnswers',
                 Field('question_id', type=db.TblQuestions),
-                Field('answer', type='string')
+                Field('text', type='string')
                 )
 
-db.define_table('TblMemberAnswers',
+db.define_table('TblItemAnswers',
                 Field('answer_id', type=db.TblAnswers),
                 Field('item_id', type='integer') #ensure only one answer per question
                 )
