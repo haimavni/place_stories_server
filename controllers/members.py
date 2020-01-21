@@ -1204,3 +1204,10 @@ def copy_story_date_to_object_date(story_rec):
                               doc_date_datespan=story_rec.story_date_datespan,
                               doc_date_dateend=story_rec.story_date_dateend,
                               )
+
+@serve_json
+def qualified_members(vars):
+    checked_answers = vars.checked_answers
+    lst = db(db.TblItemAnswers.answer_id.belongs(checked_answers)).select()
+    qualified_members = [rec.item_id for rec in lst]
+    return dict(qualified_members=qualified_members)

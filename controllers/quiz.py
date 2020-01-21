@@ -1,3 +1,5 @@
+from quiz_support import apply_quiz
+
 @serve_json
 def read_menu(vars):
     name = vars.name
@@ -43,3 +45,10 @@ def save_answer(vars):
     else:
         answer_id = db.TblAnswers.insert(question_id=question_id, text=text)
     return dict(answer_id=answer_id)
+
+@serve_json
+def apply_answers(vars):
+    checked_answers = vars.checked_answers
+    item_list = vars.item_list
+    apply_quiz(item_list, checked_answers)
+    return dict()
