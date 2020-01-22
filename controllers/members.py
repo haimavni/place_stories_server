@@ -18,6 +18,7 @@ from html_utils import clean_html
 from members_support import *
 from docs_support import doc_url
 from family_connections import *
+from quiz_support import use_quiz
 
 @serve_json
 def member_list(vars):
@@ -1208,6 +1209,5 @@ def copy_story_date_to_object_date(story_rec):
 @serve_json
 def qualified_members(vars):
     checked_answers = vars.checked_answers
-    lst = db(db.TblItemAnswers.answer_id.belongs(checked_answers)).select()
-    qualified_members = [rec.item_id for rec in lst]
+    qualified_members = use_quiz(checked_answers)
     return dict(qualified_members=qualified_members)
