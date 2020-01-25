@@ -32,15 +32,15 @@ def use_quiz(answers):
         if rec.question_id != prev_question:
             if group:
                 group_arr += [group]
-                prev_question = rec.question_id
                 group = []
         group += [rec.id]
+        prev_question = rec.question_id
     group_arr += [group]
     item_set = None
     for group in group_arr:
         items = db(db.TblItemAnswers.answer_id.belongs(group)).select()
         item_arr = [rec.item_id for rec in items]
-        if item_set:
+        if item_set != None:
             item_set &= set(item_arr)
         else:
             item_set = set(item_arr)
