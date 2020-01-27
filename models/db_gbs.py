@@ -207,9 +207,10 @@ db.define_table('TblMemberPhotos',
 )
 
 db.define_table('TblMembers',
+                Field('title', type='string'),
                 Field('first_name', type='string'),
                 Field('last_name', type='string'),
-                Field.Virtual('full_name', lambda rec: rec.first_name + ' ' + rec.last_name),
+                Field.Virtual('full_name', lambda rec: (rec.title + ' ' if rec.title else '') + rec.first_name + ' ' + rec.last_name),
                 Field('former_first_name', type='string'),
                 Field('former_last_name', type='string'),
                 Field('DateOfAlia', type='string'),

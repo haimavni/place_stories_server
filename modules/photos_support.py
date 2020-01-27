@@ -451,27 +451,6 @@ def create_zip_file(zip_name, file_list):
             name, ext = os.path.splitext(p.path)
             myzip.write(p.path, arcname=p.name + ext)
 
-#function below is duplicated in members_support
-def member_display_name(rec=None, member_id=None, full=True):
-    rec = rec or get_member_rec(member_id)
-    if not rec:
-        return ''
-    if not rec.first_name:
-        return older_display_name(rec, full)
-    s = rec.first_name + ' ' + rec.last_name
-    if full and (rec.former_first_name or rec.former_last_name):
-        s += ' ('
-        if rec.former_first_name:
-            s += rec.former_first_name
-        if rec.former_last_name:
-            if rec.former_first_name:
-                s += ' '
-            s += rec.former_last_name
-        s += ')'
-    if rec.NickName:
-        s += ' - {}'.format(rec.NickName)
-    return s
-
 def get_photo_pairs(photo_list):
     db = inject('db')
     q = (db.TblPhotoPairs.front_id.belongs(photo_list) & \

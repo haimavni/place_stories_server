@@ -172,6 +172,7 @@ def get_random_member(vars):
     idx = random.randint(0, len(lst) / 5)
     member_data=get_member_rec(lst[idx].member_id)
     member_data.face_photo_url = photos_folder('profile_photos') + member_data.facePhotoURL
+    member_data.short_name = (member_data.title + ' ' if member_data.title else '') + member_data.first_name
     return dict(member_data=member_data)
 
 @serve_json
