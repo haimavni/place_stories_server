@@ -82,7 +82,7 @@ class AccessManager:
         else:
             auth.del_membership(grp_id, usr_id)
             
-    def enable_roles(self, user_id, grp_ids):
+    def enable_roles(self, usr_id, grp_ids):
         auth = inject('auth')
         for grp_id in grp_ids:
             auth.add_membership(grp_id, usr_id)
@@ -90,7 +90,7 @@ class AccessManager:
     def enable_all_roles(self, usr_id):
         groups = self.get_groups(False)
         for grp in groups:
-            if grp.role == 'ARCHIVER':
+            if grp.role in ['ARCHIVER', 'HELP_AUTHOR']:
                 continue
             self.modify_membership(usr_id, grp.id, True)
 
