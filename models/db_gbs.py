@@ -467,12 +467,14 @@ db.define_table('TblMenus',
 
 db.define_table('TblQuestions',
                 Field('menu_id', type=db.TblMenus),
-                Field('prompt', type='string')
+                Field('prompt', type='string'),
+                Field('description', type='string')
                 )
 
 db.define_table('TblAnswers',
                 Field('question_id', type=db.TblQuestions),
-                Field('text', type='string')
+                Field('text', type='string'),
+                Field('description', type='string')
                 )
 
 db.define_table('TblItemAnswers',

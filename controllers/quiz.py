@@ -9,20 +9,20 @@ def read_menu(vars):
     else:
         menu_id = db.TblMenus.insert(name=name)
     q = db.TblQuestions.menu_id==menu_id
-    lst = db(q).select()
+    lst = db(q).select(orderby=db.TblQuestions.id)
     result = []
     for rec in lst:
         question = rec
-        answers = db(db.TblAnswers.question_id==rec.id).select()
-        answers = [dict(aid=ans.id, qid=rec.id, text=ans.text) for ans in answers]
-        prompt = question.prompt
-        result.append(dict(prompt=prompt, qid=question.id, answers = answers or []))
+        answers = db(db.TblAnswers.question_id==rec.id).select(orderby=db.TblAnswers.id)
+        answers = [dict(aid=ans.id, qid=rec.id, text=ans.text, description=ans.description) for ans in answers]
+        result.append(dict(prompt=question.prompt, description=question.description, qid=question.id, answers = answers or []))
     return dict(questions=result)
 
 @serve_json
 def save_question(vars):
     name = vars.name
     prompt = vars.prompt
+    description = vars.description
     question_id = vars.question_id
     menu = db(db.TblMenus.name == name).select().first()
     if menu:
@@ -30,9 +30,9 @@ def save_question(vars):
     else:
         menu_id = db.TblMenus.insert(name=name)
     if question_id:
-        db(db.TblQuestions.id == question_id).update(prompt=prompt)
+        db(db.TblQuestions.id == question_id).update(prompt=prompt, description=description)
     else:
-        question_id = db.TblQuestions.insert(menu_id=menu_id, prompt=prompt)
+        question_id = db.TblQuestions.insert(menu_id=menu_id, prompt=prompt, description=description)
     return dict(question_id=question_id)
 
 @serve_json
@@ -40,10 +40,11 @@ def save_answer(vars):
     question_id = vars.question_id
     answer_id = vars.answer_id
     text = vars.text
+    description = vars.description
     if answer_id:
-        db(db.TblAnswers.id==answer_id).update(text=text)
+        db(db.TblAnswers.id==answer_id).update(text=text, description=description)
     else:
-        answer_id = db.TblAnswers.insert(question_id=question_id, text=text)
+        answer_id = db.TblAnswers.insert(question_id=question_id, text=text, description=description)
     return dict(answer_id=answer_id)
 
 @serve_json
