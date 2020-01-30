@@ -46,7 +46,7 @@ class AccessManager:
     def get_groups(self, by_developer):
         db, auth = inject('db', 'auth')
         groups = AccessManager.auth_groups()
-        forbidden_group_set = [] if by_developer else set(['DEVELOPER', 'TESTER'])
+        forbidden_group_set = [] if by_developer else set(['DEVELOPER', 'TESTER', 'COMMENTATOR'])
         return [grp for grp in groups if grp.role not in forbidden_group_set]
 
     def user_data(self, usr, by_developer=False):
