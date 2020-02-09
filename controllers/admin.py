@@ -118,6 +118,16 @@ def set_new_app_options(vars):
     config_rec.update_record(expose_new_app_button=expose_new_app_button)
     return dict()
 
+@serve_json
+def set_audio_option(vars):
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    support_audio = vars.option == 'user.audio-enabled'
+    config_rec.update_record(support_audio=support_audio)
+    return dict()
+
 def reindex_stories():
     from words import update_word_index_all
     update_word_index_all()

@@ -3,6 +3,7 @@ from docs_support import save_uploaded_doc, doc_url, calc_doc_story
 from members_support import calc_grouped_selected_options, calc_all_tags, get_tag_ids
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
 import stories_manager
+
 @serve_json
 def upload_doc(vars):
     user_id = vars.user_id or auth.current_user()

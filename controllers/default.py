@@ -98,11 +98,12 @@ def read_privileges(vars):
 
 @serve_json
 def read_configuration(vars):
-    config = dict(enable_auto_registration=False, expose_new_app_button=False)
+    config = dict(enable_auto_registration=False, expose_new_app_button=False, support_audio=False)
     config_rec = db(db.TblConfiguration).select().first()
     if config_rec:
         config['enable_auto_registration'] = config_rec.enable_auto_registration
         config['expose_new_app_button'] = config_rec.expose_new_app_button
+        config['support_audio'] = config_rec.support_audio
     return dict(config=config)
 
 @serve_json

@@ -114,7 +114,7 @@ class Stories:
         language = guess_language(name + ' ' + story_text)
         story_text = story_text.replace('~1', '&').replace('~2', ';').replace('\n', '').replace('>', '>\n')
         now = datetime.datetime.now()
-        db, auth, STORY4EVENT, STORY4TERM, STORY4PHOTO, STORY4DOC, TEXT_AUDITOR = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO', 'STORY4DOC', 'TEXT_AUDITOR')
+        db, auth, STORY4EVENT, STORY4TERM, STORY4PHOTO, STORY4DOC, STORY4AUDIO, TEXT_AUDITOR = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO', 'STORY4DOC', 'STORY4AUDIO', 'TEXT_AUDITOR')
         source = story_info.source or auth.user_name(self.author_id)
         ###todo: handle language issues here and in update_story
         story_id = db.TblStories.insert(story=story_text, 
@@ -149,7 +149,7 @@ class Stories:
         return Storage(story_id=story_id, creation_date=now, author=source, preview=preview)
 
     def update_story(self, story_id, story_info, language=None, change_language=False):
-        db, auth, STORY4EVENT, STORY4TERM, STORY4PHOTO, STORY4DOC, TEXT_AUDITOR = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO', 'STORY4DOC', 'TEXT_AUDITOR')
+        db, auth, STORY4EVENT, STORY4TERM, STORY4PHOTO, STORY4DOC, STORY4AUDIO, TEXT_AUDITOR = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO', 'STORY4DOC', 'STORY4AUDIO', 'TEXT_AUDITOR')
         if story_id == 'new':
             return self.add_story(story_info)
         updated_story_text = story_info.story_text
@@ -217,6 +217,9 @@ class Stories:
         elif story_info.used_for == STORY4PHOTO:
             photo_rec = db(db.TblPhotos.story_id==story_id).select().first()
             photo_rec.update_record(Name=name)
+        elif story_info.used_for == STORY4AUDIO:
+            audio_rec = db(db.TblAudios.story_id==story_id).select().first()
+            audio_rec.update_record(name=name)
         promote_word_indexing()
         return Storage(story_id=story_id, last_update_date=now, updater_name=author_name, author=story_info.source, language=language, preview=preview)
     

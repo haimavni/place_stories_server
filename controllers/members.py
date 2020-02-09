@@ -17,6 +17,7 @@ from words import calc_used_languages, read_words_index, get_all_story_previews,
 from html_utils import clean_html
 from members_support import *
 from docs_support import doc_url
+from audios_support import audio_path
 from family_connections import *
 from quiz_support import use_quiz
 
@@ -224,12 +225,14 @@ def get_story_list(vars):
         if result_type_counters[k] >= 100:
             continue
         result_type_counters[k] += 1
+        story.doc_url = None
+        story.audio_path = None
+        story.editable_preview = False
         if k == STORY4DOC:
             story.doc_url = doc_url(story.id)
             story.editable_preview = True
-        else:
-            story.doc_url = None
-            story.editable_preview = False
+        elif k == STORY4AUDIO:
+            story.audio_path = audio_path(story.id)
         final_result.append(story)
     active_result_types = [k for k in active_result_types]
     active_result_types = sorted(active_result_types)
@@ -471,7 +474,8 @@ def get_constants(vars):
             STORY4MESSAGE=STORY4MESSAGE,
             STORY4HELP=STORY4HELP,
             STORY4FEEDBACK=STORY4FEEDBACK,
-            STORY4DOC=STORY4DOC
+            STORY4DOC=STORY4DOC,
+            STORY4AUDIO=STORY4AUDIO
             ),
         visibility=dict(
             VIS_NEVER=VIS_NEVER, #for non existing members such as the child of a childless couple (it just connects the)
@@ -524,7 +528,7 @@ def delete_checked_stories(vars):
     tbls = {STORY4MEMBER: db.TblMembers, STORY4EVENT: db.TblEvents, STORY4PHOTO: db.TblPhotos, STORY4TERM: db.TblTerms, STORY4VIDEO: db.TblVideos, STORY4DOC: db.TblDocs}
     
     #if story is associated with member, photo, video or document, need to skip it or delete the item too 
-    for usage in [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC]:
+    for usage in [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4AUDIO]:
         q1 = q & (db.TblStories.used_for == usage)
         lst = db(q1).select()
         story_ids = [rec.id for rec in lst]
@@ -545,7 +549,7 @@ def delete_story(vars):
 def apply_topics_to_selected_stories(vars):
     used_for = vars.used_for
     if used_for:
-        usage_chars = 'xMEPTxxxVD'
+        usage_chars = 'xMEPTxxxVDA'
         usage_char = usage_chars[used_for]
     else:
         usage_char = 'x'
@@ -858,6 +862,7 @@ def set_story_list_data(story_list):
         story_id=rec.id,
         topics = rec.keywords, ###'; '.join(story_topics[rec.id]) if rec.id in story_topics else "",
         doc_url = rec.doc_url,
+        audio_path = rec.audio_path,
         doc_jpg_url = rec.doc_url.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', '.jpg') if rec.doc_url else '',
         used_for=rec.used_for,
         editable_preview=rec.editable_preview,
@@ -1168,7 +1173,8 @@ def item_of_story_id(used_for, story_id):
         STORY4HELP: None,
         STORY4FEEDBACK: None,
         STORY4VIDEO: db.TblVideos,
-        STORY4DOC: db.TblDocs        
+        STORY4DOC: db.TblDocs,
+        STORY4AUDIO: db.TblAudios
     }
     tbl = tbls[used_for]
     if tbl:
@@ -1205,6 +1211,13 @@ def copy_story_date_to_object_date(story_rec):
                               doc_date_dateunit=story_rec.story_date_dateunit,
                               doc_date_datespan=story_rec.story_date_datespan,
                               doc_date_dateend=story_rec.story_date_dateend,
+                              )
+    elif story_rec.used_for == STORY4AUDIO:
+        audio_rec = db(db.TblAudios.story_id==story_rec.id).select().first()
+        audio_rec.update_record(audio_date=story_rec.story_date, 
+                              audio_date_dateunit=story_rec.story_date_dateunit,
+                              audio_date_datespan=story_rec.story_date_datespan,
+                              audio_date_dateend=story_rec.story_date_dateend,
                               )
 
 @serve_json
