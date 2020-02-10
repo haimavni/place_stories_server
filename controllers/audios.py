@@ -16,6 +16,33 @@ def get_audio_list(vars):
     return dict(audio_list=audio_list, no_results=not audio_list)
 
 @serve_json
+def get_audio_list(vars):
+    params = vars.params
+    if params.checked_audio_list:
+        lst0 = db(db.TblAudios.story_id.belongs(params.checked_audio_list)).select()
+        lst0 = [rec for rec in lst0]
+        for rec in lst0:
+            rec.checked = True
+    else:
+        lst0 = []
+    selected_topics = params.selected_topics or []
+    if selected_topics:
+        lst = get_audio_list_with_topics(params)
+    else:
+        q = make_audios_query(params)
+        lst = db(q).select(orderby=~db.TblAudios.id)
+    selected_audio_list = params.selected_audio_list
+    lst = [rec for rec in lst if rec.story_id not in params.checked_audio_list]
+    lst = lst0 + lst
+    audio_list = [rec for rec in lst]
+    for rec in audio_list:
+        fix_record_dates_out(rec)
+        story = get_story_by_id(rec.story_id)
+        rec.story = story
+        rec.audio_path = audio_url(rec.story_id)
+    return dict(audio_list=audio_list, no_results=not audio_list)
+
+@serve_json
 def upload_audio(vars):
     comment("start handling uploaded audio file")
     user_id = int(vars.user_id) if vars.user_id else auth.current_user()
@@ -48,7 +75,7 @@ def apply_to_checked_audios(vars):
             ###item = dict(item_id=audio_id, topic_id=topic.id)
             audio_id = drec.id
             if topic.sign=="plus" and topic.id not in curr_tag_ids:
-                new_id = db.TblItemTopics.insert(item_type='D', item_id=audio_id, topic_id=topic.id, story_id=story_id) 
+                new_id = db.TblItemTopics.insert(item_type='A', item_id=audio_id, topic_id=topic.id, story_id=story_id) 
                 curr_tag_ids |= set([topic.id])
                 ###added.append(item)
                 topic_rec = db(db.TblTopics.id==topic.id).select().first()
@@ -75,6 +102,57 @@ def apply_to_checked_audios(vars):
     ###ws_messaging.send_message('audio-TAGS-CHANGED', group='ALL', changes=changes)
     return dict(new_topic_was_added=new_topic_was_added)
 
+#----------------support functions-----------------
+
+def get_audio_list_with_topics(vars):
+    first = True
+    topic_groups = calc_grouped_selected_options(vars.selected_topics)
+    for topic_group in topic_groups:
+        q = make_audios_query(vars) #if we do not regenerate it the query becomes accumulated and necessarily fails
+        q &= (db.TblItemTopics.item_id==db.TblAudios.id) & (db.TblItemTopics.item_type.like('%A%'))
+        ##topic_ids = [t.id for t in topic_group]
+        sign = topic_group[0]
+        topic_group = topic_group[1:]
+        q1 = db.TblItemTopics.topic_id.belongs(topic_group)
+        if sign == 'minus':
+            q1 = ~q1
+        q &= q1
+        lst = db(q).select(orderby=~db.TblAudios.id)
+        lst = [rec.TblAudios for rec in lst]
+        bag1 = set(r.id for r in lst)
+        if first:
+            first = False
+            bag = bag1
+        else:
+            bag &= bag1
+    dic = {}
+    for r in lst:
+        dic[r.id] = r
+    result = [dic[id] for id in bag]
+    return result
+
+def make_audios_query(params):
+    q = (db.TblAudios.deleted!=True)
+    if params.days_since_upload:
+        days = params.days_since_upload.value
+        if days:
+            upload_date = datetime.datetime.today() - datetime.timedelta(days=days)
+            q &= (db.TblAudios.upload_date >= upload_date)
+    opt = params.selected_uploader
+    if opt == 'mine':
+        q &= (db.TblAudios.uploader==params.user_id)
+    elif opt == 'users':
+        q &= (db.TblAudios.uploader!=None)
+    opt = params.selected_dates_option
+    if opt == 'selected_dates_option':
+        pass
+    elif opt == 'dated':
+        q &= (db.TblAudios.audio_date != NO_DATE)
+    elif opt == 'undated':
+        q &= (db.TblAudios.audio_date == NO_DATE)
+    if params.selected_audios:
+        q &= (db.TblAudios.story_id.belongs(params.selected_audios))
+    return q
 
 def get_story_by_id(story_id):
     sm = stories_manager.Stories()
