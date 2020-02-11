@@ -278,6 +278,10 @@ db.define_table('TblPhotographers',
                 Field('kind', type='string') #P=photograps, V=video, PV=both
 )
 
+db.define_table('TblRecorders',  #audio authors
+                Field('name', type='string')
+)
+
 db.define_table('TblChats',
                 Field('chat_group', type=db.TblChatGroup),
                 Field('author', type=db.auth_user),
@@ -402,7 +406,8 @@ db.define_table('TblAudios',
                 Field('audio_path', type='string'),
                 Field('original_file_name', type='string'),
                 Field('crc', type='integer'),
-                Field('upload_date', type='datetime')
+                Field('upload_date', type='datetime'),
+                Field('recorder_id', type=db.TblRecorders)
                 )
 
 db.define_table('TblStatuses',

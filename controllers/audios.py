@@ -6,17 +6,6 @@ import stories_manager
 
 @serve_json
 def get_audio_list(vars):
-    audio_list = db(db.TblAudios).select()
-    
-    for rec in audio_list:
-        fix_record_dates_out(rec)
-        story = get_story_by_id(rec.story_id)
-        rec.story = story
-        rec.audio_path=audio_url(rec.story_id)
-    return dict(audio_list=audio_list, no_results=not audio_list)
-
-@serve_json
-def get_audio_list(vars):
     params = vars.params
     if params.checked_audio_list:
         lst0 = db(db.TblAudios.story_id.belongs(params.checked_audio_list)).select()
@@ -63,6 +52,11 @@ def apply_to_checked_audios(vars):
         dates_info = None
 
     st = params.selected_topics
+    rlist = params.selected_recorders
+    if len(rlist) == 1:
+        recorder_id = rlist[0].option.id
+    else:
+        recorder_id = None
     added = []
     deleted = []
     changes = dict()
@@ -70,10 +64,10 @@ def apply_to_checked_audios(vars):
     for story_id in adl:
         drec = db(db.TblAudios.story_id==story_id).select().first()
         curr_tag_ids = set(get_tag_ids(drec.id, 'A'))
+        audio_id = drec.id
         for tpc in st:
             topic = tpc.option
             ###item = dict(item_id=audio_id, topic_id=topic.id)
-            audio_id = drec.id
             if topic.sign=="plus" and topic.id not in curr_tag_ids:
                 new_id = db.TblItemTopics.insert(item_type='A', item_id=audio_id, topic_id=topic.id, story_id=story_id) 
                 curr_tag_ids |= set([topic.id])
@@ -89,6 +83,9 @@ def apply_to_checked_audios(vars):
                 curr_tag_ids -= set([topic.id])
                 ###deleted.append(item)
                 db(q).delete()
+        if recorder_id:
+            drec.update_record(recorder_id=recorder_id)
+            
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         keywords = "; ".join(curr_tags)
         changes[audio_id] = dict(keywords=keywords, audio_id=audio_id)
@@ -101,6 +98,20 @@ def apply_to_checked_audios(vars):
     ###changes = [changes[audio_id] for audio_id in adl]
     ###ws_messaging.send_message('audio-TAGS-CHANGED', group='ALL', changes=changes)
     return dict(new_topic_was_added=new_topic_was_added)
+
+@serve_json
+def add_recorder(vars):
+    recorder_name = vars.recorder_name
+    if not db(db.TblRecorders.name == recorder_name).isempty():
+        raise User_Error("!audios.recorder-already-exists")
+    db.TblRecorders.insert(name=recorder_name)
+    ws_messaging.send_message(key='RECORDER_ADDED', group='ALL', recorder_name=recorder_name)
+    return dict()
+
+@serve_json
+def get_recorder_list(vars):
+    recorder_list = db(db.TblRecorders).select()
+    return dict(recorder_list = recorder_list)
 
 #----------------support functions-----------------
 
@@ -138,6 +149,9 @@ def make_audios_query(params):
         if days:
             upload_date = datetime.datetime.today() - datetime.timedelta(days=days)
             q &= (db.TblAudios.upload_date >= upload_date)
+    if params.selected_recorders:
+        selected_recorders = [r.option.id for r in params.selected_recorders]
+        q &= (db.TblAudios.recorder_id.belongs(selected_recorders))
     opt = params.selected_uploader
     if opt == 'mine':
         q &= (db.TblAudios.uploader==params.user_id)
