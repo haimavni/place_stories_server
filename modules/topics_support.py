@@ -41,12 +41,12 @@ def get_topic_groups():
     lst = db.executesql(cmd)
     return lst
 
-def calculate_all_story_keywords():
+def calculate_all_story_keywords(): #not in use. one time for upgrade
     db = inject('db')
     q = (db.TblItemTopics.story_id == db.TblStories.id) 
     q &= (db.TblTopics.id == db.TblItemTopics.topic_id)
     q &= (db.TblTopics.topic_kind == 2)
-    lst = db(q)._select()
+    #lst = db(q)._select() #helped to create the sql command...
     cmd = '''
         SELECT TblItemTopics.story_id, array_agg(TblTopics.name) FROM TblTopics, TblItemTopics, TblStories 
         WHERE ((TblItemTopics.story_id = TblStories.id) AND (TblTopics.id = TblItemTopics.topic_id))
@@ -58,7 +58,7 @@ def calculate_all_story_keywords():
         db(db.TblStories.id==r[0]).update(keywords=keywords)
     n = len(lst)
 
-def fix_topic_groups(): #one time for upgrade
+def fix_topic_groups(): #not in use. one time for upgrade
     db = inject('db')
     for r in db(db.TblTopics.usage != '').select():
         usage = ''.join(sorted(list(set(list(r.usage)))))
