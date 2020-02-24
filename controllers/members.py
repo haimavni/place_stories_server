@@ -808,7 +808,7 @@ def _get_story_list(params, exact, checked):
         lst1 = [r for r in lst1]
     elif not query_has_data(params):
         lst1 = []
-        for used_for in STORY4USER:
+        for used_for in story_kinds():
             q = (db.TblStories.deleted != True) & (db.TblStories.used_for==used_for)
             n = db(q).count()
             if not n:
@@ -830,7 +830,7 @@ def _get_story_list(params, exact, checked):
             if not q:
                 return []
             lst1 = []
-            for used_for in STORY4USER:
+            for used_for in story_kinds():
                 q1 = q & (db.TblStories.used_for==used_for)
                 lst0 = db(q1).select(limitby=(0, 1000), orderby=~db.TblStories.story_len)
                 lst1 += lst0
@@ -1001,7 +1001,7 @@ def query_has_data(params):
 
 def make_stories_query(params, exact):
     getting_live_stories = not params.deleted_stories
-    q = (db.TblStories.deleted != getting_live_stories) & (db.TblStories.used_for.belongs(STORY4USER)) 
+    q = (db.TblStories.deleted != getting_live_stories) & (db.TblStories.used_for.belongs(story_kinds())) 
     selected_stories = params.selected_stories
     ##if exact and params.search_type != 'advanced':
         ##return None
@@ -1225,3 +1225,10 @@ def qualified_members(vars):
     checked_answers = vars.checked_answers
     qualified_members = use_quiz(checked_answers)
     return dict(qualified_members=qualified_members)
+
+def story_kinds():
+    story_kinds_arr = STORY4USER
+    if auth.user_has_privilege(HELP_AUTHOR):
+        story_kinds_arr += [STORY4HELP]
+    return story_kinds_arr
+    

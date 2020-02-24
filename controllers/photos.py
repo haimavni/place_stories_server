@@ -776,6 +776,10 @@ def make_photos_query(vars):
         q1 = (db.TblMemberPhotos.Member_id == member_id) & \
             (db.TblPhotos.id == db.TblMemberPhotos.Photo_id)
         q &= q1
+    if vars.selected_recognition == 'recognized':
+        q &= (db.TblPhotos.Recognized == True)
+    elif vars.selected_recognition == 'unrecognized':
+        q &= (db.TblPhotos.Recognized == False)
     return q
 
 def get_video_list_with_topics(vars):
