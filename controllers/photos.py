@@ -52,7 +52,7 @@ def update_photo_caption(vars):
     photo_id = int(vars.photo_id)
     caption = vars.caption
     photo_rec = db((db.TblPhotos.id==photo_id) & (db.TblPhotos.deleted != True)).select().first()
-    photo_rec.update(Name=caption)
+    photo_rec.update(Name=caption, Recognized=True)
     sm = stories_manager.Stories()
     sm.update_story_name(photo_rec.story_id, caption)
     return dict(bla='bla')
@@ -108,6 +108,7 @@ def save_photo_info(vars):
     del pinf.photographer
     pinf.Name = pinf.name
     del pinf.name
+    pinf.Recognized = True
     photo_rec.update_record(**pinf)
     if photo_date_str:
         dates_info = dict(
@@ -293,7 +294,7 @@ def apply_to_selected_photos(vars):
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         keywords = "; ".join(curr_tags)
         rec = db(db.TblPhotos.id == pid).select().first()
-        rec.update_record(KeyWords=keywords) #todo: remove this line soon
+        rec.update_record(KeyWords=keywords, Recognized=True) #todo: the KeyWords part is obsolete?
         rec1 = db(db.TblStories.id == rec.story_id).select().first()
         rec1.update_record(keywords=keywords)
         if photographer_id:
@@ -777,7 +778,7 @@ def make_photos_query(vars):
             (db.TblPhotos.id == db.TblMemberPhotos.Photo_id)
         q &= q1
     if vars.selected_recognition == 'recognized':
-        q &= (db.TblPhotos.Recognized == True)
+        q &= (db.TblPhotos.Recognized == True) & (db.TblPhotos.Recognized == None)
     elif vars.selected_recognition == 'unrecognized':
         q &= (db.TblPhotos.Recognized == False)
     return q
