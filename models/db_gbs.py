@@ -459,6 +459,7 @@ db.define_table('TblFeedback',
 
 db.define_table('TblConfiguration',
                 Field('languages', type='string', default='he,en'),
+                Field('description', type='string'),
                 Field('fix_level', type='integer', default=0),
                 Field('enable_auto_registration', type='boolean', default=False),
                 Field('initial_privileges', type='string', default='EDITOR;PHOTO_UPLOADER;CHATTER'),
@@ -505,6 +506,13 @@ db.define_table('TblAnswers',
 db.define_table('TblItemAnswers',
                 Field('answer_id', type=db.TblAnswers),
                 Field('item_id', type='integer') #ensure only one answer per question
+                )
+
+db.define_table('TblGroups',
+                Field('title', type='string'),
+                Field('description', type='string'),
+                Field('logo_name', type='string'),
+                Field('deleted', type='boolean', default=False)
                 )
 
 def write_indexing_sql_scripts():

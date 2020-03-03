@@ -778,7 +778,7 @@ def make_photos_query(vars):
             (db.TblPhotos.id == db.TblMemberPhotos.Photo_id)
         q &= q1
     if vars.selected_recognition == 'recognized':
-        q &= (db.TblPhotos.Recognized == True) & (db.TblPhotos.Recognized == None)
+        q &= ((db.TblPhotos.Recognized == True) | (db.TblPhotos.Recognized == None))
     elif vars.selected_recognition == 'unrecognized':
         q &= (db.TblPhotos.Recognized == False)
     return q
