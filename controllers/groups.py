@@ -1,4 +1,8 @@
 from folders import *
+import zlib
+from cStringIO import StringIO
+from PIL import Image, ImageFile
+from photos_support import crop_to_square
 
 @serve_json
 def get_group_list(vars):
@@ -30,8 +34,8 @@ def get_group_info(vars):
 @serve_json
 def upload_logo(vars):
     fil = vars.file
-    group_id=vars.group_id
-    file_name = save_uploaded_logo(fil.name, fil.BINvalue)
+    group_id=fil.info.group_id
+    file_name = save_uploaded_logo(fil.name, fil.BINvalue, group_id)
     return dict(logo_url=get_logo_url(group_id))
 
 #-----------support functions----------------------------
@@ -42,15 +46,16 @@ def get_logo_url(group_id):
     logo_name = rec.logo_name if rec.logo_name else 'dummy-logo.jpg'
     return folder + logo_name
     
-def save_uploaded_logo(file_name, blob):
+def save_uploaded_logo(file_name, blob, group_id):
     crc = zlib.crc32(blob)
     original_file_name, ext = os.path.splitext(file_name)
     file_name = '{crc:x}{ext}'.format(crc=crc & 0xffffffff, ext=ext)
-    path = local_folder(logos) + sub_folder
+    path = local_folder('logos')
     dir_util.mkpath(path)
     stream = StringIO(blob)
     img = Image.open(stream)
     width, height = img.size
     img = crop_to_square(img, width, height, 256)
     img.save(path + file_name)
+    db(db.TblGroups.id==group_id).update(logo_name=file_name)
     return file_name
