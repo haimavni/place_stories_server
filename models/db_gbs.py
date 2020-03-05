@@ -512,7 +512,8 @@ db.define_table('TblGroups',
                 Field('title', type='string'),
                 Field('description', type='string'),
                 Field('logo_name', type='string'),
-                Field('deleted', type='boolean', default=False)
+                Field('topic_id', type='integer'),
+                Field('deleted', type='boolean', default=False) #todo: currently not used
                 )
 
 def write_indexing_sql_scripts():

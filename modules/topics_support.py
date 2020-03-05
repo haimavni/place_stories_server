@@ -80,3 +80,24 @@ def combined_usage(uc):
     usage = sorted(usage)
     usage = ''.join(usage)
     return usage
+
+def add_a_topic(topic_name):
+    db, User_Error = inject('db', 'User_Error')
+    if db(db.TblTopics.name==topic_name).count() > 0:
+        raise User_Error('!stories.topic-already-exists')
+    new_topic_id = db.TblTopics.insert(name=topic_name, usage='', topic_kind=0)
+    return new_topic_id
+
+def topic_name(topic_id):
+    db = inject('db')
+    return db(db.TblTopics.id==topic_id).select().first().name
+
+def rename_a_topic(topic_id, new_name):
+    db = inject('db')
+    rec = db(db.TblTopics.id==topic_id).select().first()
+    old_name = rec.name
+    if new_name == rec.name:
+        return
+    rec.update_record(name = new_name)
+    #todo: recalculate keyword list for all relevant stories
+    
