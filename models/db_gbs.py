@@ -509,7 +509,6 @@ db.define_table('TblItemAnswers',
                 )
 
 db.define_table('TblGroups',
-                Field('title', type='string'),
                 Field('description', type='string'),
                 Field('logo_name', type='string'),
                 Field('topic_id', type='integer'),

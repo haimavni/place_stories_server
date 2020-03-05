@@ -31,10 +31,10 @@ def get_group_info(vars):
     group_id = vars.group_id
     logo_url = get_logo_url(group_id)
     rec = db(db.TblGroups.id==group_id).select().first()
-    result = dict(title=topic_name(rec.topic_id),
-                  description=rec.description,
-                  logo_url=logo_url)
-    
+    return dict(title=topic_name(rec.topic_id),
+                description=rec.description,
+                logo_url=logo_url)
+
 @serve_json
 def upload_logo(vars):
     fil = vars.file
@@ -48,13 +48,14 @@ def delete_group(vars):
     return dict()
 
 #-----------support functions----------------------------
-       
+
 def get_logo_url(group_id):
+    group_id = int(group_id)
     rec = db(db.TblGroups.id==group_id).select().first()
     folder = url_folder('logos')
     logo_name = rec.logo_name if rec.logo_name else 'dummy-logo.jpg'
     return folder + logo_name
-    
+
 def save_uploaded_logo(file_name, blob, group_id):
     crc = zlib.crc32(blob)
     original_file_name, ext = os.path.splitext(file_name)
