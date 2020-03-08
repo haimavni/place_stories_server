@@ -2,7 +2,7 @@ from folders import *
 import zlib
 from cStringIO import StringIO
 from PIL import Image, ImageFile
-from photos_support import crop_to_square
+from photos_support import save_uploaded_photo, photos_folder, timestamped_photo_path
 from topics_support import *
 import ws_messaging
 
@@ -47,7 +47,26 @@ def delete_group(vars):
     db(db.TblGroups.id==vars.group_id).delete()
     return dict()
 
+@serve_json
+def upload_photo(vars):
+    user_id = vars.user_id or auth.current_user()
+    comment("start handling uploaded file")
+    user_id = int(vars.user_id) if vars.user_id else auth.current_user()
+    fil = vars.file
+    result = save_uploaded_photo(fil.name, fil.BINvalue, user_id)
+    duplicate = False
+    if result.duplicate:
+        photo_id = result.duplicate
+        duplicate = True
+    else:
+        photo_id = result.photo_id
+    rec = db(db.TblPhotos.id == photo_id).select().first()
+    photo_url=photos_folder() + timestamped_photo_path(rec)
+    ws_messaging.send_message(key='GROUP-PHOTO-UPLOADED', group=vars.file.info.ptp_key, photo_url=photo_url, duplicate=duplicate)
+    return dict(photo_url=photo_url, upload_result=dict(duplicate=duplicate))
+
 #-----------support functions----------------------------
+MAX_SIZE = 256
 
 def get_logo_url(group_id):
     group_id = int(group_id)
@@ -65,8 +84,17 @@ def save_uploaded_logo(file_name, blob, group_id):
     stream = StringIO(blob)
     img = Image.open(stream)
     width, height = img.size
-    img = crop_to_square(img, width, height, 256)
+    
+    if height > MAX_SIZE or width > MAX_SIZE:
+        width, height = resized(width, height)
+        img = img.resize((width, height), Image.LANCZOS)
     img.save(path + file_name)
     db(db.TblGroups.id==group_id).update(logo_name=file_name)
     ws_messaging.send_message(key='GROUP-LOGO-UPLOADED', group='ALL', group_id=group_id, logo_url=get_logo_url(group_id))
     return file_name
+
+def resized(width, height):
+    x = 1.0 * MAX_SIZE / width
+    y = 1.0 * MAX_SIZE / height
+    r = x if x < y else y
+    return int(round(r * width)), int(round(r * height))
