@@ -5,6 +5,7 @@ from PIL import Image, ImageFile
 from photos_support import save_uploaded_photo, photos_folder, timestamped_photo_path
 from topics_support import *
 import ws_messaging
+from admin_support.access_manager import register_new_user
 
 @serve_json
 def get_group_list(vars):
@@ -64,6 +65,19 @@ def upload_photo(vars):
     photo_url=photos_folder() + timestamped_photo_path(rec)
     ws_messaging.send_message(key='GROUP-PHOTO-UPLOADED', group=vars.file.info.ptp_key, photo_url=photo_url, duplicate=duplicate)
     return dict(photo_url=photo_url, upload_result=dict(duplicate=duplicate))
+
+@serve_json
+def attempt_login(vars):
+    user_id = 0;
+    user_rec = db(db.auth_user.email==vars.email).select().first()
+    if user_rec:
+        user_id = user_rec.id
+    return dict(user_id=user_id)
+
+@serve_json
+def register_user(vars):
+    user_id = register_new_user(vars.email, vars.password, vars.first_name, vars.last_name, registration_key='')
+    return dict(user_id=user_id)
 
 #-----------support functions----------------------------
 MAX_SIZE = 256

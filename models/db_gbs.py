@@ -51,6 +51,7 @@ db.define_table('TblStories',
                 Field('used_for', type='integer'),  #member, event, photo, term, message
                 Field('keywords', type='string'),  #to be calculated automatically using tfidf
                 Field('story_len', type='integer', compute=lambda row: len(row.story)),
+                Field('is_tagged', type='boolean', default=False),
                 Field('language', type='string'),
                 Field('translated_from', type='integer'), ##db.TblStories 
                 Field('deleted', type='boolean', default=False),
