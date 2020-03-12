@@ -19,6 +19,7 @@ def __apply_fixes():
     if db(db.TblConfiguration).isempty():
         return
     last_fix = sorted(_fixes)[-1]
+    comment("last fix is {}", last_fix)
     last_applied_fix = db(db.TblConfiguration.id==1).select().first().fix_level or 0
     if last_applied_fix >= last_fix:
         return
@@ -28,6 +29,7 @@ def __apply_fixes():
         return
     for f in sorted(_fixes):
         if f > last_applied_fix:
+            comment("applying fix {}", f)
             try:
                 _fixes[f]()
             except Exception, e:
@@ -36,7 +38,6 @@ def __apply_fixes():
             else:
                 db(db.TblConfiguration.id==1).update(fix_level=f)
                 db.commit()
-                
     
 def _apply_fixes():    
     lock_file_name = '{p}apply-fixes[{a}].lock'.format(p=log_path(), a=request.application)
