@@ -1,7 +1,7 @@
 import random
 import time
 from date_utils import fix_all_date_ends, init_story_dates
-from topics_support import fix_is_tagged
+#from topics_support import fix_is_tagged
 
 def _delay():
     n = random.randint(0, 1000000)
@@ -19,7 +19,6 @@ def __apply_fixes():
     if db(db.TblConfiguration).isempty():
         return
     last_fix = sorted(_fixes)[-1]
-    comment("last fix is {}", last_fix)
     last_applied_fix = db(db.TblConfiguration.id==1).select().first().fix_level or 0
     if last_applied_fix >= last_fix:
         return
@@ -58,6 +57,9 @@ def init_sampling():
     for story_rec in db((db.TblStories.deleted!= True) & (db.TblStories.sampling_id==None)).select():
         story_rec.update_record(sampling_id=random.randint(1, SAMPLING_SIZE))
     db.commit()
+    
+def fix_is_tagged():
+    schedule_background_task("fix is tagged", "fix_is_tagged()")
 
 _fixes = {
     1: init_photo_back_sides,
