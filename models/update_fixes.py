@@ -1,6 +1,7 @@
 import random
 import time
 from date_utils import fix_all_date_ends, init_story_dates
+from topics_support import fix_is_tagged
 
 def _delay():
     n = random.randint(0, 1000000)
@@ -61,7 +62,8 @@ _fixes = {
     1: init_photo_back_sides,
     2: fix_all_date_ends,
     3: init_story_dates,
-    4: init_sampling
+    4: init_sampling,
+    5: fix_is_tagged
 }
 
 _init_configuration_table()

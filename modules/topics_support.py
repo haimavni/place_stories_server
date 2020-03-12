@@ -104,7 +104,7 @@ def rename_a_topic(topic_id, new_name):
 def fix_is_tagged():
     db = inject('db')
     cnt = 0
-    for story in db(db.TblStories.deleted!=True).select():
+    for story in db((db.TblStories.is_tagged==None) & (db.TblStories.deleted!=True)).select():
         cnt += 1
         story.update_record(is_tagged = False)
     cnt1 = 0
