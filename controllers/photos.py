@@ -201,6 +201,8 @@ def get_photo_list(vars):
         lst1 = random.sample(lst, MAX_PHOTOS_COUNT)
         lst = lst1
     selected_photo_list = vars.selected_photo_list
+    if lst and 'TblPhotos' in lst[0]:
+        lst = [r.TblPhotos for r in lst]
     if selected_photo_list:
         lst1 = db(db.TblPhotos.id.belongs(selected_photo_list)).select()
         lst1 = [rec for rec in lst1]
@@ -781,6 +783,8 @@ def make_photos_query(vars):
         q &= ((db.TblPhotos.Recognized == True) | (db.TblPhotos.Recognized == None))
     elif vars.selected_recognition == 'unrecognized':
         q &= (db.TblPhotos.Recognized == False)
+    if vars.show_untagged:
+        q &= (db.TblPhotos.story_id==db.TblStories.id) & (db.TblStories.is_tagged==False)
     return q
 
 def get_video_list_with_topics(vars):

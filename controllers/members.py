@@ -346,6 +346,8 @@ def get_story_photo_list(vars):
     elif vars.story_type == "term":
         tbl = db.TblTerms
         tbl1 = db.TblTermPhotos
+    elif vars.story_type ==  "help":
+        return dict(photo_list=[])
     else:
         raise Exception('Unknown call type in get story photo list')
     item_id = db(tbl.story_id == story_id).select().first().id
@@ -998,7 +1000,8 @@ def query_has_data(params):
     first_year, last_year = calc_years_range(params)
     return params.keywords_str or params.checked_story_list or params.selected_stories or \
            (params.days_since_update and params.days_since_update.value) or first_year or last_year or \
-           (params.approval_state and params.approval_state.id in [2,3]) or params.selected_topics or params.selected_words
+           (params.approval_state and params.approval_state.id in [2,3]) or params.selected_topics or \
+           params.show_untagged or params.selected_words
 
 def make_stories_query(params, exact):
     getting_live_stories = not params.deleted_stories
@@ -1037,6 +1040,8 @@ def make_stories_query(params, exact):
     if last_year:
         to_date = datetime.date(year=last_year, month=1, day=1)
         q &= (db.TblStories.story_date < to_date)
+    if params.show_untagged:
+        q &= (db.TblStories.is_tagged==False)
     return q
 
 def calc_years_range(params):

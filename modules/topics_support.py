@@ -101,3 +101,17 @@ def rename_a_topic(topic_id, new_name):
     rec.update_record(name = new_name)
     #todo: recalculate keyword list for all relevant stories
     
+def fix_is_tagged():
+    db = inject('db')
+    cnt = 0
+    for story in db(db.TblStories.deleted!=True).select():
+        cnt += 1
+        story.update_record(is_tagged = False)
+    cnt1 = 0
+    for rec in db(db.TblItemTopics).select():
+        cnt1 += 1
+        story = db(db.TblStories.id==rec.story_id).select().first()
+        if story:
+            story.update_record(is_tagged=True)
+    db.commit()
+    
