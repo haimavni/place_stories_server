@@ -645,7 +645,7 @@ def add_story_member(vars):
 @serve_json
 def save_photo_group(vars):
     story_id = vars.caller_id
-    tbl = db.TblEvents if vars.caller_type == "story" else db.TblTerms if vars.caller_type == "term" else None
+    tbl = db.TblEvents if vars.caller_type == "story" else db.TblTerms if vars.caller_type == "term" else help if vars.caller_type == 'help' else None
     if not tbl:
         raise Exception('Unknown call type in save photo group')
     item_id = db(tbl.story_id == story_id).select().first().id

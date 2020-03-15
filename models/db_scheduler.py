@@ -18,6 +18,10 @@ def test_scheduler(msg):
     comment("test task {}", msg)
 
 class MyScheduler(Scheduler):
+    
+    def __init__(self, db, tasks, one_time_tasks):
+        Scheduler.__init__(self, db, tasks)
+        self.one_time_tasks = one_time_tasks
 
     def restart_task(self, task_id, period=None):
         self.stop_task(task_id)
@@ -94,19 +98,18 @@ def dict_to_json_str(dic):
 def execute_task(*args, **vars):
     comment("entered execute task")
     try:
-        #for key in vars:
-            #comment(" vars[{key}]={val}", key, vars[key])
-        #comment('Started task {}: {}'.format(args, vars))
         name = vars['name']
         command = vars['command']
         comment('Started task {}: {}'.format(name, command))
+        function = scheduler.one_time_tasks[command]
     except Exception, e:
-        log_exception('enter execute task ')
+        log_exception('error enter execute task ')
         raise
     try:
-        result = eval(command)
+
+        result = function()
     except Exception, e:
-        log_exception('Executing ' + name)
+        log_exception('Error executing ' + name)
     else:
         comment('Finished task {}. Returned {}.'.format(name, result))
         db.commit()
@@ -249,7 +252,11 @@ __tasks = dict(
     execute_task=execute_task
 )
 
-scheduler = MyScheduler(db, __tasks)
+__one_time_tasks = dict(
+    fix_is_tagged=fix_is_tagged
+)
+
+scheduler = MyScheduler(db, __tasks, __one_time_tasks)
 
 def verify_tasks_started():
     if db(db.auth_user).count() < 2:
