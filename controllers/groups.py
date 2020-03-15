@@ -51,6 +51,7 @@ def delete_group(vars):
 @serve_json
 def upload_photo(vars):
     user_id = vars.user_id or auth.current_user()
+    group_id = vars.file.info.group_id
     comment("start handling uploaded file")
     user_id = int(vars.user_id) if vars.user_id else auth.current_user()
     fil = vars.file
@@ -61,8 +62,19 @@ def upload_photo(vars):
         duplicate = True
     else:
         photo_id = result.photo_id
-    rec = db(db.TblPhotos.id == photo_id).select().first()
-    photo_url=photos_folder() + timestamped_photo_path(rec)
+    photo_rec = db(db.TblPhotos.id == photo_id).select().first()
+    group_rec = db(db.TblGroups.id==group_id).select().first()
+    topic_id=group_rec.topic_id
+    topic_rec = db(db.TblTopics.id==topic_id).select().first()
+    new_id = db.TblItemTopics.insert(
+        item_type="P",
+        item_id=photo_id,
+        topic_id=topic_id,
+        story_id=photo_rec.story_id)
+    if 'P' not in topic_rec.usage:
+        usage = topic_rec.usage + 'P'
+        topic_rec.update_record(usage=usage, topic_kind=2) #simple topic
+    photo_url=photos_folder() + timestamped_photo_path(photo_rec)
     ws_messaging.send_message(key='GROUP-PHOTO-UPLOADED', group=vars.file.info.ptp_key, photo_url=photo_url, duplicate=duplicate)
     return dict(photo_url=photo_url, upload_result=dict(duplicate=duplicate))
 
