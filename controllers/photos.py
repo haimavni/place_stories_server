@@ -727,6 +727,8 @@ def get_photo_list_with_topics(vars):
     for r in lst:
         dic[r.id] = r
     result = [dic[id] for id in bag]
+    if vars.selected_order_option == 'upload-time-order': 
+        result = sorted(result, reverse=True, key=lambda r: r.id)
     return result
 
 def make_photos_query(vars):
