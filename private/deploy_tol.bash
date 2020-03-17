@@ -25,6 +25,13 @@ then
     BRANCH1=$BRANCH
 fi
 
+if [ -z "$2" ]
+then
+    TARGET=$BRANCH
+else
+    TARGET=$2
+fi
+
 echo -e "Deploy to branch " $BRANCH
 echo -d "Front branch is " $BRANCH1
 echo -e "Deploy to branch " $BRANCH >> ~/log/deploy_history.log
@@ -56,25 +63,25 @@ git checkout master
 
 echo "
 lcd /home/haim/deployment_folder
-cd /home/www-data/tol_server_${BRANCH}/static
+cd /home/www-data/tol_server_${TARGET}/static
 rename aurelia aurelia_prev
 mkdir aurelia
 cd aurelia
 put -R *
 " > ../server/tol_server/private/deploy.batch
 
-ssh gbstories.org rm -R -f /home/www-data/tol_server_${BRANCH}/static/aurelia_prev/*
+ssh gbstories.org rm -R -f /home/www-data/tol_server_${TARGET}/static/aurelia_prev/*
 sftp -b ../server/tol_server/private/deploy.batch gbstories.org
 
 #version file is uploaded last to prevent immature updates for users
 echo "
 lcd /home/haim/
-cd /home/www-data/tol_server_${BRANCH}/static/aurelia
+cd /home/www-data/tol_server_${TARGET}/static/aurelia
 put curr_version.tmp
 " > ../server/tol_server/private/deploy.batch
 sftp -b ../server/tol_server/private/deploy.batch gbstories.org
 
-ssh root@gbstories.org bash /home/www-data/tol_server_${BRANCH}/private/update_${BRANCH}.bash
+ssh root@gbstories.org bash /home/www-data/tol_server_${TARGET}/private/update_target.bash $TARGET
 rm ../server/tol_server/private/deploy.batch
 
 popd

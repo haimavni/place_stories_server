@@ -13,7 +13,8 @@ STORY4HELP = 6
 STORY4FEEDBACK = 7
 STORY4VIDEO = 8
 STORY4DOC = 9
-STORY4USER = [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC]
+STORY4AUDIO = 10
+STORY4USER = [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4AUDIO] 
 
 VIS_NEVER = 0           #for non existing members such as the child of a childless couple (it just connects them)
 VIS_NOT_READY = 1
@@ -50,6 +51,7 @@ db.define_table('TblStories',
                 Field('used_for', type='integer'),  #member, event, photo, term, message
                 Field('keywords', type='string'),  #to be calculated automatically using tfidf
                 Field('story_len', type='integer', compute=lambda row: len(row.story)),
+                Field('is_tagged', type='boolean', default=False),
                 Field('language', type='string'),
                 Field('translated_from', type='integer'), ##db.TblStories 
                 Field('deleted', type='boolean', default=False),
@@ -207,9 +209,10 @@ db.define_table('TblMemberPhotos',
 )
 
 db.define_table('TblMembers',
+                Field('title', type='string'),
                 Field('first_name', type='string'),
                 Field('last_name', type='string'),
-                Field.Virtual('full_name', lambda rec: rec.first_name + ' ' + rec.last_name),
+                Field.Virtual('full_name', lambda rec: (rec.title + ' ' if rec.title else '') + rec.first_name + ' ' + rec.last_name),
                 Field('former_first_name', type='string'),
                 Field('former_last_name', type='string'),
                 Field('DateOfAlia', type='string'),
@@ -274,6 +277,10 @@ db.define_table('TblObjects',
 db.define_table('TblPhotographers',
                 Field('name', type='string'),
                 Field('kind', type='string') #P=photograps, V=video, PV=both
+)
+
+db.define_table('TblRecorders',  #audio authors
+                Field('name', type='string')
 )
 
 db.define_table('TblChats',
@@ -385,6 +392,25 @@ db.define_table('TblDocs',
                 Field('upload_date', type='datetime')
                 )
 
+db.define_table('TblAudios',
+                Field('name', type='string'),
+                Field('keywords', type='string'),
+                Field('audio_type', type='string'),
+                Field('deleted', type='boolean', default=False),
+                Field('story_id', type=db.TblStories),
+                Field('uploader', type=db.auth_user),
+                Field('audio_date', type='date', default=NO_DATE),
+                Field('audio_date_dateunit', type='string', default='Y'), # D, M or Y for day, month, year
+                Field('audio_date_datespan', type='integer', default=1), # how many months or years in the range
+                Field('audio_date_dateend', type='date', default=NO_DATE),
+                Field('touch_time', type='date', default=NO_DATE), #used to promote docs
+                Field('audio_path', type='string'),
+                Field('original_file_name', type='string'),
+                Field('crc', type='integer'),
+                Field('upload_date', type='datetime'),
+                Field('recorder_id', type=db.TblRecorders)
+                )
+
 db.define_table('TblStatuses',
                 Field('IIDD', type='integer'),
                 Field('Name', type='string'),
@@ -434,11 +460,13 @@ db.define_table('TblFeedback',
 
 db.define_table('TblConfiguration',
                 Field('languages', type='string', default='he,en'),
+                Field('description', type='string'),
                 Field('fix_level', type='integer', default=0),
                 Field('enable_auto_registration', type='boolean', default=False),
                 Field('initial_privileges', type='string', default='EDITOR;PHOTO_UPLOADER;CHATTER'),
                 Field('expiration_date', type='date'),
-                Field('expose_new_app_button', type='boolean', default=True)
+                Field('expose_new_app_button', type='boolean', default=True),
+                Field('support_audio', type='boolean', default=False)
                 )
 
 db.define_table('TblLocaleCustomizations',
@@ -460,19 +488,32 @@ db.define_table('TblCustomers',
                 Field('creation_time', type='datetime', default=request.now)
                 )
 
+db.define_table('TblMenus',
+                Field('name', type='string')
+                )
+
 db.define_table('TblQuestions',
-                Field('kind', type='string'),
-                Field('question', type='string')
+                Field('menu_id', type=db.TblMenus),
+                Field('prompt', type='string'),
+                Field('description', type='string')
                 )
 
 db.define_table('TblAnswers',
                 Field('question_id', type=db.TblQuestions),
-                Field('answer', type='string')
+                Field('text', type='string'),
+                Field('description', type='string')
                 )
 
-db.define_table('TblMemberAnswers',
+db.define_table('TblItemAnswers',
                 Field('answer_id', type=db.TblAnswers),
                 Field('item_id', type='integer') #ensure only one answer per question
+                )
+
+db.define_table('TblGroups',
+                Field('description', type='string'),
+                Field('logo_name', type='string'),
+                Field('topic_id', type='integer'),
+                Field('deleted', type='boolean', default=False) #todo: currently not used
                 )
 
 def write_indexing_sql_scripts():

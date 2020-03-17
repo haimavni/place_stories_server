@@ -17,7 +17,9 @@ from words import calc_used_languages, read_words_index, get_all_story_previews,
 from html_utils import clean_html
 from members_support import *
 from docs_support import doc_url
+from audios_support import audio_path
 from family_connections import *
+from quiz_support import use_quiz
 
 @serve_json
 def member_list(vars):
@@ -171,6 +173,7 @@ def get_random_member(vars):
     idx = random.randint(0, len(lst) / 5)
     member_data=get_member_rec(lst[idx].member_id)
     member_data.face_photo_url = photos_folder('profile_photos') + member_data.facePhotoURL
+    member_data.short_name = (member_data.title + ' ' if member_data.title else '') + member_data.first_name
     return dict(member_data=member_data)
 
 @serve_json
@@ -222,12 +225,14 @@ def get_story_list(vars):
         if result_type_counters[k] >= 100:
             continue
         result_type_counters[k] += 1
+        story.doc_url = None
+        story.audio_path = None
+        story.editable_preview = False
         if k == STORY4DOC:
             story.doc_url = doc_url(story.id)
             story.editable_preview = True
-        else:
-            story.doc_url = None
-            story.editable_preview = False
+        elif k == STORY4AUDIO:
+            story.audio_path = audio_path(story.id)
         final_result.append(story)
     active_result_types = [k for k in active_result_types]
     active_result_types = sorted(active_result_types)
@@ -341,6 +346,8 @@ def get_story_photo_list(vars):
     elif vars.story_type == "term":
         tbl = db.TblTerms
         tbl1 = db.TblTermPhotos
+    elif vars.story_type ==  "help":
+        return dict(photo_list=[])
     else:
         raise Exception('Unknown call type in get story photo list')
     item_id = db(tbl.story_id == story_id).select().first().id
@@ -469,7 +476,8 @@ def get_constants(vars):
             STORY4MESSAGE=STORY4MESSAGE,
             STORY4HELP=STORY4HELP,
             STORY4FEEDBACK=STORY4FEEDBACK,
-            STORY4DOC=STORY4DOC
+            STORY4DOC=STORY4DOC,
+            STORY4AUDIO=STORY4AUDIO
             ),
         visibility=dict(
             VIS_NEVER=VIS_NEVER, #for non existing members such as the child of a childless couple (it just connects the)
@@ -522,7 +530,7 @@ def delete_checked_stories(vars):
     tbls = {STORY4MEMBER: db.TblMembers, STORY4EVENT: db.TblEvents, STORY4PHOTO: db.TblPhotos, STORY4TERM: db.TblTerms, STORY4VIDEO: db.TblVideos, STORY4DOC: db.TblDocs}
     
     #if story is associated with member, photo, video or document, need to skip it or delete the item too 
-    for usage in [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC]:
+    for usage in [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4AUDIO]:
         q1 = q & (db.TblStories.used_for == usage)
         lst = db(q1).select()
         story_ids = [rec.id for rec in lst]
@@ -543,7 +551,7 @@ def delete_story(vars):
 def apply_topics_to_selected_stories(vars):
     used_for = vars.used_for
     if used_for:
-        usage_chars = 'xMEPTxxxVD'
+        usage_chars = 'xMEPTxxxVDA'
         usage_char = usage_chars[used_for]
     else:
         usage_char = 'x'
@@ -582,6 +590,7 @@ def apply_topics_to_selected_stories(vars):
                 if usage_char not in topic_rec.usage:
                     usage = topic_rec.usage + usage_char
                     topic_rec.update_record(usage=usage, topic_kind=2) #topic is simple
+                db(db.TblStories.id == ed).update(is_tagged = True)
             elif topic.sign == "minus" and topic.id in curr_tag_ids:
                 q = (db.TblItemTopics.item_type == usage_char) & (db.TblItemTopics.story_id == eid) & (db.TblItemTopics.topic_id == topic.id)
                 curr_tag_ids -= set([topic.id])
@@ -636,7 +645,7 @@ def add_story_member(vars):
 @serve_json
 def save_photo_group(vars):
     story_id = vars.caller_id
-    tbl = db.TblEvents if vars.caller_type == "story" else db.TblTerms if vars.caller_type == "term" else None
+    tbl = db.TblEvents if vars.caller_type == "story" else db.TblTerms if vars.caller_type == "term" else help if vars.caller_type == 'help' else None
     if not tbl:
         raise Exception('Unknown call type in save photo group')
     item_id = db(tbl.story_id == story_id).select().first().id
@@ -802,7 +811,7 @@ def _get_story_list(params, exact, checked):
         lst1 = [r for r in lst1]
     elif not query_has_data(params):
         lst1 = []
-        for used_for in STORY4USER:
+        for used_for in story_kinds():
             q = (db.TblStories.deleted != True) & (db.TblStories.used_for==used_for)
             n = db(q).count()
             if not n:
@@ -824,7 +833,7 @@ def _get_story_list(params, exact, checked):
             if not q:
                 return []
             lst1 = []
-            for used_for in STORY4USER:
+            for used_for in story_kinds():
                 q1 = q & (db.TblStories.used_for==used_for)
                 lst0 = db(q1).select(limitby=(0, 1000), orderby=~db.TblStories.story_len)
                 lst1 += lst0
@@ -856,6 +865,7 @@ def set_story_list_data(story_list):
         story_id=rec.id,
         topics = rec.keywords, ###'; '.join(story_topics[rec.id]) if rec.id in story_topics else "",
         doc_url = rec.doc_url,
+        audio_path = rec.audio_path,
         doc_jpg_url = rec.doc_url.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', '.jpg') if rec.doc_url else '',
         used_for=rec.used_for,
         editable_preview=rec.editable_preview,
@@ -990,11 +1000,12 @@ def query_has_data(params):
     first_year, last_year = calc_years_range(params)
     return params.keywords_str or params.checked_story_list or params.selected_stories or \
            (params.days_since_update and params.days_since_update.value) or first_year or last_year or \
-           (params.approval_state and params.approval_state.id in [2,3]) or params.selected_topics or params.selected_words
+           (params.approval_state and params.approval_state.id in [2,3]) or params.selected_topics or \
+           params.show_untagged or params.selected_words
 
 def make_stories_query(params, exact):
     getting_live_stories = not params.deleted_stories
-    q = (db.TblStories.deleted != getting_live_stories) & (db.TblStories.used_for.belongs(STORY4USER)) 
+    q = (db.TblStories.deleted != getting_live_stories) & (db.TblStories.used_for.belongs(story_kinds())) 
     selected_stories = params.selected_stories
     ##if exact and params.search_type != 'advanced':
         ##return None
@@ -1029,6 +1040,8 @@ def make_stories_query(params, exact):
     if last_year:
         to_date = datetime.date(year=last_year, month=1, day=1)
         q &= (db.TblStories.story_date < to_date)
+    if params.show_untagged:
+        q &= (db.TblStories.is_tagged==False)
     return q
 
 def calc_years_range(params):
@@ -1166,7 +1179,8 @@ def item_of_story_id(used_for, story_id):
         STORY4HELP: None,
         STORY4FEEDBACK: None,
         STORY4VIDEO: db.TblVideos,
-        STORY4DOC: db.TblDocs        
+        STORY4DOC: db.TblDocs,
+        STORY4AUDIO: db.TblAudios
     }
     tbl = tbls[used_for]
     if tbl:
@@ -1204,3 +1218,23 @@ def copy_story_date_to_object_date(story_rec):
                               doc_date_datespan=story_rec.story_date_datespan,
                               doc_date_dateend=story_rec.story_date_dateend,
                               )
+    elif story_rec.used_for == STORY4AUDIO:
+        audio_rec = db(db.TblAudios.story_id==story_rec.id).select().first()
+        audio_rec.update_record(audio_date=story_rec.story_date, 
+                              audio_date_dateunit=story_rec.story_date_dateunit,
+                              audio_date_datespan=story_rec.story_date_datespan,
+                              audio_date_dateend=story_rec.story_date_dateend,
+                              )
+
+@serve_json
+def qualified_members(vars):
+    checked_answers = vars.checked_answers
+    qualified_members = use_quiz(checked_answers)
+    return dict(qualified_members=qualified_members)
+
+def story_kinds():
+    story_kinds_arr = STORY4USER
+    if auth.user_has_privilege(HELP_AUTHOR):
+        story_kinds_arr += [STORY4HELP]
+    return story_kinds_arr
+    

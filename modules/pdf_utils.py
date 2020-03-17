@@ -56,7 +56,7 @@ def pdf_to_text(pdfname):
                     tmp_s = LAAZ_REGEX.sub(invert, tmp_s) #reverse non-hebrew words back
             else:
                 tmp_s = HEB_REGEX.sub(invert, tmp_s)
-            result += tmp_s + '\n'
+            result += tmp_s + '<br>'
     result += '\n</body>\n</html>'
     result = result.encode('utf-8')
     return result

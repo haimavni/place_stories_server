@@ -2,6 +2,7 @@
 
 from admin_support.access_manager import register_new_user, AccessManager
 from gluon.utils import web2py_uuid
+import re
 
 def init_database():
     if len(request.args) < 4:

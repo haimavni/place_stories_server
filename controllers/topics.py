@@ -111,10 +111,8 @@ def rename_topic(vars):
 
 @serve_json
 def add_topic(vars):
-    if db(db.TblTopics.name==vars.topic_name).count() > 0:
-        raise User_Error('!stories.topic-already-exists')
-    idx = db.TblTopics.insert(name=vars.topic_name, usage='', topic_kind=0)
-    return dict(new_topic_id=idx)
+    new_topic_id = add_a_topic(vars.topic_name)
+    return dict(new_topic_id=new_topic_id)
 
 @serve_json
 def add_topic_group(vars):

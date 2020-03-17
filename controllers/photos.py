@@ -52,7 +52,7 @@ def update_photo_caption(vars):
     photo_id = int(vars.photo_id)
     caption = vars.caption
     photo_rec = db((db.TblPhotos.id==photo_id) & (db.TblPhotos.deleted != True)).select().first()
-    photo_rec.update(Name=caption)
+    photo_rec.update(Name=caption, Recognized=True)
     sm = stories_manager.Stories()
     sm.update_story_name(photo_rec.story_id, caption)
     return dict(bla='bla')
@@ -108,6 +108,7 @@ def save_photo_info(vars):
     del pinf.photographer
     pinf.Name = pinf.name
     del pinf.name
+    pinf.Recognized = True
     photo_rec.update_record(**pinf)
     if photo_date_str:
         dates_info = dict(
@@ -200,6 +201,8 @@ def get_photo_list(vars):
         lst1 = random.sample(lst, MAX_PHOTOS_COUNT)
         lst = lst1
     selected_photo_list = vars.selected_photo_list
+    if lst and 'TblPhotos' in lst[0]:
+        lst = [r.TblPhotos for r in lst]
     if selected_photo_list:
         lst1 = db(db.TblPhotos.id.belongs(selected_photo_list)).select()
         lst1 = [rec for rec in lst1]
@@ -293,7 +296,7 @@ def apply_to_selected_photos(vars):
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         keywords = "; ".join(curr_tags)
         rec = db(db.TblPhotos.id == pid).select().first()
-        rec.update_record(KeyWords=keywords) #todo: remove this line soon
+        rec.update_record(KeyWords=keywords, Recognized=True) #todo: the KeyWords part is obsolete?
         rec1 = db(db.TblStories.id == rec.story_id).select().first()
         rec1.update_record(keywords=keywords)
         if photographer_id:
@@ -724,6 +727,8 @@ def get_photo_list_with_topics(vars):
     for r in lst:
         dic[r.id] = r
     result = [dic[id] for id in bag]
+    if vars.selected_order_option == 'upload-time-order': 
+        result = sorted(result, reverse=True, key=lambda r: r.id)
     return result
 
 def make_photos_query(vars):
@@ -776,6 +781,12 @@ def make_photos_query(vars):
         q1 = (db.TblMemberPhotos.Member_id == member_id) & \
             (db.TblPhotos.id == db.TblMemberPhotos.Photo_id)
         q &= q1
+    if vars.selected_recognition == 'recognized':
+        q &= ((db.TblPhotos.Recognized == True) | (db.TblPhotos.Recognized == None))
+    elif vars.selected_recognition == 'unrecognized':
+        q &= (db.TblPhotos.Recognized == False)
+    if vars.show_untagged:
+        q &= (db.TblPhotos.story_id==db.TblStories.id) & (db.TblStories.is_tagged==False)
     return q
 
 def get_video_list_with_topics(vars):

@@ -427,6 +427,7 @@ def save_member_face(params):
         if params.old_member_id and params.old_member_id != face.membe_id:
             db(q).delete()
     member_name = member_display_name(member_id=face.member_id)
+    db(db.TblPhotos.id==face.photo_id).update(Recognized=True)
     return Storage(member_name=member_name, face_photo_url=face_photo_url)
 
 def save_profile_photo(face):
@@ -450,27 +451,6 @@ def create_zip_file(zip_name, file_list):
         for p in file_list:
             name, ext = os.path.splitext(p.path)
             myzip.write(p.path, arcname=p.name + ext)
-
-#function below is duplicated in members_support
-def member_display_name(rec=None, member_id=None, full=True):
-    rec = rec or get_member_rec(member_id)
-    if not rec:
-        return ''
-    if not rec.first_name:
-        return older_display_name(rec, full)
-    s = rec.first_name + ' ' + rec.last_name
-    if full and (rec.former_first_name or rec.former_last_name):
-        s += ' ('
-        if rec.former_first_name:
-            s += rec.former_first_name
-        if rec.former_last_name:
-            if rec.former_first_name:
-                s += ' '
-            s += rec.former_last_name
-        s += ')'
-    if rec.NickName:
-        s += ' - {}'.format(rec.NickName)
-    return s
 
 def get_photo_pairs(photo_list):
     db = inject('db')

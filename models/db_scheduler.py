@@ -12,11 +12,16 @@ from create_app import create_pending_apps
 from words import update_word_index_all
 from docs_support import calc_doc_stories
 import os
+from topics_support import fix_is_tagged
 
 def test_scheduler(msg):
     comment("test task {}", msg)
 
 class MyScheduler(Scheduler):
+    
+    def __init__(self, db, tasks, one_time_tasks):
+        Scheduler.__init__(self, db, tasks)
+        self.one_time_tasks = one_time_tasks
 
     def restart_task(self, task_id, period=None):
         self.stop_task(task_id)
@@ -68,16 +73,6 @@ def time_dif_str(tim, now = datetime.datetime.now()):
     difstr = t_unit_str('day', d) + t_unit_str('hour', h) + t_unit_str('minute', m) + t_unit_str('second', s)
     return difstr + ' ago' if ago else 'in ' + difstr
 
-def execute_task(name, command):
-    comment('Started task {}: {}'.format(name, command))
-    try:
-        result = eval(command)
-    except Exception, e:
-        log_exception('Executing ' + name)
-    else:
-        comment('Finished task {}. Returned {}.'.format(name, result))
-        db.commit()
-
 def watchdog():
     q = (db.scheduler_task.status.belongs(['FAILED', 'TIMEOUT']))
     tsk = db(q).select().first() 
@@ -99,6 +94,25 @@ def randomize_story_sampling():
 
 def dict_to_json_str(dic):
     return response.json(dic)
+
+def execute_task(*args, **vars):
+    comment("entered execute task")
+    try:
+        name = vars['name']
+        command = vars['command']
+        comment('Started task {}: {}'.format(name, command))
+        function = scheduler.one_time_tasks[command]
+    except Exception, e:
+        log_exception('error enter execute task ')
+        raise
+    try:
+
+        result = function()
+    except Exception, e:
+        log_exception('Error executing ' + name)
+    else:
+        comment('Finished task {}. Returned {}.'.format(name, result))
+        db.commit()
 
 def schedule_background_task(name, command, period=None, timeout=None):
     return db.scheduler_task.insert(
@@ -234,10 +248,15 @@ __tasks = dict(
     randomize_story_sampling=randomize_story_sampling,
     update_word_index_all=update_word_index_all,
     calc_doc_stories=calc_doc_stories,
-    create_pending_apps=create_pending_apps
+    create_pending_apps=create_pending_apps,
+    execute_task=execute_task
 )
 
-scheduler = MyScheduler(db, __tasks)
+__one_time_tasks = dict(
+    fix_is_tagged=fix_is_tagged
+)
+
+scheduler = MyScheduler(db, __tasks, __one_time_tasks)
 
 def verify_tasks_started():
     if db(db.auth_user).count() < 2:
