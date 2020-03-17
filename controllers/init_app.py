@@ -99,4 +99,3 @@ def notify_developer(rec):
     result = mail.send(to='haimavni@gmail.com', message=message, subject='New app requested')
     comment('mail sent to developer? {}', result)
 
-    
