@@ -59,7 +59,7 @@ def init_sampling():
     db.commit()
     
 def fix_is_tagged():
-    schedule_background_task("fix is tagged", "fix_is_tagged()")
+    schedule_background_task("fix is tagged", "fix_is_tagged")
 
 _fixes = {
     1: init_photo_back_sides,
