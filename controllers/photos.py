@@ -179,8 +179,11 @@ def get_photo_list(vars):
         lst = get_photo_list_with_topics(vars)
     else:
         q = make_photos_query(vars)
-        if vars.selected_order_option == 'upload-time-order': 
-            n = 200
+        if vars.selected_order_option == 'upload-time-order':
+            if vars.count_limit:
+                n = int(vars.count_limit)
+            else:
+                n = 200
             MAX_PHOTOS_COUNT = n
             last_photo_time = vars.last_photo_time
             if last_photo_time: 
