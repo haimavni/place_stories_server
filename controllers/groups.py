@@ -8,6 +8,7 @@ import ws_messaging
 from admin_support.access_manager import register_new_user
 import stories_manager
 from gluon.storage import Storage
+from date_utils import update_record_dates, get_all_dates
 
 @serve_json
 def get_group_list(vars):
@@ -81,12 +82,21 @@ def upload_photo(vars):
         story_rec = db(db.TblStories.id==photo_rec.story_id).select().first()
         photo_name = story_rec.name
         photo_story = story_rec.story.replace('\n', '').replace('<p>', '').replace('</p>', '\n')
+        all_dates = get_all_dates(photo_rec)
+        photographer = db(db.TblPhotographers.id==photo_rec.photographer_id).select().first()
+        photographer_name = photographer.name if photographer else ''
+        photo_date_str = all_dates.photo_date.date
+        photo_date_datespan = all_dates.photo_date.span
     else:
         photo_name = fil.name
         photo_story = ''
+        photographer_name = ''
+        photo_date_str = ''
+        photo_date_datespan = 0
     
     ws_messaging.send_message(key='GROUP-PHOTO-UPLOADED', group=vars.file.info.ptp_key, photo_url=photo_url, photo_name=photo_name, 
-                              photo_id=photo_id, photo_story=photo_story, duplicate=duplicate)
+                              photo_id=photo_id, photo_story=photo_story, duplicate=duplicate,
+                              photographer_name=photographer_name,photo_date_str=photo_date_str,photo_date_datespan=photo_date_datespan)
     return dict(photo_url=photo_url, upload_result=dict(duplicate=duplicate))
 
 @serve_json
@@ -103,18 +113,31 @@ def register_user(vars):
     return dict(user_id=user_id)
 
 @serve_json
-def save_photo_story(vars):
+def save_photo_info(vars):
     photo_id = int(vars.photo_id)
     photo_rec = db(db.TblPhotos.id==photo_id).select().first()
     sm = stories_manager.Stories()
     sm.update_story(
         photo_rec.story_id, 
         Storage(
-            story_text=text_to_html(vars.story_text),
-            name=vars.photo_name,
+            story_text=text_to_html(vars.photo_info.photo_story),
+            name=vars.photo_info.photo_name,
             used_for=STORY4PHOTO
         )
     )
+    photo_date_str = vars.photo_info.photo_date_str
+    photo_date_datespan = vars.photo_info.photo_date_datespan
+    photo_dates_info = dict(
+        photo_date = (photo_date_str, int(photo_date_datespan))
+    )
+    rec = db(db.TblPhotos.id==photo_id).select().first()
+    update_record_dates(rec, photo_dates_info)
+    photographer_name = vars.photo_info.photographer_name
+    prec = db(db.TblPhotographers.name == photographer_name).select().first()
+    if prec:
+        rec.update_record(photographer_id=prec.id)
+    else:
+        pid = db.TblPhotographers.insert(name=photographer_name, kind='P')
     return dict()
 
 #-----------support functions----------------------------
