@@ -6,6 +6,7 @@ from photos_support import save_uploaded_photo, photos_folder, timestamped_photo
 from topics_support import *
 import ws_messaging
 from admin_support.access_manager import register_new_user
+import stories_manager 
 
 @serve_json
 def get_group_list(vars):
@@ -75,7 +76,7 @@ def upload_photo(vars):
         usage = topic_rec.usage + 'P'
         topic_rec.update_record(usage=usage, topic_kind=2) #simple topic
     photo_url=photos_folder() + timestamped_photo_path(photo_rec)
-    ws_messaging.send_message(key='GROUP-PHOTO-UPLOADED', group=vars.file.info.ptp_key, photo_url=photo_url, duplicate=duplicate)
+    ws_messaging.send_message(key='GROUP-PHOTO-UPLOADED', group=vars.file.info.ptp_key, photo_url=photo_url, photo_name=fil.name, photo_id=photo_id, duplicate=duplicate)
     return dict(photo_url=photo_url, upload_result=dict(duplicate=duplicate))
 
 @serve_json
@@ -90,6 +91,16 @@ def attempt_login(vars):
 def register_user(vars):
     user_id = register_new_user(vars.email, vars.password, vars.first_name, vars.last_name, registration_key='')
     return dict(user_id=user_id)
+
+@serve_json
+def save_photo_story(vars):
+    sm = stories_manager.Stories()
+    sm.update_story(dict(
+        story_text=vars.story_text,
+        name=vars.photo_name,
+        used_for=STORY4PHOTO
+    ))
+    return dict()
 
 #-----------support functions----------------------------
 MAX_SIZE = 256
