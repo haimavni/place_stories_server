@@ -6,7 +6,8 @@ from photos_support import save_uploaded_photo, photos_folder, timestamped_photo
 from topics_support import *
 import ws_messaging
 from admin_support.access_manager import register_new_user
-import stories_manager 
+import stories_manager
+from gluon.storage import Storage
 
 @serve_json
 def get_group_list(vars):
@@ -76,7 +77,16 @@ def upload_photo(vars):
         usage = topic_rec.usage + 'P'
         topic_rec.update_record(usage=usage, topic_kind=2) #simple topic
     photo_url=photos_folder() + timestamped_photo_path(photo_rec)
-    ws_messaging.send_message(key='GROUP-PHOTO-UPLOADED', group=vars.file.info.ptp_key, photo_url=photo_url, photo_name=fil.name, photo_id=photo_id, duplicate=duplicate)
+    if duplicate:
+        story_rec = db(db.TblStories.id==photo_rec.story_id).select().first()
+        photo_name = story_rec.name
+        photo_story = story_rec.story.replace('\n', '').replace('<p>', '').replace('</p>', '\n')
+    else:
+        photo_name = fil.name
+        photo_story = ''
+    
+    ws_messaging.send_message(key='GROUP-PHOTO-UPLOADED', group=vars.file.info.ptp_key, photo_url=photo_url, photo_name=photo_name, 
+                              photo_id=photo_id, photo_story=photo_story, duplicate=duplicate)
     return dict(photo_url=photo_url, upload_result=dict(duplicate=duplicate))
 
 @serve_json
@@ -94,15 +104,26 @@ def register_user(vars):
 
 @serve_json
 def save_photo_story(vars):
+    photo_id = int(vars.photo_id)
+    photo_rec = db(db.TblPhotos.id==photo_id).select().first()
     sm = stories_manager.Stories()
-    sm.update_story(dict(
-        story_text=vars.story_text,
-        name=vars.photo_name,
-        used_for=STORY4PHOTO
-    ))
+    sm.update_story(
+        photo_rec.story_id, 
+        Storage(
+            story_text=text_to_html(vars.story_text),
+            name=vars.photo_name,
+            used_for=STORY4PHOTO
+        )
+    )
     return dict()
 
 #-----------support functions----------------------------
+
+def text_to_html(txt):
+    lst = txt.split('\n')
+    lst = ['<p>' + seg + '</p>' for seg in lst]
+    return ''.join(lst)
+
 MAX_SIZE = 256
 
 def get_logo_url(group_id):
