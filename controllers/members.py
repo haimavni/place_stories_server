@@ -590,7 +590,6 @@ def apply_topics_to_selected_stories(vars):
                 if usage_char not in topic_rec.usage:
                     usage = topic_rec.usage + usage_char
                     topic_rec.update_record(usage=usage, topic_kind=2) #topic is simple
-                db(db.TblStories.id == eid).update(is_tagged = True)
             elif topic.sign == "minus" and topic.id in curr_tag_ids:
                 q = (db.TblItemTopics.item_type == usage_char) & (db.TblItemTopics.story_id == eid) & (db.TblItemTopics.topic_id == topic.id)
                 curr_tag_ids -= set([topic.id])
@@ -605,7 +604,7 @@ def apply_topics_to_selected_stories(vars):
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         keywords = "; ".join(curr_tags)
         rec = db(db.TblStories.id == eid).select().first()
-        rec.update_record(keywords=keywords)
+        rec.update_record(keywords=keywords, is_tagged=bool(keywords))
         if item_rec:
             if usage_char in 'EMP':
                 item_rec.update_record(KeyWords=keywords)
