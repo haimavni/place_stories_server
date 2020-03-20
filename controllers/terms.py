@@ -39,7 +39,7 @@ def apply_to_checked_terms(vars):
         rec = db(db.TblTerms.id==term_id).select().first()
         rec.update_record(keywords=keywords)  #todo: remove this line soon
         rec = db(db.TblStories.id==rec.story_id).select().first()
-        rec.update_record(keywords=keywords)
+        rec.update_record(keywords=keywords, is_tagged=bool(keywords))
     return dict(new_topic_was_added=new_topic_was_added)
 
 @serve_json

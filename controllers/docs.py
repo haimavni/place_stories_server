@@ -95,7 +95,7 @@ def apply_to_checked_docs(vars):
         rec = db(db.TblDocs.id==doc_id).select().first()
         rec.update_record(keywords=keywords)  #todo: remove this line soon
         rec = db(db.TblStories.id==rec.story_id).select().first()
-        rec.update_record(keywords=keywords)
+        rec.update_record(keywords=keywords, is_tagged=bool(keywords))
         if dates_info:
             update_record_dates(rec, dates_info)
     ###changes = [changes[doc_id] for doc_id in sdl]
