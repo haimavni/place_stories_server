@@ -72,6 +72,22 @@ def update_message(vars):
     )
     return dict()
 
+@serve_json
+def rename_chatroom(vars):
+    chatroom_id = int(vars.room_number)
+    chat_rec = db(db.TblChatGroup.id==chatroom_id).select().first()
+    chat_rec.update_record(name=vars.new_chatroom_name)         
+    return dict()
+
+@serve_json
+def delete_chatroom(vars):
+    chatroom_id = int(vars.room_number)
+    db(db.TblChatGroup.id==chatroom_id).delete()
+    ws_messaging.send_message(key='DELETE_CHATROOM', group='ALL', room_number=chatroom_id);
+    return dict()
+
+#---------------support functions---------------------
+
 def notify_chatters(user_id, chatroom_id):
     messages = db(db.TblChats.id==chatroom_id).select() #todo: also ignore very recent ones?
     chatroom = db(db.TblChatGroup.id==chatroom_id).select().first()
@@ -109,4 +125,3 @@ def calc_url(story):
         if photo:
             return '/{app}/static/aurelia/index.html#/photo-detail/{pid}/*'.format(app=request.application, pid=story.id)
     return ''
-    
