@@ -189,6 +189,16 @@ def get_photo_list(vars):
             if last_photo_time: 
                 q &= (db.TblPhotos.upload_date < last_photo_time)
             lst = db(q).select(orderby=~db.TblPhotos.id, limitby=(0, n))
+        elif vars.selected_order_option == 'chronological-order':
+            if vars.count_limit:
+                n = int(vars.count_limit)
+            else:
+                n = 200
+            MAX_PHOTOS_COUNT = n
+            last_photo_time = vars.last_photo_time
+            if last_photo_time: 
+                q &= (db.TblPhotos.upload_date < last_photo_time)
+            lst = db(q).select(orderby=db.TblPhotos.photo_date, limitby=(0, n))
         else:
             n = db(q).count()
             if n > MAX_PHOTOS_COUNT:
@@ -775,7 +785,7 @@ def make_photos_query(vars):
     opt = vars.selected_dates_option
     if opt == 'selected_dates_option':
         pass
-    elif opt == 'dated':
+    elif opt == 'dated' or vars.selected_order_option == 'chronological-order':
         q &= (db.TblPhotos.photo_date != NO_DATE)
     elif opt == 'undated':
         q &= (db.TblPhotos.photo_date == NO_DATE)
