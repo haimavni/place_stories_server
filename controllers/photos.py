@@ -515,6 +515,8 @@ def delete_selected_photos(vars):
 @serve_json
 def rotate_selected_photos(vars):
     selected_photo_list = vars.selected_photo_list
+    if not isinstance(selected_photo_list, list):
+        selected_photo_list  = [int(selected_photo_list)];
     for photo_id in selected_photo_list:
         rotate_photo(photo_id)
     return dict()
