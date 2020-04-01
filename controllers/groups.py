@@ -5,7 +5,7 @@ from PIL import Image, ImageFile
 from photos_support import save_uploaded_photo, photos_folder, timestamped_photo_path
 from topics_support import *
 import ws_messaging
-from admin_support.access_manager import register_new_user
+from admin_support.access_manager import register_new_user, AccessManager
 import stories_manager
 from gluon.storage import Storage
 from date_utils import update_record_dates, get_all_dates
@@ -110,6 +110,9 @@ def attempt_login(vars):
 @serve_json
 def register_user(vars):
     user_id = register_new_user(vars.email, vars.password, vars.first_name, vars.last_name, registration_key='')
+    am = AccessManager()
+    grp_ids = [RESTRICTED, PHOTO_UPLOADER, EDITOR]
+    am.enable_roles(user_id, grp_ids)
     return dict(user_id=user_id)
 
 @serve_json
