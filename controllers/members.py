@@ -491,6 +491,13 @@ def get_constants(vars):
             DC_KILLED=2,
             DC_MURDERED=3
             ),
+        story_visibility=dict(
+            SV_NO_CHANGE=SV_NO_CHANGE,
+            SV_PUBLIC=SV_PUBLIC,
+            SV_ADMIN=SV_ADMIN_ONLY,
+            SV_ARCHIVER=SV_ARCHIVER_ONLY,
+            SV_LOGGEDIN=SV_LOGGEDIN_ONLY
+        ),
         ptp_key=web2py_uuid()
     )    
 
@@ -564,6 +571,7 @@ def apply_topics_to_selected_stories(vars):
         )
     else:
         dates_info = None
+    visibility_option = params.selected_story_visibility
 
     checked_story_list = params.checked_story_list
     selected_topics = params.selected_topics
@@ -600,7 +608,10 @@ def apply_topics_to_selected_stories(vars):
             story_rec = db(db.TblStories.id==eid).select().first()
             update_record_dates(story_rec, dates_info)
             copy_story_date_to_object_date(story_rec)
-
+        if visibility_option:
+            story_rec = db(db.TblStories.id==eid).select().first()
+            story_rec.update_record(visibility=visibility_option)
+            
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         keywords = "; ".join(curr_tags)
         rec = db(db.TblStories.id == eid).select().first()

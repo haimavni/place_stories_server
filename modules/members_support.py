@@ -94,3 +94,17 @@ def get_tag_ids(item_id, item_type):
     q = (db.TblItemTopics.item_type==item_type) & (db.TblItemTopics.item_id==item_id)
     lst = db(q).select()
     return [rec.topic_id for rec in lst]
+
+def get_visibility_query():
+    db, auth, VS_PUBLIC, VS_ADMIN_ONLY, VS_ARCHIVER_ONLY, VS_LOGGEDIN_ONLY = inject('db', 'auth', 'VS_PUBLIC', 'VS_ADMIN_ONLY', 'VS_ARCHIVER_ONLY', 'VS_LOGGEDIN_ONLY')
+    allowed = [VS_PUBLIC]
+    if auth.user:
+        allowed.append(VS_LOGGEDIN_ONLY)
+    for p in [ADMIN, ARCHIVER]:
+        if auth.user_has_privileges(p):
+            allowed.append(p)
+    if len(allowed) == 4:
+        return None
+    else:
+        return (db.TblStories.visibility.belongs(allowed))
+

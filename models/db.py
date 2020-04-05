@@ -139,3 +139,7 @@ response.delimiters = ('{!', '!}')
 response.controller = 'none'
 
 BASE_URL = (request.env.http_origin or request.env.http_host) + '/' + request.application + '/'
+
+story_visibility_values = ['SV_NO_CHANGE', 'SV_PUBLIC', 'SV_ADMIN_ONLY', 'SV_ARCHIVER_ONLY', 'SV_LOGGEDIN_ONLY']
+for i, v in enumerate(story_visibility_values):
+    globals()[v] = i
