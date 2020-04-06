@@ -1014,12 +1014,9 @@ def query_has_data(params):
            params.show_untagged or params.selected_words
 
 def make_stories_query(params, exact):
-    getting_live_stories = not params.deleted_stories
-    q = (db.TblStories.deleted != getting_live_stories) & (db.TblStories.used_for.belongs(story_kinds())) 
+    q = init_query(db.TblStories, params.deleted_stories)
+    q &= (db.TblStories.used_for.belongs(story_kinds()))
     selected_stories = params.selected_stories
-    ##if exact and params.search_type != 'advanced':
-        ##return None
-
     if params.keywords_str:
         selected_stories = [];
         if exact:

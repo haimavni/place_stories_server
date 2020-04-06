@@ -95,16 +95,23 @@ def get_tag_ids(item_id, item_type):
     lst = db(q).select()
     return [rec.topic_id for rec in lst]
 
-def get_visibility_query():
-    db, auth, VS_PUBLIC, VS_ADMIN_ONLY, VS_ARCHIVER_ONLY, VS_LOGGEDIN_ONLY = inject('db', 'auth', 'VS_PUBLIC', 'VS_ADMIN_ONLY', 'VS_ARCHIVER_ONLY', 'VS_LOGGEDIN_ONLY')
-    allowed = [VS_PUBLIC]
+def init_query(tbl, is_deleted=False):
+    db, auth, SV_PUBLIC, SV_ADMIN_ONLY, SV_ARCHIVER_ONLY, SV_LOGGEDIN_ONLY, ADMIN, ARCHIVER = \
+        inject('db', 'auth', 'SV_PUBLIC', 'SV_ADMIN_ONLY', 'SV_ARCHIVER_ONLY', 'SV_LOGGEDIN_ONLY', 'ADMIN', 'ARCHIVER')
+    allowed = [SV_PUBLIC]
     if auth.user:
-        allowed.append(VS_LOGGEDIN_ONLY)
+        allowed.append(SV_LOGGEDIN_ONLY)
     for p in [ADMIN, ARCHIVER]:
-        if auth.user_has_privileges(p):
+        if auth.has_membership(p):
             allowed.append(p)
-    if len(allowed) == 4:
-        return None
+    is_alive = not bool(is_deleted)
+    if tbl == db.TblStories:
+        q = (tbl.deleted!=is_alive)
     else:
-        return (db.TblStories.visibility.belongs(allowed))
+        q = (tbl.story_id==db.TblStories.id) & (tbl.deleted!=is_alive)
+    if len(allowed) == 4:
+        return q
+    else:
+        q &= (db.TblStories.visibility.belongs(allowed))
+        return q
 

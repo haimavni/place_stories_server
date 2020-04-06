@@ -13,7 +13,7 @@ import random
 import pwd
 from stories_manager import Stories
 from folders import *
-from members_support import member_display_name, older_display_name, get_member_rec
+from members_support import member_display_name, older_display_name, get_member_rec, init_query #init_query is used indirectly
 import zipfile
 from pybktree import BKTree, hamming_distance
 import time

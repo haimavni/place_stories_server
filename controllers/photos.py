@@ -214,8 +214,6 @@ def get_photo_list(vars):
         lst1 = random.sample(lst, MAX_PHOTOS_COUNT)
         lst = lst1
     selected_photo_list = vars.selected_photo_list
-    if lst and 'TblPhotos' in lst[0]:
-        lst = [r.TblPhotos for r in lst]
     if selected_photo_list:
         lst1 = db(db.TblPhotos.id.belongs(selected_photo_list)).select()
         lst1 = [rec for rec in lst1]
@@ -224,7 +222,7 @@ def get_photo_list(vars):
     else:
         lst1 = []
     lst1_ids = [rec.id for rec in lst1]
-    lst = [rec for rec in lst if rec.id not in lst1_ids]
+    lst = [rec.TblPhotos for rec in lst if rec.TblPhotos.id not in lst1_ids]
     lst = lst1 + lst
     photo_ids = [rec.id for rec in lst]
     photo_pairs = get_photo_pairs(photo_ids)
@@ -426,6 +424,8 @@ def get_video_list(vars):
     else:
         lst1 = []
     lst1_ids = [rec.id for rec in lst1]
+    if lst and 'TblVideos' in lst[0]:
+        lst = [r.TblVideos for r in lst]
     lst = [rec for rec in lst if rec.id not in lst1_ids]
     lst = lst1 + lst
     ##lst = db(db.TblVideos.deleted != True).select()
@@ -731,8 +731,7 @@ def get_photo_list_with_topics(vars):
             q1 = ~q1
         q &= q1
         lst = db(q).select()
-        lst = [rec.TblPhotos for rec in lst]
-        bag1 = set(r.id for r in lst)
+        bag1 = set(r.TblPhotos.id for r in lst)
         if first:
             first = False
             bag = bag1
@@ -740,18 +739,16 @@ def get_photo_list_with_topics(vars):
             bag &= bag1
     dic = {}
     for r in lst:
-        dic[r.id] = r
+        dic[r.TblPhotos.id] = r
     result = [dic[id] for id in bag]
     if vars.selected_order_option == 'upload-time-order': 
         result = sorted(result, reverse=True, key=lambda r: r.id)
     return result
 
 def make_photos_query(vars):
-    q = (db.TblPhotos.width > 0) & \
-        (db.TblPhotos.deleted != True) & \
+    q = init_query(db.TblPhotos)
+    q &= (db.TblPhotos.width > 0) & \
         (db.TblPhotos.is_back_side != True)
-    #if vars.relevant_only:
-        #q &= (db.TblPhotos.usage > 0)
     if vars.photo_ids:
         q &= (db.TblPhotos.id.belongs(vars.photo_ids))
     first_year = vars.first_year
@@ -820,8 +817,8 @@ def get_video_list_with_topics(vars):
             q1 = ~q1
         q &= q1
         lst = db(q).select()
-        lst = [rec.TblVideos for rec in lst]
-        bag1 = set(r.id for r in lst)
+        ###lst = [rec.TblVideos for rec in lst]
+        bag1 = set(r.TblVideos.id for r in lst)
         if first:
             first = False
             bag = bag1
@@ -829,12 +826,13 @@ def get_video_list_with_topics(vars):
             bag &= bag1
     dic = {}
     for r in lst:
-        dic[r.id] = r
+        dic[r.TblVideos.id] = r
     result = [dic[id] for id in bag]
     return result
 
 def make_videos_query(vars):
-    q = (db.TblVideos.deleted != True)
+    q = init_query(db.TblVideos)
+    ###q = (db.TblVideos.deleted != True)
     photographer_list = [p.option.id for p in vars.selected_photographers] \
         if vars.selected_photographers else []
     if len(photographer_list) > 0:
