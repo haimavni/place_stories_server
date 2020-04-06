@@ -36,14 +36,19 @@ def get_photo_detail(vars):
     all_dates = get_all_dates(rec)
     photographer = db(db.TblPhotographers.id==rec.photographer_id).select().first()
     photographer_name = photographer.name if photographer else ''
+    photographer_id = photographer.id if photographer else None
+    topic_ids = photo_topics(photo_id)
     return dict(photo_src=photos_folder() + timestamped_photo_path(rec),
                 photo_name=rec.Name,
+                keywords=rec.KeyWords,
+                topic_ids=topic_ids,
                 height=rec.height,
                 width=rec.width,
                 photo_story=story,
                 photo_date_str = all_dates.photo_date.date,
                 photo_date_datespan = all_dates.photo_date.span,
                 photographer_name=photographer_name,
+                photographer_id=photographer_id,
                 photo_id=rec.id,
                 chatroom_id=story.chatroom_id)
 
@@ -916,3 +921,9 @@ def delete_photos(photo_list):
     a.update(deleted=True)
     story_ids = [rec.story_id for rec in a.select()]
     db(db.TblStories.id.belongs(story_ids)).update(deleted=True)
+
+def photo_topics(photo_id):
+    q = (db.TblItemTopics.item_id==photo_id) & (db.TblItemTopics.item_type=='P') & (db.TblTopics.id==db.TblItemTopics.topic_id)
+    lst = db(q).select()
+    lst = [itm.TblTopics.id for itm in lst]
+    return lst
