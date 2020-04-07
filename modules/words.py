@@ -248,7 +248,7 @@ def read_words_index():
     ##lst = sorted(lst, key=lambda item: item[2], reverse=True)
     ##lst = sorted(lst)  #todo: collect number of clicks and sort first by num of clicks then alfabetically
 
-    result = [dict(word_id=item[0], name=item[1], story_ids=item[2], word_count=item[3]) for item in lst]
+    result = [dict(word_id=item[0], name=item[1], story_ids=item[2], word_count=item[3], topic_kind=2) for item in lst]
     return result
 
 def _calc_used_languages(used_for):

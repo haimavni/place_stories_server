@@ -32,7 +32,7 @@ def get_topic_list(vars):
     if usage in ('P', 'V'):
         q &= db.TblPhotographers.kind.like('%' + usage + '%')
     photographer_list = db(q).select(orderby=db.TblPhotographers.name)
-    photographer_list = [dict(name=rec.name, id=rec.id) for rec in photographer_list if rec.name]
+    photographer_list = [dict(name=rec.name, id=rec.id, topic_kind=2) for rec in photographer_list if rec.name]
     return dict(topic_list=topic_list, topic_groups=topic_groups, photographer_list=photographer_list)
 
 @serve_json 
