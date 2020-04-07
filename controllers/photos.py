@@ -37,11 +37,10 @@ def get_photo_detail(vars):
     photographer = db(db.TblPhotographers.id==rec.photographer_id).select().first()
     photographer_name = photographer.name if photographer else ''
     photographer_id = photographer.id if photographer else None
-    topic_ids = photo_topics(photo_id)
+    photo_topics = get_photo_topics(rec.id)
     return dict(photo_src=photos_folder() + timestamped_photo_path(rec),
                 photo_name=rec.Name,
-                keywords=rec.KeyWords,
-                topic_ids=topic_ids,
+                photo_topics=photo_topics,
                 height=rec.height,
                 width=rec.width,
                 photo_story=story,
@@ -210,11 +209,9 @@ def get_photo_list(vars):
                 frac = max(MAX_PHOTOS_COUNT * 100 / n, 1)
                 sample = random.sample(range(1, 101), frac)
                 ##q &= (db.TblPhotos.random_photo_key <= frac)
-                q &= (db.TblPhotos.random_photo_key.belongs(sample)) #we don't want to bore our uses 
+                q &= (db.TblPhotos.random_photo_key.belongs(sample)) #we don't want to bore our users 
             lst = db(q).select() ###, db.TblPhotographers.id) ##, db.TblPhotographers.id)
             last_photo_time = None
-        if lst and 'TblMemberPhotos' in lst[0]:
-            lst = [rec.TblPhotos for rec in lst]
     if len(lst) > MAX_PHOTOS_COUNT:
         lst1 = random.sample(lst, MAX_PHOTOS_COUNT)
         lst = lst1
@@ -326,6 +323,50 @@ def apply_to_selected_photos(vars):
             update_record_dates(rec, dates_info)
     ws_messaging.send_message('PHOTO-TAGS-CHANGED', added=added, deleted=deleted)
     return dict(new_topic_was_added=new_topic_was_added)
+
+@serve_json
+def apply_topics_to_photo(vars):
+    all_tags = calc_all_tags()
+    photo_id = int(vars.photo_id)
+    topics = vars.topics
+    curr_tag_ids = set(get_tag_ids(photo_id, "P"))
+    new_tag_ids = set([t.id for t in topics])
+    added = set([])
+    deleted = set([])
+    for tag_id in new_tag_ids:
+        if tag_id not in curr_tag_ids:
+            added |= set([tag_id])
+            item = dict(item_id=photo_id, topic_id=tag_id)
+            rec = db(db.TblPhotos.id == photo_id).select().first()
+            story_id = rec.story_id if rec else None
+            db.TblItemTopics.insert(
+                item_type="P",
+                item_id=photo_id,
+                topic_id=tag_id,
+                story_id=story_id)
+            topic_rec = db(db.TblTopics.id == tag_id).select().first()
+            if 'P' not in topic_rec.usage:
+                usage = topic_rec.usage + 'P'
+                topic_rec.update_record(usage=usage, topic_kind=2) #simple topic
+                
+    for tag_id in curr_tag_ids:  
+        if tag_id not in new_tag_ids:
+            deleted |= set([tag_id])
+            q = (db.TblItemTopics.item_type == "P") & \
+                (db.TblItemTopics.item_id == photo_id) & \
+                (db.TblItemTopics.topic_id == tag_id)
+            #should remove 'P' from usage if it was the last one...
+            db(q).delete()
+            
+    curr_tag_ids |= added
+    curr_tag_ids -= deleted
+    curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
+    curr_tags = sorted(curr_tags)
+    keywords = "; ".join(curr_tags)
+    rec = db(db.TblPhotos.id == photo_id).select().first()
+    rec.update_record(KeyWords=keywords, Recognized=True) #todo: the KeyWords part is obsolete?
+    srec = db(db.TblStories.id==rec.story_id).select().first()
+    srec.update_record(keywords=keywords)
 
 @serve_json
 def save_video(vars):
@@ -922,8 +963,8 @@ def delete_photos(photo_list):
     story_ids = [rec.story_id for rec in a.select()]
     db(db.TblStories.id.belongs(story_ids)).update(deleted=True)
 
-def photo_topics(photo_id):
+def get_photo_topics(photo_id):
     q = (db.TblItemTopics.item_id==photo_id) & (db.TblItemTopics.item_type=='P') & (db.TblTopics.id==db.TblItemTopics.topic_id)
     lst = db(q).select()
-    lst = [itm.TblTopics.id for itm in lst]
+    lst = [itm.TblTopics.as_dict() for itm in lst]
     return lst
