@@ -367,6 +367,13 @@ def apply_topics_to_photo(vars):
     rec.update_record(KeyWords=keywords, Recognized=True) #todo: the KeyWords part is obsolete?
     srec = db(db.TblStories.id==rec.story_id).select().first()
     srec.update_record(keywords=keywords)
+    
+@serve_json
+def assign_photo_photographer(vars):
+    photo_id = int(vars.photo_id)
+    photographer_id = int(vars.photographer_id) if vars.photographer_id else None
+    db(db.TblPhotos.id==photo_id).update(photographer_id=photographer_id)
+    return dict()
 
 @serve_json
 def save_video(vars):
