@@ -556,6 +556,30 @@ def timestamped_photo_path(photo_rec):
         result += '?' + str(utime)
     return result
 
+def find_missing_files(init=False):
+    db = inject('db')
+    q = (db.TblPhotos.deleted != True) & (db.TblPhotos.photo_missing == None)
+    n = db(q).count()
+    if init:
+        db(db.TblPhotos.deleted != True).update(photo_missing = None)
+    chunk = 100
+    recoverable = 0
+    while True:
+        lst = db(q).select(limitby=(0,chunk))
+        if len(lst) == 0:
+            break
+        for rec in lst:
+            fname = local_photos_folder('orig') + rec.photo_path
+            lost = not os.path.exists(fname)
+            if lost:
+                fname = local_photos_folder('oversize') + rec.photo_path
+                if os.path.exists(fname):
+                    recoverable += 1
+            rec.update_record(photo_missing=lost)
+        db.commit()
+    missing = db((db.TblPhotos.deleted!=True)&(db.TblPhotos.photo_missing==True)).count()
+    return dict(missing=missing, recoverable=recoverable)
+
 def create_watermark(image_path, final_image_path, watermark):
     #https://pybit.es/pillow-intro.html
     main = Image.open(image_path)
