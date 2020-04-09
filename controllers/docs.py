@@ -133,7 +133,7 @@ def get_doc_list_with_topics(vars):
     return result
 
 def make_docs_query(params):
-    q = init_query(db.TblDocs)
+    q = init_query(db.TblDocs, params.editing)
     if params.days_since_upload:
         days = params.days_since_upload.value
         if days:

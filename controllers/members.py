@@ -1014,7 +1014,7 @@ def query_has_data(params):
            params.show_untagged or params.selected_words
 
 def make_stories_query(params, exact):
-    q = init_query(db.TblStories, params.deleted_stories)
+    q = init_query(db.TblStories, editing=params.editing, is_deleted=params.deleted_stories)
     q &= (db.TblStories.used_for.belongs(story_kinds()))
     selected_stories = params.selected_stories
     if params.keywords_str:

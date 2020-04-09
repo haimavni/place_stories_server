@@ -95,9 +95,9 @@ def get_tag_ids(item_id, item_type):
     lst = db(q).select()
     return [rec.topic_id for rec in lst]
 
-def init_query(tbl, is_deleted=False):
-    db, auth, SV_PUBLIC, SV_ADMIN_ONLY, SV_ARCHIVER_ONLY, SV_LOGGEDIN_ONLY, ADMIN, ARCHIVER = \
-        inject('db', 'auth', 'SV_PUBLIC', 'SV_ADMIN_ONLY', 'SV_ARCHIVER_ONLY', 'SV_LOGGEDIN_ONLY', 'ADMIN', 'ARCHIVER')
+def init_query(tbl, editing=False, is_deleted=False):
+    db, auth, SV_PUBLIC, SV_ADMIN_ONLY, SV_ARCHIVER_ONLY, SV_LOGGEDIN_ONLY, ADMIN, ARCHIVER, RESTRICTED = \
+        inject('db', 'auth', 'SV_PUBLIC', 'SV_ADMIN_ONLY', 'SV_ARCHIVER_ONLY', 'SV_LOGGEDIN_ONLY', 'ADMIN', 'ARCHIVER', 'RESTRICTED')
     allowed = [SV_PUBLIC]
     if auth.user:
         allowed.append(SV_LOGGEDIN_ONLY)
@@ -109,6 +109,14 @@ def init_query(tbl, is_deleted=False):
         q = (tbl.deleted!=is_alive)
     else:
         q = (tbl.story_id==db.TblStories.id) & (tbl.deleted!=is_alive)
+    if editing and auth.has_membership(RESTRICTED):
+        user = auth.current_user()
+        if tbl == db.TblStories:
+            q &= (tbl.author_id == user)
+        elif tbl == db.TblPhotos or tbl == db.TblDocs or tbl == db.TblAudios:
+            q &= (tbl.uploader == user)
+        elif tbl == db.Tbl.Videos:
+            q &= (tbl.contributor == user)
     if len(allowed) == 4:
         return q
     else:

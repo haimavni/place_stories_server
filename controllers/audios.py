@@ -143,7 +143,7 @@ def get_audio_list_with_topics(vars):
     return result
 
 def make_audios_query(params):
-    q = init_query(db.TblAudios)
+    q = init_query(db.TblAudios, editing=params.editing)
     if params.days_since_upload:
         days = params.days_since_upload.value
         if days:

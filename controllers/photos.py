@@ -799,7 +799,7 @@ def get_photo_list_with_topics(vars):
     return result
 
 def make_photos_query(vars):
-    q = init_query(db.TblPhotos)
+    q = init_query(db.TblPhotos, editing=vars.editing, is_deleted=vars.editing)
     q &= (db.TblPhotos.width > 0) & \
         (db.TblPhotos.is_back_side != True)
     if vars.photo_ids:
@@ -884,7 +884,7 @@ def get_video_list_with_topics(vars):
     return result
 
 def make_videos_query(vars):
-    q = init_query(db.TblVideos)
+    q = init_query(db.TblVideos, editing=vars.editing)
     ###q = (db.TblVideos.deleted != True)
     photographer_list = [p.option.id for p in vars.selected_photographers] \
         if vars.selected_photographers else []
