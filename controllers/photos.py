@@ -799,7 +799,7 @@ def get_photo_list_with_topics(vars):
     return result
 
 def make_photos_query(vars):
-    q = init_query(db.TblPhotos, editing=vars.editing, is_deleted=vars.editing)
+    q = init_query(db.TblPhotos, editing=vars.editing, is_deleted=vars.deleted)
     q &= (db.TblPhotos.width > 0) & \
         (db.TblPhotos.is_back_side != True)
     if vars.photo_ids:
