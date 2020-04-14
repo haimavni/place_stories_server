@@ -1,6 +1,6 @@
 from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, \
      save_uploaded_photo, rotate_photo, save_member_face, create_zip_file, get_photo_pairs, find_similar_photos, \
-     timestamped_photo_path, crop_a_photo
+     timestamped_photo_path, crop_a_photo, get_photo_topics
 import ws_messaging
 import stories_manager
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
@@ -795,7 +795,7 @@ def get_photo_list_with_topics(vars):
         dic[r.TblPhotos.id] = r
     result = [dic[id] for id in bag]
     if vars.selected_order_option == 'upload-time-order': 
-        result = sorted(result, reverse=True, key=lambda r: r.id)
+        result = sorted(result, reverse=True, key=lambda r: r.TblPhotos.id)
     return result
 
 def make_photos_query(vars):
@@ -970,8 +970,3 @@ def delete_photos(photo_list):
     story_ids = [rec.story_id for rec in a.select()]
     db(db.TblStories.id.belongs(story_ids)).update(deleted=True)
 
-def get_photo_topics(photo_id):
-    q = (db.TblItemTopics.item_id==photo_id) & (db.TblItemTopics.item_type=='P') & (db.TblTopics.id==db.TblItemTopics.topic_id)
-    lst = db(q).select()
-    lst = [itm.TblTopics.as_dict() for itm in lst]
-    return lst

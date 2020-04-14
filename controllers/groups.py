@@ -2,7 +2,7 @@ from folders import *
 import zlib
 from cStringIO import StringIO
 from PIL import Image, ImageFile
-from photos_support import save_uploaded_photo, photos_folder, timestamped_photo_path
+from photos_support import save_uploaded_photo, photos_folder, timestamped_photo_path, get_photo_topics
 from topics_support import *
 import ws_messaging
 from admin_support.access_manager import register_new_user, AccessManager
@@ -69,14 +69,15 @@ def upload_photo(vars):
     group_rec = db(db.TblGroups.id==group_id).select().first()
     topic_id=group_rec.topic_id
     topic_rec = db(db.TblTopics.id==topic_id).select().first()
-    new_id = db.TblItemTopics.insert(
-        item_type="P",
-        item_id=photo_id,
-        topic_id=topic_id,
-        story_id=photo_rec.story_id)
-    if 'P' not in topic_rec.usage:
-        usage = topic_rec.usage + 'P'
-        topic_rec.update_record(usage=usage, topic_kind=2) #simple topic
+    if not duplicate:
+        new_id = db.TblItemTopics.insert(
+            item_type="P",
+            item_id=photo_id,
+            topic_id=topic_id,
+            story_id=photo_rec.story_id)
+        if 'P' not in topic_rec.usage:
+            usage = topic_rec.usage + 'P'
+            topic_rec.update_record(usage=usage, topic_kind=2) #simple topic
     photo_url=photos_folder() + timestamped_photo_path(photo_rec)
     if duplicate:
         story_rec = db(db.TblStories.id==photo_rec.story_id).select().first()
@@ -84,19 +85,23 @@ def upload_photo(vars):
         photo_story = story_rec.story.replace('\n', '').replace('<p>', '').replace('</p>', '\n')
         all_dates = get_all_dates(photo_rec)
         photographer = db(db.TblPhotographers.id==photo_rec.photographer_id).select().first()
+        photographer_id = photo_rec.photographer_id or 0
         photographer_name = photographer.name if photographer else ''
         photo_date_str = all_dates.photo_date.date
         photo_date_datespan = all_dates.photo_date.span
     else:
         photo_name = fil.name
         photo_story = ''
+        photographer_id = 0
         photographer_name = ''
         photo_date_str = ''
         photo_date_datespan = 0
+    photo_topics = get_photo_topics(photo_rec.id)
     
     ws_messaging.send_message(key='GROUP-PHOTO-UPLOADED', group=vars.file.info.ptp_key, photo_url=photo_url, photo_name=photo_name, 
                               photo_id=photo_id, photo_story=photo_story, duplicate=duplicate,
-                              photographer_name=photographer_name,photo_date_str=photo_date_str,photo_date_datespan=photo_date_datespan)
+                              photographer_name=photographer_name,photo_date_str=photo_date_str,photo_date_datespan=photo_date_datespan,
+                              photo_topics=photo_topics, photographer_id=photographer_id)
     return dict(photo_url=photo_url, upload_result=dict(duplicate=duplicate))
 
 @serve_json

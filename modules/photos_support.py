@@ -601,3 +601,12 @@ def create_watermark(image_path, final_image_path, watermark):
             main.paste(mark, (i, j), mark)
             main.thumbnail((8000, 8000), Image.ANTIALIAS)
             main.save(final_image_path, quality=100)
+
+def get_photo_topics(photo_id):
+    db = inject('db')
+    q = (db.TblItemTopics.item_id==photo_id) & (db.TblItemTopics.item_type=='P') & (db.TblTopics.id==db.TblItemTopics.topic_id)
+    lst = db(q).select()
+    lst = [itm.TblTopics.as_dict() for itm in lst]
+    for itm in lst:
+        itm['sign'] = ""
+    return lst
