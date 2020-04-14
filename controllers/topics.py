@@ -27,7 +27,7 @@ def get_topic_list(vars):
         q &= q1
         
     topic_list = db(q).select(orderby=db.TblTopics.topic_kind | db.TblTopics.name)
-    topic_list = [dict(name=rec.name, id=rec.id, topic_kind=rec.topic_kind, usage=rec.usage) for rec in topic_list if rec.name]
+    topic_list = [dict(name=rec.name, description=rec.description, id=rec.id, topic_kind=rec.topic_kind, usage=rec.usage) for rec in topic_list if rec.name]
     q = db.TblPhotographers.id > 0
     if usage in ('P', 'V'):
         q &= db.TblPhotographers.kind.like('%' + usage + '%')
@@ -138,3 +138,11 @@ def add_topic_group(vars):
     db(db.TblTopics.id==group_id).update(topic_kind=1, usage=topic_usage)
     return dict()
 
+@serve_json
+def update_topic_name_and_description(vars):
+    topic = vars.topic
+    n = db((db.TblTopics.id!=topic.id) & (db.TblTopics.name==topic.name)).count()
+    if n > 0:
+        return dict(user_error='multi-select.duplicate')
+    db(db.TblTopics.id==topic.id).update(name=topic.name, description=topic.description)
+    return dict()

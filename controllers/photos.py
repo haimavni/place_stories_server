@@ -179,11 +179,12 @@ def get_photo_list(vars):
     selected_topics = vars.selected_topics or []
     mprl = vars.max_photos_per_line or 8
     MAX_PHOTOS_COUNT = 100 + (mprl - 8) * 100
+    selected_order_option = vars.selected_order_option or ""
     if selected_topics:
         lst = get_photo_list_with_topics(vars)
     else:
         q = make_photos_query(vars)
-        if vars.selected_order_option == 'upload-time-order':
+        if selected_order_option == 'upload-time-order':
             if vars.count_limit:
                 n = int(vars.count_limit)
             else:
@@ -193,7 +194,7 @@ def get_photo_list(vars):
             if last_photo_time: 
                 q &= (db.TblPhotos.upload_date < last_photo_time)
             lst = db(q).select(orderby=~db.TblPhotos.id, limitby=(0, n))
-        elif vars.selected_order_option == 'chronological-order':
+        elif selected_order_option.startswith('chronological-order'):
             if vars.count_limit:
                 n = int(vars.count_limit)
             else:
@@ -202,7 +203,10 @@ def get_photo_list(vars):
             last_photo_time = vars.last_photo_time
             if last_photo_time: 
                 q &= (db.TblPhotos.upload_date < last_photo_time)
-            lst = db(q).select(orderby=db.TblPhotos.photo_date, limitby=(0, n))
+            field = db.TblPhotos.photo_date
+            if selected_order_option.endswith('reverse'):
+                field = ~field
+            lst = db(q).select(orderby=field, limitby=(0, n))
         else:
             n = db(q).count()
             if n > MAX_PHOTOS_COUNT:
@@ -229,9 +233,10 @@ def get_photo_list(vars):
     photo_ids = [rec.id for rec in lst]
     photo_pairs = get_photo_pairs(photo_ids)
     result = process_photo_list(lst, photo_pairs)
-    if vars.selected_order_option == 'upload-time-order' and lst:
+    if selected_order_option == 'upload-time-order' and lst:
         last_photo_time = lst[-1].upload_date
     else:
+        #could keep here date + id for chronological order
         last_photo_time = None
     return dict(photo_list=result, last_photo_time=last_photo_time)
 
@@ -835,9 +840,10 @@ def make_photos_query(vars):
     elif opt == 'users':
         q &= (db.TblPhotos.uploader != None)
     opt = vars.selected_dates_option
+    selected_order_option = vars.selected_order_option or ""
     if opt == 'selected_dates_option':
         pass
-    elif opt == 'dated' or vars.selected_order_option == 'chronological-order':
+    elif opt == 'dated' or selected_order_option.startswith('chronological-order'):
         q &= (db.TblPhotos.photo_date != NO_DATE)
     elif opt == 'undated':
         q &= (db.TblPhotos.photo_date == NO_DATE)
