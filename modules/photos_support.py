@@ -609,4 +609,13 @@ def get_photo_topics(photo_id):
     lst = [itm.TblTopics.as_dict() for itm in lst]
     for itm in lst:
         itm['sign'] = ""
+    lst = make_unique(lst, 'id')
     return lst
+
+def make_unique(arr, key):
+    dic = dict()
+    for a in arr:
+        dic[a[key]] = a
+    arr = [dic[id] for id in sorted(dic)]
+    return arr
+    
