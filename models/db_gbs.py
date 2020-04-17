@@ -516,6 +516,14 @@ db.define_table('TblGroups',
                 Field('deleted', type='boolean', default=False) #todo: currently not used
                 )
 
+db.define_table('TblGroupContacts',
+                Field('email', type='string'),
+                Field('first_name', type='string'),
+                Field('last_name', type='string'),
+                Field('group_id', type=db.TblGroups),
+                Field('deleted', type='boolean', default=False)
+                )
+
 def write_indexing_sql_scripts():
     '''Creates a set of indexes if they do not exist.
        In a terminal, su postgres and issue the command

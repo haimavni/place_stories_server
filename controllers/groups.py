@@ -17,6 +17,12 @@ def get_group_list(vars):
     return dict(group_list = lst)
 
 @serve_json
+def get_contact_list(vars):
+    lst = db(db.TblGroupContacts.deleted!=True).select()
+    lst = [dict(id=r.id, group_id=r.group_id, email=r.email, first_name=r.first_name, last_name=r.last_name) for r in lst]
+    return dict(contact_list = lst)
+
+@serve_json
 def add_or_update_group(vars):
     group_id = vars.id
     if group_id:
@@ -29,6 +35,20 @@ def add_or_update_group(vars):
         group_id = db.TblGroups.insert(topic_id=topic_id, description=vars.description)
     group_data = dict(title=vars.title, description=vars.description,id=group_id)
     return dict(group_data=group_data)
+
+@serve_json
+def add_or_update_contact(vars):
+    contact_id = vars.id
+    group_id = vars.group_id
+    if contact_id:
+        rec = db(db.TblGroupContacts.id==contact_id).select().first()
+        rec.update_record(email=vars.email, first_name=vars.first_name, last_name=vars.last_name)
+    else:
+        if not db(db.TblGroupContacts.email==vars.email).isempty():
+            raise User_Error("groups.duplicate-contact")
+        contact_id = db.TblGroupContacts.insert(group_id=group_id, email=vars.email, first_name=vars.first_name, last_name=vars.last_name)
+    contact_data = dict(group_id=group_id, id=vars.id, first_name=vars.first_name, last_name=vars.last_name, email=vars.email)
+    return dict(contact_data=contact_data)
 
 @serve_json
 def get_group_info(vars):
@@ -146,6 +166,12 @@ def save_photo_info(vars):
         rec.update_record(photographer_id=prec.id)
     else:
         pid = db.TblPhotographers.insert(name=photographer_name, kind='P')
+    return dict()
+
+@serve_json
+def mail_contacts(vars):
+    group_id = vars.group_id
+    #build recipient list and pass to send_mail
     return dict()
 
 #-----------support functions----------------------------
