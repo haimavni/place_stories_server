@@ -171,6 +171,9 @@ def save_photo_info(vars):
 @serve_json
 def mail_contacts(vars):
     group_id = vars.group_id
+    recipients = db(db.TblGroupContacts.group_id==group_id).select()
+    grec = db(db.TblGroups.id==group_id).select().first()
+    campaign_name = grec.description
     #build recipient list and pass to send_mail
     return dict()
 

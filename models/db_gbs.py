@@ -14,6 +14,7 @@ STORY4FEEDBACK = 7
 STORY4VIDEO = 8
 STORY4DOC = 9
 STORY4AUDIO = 10
+STORY4LETTER = 11
 STORY4USER = [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4AUDIO] 
 
 VIS_NEVER = 0           #for non existing members such as the child of a childless couple (it just connects them)
