@@ -40,6 +40,7 @@ def get_photo_detail(vars):
     photo_topics = get_photo_topics(rec.id)
     return dict(photo_src=photos_folder() + timestamped_photo_path(rec),
                 photo_name=rec.Name,
+                original_file_name=rec.original_file_name,
                 photo_topics=photo_topics,
                 height=rec.height,
                 width=rec.width,
@@ -944,6 +945,7 @@ def process_photo_list(lst, photo_pairs=dict()):
             keywords=rec.KeyWords or "",
             description=rec.Description or "",
             name=rec.Name,
+            original_file_name=rec.original_file_name,
             title='{}: {}'.format(rec.Name, rec.KeyWords),
             photo_date_datestr=rec.photo_date_datestr,
             photo_date_span=rec.photo_date_datespan,
