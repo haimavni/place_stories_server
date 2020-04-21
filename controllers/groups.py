@@ -51,6 +51,14 @@ def add_or_update_contact(vars):
     return dict(contact_data=contact_data)
 
 @serve_json
+def remove_contact(vars):
+    contact_id = int(vars.contact_id)
+    group_id = int(vars.group_id)
+    rec = db(db.TblGroupContacts.id==contact_id).select().first()
+    rec.update_record(deleted=True)
+    return dict()
+
+@serve_json
 def get_group_info(vars):
     group_id = vars.group_id
     logo_url = get_logo_url(group_id)
