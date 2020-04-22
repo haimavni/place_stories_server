@@ -837,7 +837,8 @@ def make_photos_query(vars):
             q &= (db.TblPhotos.upload_date >= upload_date)
     opt = vars.selected_uploader
     if opt == 'mine':
-        q &= (db.TblPhotos.uploader == auth.current_user() or vars.user_id)
+        user_id = auth.current_user() or vars.user_id
+        q &= (db.TblPhotos.uploader == user_id)
     elif opt == 'users':
         q &= (db.TblPhotos.uploader != None)
     opt = vars.selected_dates_option

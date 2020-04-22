@@ -102,9 +102,10 @@ def init_query(tbl, editing=False, is_deleted=False, user_id=None):
     user_id = auth.current_user() or user_id
     if user_id:
         allowed.append(SV_LOGGEDIN_ONLY)
-    for p in [ADMIN, ARCHIVER]:
-        if auth.has_membership(p, user_id):
-            allowed.append(p)
+        if auth.has_membership(ADMIN, user_id):
+            allowed.append(SV_ADMIN_ONLY)
+        if auth.has_membership(ARCHIVER, user_id):
+            allowed.append(SV_ARCHIVER_ONLY)
     is_alive = not bool(is_deleted)
     if tbl == db.TblStories:
         q = (tbl.deleted!=is_alive)
