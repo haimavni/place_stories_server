@@ -9,6 +9,7 @@ from admin_support.access_manager import register_new_user, AccessManager
 import stories_manager
 from gluon.storage import Storage
 from date_utils import update_record_dates, get_all_dates
+from send_email import send_email
 
 @serve_json
 def get_group_list(vars):
@@ -44,9 +45,14 @@ def add_or_update_contact(vars):
         rec = db(db.TblGroupContacts.id==contact_id).select().first()
         rec.update_record(email=vars.email, first_name=vars.first_name, last_name=vars.last_name)
     else:
-        if not db(db.TblGroupContacts.email==vars.email).isempty():
+        if not db((db.TblGroupContacts.email==vars.email) & (db.TblGroupContacts.deleted != True)).isempty():
             raise User_Error("groups.duplicate-contact")
-        contact_id = db.TblGroupContacts.insert(group_id=group_id, email=vars.email, first_name=vars.first_name, last_name=vars.last_name)
+        rec = db((db.TblGroupContacts.email==vars.email) & (db.TblGroupContacts.deleted == True)).select().first()
+        if rec:
+            rec.update_record(deleted=False)
+            contact_id = rec.id
+        else:
+            contact_id = db.TblGroupContacts.insert(group_id=group_id, email=vars.email, first_name=vars.first_name, last_name=vars.last_name)
     contact_data = dict(group_id=group_id, id=vars.id, first_name=vars.first_name, last_name=vars.last_name, email=vars.email)
     return dict(contact_data=contact_data)
 
@@ -179,11 +185,13 @@ def save_photo_info(vars):
 @serve_json
 def mail_contacts(vars):
     group_id = vars.group_id
-    recipients = db(db.TblGroupContacts.group_id==group_id).select()
+    recipients = db((db.TblGroupContacts.group_id==group_id) & (db.TblGroupContacts.deleted != True)).select()
     grec = db(db.TblGroups.id==group_id).select().first()
     campaign_name = grec.description
+    group_name = db(db.TblTopics.id==grec.topic_id).select().first().name
     #build recipient list and pass to send_mail
-    return dict()
+    result = send_email(campaign_name=group_name, from_address="info@gbstories.org", from_name="", subject=grec.description, body=vars.mail_body, recipient_list=recipients)
+    return dict(result = result)
 
 #-----------support functions----------------------------
 

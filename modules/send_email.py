@@ -1,5 +1,8 @@
 import requests
 import re
+from collections import Iterable
+import xml.etree.ElementTree as ET
+from cStringIO import StringIO
 
 api_token = "669gxifj8b1r5y71qcvcei0wu"
 username = "haimavni"
@@ -8,7 +11,7 @@ service_address = 'https://capi.inforu.co.il/mail/api.php?xml'
 
 def send_xml(xml):
     response = requests.post(xml) 
-    return dict(response=response, rtext=response.text, reason=response.reason)
+    return response
 
 def create_xml(campaign_name="", from_address=from_address, from_name="", subject="", body="", recipients=""):
     template = '''
@@ -42,10 +45,10 @@ def create_xml(campaign_name="", from_address=from_address, from_name="", subjec
 
 def create_recipients(recipient_list):
     result = ''
-    if not isinstance(recipient_list, list):
+    if not isinstance(recipient_list, Iterable):
         recipient_list = [recipient_list]
     for r in recipient_list:
-        s = '<Email address="{email}" fname="{fname}" lname="{lname}" />\n'.format(email=r.email,fname=r.fname or "",lname=r.lname or "")
+        s = '<Email address="{email}" fname="{fname}" lname="{lname}" />\n'.format(email=r.email,fname=r.first_name or "",lname=r.last_name or "")
         result += s
     return result
 
@@ -53,4 +56,8 @@ def send_email(campaign_name="", from_address=from_address, from_name="", subjec
     recipients = create_recipients(recipient_list)
     xml = create_xml(campaign_name=campaign_name,from_address=from_address, 
                      from_name=from_name, subject=subject, body=body, recipients=recipients)
-    return send_xml(xml)
+    result = send_xml(xml)
+    stream = StringIO(result.text)
+    tree = ET.parse(stream)
+    return dict(response=result.text, reason=result.reason)
+    
