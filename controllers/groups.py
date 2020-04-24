@@ -190,7 +190,7 @@ def mail_contacts(vars):
     campaign_name = grec.description
     group_name = db(db.TblTopics.id==grec.topic_id).select().first().name
     #build recipient list and pass to send_mail
-    result = send_email(campaign_name=group_name, from_address="info@gbstories.org", from_name="", subject=grec.description, body=vars.mail_body, recipient_list=recipients)
+    result = send_email(campaign_name=group_name, from_address="info@gbstories.org", from_name="Test", subject=grec.description, body=vars.mail_body, recipient_list=recipients)
     return dict(result = result)
 
 #-----------support functions----------------------------

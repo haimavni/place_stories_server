@@ -10,7 +10,8 @@ from_address = "info@gbstories.org"
 service_address = 'https://capi.inforu.co.il/mail/api.php?xml'
 
 def send_xml(xml):
-    response = requests.post(xml) 
+    url= service_address + '=' + xml
+    response = requests.post(url) 
     return response
 
 def create_xml(campaign_name="", from_address=from_address, from_name="", subject="", body="", recipients=""):
@@ -25,7 +26,7 @@ def create_xml(campaign_name="", from_address=from_address, from_name="", subjec
                 <CampaignName>{campaign_name}</CampaignName>
                 <FromAddress>{from_address}</FromAddress>
                 <FromName>{from_name}</FromName>
-                <Subject>{subject}</Subject>
+                <Subject>![CDATA[{subject}]]</Subject>
                 <Body><![CDATA[{body}]]></Body>
             </Message>
             <Recipients>
@@ -40,7 +41,6 @@ def create_xml(campaign_name="", from_address=from_address, from_name="", subjec
                            campaign_name=campaign_name, from_address=from_address, 
                            from_name=from_name, subject=subject, body=body, recipients=recipients)
     result = re.sub('\n\s*', '', result)
-    result = service_address + '=' + result
     return result
 
 def create_recipients(recipient_list):
@@ -59,5 +59,7 @@ def send_email(campaign_name="", from_address=from_address, from_name="", subjec
     result = send_xml(xml)
     stream = StringIO(result.text)
     tree = ET.parse(stream)
+    if len(tree.findall('Error')) > 0:
+        raise Exception('Mail delivery failed!')
     return dict(response=result.text, reason=result.reason)
     

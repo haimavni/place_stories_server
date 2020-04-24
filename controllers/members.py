@@ -872,6 +872,7 @@ def set_story_list_data(story_list):
         story_text=rec.story,
         preview=rec.preview,
         name=rec.name,
+        source=rec.source,
         story_id=rec.id,
         topics = rec.keywords, ###'; '.join(story_topics[rec.id]) if rec.id in story_topics else "",
         doc_url = rec.doc_url,
