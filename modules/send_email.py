@@ -15,6 +15,9 @@ def send_xml(xml):
     return response
 
 def create_xml(campaign_name="", from_address=from_address, from_name="", subject="", body="", recipients=""):
+    body = re.sub(r'\&.+?;', '', body)
+    #body = body.replace('&nbsp;', '')
+    body = body.replace('#', '%23')
     template = '''
     <InfoMailClient>
         <SendEmails>
@@ -26,7 +29,7 @@ def create_xml(campaign_name="", from_address=from_address, from_name="", subjec
                 <CampaignName>{campaign_name}</CampaignName>
                 <FromAddress>{from_address}</FromAddress>
                 <FromName>{from_name}</FromName>
-                <Subject>![CDATA[{subject}]]</Subject>
+                <Subject>{subject}</Subject>
                 <Body><![CDATA[{body}]]></Body>
             </Message>
             <Recipients>
