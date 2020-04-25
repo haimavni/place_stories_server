@@ -420,6 +420,7 @@ def save_video(vars):
             upload_date=datetime.datetime.now()
         )
         vid = db.TblVideos.insert(**data)
+        data.update(id=vid)
         if params.video_date_datestr:
             rec = db(db.TblVideos.id == vid).select().first()
             date_data = dict(
@@ -437,6 +438,7 @@ def save_video(vars):
         ws_messaging.send_message(key='NEW-VIDEO', group='ALL', new_video_rec=data)
     else:
         old_rec = db(db.TblVideos.id == params.id).select().first()
+        vid = old_rec.id
         del params['src'] #
         #data = dict()
         #for fld in old_rec:
@@ -455,7 +457,7 @@ def save_video(vars):
                 story_info.name = params.name
                 sm.update_story(old_rec.story_id, story_info)
                 ws_messaging.send_message(key='VIDEO-INFO-CHANGED', group='ALL', changes=data)
-    return dict()
+    return dict(video_id=vid)
 
 @serve_json
 def delete_video(vars):
