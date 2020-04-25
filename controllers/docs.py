@@ -1,6 +1,6 @@
 import datetime
 from docs_support import save_uploaded_doc, doc_url, calc_doc_story
-from members_support import calc_grouped_selected_options, calc_all_tags, get_tag_ids
+from members_support import calc_grouped_selected_options, calc_all_tags, get_tag_ids, init_query
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
 import stories_manager
 
@@ -32,6 +32,7 @@ def get_doc_list(vars):
         q = make_docs_query(params)
         lst = db(q).select(orderby=~db.TblDocs.id)
     selected_doc_list = params.selected_doc_list
+    lst = [r.TblDocs for r in lst]
     lst = [rec for rec in lst if rec.story_id not in params.checked_doc_list]
     lst = lst0 + lst
     doc_list = [rec for rec in lst]
@@ -132,7 +133,7 @@ def get_doc_list_with_topics(vars):
     return result
 
 def make_docs_query(params):
-    q = (db.TblDocs.deleted!=True)
+    q = init_query(db.TblDocs, params.editing)
     if params.days_since_upload:
         days = params.days_since_upload.value
         if days:

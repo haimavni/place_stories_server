@@ -14,6 +14,7 @@ STORY4FEEDBACK = 7
 STORY4VIDEO = 8
 STORY4DOC = 9
 STORY4AUDIO = 10
+STORY4LETTER = 11
 STORY4USER = [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4AUDIO] 
 
 VIS_NEVER = 0           #for non existing members such as the child of a childless couple (it just connects them)
@@ -55,7 +56,7 @@ db.define_table('TblStories',
                 Field('language', type='string'),
                 Field('translated_from', type='integer'), ##db.TblStories 
                 Field('deleted', type='boolean', default=False),
-                Field('visibility', type='integer'),
+                Field('visibility', type='integer', default=SV_PUBLIC),
                 Field('touch_time', type='date', default=NO_DATE), #used to promote stories
                 Field('last_version', type='integer'),
                 Field('approved_version', type='integer'),
@@ -514,6 +515,14 @@ db.define_table('TblGroups',
                 Field('logo_name', type='string'),
                 Field('topic_id', type='integer'),
                 Field('deleted', type='boolean', default=False) #todo: currently not used
+                )
+
+db.define_table('TblGroupContacts',
+                Field('email', type='string'),
+                Field('first_name', type='string'),
+                Field('last_name', type='string'),
+                Field('group_id', type=db.TblGroups),
+                Field('deleted', type='boolean', default=False)
                 )
 
 def write_indexing_sql_scripts():

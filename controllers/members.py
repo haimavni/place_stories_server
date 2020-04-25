@@ -491,6 +491,13 @@ def get_constants(vars):
             DC_KILLED=2,
             DC_MURDERED=3
             ),
+        story_visibility=dict(
+            SV_NO_CHANGE=SV_NO_CHANGE,
+            SV_PUBLIC=SV_PUBLIC,
+            SV_ADMIN=SV_ADMIN_ONLY,
+            SV_ARCHIVER=SV_ARCHIVER_ONLY,
+            SV_LOGGEDIN=SV_LOGGEDIN_ONLY
+        ),
         ptp_key=web2py_uuid()
     )    
 
@@ -564,6 +571,7 @@ def apply_topics_to_selected_stories(vars):
         )
     else:
         dates_info = None
+    visibility_option = params.selected_story_visibility
 
     checked_story_list = params.checked_story_list
     selected_topics = params.selected_topics
@@ -600,7 +608,10 @@ def apply_topics_to_selected_stories(vars):
             story_rec = db(db.TblStories.id==eid).select().first()
             update_record_dates(story_rec, dates_info)
             copy_story_date_to_object_date(story_rec)
-
+        if visibility_option:
+            story_rec = db(db.TblStories.id==eid).select().first()
+            story_rec.update_record(visibility=visibility_option)
+            
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         keywords = "; ".join(curr_tags)
         rec = db(db.TblStories.id == eid).select().first()
@@ -861,6 +872,7 @@ def set_story_list_data(story_list):
         story_text=rec.story,
         preview=rec.preview,
         name=rec.name,
+        source=rec.source,
         story_id=rec.id,
         topics = rec.keywords, ###'; '.join(story_topics[rec.id]) if rec.id in story_topics else "",
         doc_url = rec.doc_url,
@@ -1003,12 +1015,9 @@ def query_has_data(params):
            params.show_untagged or params.selected_words
 
 def make_stories_query(params, exact):
-    getting_live_stories = not params.deleted_stories
-    q = (db.TblStories.deleted != getting_live_stories) & (db.TblStories.used_for.belongs(story_kinds())) 
+    q = init_query(db.TblStories, editing=params.editing, is_deleted=params.deleted_stories)
+    q &= (db.TblStories.used_for.belongs(story_kinds()))
     selected_stories = params.selected_stories
-    ##if exact and params.search_type != 'advanced':
-        ##return None
-
     if params.keywords_str:
         selected_stories = [];
         if exact:

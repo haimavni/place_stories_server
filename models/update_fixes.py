@@ -60,13 +60,17 @@ def init_sampling():
     
 def fix_is_tagged():
     schedule_background_task("fix is tagged", "fix_is_tagged")
+    
+def fix_visibility():
+    db(db.TblStories.deleted!=True).update(visibility=SV_PUBLIC)
 
 _fixes = {
     1: init_photo_back_sides,
     2: fix_all_date_ends,
     3: init_story_dates,
     4: init_sampling,
-    5: fix_is_tagged
+    5: fix_is_tagged,
+    6: fix_visibility
 }
 
 _init_configuration_table()

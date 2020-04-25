@@ -13,7 +13,7 @@ import random
 import pwd
 from stories_manager import Stories
 from folders import *
-from members_support import member_display_name, older_display_name, get_member_rec
+from members_support import member_display_name, older_display_name, get_member_rec, init_query #init_query is used indirectly
 import zipfile
 from pybktree import BKTree, hamming_distance
 import time
@@ -556,3 +556,66 @@ def timestamped_photo_path(photo_rec):
         result += '?' + str(utime)
     return result
 
+def find_missing_files(init=False):
+    db = inject('db')
+    q = (db.TblPhotos.deleted != True) & (db.TblPhotos.photo_missing == None)
+    n = db(q).count()
+    if init:
+        db(db.TblPhotos.deleted != True).update(photo_missing = None)
+    chunk = 100
+    recoverable = 0
+    while True:
+        lst = db(q).select(limitby=(0,chunk))
+        if len(lst) == 0:
+            break
+        for rec in lst:
+            fname = local_photos_folder('orig') + rec.photo_path
+            lost = not os.path.exists(fname)
+            if lost:
+                fname = local_photos_folder('oversize') + rec.photo_path
+                if os.path.exists(fname):
+                    recoverable += 1
+            rec.update_record(photo_missing=lost)
+        db.commit()
+    missing = db((db.TblPhotos.deleted!=True)&(db.TblPhotos.photo_missing==True)).count()
+    return dict(missing=missing, recoverable=recoverable)
+
+def create_watermark(image_path, final_image_path, watermark):
+    #https://pybit.es/pillow-intro.html
+    main = Image.open(image_path)
+    mark = Image.open(watermark)
+
+    mask = mark.convert('L').point(lambda x: min(x, 25))
+    mark.putalpha(mask)
+
+    mark_width, mark_height = mark.size
+    main_width, main_height = main.size
+    aspect_ratio = mark_width / mark_height
+    new_mark_width = main_width * 0.25
+    mark.thumbnail((new_mark_width, new_mark_width / aspect_ratio), Image.ANTIALIAS)
+
+    tmp_img = Image.new('RGB', main.size)
+
+    for i in range(0, tmp_img.size[0], mark.size[0]):
+        for j in range(0, tmp_img.size[1], mark.size[1]):
+            main.paste(mark, (i, j), mark)
+            main.thumbnail((8000, 8000), Image.ANTIALIAS)
+            main.save(final_image_path, quality=100)
+
+def get_photo_topics(photo_id):
+    db = inject('db')
+    q = (db.TblItemTopics.item_id==photo_id) & (db.TblItemTopics.item_type=='P') & (db.TblTopics.id==db.TblItemTopics.topic_id)
+    lst = db(q).select()
+    lst = [itm.TblTopics.as_dict() for itm in lst]
+    for itm in lst:
+        itm['sign'] = ""
+    lst = make_unique(lst, 'id')
+    return lst
+
+def make_unique(arr, key):
+    dic = dict()
+    for a in arr:
+        dic[a[key]] = a
+    arr = [dic[id] for id in sorted(dic)]
+    return arr
+    

@@ -1,6 +1,6 @@
 from words import calc_used_languages, read_words_index, get_all_story_previews, get_reisha
 import stories_manager
-from members_support import calc_grouped_selected_options, calc_all_tags, get_tag_ids
+from members_support import calc_grouped_selected_options, calc_all_tags, get_tag_ids, init_query
 
 @serve_json
 def apply_to_checked_terms(vars):
@@ -58,6 +58,7 @@ def get_term_list(vars):
     else:
         q = make_terms_query(params)
         lst = db(q).select(orderby=~db.TblTerms.id)
+    lst = [r.TblTerms for r in lst]
     selected_term_list = params.selected_term_list
     lst = [rec for rec in lst if rec.story_id not in params.checked_term_list]
     lst = sorted(lst, cmp=lambda itm1, itm2: -1 if itm1.Name < itm2.Name else +1 if itm1.Name > itm2.Name else 0)
@@ -84,8 +85,7 @@ def get_term_list_with_topics(vars):
             q1 = ~q1
         q &= q1
         lst = db(q).select(orderby=~db.TblTerms.id)
-        lst = [rec.TblTerms for rec in lst]
-        bag1 = set(r.id for r in lst)
+        bag1 = set(r.TblTerms.id for r in lst)
         if first:
             first = False
             bag = bag1
@@ -93,12 +93,12 @@ def get_term_list_with_topics(vars):
             bag &= bag1
     dic = {}
     for r in lst:
-        dic[r.id] = r
+        dic[r.TblTerms.id] = r
     result = [dic[id] for id in bag]
     return result
 
 def make_terms_query(params):
-    q = (db.TblTerms.deleted!=True)
+    q = init_query(db.TblTerms)
     if params.selected_terms:
         q &= (db.TblTerms.story_id.belongs(params.selected_terms))
     return q

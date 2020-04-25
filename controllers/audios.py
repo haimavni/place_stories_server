@@ -1,5 +1,5 @@
 from audios_support import save_uploaded_audio, audio_url
-from members_support import calc_grouped_selected_options, calc_all_tags, get_tag_ids
+from members_support import calc_grouped_selected_options, calc_all_tags, get_tag_ids, init_query
 from gluon.storage import Storage
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
 import stories_manager
@@ -143,7 +143,7 @@ def get_audio_list_with_topics(vars):
     return result
 
 def make_audios_query(params):
-    q = (db.TblAudios.deleted!=True)
+    q = init_query(db.TblAudios, editing=params.editing)
     if params.days_since_upload:
         days = params.days_since_upload.value
         if days:

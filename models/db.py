@@ -100,7 +100,7 @@ auth.settings.reset_password_requires_verification = True
 # auth.enable_record_versioning(db)
 
 membership_consts = ['ADMIN', 'DEVELOPER', 'EDITOR', 'COMMENTATOR', 'PHOTO_UPLOADER', 'ACCESS_MANAGER', 'CHATTER', 
-                     'CHAT_MODERATOR', 'TEXT_AUDITOR', 'DATA_AUDITOR', 'HELP_AUTHOR', 'ADVANCED', 'MAIL_WATCHER', 'ARCHIVER', 'TESTER']
+                     'CHAT_MODERATOR', 'TEXT_AUDITOR', 'DATA_AUDITOR', 'HELP_AUTHOR', 'ADVANCED', 'MAIL_WATCHER', 'ARCHIVER', 'TESTER', 'RESTRICTED']
 
 def __calc_membership_const(const_name):
     display_name = ' '.join([z.capitalize() for z in const_name.split('_')])
@@ -139,3 +139,7 @@ response.delimiters = ('{!', '!}')
 response.controller = 'none'
 
 BASE_URL = (request.env.http_origin or request.env.http_host) + '/' + request.application + '/'
+
+story_visibility_values = ['SV_NO_CHANGE', 'SV_PUBLIC', 'SV_ADMIN_ONLY', 'SV_ARCHIVER_ONLY', 'SV_LOGGEDIN_ONLY']
+for i, v in enumerate(story_visibility_values):
+    globals()[v] = i
