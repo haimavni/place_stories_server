@@ -62,7 +62,8 @@ db.define_table('TblStories',
                 Field('approved_version', type='integer'),
                 Field('sampling_id', type='integer', default=random.randint(1, SAMPLING_SIZE)),
                 Field('chatroom_id', type=db.TblChatGroup),
-                Field('last_chat_time', type='datetime', default=NO_DATE)
+                Field('last_chat_time', type='datetime', default=NO_DATE),
+                Field('imported_from', type='string')
 )                
 
 db.define_table('TblStoryVersions',
@@ -467,7 +468,8 @@ db.define_table('TblConfiguration',
                 Field('initial_privileges', type='string', default='EDITOR;PHOTO_UPLOADER;CHATTER'),
                 Field('expiration_date', type='date'),
                 Field('expose_new_app_button', type='boolean', default=True),
-                Field('support_audio', type='boolean', default=False)
+                Field('support_audio', type='boolean', default=False),
+                Field('last_help_update', type='datetime', default=NO_DATE)
                 )
 
 db.define_table('TblLocaleCustomizations',

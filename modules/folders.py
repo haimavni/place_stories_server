@@ -15,6 +15,11 @@ def local_folder(kind):
     dir_util.mkpath(path)
     return path
 
+def system_folder():
+    path = '/gb_photos/system_data/'
+    dir_util.mkpath(path)
+    return path
+
 def photos_folder(what="orig"):
     #what may be orig, squares or profile_photos.
     return url_folder('photos') + what + '/'
