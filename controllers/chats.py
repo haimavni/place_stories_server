@@ -14,7 +14,7 @@ def read_chatroom(vars):
 
 @serve_json
 def read_chatrooms(vars):
-    lst = db(db.TblChatGroup).select()
+    lst = db(db.TblChatGroup).select(db.TblChatGroup.story_id==None) #only system-wide chats
     for rec in lst:
         rec.user_message = 'bla'
     dic = dict()
