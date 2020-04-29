@@ -149,7 +149,7 @@ class Stories:
         promote_word_indexing()
         return Storage(story_id=story_id, creation_date=now, author=source, preview=preview)
 
-    def update_story(self, story_id, story_info, language=None, change_language=False, import_from=''):
+    def update_story(self, story_id, story_info, language=None, change_language=False, imported_from=''):
         db, auth, STORY4EVENT, STORY4TERM, STORY4PHOTO, STORY4DOC, STORY4AUDIO, TEXT_AUDITOR = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO', 'STORY4DOC', 'STORY4AUDIO', 'TEXT_AUDITOR')
         if story_id == 'new':
             return self.add_story(story_info)

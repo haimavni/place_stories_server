@@ -4,11 +4,51 @@ from folders import local_folder, system_folder
 import re
 from injections import inject
 import os, datetime
+from gluon.storage import Storage
 
-def default_csv_name():
-    return local_folder('help') + 'help_messages.csv'
+def save_help(name, topic, content, imported_from=''):
+    STORY4HELP = inject('STORY4HELP')
+    return _save_system_story(name, topic, content, imported_from=imported_from, used_for=STORY4HELP)
 
-def save_system_story(name, topic, content, imported_from='', used_for=None):
+def save_letter(name, topic, content, imported_from=''):
+    STORY4LETTER = inject('STORY4LETTER')
+    return _save_system_story(name, topic, content, imported_from=imported_from, used_for=STORY4LETTER)
+
+def save_help_messages_to_csv(target=None):
+    STORY4HELP = inject('STORY4HELP')
+    return _save_system_stories_to_csv(target=target, used_for=STORY4HELP)
+
+def save_letter_templates_to_csv(target=None):
+    STORY4LETTER = inject('STORY4LETTER')
+    return _save_system_stories_to_csv(target=target, used_for=STORY4LETTER)
+
+def load_help_messages_from_csv():
+    STORY4HELP = inject('STORY4HELP')
+    return _load_system_stories_from_csv(used_for=STORY4HELP)
+
+def load_letter_templates_from_csv():
+    STORY4LETTER = inject('STORY4LETTER')
+    return _load_system_stories_from_csv(used_for=STORY4LETTER)
+
+def update_help_messages():
+    STORY4HELP = inject('STORY4HELP')
+    return _update_system_stories(used_for=STORY4HELP)
+
+def update_letter_templates():
+    STORY4LETTER = inject('STORY4LETTER')
+    return _update_system_stories(used_for=STORY4LETTER)
+
+#--------------------------------------------------------------------------------------------
+
+def _system_stories_file_name(used_for):
+    STORY4HELP, STORY4LETTER = inject('STORY4HELP', 'STORY4LETTER')
+    if used_for == STORY4HELP:
+        return 'help_messages'
+    if used_for == STORY4LETTER:
+        return 'letter_templates'
+    raise Exception('Unknown system story type')
+
+def _save_system_story(name, topic, content, imported_from='', used_for=None):
     db = inject('db')
     rec = db((db.TblStories.used_for==used_for) & (db.TblStories.topic==topic)).select().first()
     if rec:
@@ -28,11 +68,8 @@ def save_system_story(name, topic, content, imported_from='', used_for=None):
     else:
         sm.add_story(story_info, imported_from=imported_from)
 
-def save_help(name, topic, content, imported_from=''):
-    STORY4HELP = inject('STORY4HELP')
-    return save_system_story(name, topic, content, imported_from=imported_from, used_for=STORY4HELP)
-
-def save_system_stories_to_csv(target=None, used_for=None, filename=None):
+def _save_system_stories_to_csv(target=None, used_for=None):
+    filename = _system_stories_file_name(used_for)
     db = inject('db')
     folder = system_folder() if target == system else local_folder('help')
     csv_name = folder + filename + '.csv'
@@ -41,26 +78,6 @@ def save_system_stories_to_csv(target=None, used_for=None, filename=None):
         rows.export_to_csv_file(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
     return dict(good=True)
 
-def save_help_messages_to_csv(target=None):
-    STORY4HELP = inject('STORY4HELP')
-    return save_system_stories_to_csv(target=target, 
-                                      used_for=STORY4HELP, 
-                                     filename='help_messages')
-
-def load_system_stories_from_csv(filename, used_for=None):
-    db = inject('db')
-    csv_name = system_folder() + filename + '.csv'
-    imported_from = 'system'
-    for rec in get_records(csv_name):
-        name, topic, content = rec
-        save_system_story(name, topic, content, imported_from=imported_from, used_for=used_for)
-    db.commit()
-    return
-
-def load_help_messages_from_csv():
-    STORY4HELP = inject('STORY4HELP')
-    return load_system_stories_from_csv('help_messages', used_for=STORY4HELP)
-
 def get_records(csv_name):
     with open(csv_name, 'rb') as csvfile:
         reader = csv.reader(csvfile, delimiter=',', quotechar='"')
@@ -68,13 +85,29 @@ def get_records(csv_name):
         for row in reader:
             yield row
 
-def update_help_messages():
-    db, NO_DATE = inject('db', 'NO_DATE')
-    fname = system_folder() + 'help_messages.csv'
-    ctime = os.path.getctime(fname)
+def _update_system_stories(used_for=None):
+    filename = system_folder() + _system_stories_file_name(used_for) + '.csv'
+    db, NO_TIME = inject('db', 'NO_TIME')
+    ctime = round(os.path.getctime(filename))
     dt = datetime.datetime.fromtimestamp(ctime)
     crec = db(db.TblConfiguration).select().first()
-    last_help_update = crec.last_help_update or NO_DATE
-    if dt > last_help_update: #need to update
-        load_help_messages_from_csv()
+    field_name = _system_stories_file_name(used_for) + '_upload_time'
+    last_update = crec[field_name] or NO_TIME
+    if dt > last_update: #need to update
+        _load_system_stories_from_csv(used_for)
+        data = {field_name: dt}
+        crec.update_record(**data)
+        return 'updated'
+    return 'No updates'
+
+def _load_system_stories_from_csv(used_for=None):
+    filename = _system_stories_file_name(used_for)
+    db = inject('db')
+    csv_name = system_folder() + filename + '.csv'
+    imported_from = 'system'
+    for rec in get_records(csv_name):
+        name, topic, content = rec
+        _save_system_story(name, topic, content, imported_from=imported_from, used_for=used_for)
+    db.commit()
+    return
 
