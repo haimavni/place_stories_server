@@ -71,7 +71,7 @@ def _save_system_story(name, topic, content, imported_from='', used_for=None):
 def _save_system_stories_to_csv(target=None, used_for=None):
     filename = _system_stories_file_name(used_for)
     db = inject('db')
-    folder = system_folder() if target == system else local_folder('help')
+    folder = system_folder() if target == 'system' else local_folder('help')
     csv_name = folder + filename + '.csv'
     rows = db(db.TblStories.used_for==used_for).select(db.TblStories.name, db.TblStories.topic, db.TblStories.story)
     with open(csv_name, 'w') as f:

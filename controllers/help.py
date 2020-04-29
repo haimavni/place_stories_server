@@ -20,16 +20,13 @@ def get_help(vars):
                              )
     return dict(story_info=story_info)
 
-def default_csv_name():
-    return local_folder('help') + 'help_messages.csv'
-
 @serve_json
 def save_help_messages_to_csv(vars):
-    return help_support.save_help_messages_to_csv(target=vars.target, csv_name=vars.csv_name)
+    return help_support.save_help_messages_to_csv(target=vars.target)
 
 @serve_json
 def load_help_messages_from_csv(vars):
-    return help_support.load_help_messages_from_csv(csv_name=vars.csv_name)
+    return help_support.load_help_messages_from_csv()
 
 @serve_json
 def print_all_messages(vars):
