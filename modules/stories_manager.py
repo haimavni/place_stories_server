@@ -108,7 +108,7 @@ class Stories:
             )
         return story_info
 
-    def add_story(self, story_info, story_id=None):
+    def add_story(self, story_info, story_id=None, imported_from=''):
         story_text = story_info.story_text
         name = story_info.name
         language = guess_language(name + ' ' + story_text)
@@ -128,7 +128,8 @@ class Stories:
                                         topic=story_info.topic,
                                         last_version=0,
                                         approved_version=0 if auth.user_has_privilege(TEXT_AUDITOR) else -1,
-                                        last_update_date=now)
+                                        last_update_date=now,
+                                        imported_from=imported_from)
         preview = get_reisha(story_text)
         db(db.TblStories.id==story_id).update(preview=preview)
         if story_info.used_for == STORY4EVENT:
@@ -148,7 +149,7 @@ class Stories:
         promote_word_indexing()
         return Storage(story_id=story_id, creation_date=now, author=source, preview=preview)
 
-    def update_story(self, story_id, story_info, language=None, change_language=False):
+    def update_story(self, story_id, story_info, language=None, change_language=False, imported_from=''):
         db, auth, STORY4EVENT, STORY4TERM, STORY4PHOTO, STORY4DOC, STORY4AUDIO, TEXT_AUDITOR = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO', 'STORY4DOC', 'STORY4AUDIO', 'TEXT_AUDITOR')
         if story_id == 'new':
             return self.add_story(story_info)
@@ -181,6 +182,8 @@ class Stories:
             delta = merger.diff_make(rec.story, updated_story_text)
             last_version = db((db.TblStoryVersions.story_id==story_id)&(db.TblStoryVersions.language==rec.language)).count() + 1
             preview = get_reisha(updated_story_text)
+            if imported_from and not rec.imported_from:
+                imported_from = imported_from.upper() #signal import overrides previous content
             data = dict(
                 story=updated_story_text,
                 preview=preview,
@@ -189,7 +192,8 @@ class Stories:
                 last_update_date=now, 
                 updater_id=self.author_id,
                 last_version=last_version,
-                language=language1
+                language=language1,
+                imported_from=imported_from
             )
             text_auditor = auth.user_has_privilege(TEXT_AUDITOR)
             if text_auditor:
