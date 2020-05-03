@@ -60,6 +60,7 @@ def send_email(campaign_name="", from_address=from_address, from_name="", subjec
     xml = create_xml(campaign_name=campaign_name,from_address=from_address, 
                      from_name=from_name, subject=subject, body=body, recipients=recipients)
     result = send_xml(xml)
+    comment("Send_email result: {}", result.text)
     stream = StringIO(result.text)
     tree = ET.parse(stream)
     if len(tree.findall('Error')) > 0:
