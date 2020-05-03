@@ -85,8 +85,9 @@ def upload_logo(vars):
 def upload_contacts(vars):
     stream = StringIO(vars.file.BINvalue)
     added = 0
+    group_id = vars.file.info.group_id
     for rec in get_records_from_csv_stream(stream):
-        email, first_name, last_name, group_id = rec[1:-1] #todo: actual csv files may not need truncation
+        email, first_name, last_name = rec 
         q = (db.TblGroupContacts.group_id==group_id) & (db.TblGroupContacts.email==email)
         cont_rec =  db(q).select().first()
         if cont_rec:
