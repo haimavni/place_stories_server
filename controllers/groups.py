@@ -1,6 +1,7 @@
 from folders import *
 import zlib
 from cStringIO import StringIO
+import csv
 from PIL import Image, ImageFile
 from photos_support import save_uploaded_photo, photos_folder, timestamped_photo_path, get_photo_topics
 from topics_support import *
@@ -79,6 +80,31 @@ def upload_logo(vars):
     group_id=fil.info.group_id
     file_name = save_uploaded_logo(fil.name, fil.BINvalue, group_id)
     return dict(upload_result=dict(), logo_url=get_logo_url(group_id))
+
+@serve_json
+def upload_contacts(vars):
+    stream = StringIO(vars.file.BINvalue)
+    added = 0
+    for rec in get_records_from_csv_stream(stream):
+        email, first_name, last_name, group_id = rec[1:-1] #todo: actual csv files may not need truncation
+        q = (db.TblGroupContacts.group_id==group_id) & (db.TblGroupContacts.email==email)
+        cont_rec =  db(q).select().first()
+        if cont_rec:
+            if cont_rec.deleted:
+                added += 1
+            cont_rec.update_record(deleted=False)
+        else:
+            added += 1
+            db.TblGroupContacts.insert(email=email, first_name=first_name, last_name=last_name, group_id=group_id)
+    ws_messaging.send_message(key='CONTACTS-FILE-UPLOADED', group='ALL', added=added)
+    return dict(upload_result=dict())
+
+def get_records_from_csv_stream(csvfile):
+    reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+    reader.next()     #skip header
+    for row in reader:
+        yield row
+    
 
 @serve_json
 def delete_group(vars):
