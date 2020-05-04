@@ -249,17 +249,15 @@ def get_theme_data(vars):
         header_background='header-background.png',
         top_background='top-background.png',
         footer_background='footer-background.png',
-        founders_group_photo='founders_group_photo.jpg',
         app_logo='app-logo.png',
-        himnon='himnon-givat-brenner.mp3',
-        content_background='bgs/body-bg.jpg',
-        mayflower='bgs/mayflower.jpg'
+        content_background='bgs/body-bg.jpg'
     )
     result = dict()
     for k in files:
         result[k] = path + files[k] if os.path.exists(local_path + files[k]) else ''
         if not os.path.exists(local_path + files[k]):
-            comment("file {} is missing", k)
+            pass
+            #comment("file {} is missing", k)
     return dict(files=result)
 
 @serve_json

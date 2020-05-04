@@ -211,7 +211,6 @@ def save_photo_info(vars):
 
 @serve_json
 def mail_contacts(vars):
-    comment("enter mail contacts, from: {}, group {}", from_name, group_id)
     group_id = vars.group_id
     from_name = vars.from_name or 'Test'
     comment("enter mail contacts, from: {}, group {}", from_name, group_id)
