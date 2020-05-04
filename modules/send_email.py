@@ -3,6 +3,7 @@ import re
 from collections import Iterable
 import xml.etree.ElementTree as ET
 from cStringIO import StringIO
+from injections import inject
 
 api_token = "669gxifj8b1r5y71qcvcei0wu"
 username = "haimavni"
@@ -56,6 +57,7 @@ def create_recipients(recipient_list):
     return result
 
 def send_email(campaign_name="", from_address=from_address, from_name="", subject="", body="", recipient_list=[]):
+    comment = inject('comment')
     recipients = create_recipients(recipient_list)
     xml = create_xml(campaign_name=campaign_name,from_address=from_address, 
                      from_name=from_name, subject=subject, body=body, recipients=recipients)
