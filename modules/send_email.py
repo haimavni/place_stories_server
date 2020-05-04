@@ -58,6 +58,7 @@ def create_recipients(recipient_list):
 
 def send_email(campaign_name="", from_address=from_address, from_name="", subject="", body="", recipient_list=[]):
     comment = inject('comment')
+    comment("about to send email")
     recipients = create_recipients(recipient_list)
     xml = create_xml(campaign_name=campaign_name,from_address=from_address, 
                      from_name=from_name, subject=subject, body=body, recipients=recipients)
