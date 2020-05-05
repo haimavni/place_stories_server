@@ -168,9 +168,9 @@ def upload_photo(vars):
 @serve_json
 def attempt_login(vars):
     user_id = 0;
-    user_rec = db(db.auth_user.email==vars.email).select().first()
-    if user_rec:
-        user_id = user_rec.id
+    user = auth.login_bare(vars.email, "", sneak_in=True)
+    if user:
+        user_id = user.id
     return dict(user_id=user_id)
 
 @serve_json

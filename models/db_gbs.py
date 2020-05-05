@@ -290,7 +290,8 @@ db.define_table('TblChats',
                 Field('chat_group', type=db.TblChatGroup),
                 Field('author', type=db.auth_user),
                 Field('timestamp', type='datetime'),
-                Field('message', type='text')
+                Field('message', type='text'),
+                Field('deleted', type='boolean', default=False)
 )
 
 db.define_table('TblPhotos',

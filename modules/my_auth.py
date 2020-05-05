@@ -143,7 +143,7 @@ class MyAuth(Auth):
                 privileges[group.role] = True
         return privileges
     
-    def login_bare(self, username, password):
+    def login_bare(self, username, password, sneak_in=False):
         """
         Logins user as specified by username (or email) and password
         """
@@ -151,6 +151,8 @@ class MyAuth(Auth):
         user = settings.table_user(**{settings.userfield: username})
         if not user:
             return 'user-not-registered'
+        if sneak_in:
+            return user
         if user and user.get(settings.passfield, False):
             if user.registration_key:
                 return 'incomplete-registration'

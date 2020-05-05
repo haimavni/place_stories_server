@@ -138,9 +138,12 @@ def check_if_logged_in(vars):
 def login(vars):
     if not vars.email:
         return dict()
-    result = auth.login_bare(vars.email, vars.password)
+    result = auth.login_bare(vars.email, vars.password, sneak_in=vars.sneak_in)
     if isinstance(result, str):
-        raise User_Error(result)
+        if vars.sneak_in:
+            return dict(user=dict(id=0), unregistered=True)
+        else:
+            raise User_Error(result)
     user = Storage()
     for k in ['email', 'facebook', 'first_name', 'last_name', 'id', 'skype']:
         v = result[k]

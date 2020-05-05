@@ -7,7 +7,8 @@ def read_chatroom(vars):
     for msg in messages:
         msg.sender_name = auth.user_name(msg.author)
         msg.message = msg.message.replace('\n', '<br/>')
-    chatroom_name = db(db.TblChatGroup.id==int(vars.room_number)).select().first().name
+    crec = db(db.TblChatGroup.id==int(vars.room_number)).select().first()
+    chatroom_name = crec.name if crec else ""
     return dict(chatroom_name=chatroom_name,
                 messages=messages,
                 user_message='')
@@ -57,7 +58,7 @@ def send_message(vars):
 
 @serve_json
 def delete_message(vars):
-    good = db(db.TblChats.id==vars.message.id).delete() == 1
+    good = db(db.TblChats.id==vars.message.id).update(deleted=True)
     return dict(deleted=good)
 
 @serve_json
