@@ -169,6 +169,8 @@ def upload_photo(vars):
 def attempt_login(vars):
     user_id = 0;
     user = auth.login_bare(vars.email, "", sneak_in=True)
+    if isinstance(user, str):
+        return dict(warning_message=user)
     if user:
         user_id = user.id
     return dict(user_id=user_id)
