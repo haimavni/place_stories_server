@@ -87,13 +87,14 @@ def get_records(csv_name):
 
 def _update_system_stories(used_for=None):
     filename = system_folder() + _system_stories_file_name(used_for) + '.csv'
-    db, NO_TIME = inject('db', 'NO_TIME')
+    db, NO_TIME, comment = inject('db', 'NO_TIME', 'comment')
     ctime = round(os.path.getctime(filename))
     dt = datetime.datetime.fromtimestamp(ctime)
     crec = db(db.TblConfiguration).select().first()
     field_name = _system_stories_file_name(used_for) + '_upload_time'
     last_update = crec[field_name] or NO_TIME
     if dt > last_update: #need to update
+        comment("Updating system stories {}", used_for)
         _load_system_stories_from_csv(used_for)
         data = {field_name: dt}
         crec.update_record(**data)

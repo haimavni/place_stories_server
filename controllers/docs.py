@@ -31,8 +31,8 @@ def get_doc_list(vars):
     else:
         q = make_docs_query(params)
         lst = db(q).select(orderby=~db.TblDocs.id)
+        lst = [r.TblDocs for r in lst]
     selected_doc_list = params.selected_doc_list
-    lst = [r.TblDocs for r in lst]
     lst = [rec for rec in lst if rec.story_id not in params.checked_doc_list]
     lst = lst0 + lst
     doc_list = [rec for rec in lst]

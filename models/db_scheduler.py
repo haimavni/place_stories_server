@@ -7,6 +7,7 @@ import re
 import ws_messaging
 from injections import inject
 from photos_support import scan_all_unscanned_photos
+from help_support import update_help_messages, update_letter_templates
 from collect_emails import collect_mail
 from create_app import create_pending_apps
 from words import update_word_index_all
@@ -157,6 +158,34 @@ def schedule_collect_mail():
         timeout=5 * 60 , # will time out if running for 5 minutes
     )
 
+def schedule_update_help_messages():
+    now = datetime.datetime.now()
+    return db.scheduler_task.insert(
+        status='QUEUED',
+        application_name=request.application,
+        task_name = 'collect mail',
+        function_name='update_help_messages',
+        start_time=now,
+        stop_time=now + datetime.timedelta(days=1461),
+        repeats=0,
+        period=3600,   # every hour
+        timeout=5 * 60 , # will time out if running for 5 minutes
+    )
+
+def schedule_update_letter_templates():
+    now = datetime.datetime.now()
+    return db.scheduler_task.insert(
+        status='QUEUED',
+        application_name=request.application,
+        task_name = 'collect mail',
+        function_name='update_letter_templates',
+        start_time=now,
+        stop_time=now + datetime.timedelta(days=1461),
+        repeats=0,
+        period=3600,   # every hour
+        timeout=5 * 60 , # will time out if running for 5 minutes
+    )
+
 def schedule_watchdog():
     now = datetime.datetime.now()
     return db.scheduler_task.insert(
@@ -235,7 +264,9 @@ permanent_tasks = dict(
     randomize_story_sampling=schedule_randomize_story_sampling,
     update_word_index_all=schedule_update_word_index_all,
     calc_doc_stories=schedule_calc_doc_stories,
-    create_pending_apps=schedule_create_pending_apps
+    create_pending_apps=schedule_create_pending_apps,
+    update_help_messages=schedule_update_help_messages,
+    update_letter_templates=schedule_update_letter_templates
 )
 maildir = '/home/{}_mailbox/Maildir'.format(request.application)
 if os.path.isdir(maildir):
@@ -249,7 +280,9 @@ __tasks = dict(
     update_word_index_all=update_word_index_all,
     calc_doc_stories=calc_doc_stories,
     create_pending_apps=create_pending_apps,
-    execute_task=execute_task
+    execute_task=execute_task,
+    update_help_messages=update_help_messages,
+    update_letter_templates=update_letter_templates
 )
 
 __one_time_tasks = dict(

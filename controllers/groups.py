@@ -87,7 +87,7 @@ def upload_contacts(vars):
     added = 0
     group_id = vars.file.info.group_id
     for rec in get_records_from_csv_stream(stream):
-        email, first_name, last_name = rec 
+        email, first_name, last_name = rec[:3] 
         q = (db.TblGroupContacts.group_id==group_id) & (db.TblGroupContacts.email==email)
         cont_rec =  db(q).select().first()
         if cont_rec:
