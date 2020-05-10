@@ -79,9 +79,12 @@ def watchdog():
     tsk = db(q).select().first() 
     if not tsk:
         return
+    tsks = db(q).select()
+    tsks = [tsk.function_name for tsk in tsks]
+    tsks_str = ', '.join(tsks)
     message = '''
-    A task of {app} {status} in the scheduler. Check the log files.
-    '''.format(app=request.application, status=tsk.status)
+    Task(s) {tsks} of {app} {status} in the scheduler. Check the log files.
+    '''.format(tsks=tsks_str, app=request.application, status=tsk.status)
     mail.send(sender="admin@gbstories.org", to="haimavni@gmail.com", subject = "A task failed", message=('', message))
     for tsk in db(q).select():
         comment('Task {t} failed', t=tsk.function_name)
@@ -163,7 +166,7 @@ def schedule_update_help_messages():
     return db.scheduler_task.insert(
         status='QUEUED',
         application_name=request.application,
-        task_name = 'collect mail',
+        task_name = 'update help messages',
         function_name='update_help_messages',
         start_time=now,
         stop_time=now + datetime.timedelta(days=1461),
@@ -177,7 +180,7 @@ def schedule_update_letter_templates():
     return db.scheduler_task.insert(
         status='QUEUED',
         application_name=request.application,
-        task_name = 'collect mail',
+        task_name = 'update letter templates',
         function_name='update_letter_templates',
         start_time=now,
         stop_time=now + datetime.timedelta(days=1461),
