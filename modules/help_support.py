@@ -87,7 +87,7 @@ def get_records(csv_name):
 
 def _update_system_stories(used_for=None):
     db, NO_TIME, comment, log_exception = inject('db', 'NO_TIME', 'comment', 'log_exception')
-    comment("Enter updating system stories {}", used_for)
+    ###comment("Enter updating system stories {}", used_for)
     try:
         filename = system_folder() + _system_stories_file_name(used_for) + '.csv'
         if not os.path.exists(filename):
@@ -104,7 +104,7 @@ def _update_system_stories(used_for=None):
             data = {field_name: dt}
             crec.update_record(**data)
             return 'updated'
-        comment("Exit updating system stories {}", used_for)
+        ###comment("Exit updating system stories {}", used_for)
     except Exception, e:
         log_exception("Update system stories {} failed", used_for)
     return 'No updates'
