@@ -90,6 +90,9 @@ def _update_system_stories(used_for=None):
     comment("Enter updating system stories {}", used_for)
     try:
         filename = system_folder() + _system_stories_file_name(used_for) + '.csv'
+        if not os.pasth.exists(filename):
+            comment("{} not found ", filename)
+            return "No source for update"
         ctime = round(os.path.getctime(filename))
         dt = datetime.datetime.fromtimestamp(ctime)
         crec = db(db.TblConfiguration).select().first()
