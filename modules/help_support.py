@@ -86,8 +86,9 @@ def get_records(csv_name):
             yield row
 
 def _update_system_stories(used_for=None):
-    filename = system_folder() + _system_stories_file_name(used_for) + '.csv'
     db, NO_TIME, comment = inject('db', 'NO_TIME', 'comment')
+    comment("Enter updating system stories {}", used_for)
+    filename = system_folder() + _system_stories_file_name(used_for) + '.csv'
     ctime = round(os.path.getctime(filename))
     dt = datetime.datetime.fromtimestamp(ctime)
     crec = db(db.TblConfiguration).select().first()
@@ -99,6 +100,7 @@ def _update_system_stories(used_for=None):
         data = {field_name: dt}
         crec.update_record(**data)
         return 'updated'
+    comment("Exit updating system stories {}", used_for)
     return 'No updates'
 
 def _load_system_stories_from_csv(used_for=None):
