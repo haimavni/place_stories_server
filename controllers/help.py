@@ -42,6 +42,18 @@ def print_all_messages(vars):
             f.write('\n')
     return dict()
 
+@serve_json
+def get_help_message(vars):
+    story_id = int(vars.story_id)
+    sm = stories_manager.Stories()
+    story_info = sm.get_story(story_id)
+    prev_story_info = sm.get_story(story_id, to_story_version=-1)
+    return dict(story_info=story_info, prev_story_info=prev_story_info)
+
+@serve_json
+def get_overridden_help_messages(vars):
+    return dict(message_list=help_support.get_overridden_help_messages())
+
 def break_to_lines(s):
     s = re.sub(r'^\s+', '', s)
     s = s.replace('\n', '')

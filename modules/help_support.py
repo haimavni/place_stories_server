@@ -38,6 +38,14 @@ def update_letter_templates():
     STORY4LETTER = inject('STORY4LETTER')
     return _update_system_stories(used_for=STORY4LETTER)
 
+def get_overridden_help_messages():
+    STORY4HELP = inject('STORY4HELP')
+    return _get_overridden_system_stories(STORY4HELP)
+
+def get_overridden_letter_templates():
+    STORY4LETTER = inject('STORY4LETTER')
+    return _get_overridden_system_stories(STORY4LETTER)
+
 #--------------------------------------------------------------------------------------------
 
 def _system_stories_file_name(used_for):
@@ -48,10 +56,13 @@ def _system_stories_file_name(used_for):
         return 'letter_templates'
     raise Exception('Unknown system story type')
 
-def _save_system_story(name, topic, content, imported_from='', used_for=None):
+def _save_system_story(name, topic, content, imported_from='', used_for=None, last_update=None):
     db = inject('db')
     rec = db((db.TblStories.used_for==used_for) & (db.TblStories.topic==topic)).select().first()
     if rec:
+        last_update = datetime.datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S')
+        if last_update and last_update <= rec.last_update_date:
+            return
         story_id = rec.id
     else:
         story_id = None
@@ -73,7 +84,7 @@ def _save_system_stories_to_csv(target=None, used_for=None):
     db = inject('db')
     folder = system_folder() if target == 'system' else local_folder('help')
     csv_name = folder + filename + '.csv'
-    rows = db(db.TblStories.used_for==used_for).select(db.TblStories.name, db.TblStories.topic, db.TblStories.story)
+    rows = db(db.TblStories.used_for==used_for).select(db.TblStories.name, db.TblStories.topic, db.TblStories.story, db.TblStories.last_update_date)
     with open(csv_name, 'w') as f:
         rows.export_to_csv_file(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
     return dict(good=True)
@@ -115,8 +126,14 @@ def _load_system_stories_from_csv(used_for=None):
     csv_name = system_folder() + filename + '.csv'
     imported_from = 'system'
     for rec in get_records(csv_name):
-        name, topic, content = rec
-        _save_system_story(name, topic, content, imported_from=imported_from, used_for=used_for)
+        name, topic, content, last_update = rec
+        _save_system_story(name, topic, content, imported_from=imported_from, used_for=used_for, last_update=last_update)
     db.commit()
     return
+
+def _get_overridden_system_stories(used_for):
+    db = inject('db')
+    q = (db.TblStories.used_for==used_for) & (db.TblStories.imported_from=='SYSTEM') & (db.TblStories.last_version > 0)
+    lst = db(q).select(db.TblStories.id, db.TblStories.topic, db.TblStories.name, db.TblStories.last_version, orderby=db.TblStories.name)
+    return lst
 

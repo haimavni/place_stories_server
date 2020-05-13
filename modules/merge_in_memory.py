@@ -67,7 +67,8 @@ class Merger:
         if reverse:
             diff_list = diff_list[::-1]
         for diff in diff_list:
-            text = self.diff_apply(text, diff, reverse)
+            if diff:
+                text = self.diff_apply(text, diff, reverse)
         return text
 
     def get_info_from_diff_info_line(self, line):

@@ -48,7 +48,7 @@ class Stories:
         rec = Storage(rec)
         story = rec.story
         q = (db.TblStoryVersions.story_id==story_id)
-        story_versions = db(q).select(db.TblStoryVersions.story_id, db.TblStoryVersions.creation_date, db.TblStoryVersions.author_id)
+        story_versions = db(q).select(db.TblStoryVersions.story_id, db.TblStoryVersions.creation_date, db.TblStoryVersions.author_id, db.TblStoryVersions.delta)
         story_versions = [Storage(sv) for sv in story_versions]
         current_version = len(story_versions)
         display_version = 'The original Story'
@@ -62,6 +62,8 @@ class Stories:
             story_text = story
             to_story = current_version
         else:
+            if to_story_version < 0:
+                to_story_version = max(current_version + to_story_version, 0)
             from_story_version = from_story_version or current_version
             reverse = to_story_version < from_story_version
             if reverse:
