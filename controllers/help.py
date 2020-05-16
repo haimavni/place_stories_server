@@ -54,6 +54,12 @@ def get_help_message(vars):
 def get_overridden_help_messages(vars):
     return dict(message_list=help_support.get_overridden_help_messages())
 
+@serve_json
+def accept_system(vars):
+    story_id = int(vars.story_id)
+    db(db.TblStories.id == story_id).update(imported_from="system");
+    return dict()
+
 def break_to_lines(s):
     s = re.sub(r'^\s+', '', s)
     s = s.replace('\n', '')
