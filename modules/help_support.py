@@ -117,7 +117,7 @@ def _update_system_stories(used_for=None):
             return 'updated'
         ###comment("Exit updating system stories {}", used_for)
     except Exception, e:
-        log_exception("Update system stories {} failed", used_for)
+        log_exception("Update system stories failed")
     return 'No updates'
 
 def _load_system_stories_from_csv(used_for=None):
@@ -126,6 +126,8 @@ def _load_system_stories_from_csv(used_for=None):
     csv_name = system_folder() + filename + '.csv'
     imported_from = 'system'
     for rec in get_records(csv_name):
+        if len(rec) == 3:
+            rec += ['0001-01-01 0:0:0']
         name, topic, content, last_update = rec
         _save_system_story(name, topic, content, imported_from=imported_from, used_for=used_for, last_update=last_update)
     db.commit()
