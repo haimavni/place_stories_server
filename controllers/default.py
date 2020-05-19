@@ -24,7 +24,8 @@ def index():
     if key:
         rec = db(db.TblShortcuts.key==key).select().first()
         if rec:
-            request.requires_https()
+            if not ":8000" in request.env.http_host:
+                request.requires_https()
             redirect(rec.url)
     app = request.application
     fname = '/{app}/static/aurelia/index.html'.format(app=app)
