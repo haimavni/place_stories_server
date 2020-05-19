@@ -20,13 +20,17 @@ def index():
     if you need a simple wiki simply replace the two lines below with:
     return auth.wiki()
     """
+    key = request.vars.key
+    if key:
+        rec = db(db.TblShortcuts.key==key).select().first()
+        if rec:
+            redirect(rec.url)
     app = request.application
     fname = '/{app}/static/aurelia/index.html'.format(app=app)
     fname1 = '{app}/static/aurelia/index-{app}.html'.format(app=app)
     if os.path.isfile('./applications/' + fname1):
         fname = '/' + fname1
     redirect("{}".format(fname))
-
 
 def user():
     """
@@ -342,6 +346,29 @@ def reset_password(vars):
         raise Exception("Email could not be sent - {em}".format(em=error_message))
     else:
         return dict()
+    
+@serve_json
+def get_shortcut(vars):
+    url = vars.url
+    rec = db(db.TblShortcuts.url==url).select().first()
+    if rec:
+        key = rec.key
+    else:
+        key = create_key() #if paranoid, ensure key is not in use yet
+        if db(db.TblShortcuts.key==key).count() > 0:
+            raise Exception('Non unique key')
+        db.TblShortcuts.insert(url=url, key=key)
+    shortcut = '/' + request.application + '?key='  + key
+    return dict(shortcut=shortcut)
+
+def create_key():
+    import random, base64
+    r = random.randint(0, 0xffffffffffffffff)
+    s = str(r)
+    s = base64.urlsafe_b64encode(s)
+    while s[-1] == "=":
+        s = s[:-1]
+    return s
 
 def confirm_password_reset():
     vars = request.vars

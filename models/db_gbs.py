@@ -529,6 +529,11 @@ db.define_table('TblGroupContacts',
                 Field('deleted', type='boolean', default=False)
                 )
 
+db.define_table('TblShortcuts',
+                Field('url', type='text'),
+                Field('key', type='string')
+                )
+
 def write_indexing_sql_scripts():
     '''Creates a set of indexes if they do not exist.
        In a terminal, su postgres and issue the command
