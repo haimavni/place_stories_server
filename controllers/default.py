@@ -24,6 +24,7 @@ def index():
     if key:
         rec = db(db.TblShortcuts.key==key).select().first()
         if rec:
+            request.requires_https()
             redirect(rec.url)
     app = request.application
     fname = '/{app}/static/aurelia/index.html'.format(app=app)
@@ -356,6 +357,7 @@ def get_shortcut(vars):
     else:
         key = create_key() #if paranoid, ensure key is not in use yet
         if db(db.TblShortcuts.key==key).count() > 0:
+            comment("duplicate key found in get shortcut")
             raise Exception('Non unique key')
         db.TblShortcuts.insert(url=url, key=key)
     shortcut = '/' + request.application + '?key='  + key
