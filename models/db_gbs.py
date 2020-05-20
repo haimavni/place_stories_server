@@ -312,6 +312,8 @@ db.define_table('TblPhotos',
                 Field('photo_date_dateunit', type='string', default='Y'), # D, M or Y for day, month, year
                 Field('photo_date_datespan', type='integer', default=1), # how many months or years in the range
                 Field('photo_date_dateend', type='date', default=NO_DATE),
+                Field('latitude', type='float'),
+                Field('longitude', type='float'),
                 Field('PhotoRank', type='integer'),
                 Field('Photographer', type='string'), #obsolete
                 Field('photographer_id', type='integer'),
@@ -532,6 +534,19 @@ db.define_table('TblGroupContacts',
 db.define_table('TblShortcuts',
                 Field('url', type='text'),
                 Field('key', type='string')
+                )
+
+db.define_table('TblAuthorRights',
+                Field('text', type='string')
+                )
+
+db.define_table('TblNotifications',
+                Field('notification_text', type='string')
+                )
+
+db.define_table('TblNotified',
+                Field('notified', type=db.auth_user),
+                Field('notification', type=db.TblNotifications)
                 )
 
 def write_indexing_sql_scripts():
