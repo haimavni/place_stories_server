@@ -50,6 +50,8 @@ def get_photo_detail(vars):
                 photographer_name=photographer_name,
                 photographer_id=photographer_id,
                 photo_id=rec.id,
+                latitude=rec.latitude,
+                longitude=rec.longitude,
                 chatroom_id=story.chatroom_id)
 
 @serve_json
