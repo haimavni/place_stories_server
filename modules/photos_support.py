@@ -1,5 +1,6 @@
 import PIL
 from PIL import Image, ImageFile
+from PIL.ExifTags import TAGS, GPSTAGS
 import dhash
 from injections import inject
 import os
@@ -86,9 +87,21 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
         sub_folder = sub_folder or 'uploads/' + month + '/'
     path = local_photos_folder() + sub_folder
     dir_util.mkpath(path)
+    latitude = None
+    longitude = None
     try:
         stream = StringIO(blob)
         img = Image.open(stream)
+        exif_data = get_exif_data(img)
+        if 'GPSInfo' in exif_data:
+            try:
+                gps_info = exif_data['GPSInfo']
+                lng = gps_info['GPSLongitude']
+                lat = gps_info['GPSLatitude']
+                longitude = degrees_to_float(lng)
+                latitude = degrees_to_float(lat)
+            except Exception, e:
+                log_exception("getting photo geo data failed")
         width, height = img.size
         square_img = crop_to_square(img, width, height, 256)
         if square_img:
@@ -131,6 +144,8 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
         photo_date=None,
         width=width,
         height=height,
+        latitude=latitude,
+        longitude=longitude,
         crc=crc,
         dhash=dhash_value,
         oversize=oversize,
@@ -147,6 +162,7 @@ def get_image_info(image_path):
     img = Image.open(image_path)
     width, height = img.size
     faces = []
+    exif_data = get_exif_data(img)
     return Storage(width=width, height=height, faces=faces)
 
 def fit_size(rec):
@@ -601,6 +617,24 @@ def create_watermark(image_path, final_image_path, watermark):
             main.paste(mark, (i, j), mark)
             main.thumbnail((8000, 8000), Image.ANTIALIAS)
             main.save(final_image_path, quality=100)
+            
+def get_exif_data(image):
+    """Returns a dictionary from the exif data of an PIL Image item. Also converts the GPS Tags"""
+    exif_data = {}
+    info = image._getexif()
+    if info:
+        for tag, value in info.items():
+            decoded = TAGS.get(tag, tag)
+            if decoded == "GPSInfo":
+                gps_data = {}
+                for t in value:
+                    sub_decoded = GPSTAGS.get(t, t)
+                    gps_data[sub_decoded] = value[t]
+
+                exif_data[decoded] = gps_data
+            else:
+                exif_data[decoded] = value
+    return exif_data            
 
 def get_photo_topics(photo_id):
     db = inject('db')
@@ -618,4 +652,9 @@ def make_unique(arr, key):
         dic[a[key]] = a
     arr = [dic[id] for id in sorted(dic)]
     return arr
+
+def degrees_to_float(tup):
+    degs, mins, secs = [t[0] for t in tup]
+    result = degs * 1.0 + mins * 1.0 / 60 + secs * 1.0 / 3600
+    return round(result, 6)
     
