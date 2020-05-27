@@ -369,10 +369,11 @@ def apply_topics_to_photo(vars):
     curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
     curr_tags = sorted(curr_tags)
     keywords = "; ".join(curr_tags)
+    is_tagged = len(curr_tags) > 0
     rec = db(db.TblPhotos.id == photo_id).select().first()
     rec.update_record(KeyWords=keywords, Recognized=True) #todo: the KeyWords part is obsolete?
     srec = db(db.TblStories.id==rec.story_id).select().first()
-    srec.update_record(keywords=keywords)
+    srec.update_record(keywords=keywords, is_tagged=is_tagged)
     
 @serve_json
 def assign_photo_photographer(vars):
