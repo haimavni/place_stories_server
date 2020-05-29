@@ -185,8 +185,10 @@ def get_photo_list(vars):
     selected_order_option = vars.selected_order_option or ""
     if selected_topics:
         lst = get_photo_list_with_topics(vars)
+        total_photos = len(lst)
     else:
         q = make_photos_query(vars)
+        total_photos = db(q).count()
         if selected_order_option == 'upload-time-order':
             if vars.count_limit:
                 n = int(vars.count_limit)
@@ -196,6 +198,7 @@ def get_photo_list(vars):
             last_photo_time = vars.last_photo_time
             if last_photo_time: 
                 q &= (db.TblPhotos.upload_date < last_photo_time)
+                total_photos = db(q).count()
             lst = db(q).select(orderby=~db.TblPhotos.id, limitby=(0, n))
         elif selected_order_option.startswith('chronological-order'):
             if vars.count_limit:
@@ -206,6 +209,7 @@ def get_photo_list(vars):
             last_photo_time = vars.last_photo_time
             if last_photo_time: 
                 q &= (db.TblPhotos.upload_date < last_photo_time)
+                total_photos = db(q).count()
             field = db.TblPhotos.photo_date
             if selected_order_option.endswith('reverse'):
                 field = ~field
@@ -241,7 +245,7 @@ def get_photo_list(vars):
     else:
         #could keep here date + id for chronological order
         last_photo_time = None
-    return dict(photo_list=result, last_photo_time=last_photo_time)
+    return dict(photo_list=result, last_photo_time=last_photo_time, total_photos=total_photos)
 
 @serve_json
 def get_theme_data(vars):
