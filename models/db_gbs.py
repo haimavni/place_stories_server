@@ -333,6 +333,7 @@ db.define_table('TblPhotos',
                 Field('is_back_side', type='boolean', default=False),
                 Field('crc', type='integer'),
                 Field('dhash', type='string'),
+                Field('curr_dhash', type='string'),  #after editing such as rotation and cropping. will be used to reload photo after using photoshop etc.
                 Field('dup_checked', type='boolean'),  #to be used only once, to detect all old dups. 
                 Field('usage', type='integer', default=0) #1=has identified members 2=has assigned tags 3=both, #todo need to populate, then use
                 #to select only relevant photos for opening slide show
