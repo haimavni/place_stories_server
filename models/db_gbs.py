@@ -314,6 +314,7 @@ db.define_table('TblPhotos',
                 Field('photo_date_dateend', type='date', default=NO_DATE),
                 Field('latitude', type='float'),
                 Field('longitude', type='float'),
+                Field('zoom', type='integer', default=12),
                 Field('PhotoRank', type='integer'),
                 Field('Photographer', type='string'), #obsolete
                 Field('photographer_id', type='integer'),

@@ -146,6 +146,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
         height=height,
         latitude=latitude,
         longitude=longitude,
+        zoom=12,
         crc=crc,
         dhash=dhash_value,
         oversize=oversize,
@@ -656,5 +657,5 @@ def make_unique(arr, key):
 def degrees_to_float(tup):
     degs, mins, secs = [t[0] for t in tup]
     result = degs * 1.0 + mins * 1.0 / 60 + secs * 1.0 / 3600
-    return round(result, 6)
+    return round(result, 8)
     

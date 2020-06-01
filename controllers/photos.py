@@ -52,6 +52,7 @@ def get_photo_detail(vars):
                 photo_id=rec.id,
                 latitude=rec.latitude,
                 longitude=rec.longitude,
+                zoom=rec.zoom,
                 chatroom_id=story.chatroom_id)
 
 @serve_json
@@ -73,6 +74,14 @@ def update_photo_date(vars):
     rec = db((db.TblPhotos.id==int(vars.photo_id)) & (db.TblPhotos.deleted != True)).select().first()
     update_record_dates(rec, photo_dates_info)
     #todo: save in db
+    return dict()
+
+@serve_json
+def update_photo_location(vars):
+    longitude = float(vars.longitude)
+    latitude = float(vars.latitude)
+    zoom = int(vars.zoom)
+    db(db.TblPhotos.id==int(vars.photo_id)).update(longitude=longitude, latitude=latitude, zoom=zoom)
     return dict()
 
 @serve_json
