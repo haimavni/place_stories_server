@@ -128,6 +128,46 @@ def set_audio_option(vars):
     config_rec.update_record(support_audio=support_audio)
     return dict()
 
+@serve_json
+def set_feedback_option(vars):
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    feedback_on = vars.option == 'user.feedback-on'
+    config_rec.update_record(expose_feedback_button=feedback_on)
+
+@serve_json
+def set_version_time_option(vars):
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    version_time_on = vars.option == 'user.version-time-on'
+    config_rec.update_record(expose_version_time=version_time_on)
+
+@serve_json
+def set_developer_option(vars):
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    developer_on = vars.option == 'user.expose-developer-on'
+    config_rec.update_record(expose_developer=developer_on)
+
+@serve_json
+def set_quick_upload_option(vars):
+    config_rec = get_config_rec()
+    quick_upload_on = vars.option == 'user.quick-upload-on'
+    config_rec.update_record(quick_upload_button=quick_upload_on)
+
+def get_config_rec():
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    return config_rec
+    
 def reindex_stories():
     from words import update_word_index_all
     update_word_index_all()

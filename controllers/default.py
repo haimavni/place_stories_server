@@ -110,6 +110,10 @@ def read_configuration(vars):
         config['enable_auto_registration'] = config_rec.enable_auto_registration
         config['expose_new_app_button'] = config_rec.expose_new_app_button
         config['support_audio'] = config_rec.support_audio
+        config['expose_feedback_button'] = config_rec.expose_feedback_button
+        config['quick_upload_button'] = config_rec.quick_upload_button
+        config['expose_version_time'] = config_rec.expose_version_time
+        config['expose_developer'] = config_rec.expose_developer
     return dict(config=config)
 
 @serve_json
@@ -337,9 +341,9 @@ def reset_password(vars):
     confirmation_link = '{host}{confirmation_url}'.format(host=host, confirmation_url=confirmation_url)
     mail_message_fmt = '''
     Hi {first_name} {last_name},<br><br>
-    
+
     Click {link} to confirm your new password.<br><br>
-    
+
     '''
     mail_message = ('', mail_message_fmt.format(first_name=user_rec.first_name, last_name=user_rec.last_name, link=confirmation_link))
     result = mail.send(to=vars.email, subject='New password', message=mail_message)
@@ -348,7 +352,7 @@ def reset_password(vars):
         raise Exception("Email could not be sent - {em}".format(em=error_message))
     else:
         return dict()
-    
+
 @serve_json
 def get_shortcut(vars):
     url = vars.url
@@ -381,7 +385,7 @@ def confirm_password_reset():
         raise Exception("Registration key mismatch")
     user_rec.update_record(registration_key="")
     return dict()
-    
+
 
 def notify_new_feedback():
     lst = db((db.auth_membership.group_id==ADMIN)&(db.auth_user.id==db.auth_membership.user_id)&(db.auth_user.id>1)).select(db.auth_user.email)
@@ -394,6 +398,6 @@ def notify_new_feedback():
     Click <a href="https://gbstories.org/{app}/static/aurelia/index.html#/feedbacks">here</a> to view.
     '''.format(app=app).replace('\n', '<br>'))
     mail.send(to=receivers, subject='New GB Stories Feedback', message=message)
-    
+
 
 
