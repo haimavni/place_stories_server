@@ -737,6 +737,15 @@ def count_hit(vars):
         db.TblPageHits.insert(what=what, item_id=item_id, count=1, new_count=1)
     return dict()
 
+@serve_json
+def member_by_name(vars):
+    name = vars.name + ' .'
+    first_name, last_name = name.split()[:2]
+    q = (db.TblMembers.deleted != True) & (db.TblMembers.first_name == first_name) & (db.TblMembers.last_name == last_name)
+    members = db(q).select(db.TblMembers.id)
+    member_ids = [rec.id for rec in members]
+    return dict(member_ids=member_ids)
+
 ###---------------------support functions
 
 def new_member_rec(gender=None, first_name="", last_name=""):
