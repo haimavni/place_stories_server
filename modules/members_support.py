@@ -109,6 +109,8 @@ def init_query(tbl, editing=False, is_deleted=False, user_id=None):
     is_alive = not bool(is_deleted)
     if tbl == db.TblStories:
         q = (tbl.deleted!=is_alive)
+        if not is_alive:
+            return q
     else:
         q = (tbl.story_id==db.TblStories.id) & (tbl.deleted!=is_alive)
     if editing and auth.has_membership(RESTRICTED, user_id):

@@ -1021,7 +1021,7 @@ def query_has_data(params):
     return params.keywords_str or params.checked_story_list or params.selected_stories or \
            (params.days_since_update and params.days_since_update.value) or first_year or last_year or \
            (params.approval_state and params.approval_state.id in [2,3]) or params.selected_topics or \
-           params.show_untagged or params.selected_words
+           params.show_untagged or params.selected_words or params.deleted_stories
 
 def make_stories_query(params, exact):
     q = init_query(db.TblStories, editing=params.editing, is_deleted=params.deleted_stories)

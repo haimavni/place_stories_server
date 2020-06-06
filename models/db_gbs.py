@@ -208,6 +208,7 @@ db.define_table('TblMemberPhotos',
                 Field('x', type='integer'),   #location of face in the picture
                 Field('y', type='integer'),
                 Field('r', type='integer'),
+                Field('is_object', type='boolean', default=False),
                 Field('who_identified', type=db.auth_user)
 )
 
@@ -271,10 +272,20 @@ db.define_table('TblMembers',
 )
 
 db.define_table('TblObjects',
-                Field('Description', type='string'),
-                Field('HebrewDescription', type='string'),
-                Field('IIDD', type='integer'),
-                Field('Priority', type='integer'),
+                Field('name', type='string'),
+                Field('date_start', type='date', default=NO_DATE),
+                Field('date_start_dateunit', type='string', default='N'),
+                Field('date_start_datespan', type='integer', default=0),
+                Field('date_start_dateend', type='date', default=NO_DATE),
+                Field('date_end', type='date', default=NO_DATE),
+                Field('date_end_dateunit', type='string', default='N'),
+                Field('date_end_datespan', type='integer', default=0),
+                Field('date_end_dateend', type='date', default=NO_DATE),
+                Field('story_id', type=db.TblStories),
+                Field('deleted', type='boolean', default=False),
+                Field('object_photo_id', type='integer'),
+                Field('update_time', type='datetime'),
+                Field('updater_id', type=db.auth_user),
 )
 
 db.define_table('TblPhotographers',
