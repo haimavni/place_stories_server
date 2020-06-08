@@ -3,6 +3,7 @@
 from admin_support.access_manager import register_new_user, AccessManager
 from gluon.utils import web2py_uuid
 import re
+import os
 
 def init_database():
     if len(request.args) < 4:
@@ -25,8 +26,10 @@ def request_new_app(vars):
     r = app.find('_')
     if r >= 0:
         app = app[:r]
-    app_name = app + '_' + vars.app_name
-    if not db(db.TblCustomers.app_name==vars.app_name).isempty():
+    prefix = app + '_' if vars.prefix_app else ''
+    app_name = prefix + vars.app_name
+    if app_name in app_list():
+    #if not db(db.TblCustomers.app_name==vars.app_name).isempty():
         error_message = "admin.duplicate-app-name"
     else:
         confirmation_key=web2py_uuid()
@@ -99,3 +102,9 @@ def notify_developer(rec):
     result = mail.send(to='haimavni@gmail.com', message=message, subject='New app requested')
     comment('mail sent to developer? {}', result)
 
+#-------------------support functions----------------------
+
+def app_list():
+    lst = os.listdir('applications')
+    lst = [f for f in lst if os.path.islink(f)]
+    return lst
