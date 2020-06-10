@@ -676,9 +676,9 @@ def crop_photo(vars):
             face.update_record(x=face.x - crop_left, y=face.y - crop_top)
     rec = db(db.TblPhotos.id==vars.photo_id).select().first()
     path = local_photos_folder("orig") + rec.photo_path
-    crop_a_photo(path, path, crop_left, crop_top, crop_width, crop_height)
+    curr_dhash = crop_a_photo(path, path, crop_left, crop_top, crop_width, crop_height)
     last_mod_time = request.now
-    rec.update_record(width=crop_width, height=crop_height, last_mod_time=last_mod_time)
+    rec.update_record(width=crop_width, height=crop_height, last_mod_time=last_mod_time, curr_dhash=curr_dhash)
     return dict(photo_src=photos_folder('orig') + timestamped_photo_path(rec))
 
 @serve_json

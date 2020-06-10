@@ -150,6 +150,9 @@ def upload_photo(vars):
         photographer_name = photographer.name if photographer else ''
         photo_date_str = all_dates.photo_date.date
         photo_date_datespan = all_dates.photo_date.span
+        longitude = photo_rec.longitude
+        latitude = photo_rec.latitude
+        zoom = photo_rec.zoom
     else:
         photo_name = fil.name
         photo_story = ''
@@ -157,11 +160,15 @@ def upload_photo(vars):
         photographer_name = ''
         photo_date_str = ''
         photo_date_datespan = 0
+        longitude = None
+        latitude = None
+        zoom = 8
     photo_topics = get_photo_topics(photo_rec.id)
     
     ws_messaging.send_message(key='GROUP-PHOTO-UPLOADED', group=vars.file.info.ptp_key, photo_url=photo_url, photo_name=photo_name, 
                               photo_id=photo_id, photo_story=photo_story, duplicate=duplicate,
                               photographer_name=photographer_name,photo_date_str=photo_date_str,photo_date_datespan=photo_date_datespan,
+                              longitude=longitude,latitude=latitude,zoom=zoom,
                               photo_topics=photo_topics, photographer_id=photographer_id)
     return dict(photo_url=photo_url, upload_result=dict(duplicate=duplicate))
 

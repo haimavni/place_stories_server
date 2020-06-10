@@ -330,6 +330,8 @@ def crop_a_photo(input_path, output_path, crop_left, crop_top, crop_width, crop_
     cropped_img = img.crop(area)
     #os.remove(input_path) #todo: for now keep the old file so changes in __test do not harm __www
     cropped_img.save(output_path)
+    curr_dhash = dhash_photo(photo_path=output_path)
+    return curr_dhash
     
 def crop_square(img_src, width, height, side_size):
     if width > height:
@@ -379,6 +381,8 @@ def rotate_photo(photo_id):
             new_photo_path = pname + new_fname
             new_file_name = path + new_photo_path
             os.rename(file_name, new_file_name)
+            curr_dhash = dhash_photo(photo_path=new_file_name)
+            photo_rec.update_record(curr_dhash=curr_dhash)
         else:
             img.save(path + new_photo_path)
 
@@ -505,10 +509,12 @@ def find_similar_photos(photo_list=None, time_budget=60):
     db = inject('db')
     tree = BKTree(hamming_distance)
     cnt = 0
-    for photo_rec in db(db.TblPhotos.deleted != True).select(db.TblPhotos.dhash):
+    for photo_rec in db(db.TblPhotos.deleted != True).select(db.TblPhotos.dhash, db.TblPhotos.curr_dhash):
         if not photo_rec.dhash:
             continue
         tree.add(int(photo_rec.dhash, 16))
+        if photo_rec.curr_dhash:
+            tree.add(int(photo_rec.curr_dhash, 16))
         cnt += 1
     dup_list = []
     time0 = datetime.datetime.now()
@@ -526,7 +532,7 @@ def find_similar_photos(photo_list=None, time_budget=60):
     visited = set()
     no_dhash = 0
     nv = 0
-    for photo_rec in db(q).select(db.TblPhotos.id, db.TblPhotos.dhash, db.TblPhotos.dup_checked):
+    for photo_rec in db(q).select(db.TblPhotos.id, db.TblPhotos.dhash, db.TblPhotos.curr_dhash, db.TblPhotos.dup_checked):
         if not photo_rec.dhash:
             no_dhash += 1
             continue
@@ -538,6 +544,8 @@ def find_similar_photos(photo_list=None, time_budget=60):
         if elapsed > time_budget:
             break
         lst = tree.find(int(photo_rec.dhash, 16), threshold)
+        if photo_rec.curr_dhash:
+            lst += tree.find(int(photo_rec.curr_dhash, 16), threshold)
         if len(lst) > 1:
             cnt += 1
             for itm in lst:
@@ -545,8 +553,14 @@ def find_similar_photos(photo_list=None, time_budget=60):
             dist = lst[1][0]
             lst = [itm for itm in lst if itm[0] <= dist]
             dhash_values = ['{:032x}'.format(itm[1]) for itm in lst]
-            duplicate_photo_ids = db((db.TblPhotos.dhash.belongs(dhash_values)) & (db.TblPhotos.deleted != True)).select(db.TblPhotos.id, orderby=db.TblPhotos.id)
+            duplicate_photo_ids = db((db.TblPhotos.dhash.belongs(dhash_values)) & \
+                                     (db.TblPhotos.deleted != True)).select(db.TblPhotos.id, orderby=db.TblPhotos.id)
             duplicate_photo_ids = [p.id for p in duplicate_photo_ids]
+            curr_duplicate_photo_ids = db((db.TblPhotos.curr_dhash != None) & \
+                                          (db.TblPhotos.curr_dhash.belongs(dhash_values)) & \
+                                          (db.TblPhotos.deleted != True)).select(db.TblPhotos.id, orderby=db.TblPhotos.id)
+            curr_duplicate_photo_ids = [p.id for p in curr_duplicate_photo_ids]
+            duplicate_photo_ids += curr_duplicate_photo_ids
             if duplicate_photo_ids[0] in dic:
                 continue #this group already visited
             for pid in duplicate_photo_ids:
