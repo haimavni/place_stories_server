@@ -23,13 +23,14 @@ def send_message(key, user=None, group=None, **data):
 
 def send_data(group, obj, key):
     request = inject('request')
+    host = request.env.http_host
     txt = jsondumps(obj)
     ###comment('send message: group={grp} key={key} text={txt}', grp=group, key=key, txt=txt[:40])
     if request.is_https:
         h = 'https'
         port = '8443'
-        key = 'sslkey'
-        server_name = request.env.http_host
+        key = 'sslkey' if host == "gbstories.org" else 'sslkey-tol'
+        server_name = host
     else:
         h = 'http'
         port = '8888'
