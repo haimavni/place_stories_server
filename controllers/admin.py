@@ -183,7 +183,7 @@ def create_app_index():
         s = f.read()
     pat = r'<title>.*?</title>'
     s1 = re.sub(pat, replace_title, s)
-    if app == "gbs_crossing":
+    if not app.startswith("gbs__"):
         s1 = s1.replace('gbstories.org', 'tol.life')
     with open(dst, 'w') as f:
         f.write(s1)
