@@ -388,6 +388,9 @@ def rotate_photo(photo_id):
 
     height, width = (photo_rec.width, photo_rec.height)
     photo_rec.update_record(width=width, height=height, photo_path=new_photo_path)
+    
+def resize_photo(photo_id, width, height)    :
+    prec = db(db.TblPhotos.id==photo_id)
 
 def add_photos_from_drive(sub_folder):
     folder = local_photos_folder("orig")
