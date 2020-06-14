@@ -73,6 +73,8 @@ def call():
 @serve_json
 def get_tornado_host(vars):
     host = request.env.HTTP_HOST
+    if host == "tol.life": #attempt to get both tol.life and gbstories.org coexist...
+        host = "gbstories.org"
     if ':' in host:
         host = host.split(':')[0]
     group = messaging_group(group=vars.group)
