@@ -338,7 +338,7 @@ def reset_password(vars):
     registration_key = am.replace_password(user_rec.id, vars.password)
     confirmation_url = '/{app}/default/confirm_password_reset?app_name={app_name}&registration_key={registration_key}&email={email}'. \
         format(app=request.application, app_name=app_name, registration_key=registration_key, email=vars.email)
-    confirmation_link = 'http://{host}{confirmation_url}'.format(host=host, confirmation_url=confirmation_url)
+    confirmation_link = 'https://{host}{confirmation_url}'.format(host=host, confirmation_url=confirmation_url)
     mail_message_fmt = '''
     Hi {first_name} {last_name},<br><br>
 
