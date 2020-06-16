@@ -62,7 +62,7 @@ db.define_table('TblStories',
                 Field('last_version', type='integer'),
                 Field('approved_version', type='integer'),
                 Field('sampling_id', type='integer', default=random.randint(1, SAMPLING_SIZE)),
-                Field('chatroom_id', type=db.TblChatGroup),
+                Field('chatroom_id', type='integer'), # actually db.TblChatGroup),but then deletion of the chatroom deletes the story!
                 Field('last_chat_time', type='datetime', default=NO_DATE),
                 Field('imported_from', type='string')
 )                
