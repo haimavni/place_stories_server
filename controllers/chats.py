@@ -108,6 +108,14 @@ def disconnect_chatroom(vars):
     story_rec.update_record(chatroom_id=None)
     return dict(disconnected=True)
 
+@serve_json
+def chatroom_deleted(vars):
+    story_id = int(vars.story_id)
+    srec = db(db.TblStories.id==story_id).select(db.TblStories.id, db.TblStories.chatroom_id).first()
+    if srec:
+        srec.update_record(chatroom_id=None)
+    return dict()
+
 #---------------support functions---------------------
 
 def notify_chatters(user_id, chatroom_id):
