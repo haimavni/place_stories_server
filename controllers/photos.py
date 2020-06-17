@@ -881,6 +881,9 @@ def make_photos_query(vars):
         q &= ((db.TblPhotos.Recognized == True) | (db.TblPhotos.Recognized == None))
     elif vars.selected_recognition == 'unrecognized':
         q &= (db.TblPhotos.Recognized == False)
+    elif vars.selected_recognition == 'recognized-not-located':
+        lst = unlocated_faces()
+        q &= (db.TblPhotos.id.belongs(lst))
     if vars.show_untagged:
         q &= (db.TblPhotos.story_id==db.TblStories.id) & (db.TblStories.is_tagged==False)
     return q
@@ -914,6 +917,12 @@ def get_video_list_with_topics(vars):
     result = [dic[id] for id in bag]
     return result
 
+def unlocated_faces():
+    q = (db.TblPhotos.id == db.TblMemberPhotos.Photo_id) & (db.TblMemberPhotos.x == None)
+    lst = db(q).select(db.TblPhotos.id, db.TblMemberPhotos.id.count(), groupby=[db.TblPhotos.id], limitby=(0,5000))
+    lst = [prec.TblPhotos.id for prec in lst]
+    return lst
+    
 def make_videos_query(vars):
     q = init_query(db.TblVideos, editing=vars.editing)
     ###q = (db.TblVideos.deleted != True)
