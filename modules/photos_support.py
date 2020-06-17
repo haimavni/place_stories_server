@@ -123,6 +123,9 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
             fix_owner(path + file_name)
             width, height = resized(width, height)
             img = img.resize((width, height), Image.LANCZOS)
+        elif height < MAX_HEIGHT and width < MAX_WIDTH:
+            width, height = resized(width, height)
+            img = img.resize((width, height), Image.LANCZOS)
         path = local_photos_folder() + sub_folder
         img.save(path + file_name)
         fix_owner(path)
@@ -389,8 +392,46 @@ def rotate_photo(photo_id):
     height, width = (photo_rec.width, photo_rec.height)
     photo_rec.update_record(width=width, height=height, photo_path=new_photo_path)
     
-def resize_photo(photo_id, width, height)    :
-    prec = db(db.TblPhotos.id==photo_id)
+def resize_photo(photo_id, target_width=1200, target_height=800):
+    db = inject('db')
+    prec = db(db.TblPhotos.id==photo_id).select().first()
+    what = 'oversize' if prec.oversize else 'orig'
+    path = local_photos_folder(what)
+    input_file_name = path + prec.photo_path
+    if not os.path.exists(input_file_name):
+        return
+    img = Image.open(input_file_name)
+    path = local_photos_folder('orig')
+    file_name = path + prec.photo_path
+    image_width, image_height = img.size
+    rw = 1.0 * target_width / image_width
+    rh = 1.0 * target_height / image_height
+    ratio1 = min(rw, rh)
+    ratio2 = max(rw, rh)
+    if ratio2 < 1.0 or ratio1 > 1.0:
+        width = int(round(ratio1 * image_width))
+        height = int(round(ratio1 * image_height))
+        resized_img = img.resize((width, height), Image.LANCZOS)
+        prec.update_record(width=width, height=height)
+        resized_img.save(file_name)
+        faces = db(db.TblMemberPhotos.Photo_id == photo_id).select()
+        for face in faces:
+            if not face.x:
+                return
+            x = int(round(ratio1 * face.x))
+            y = int(round(ratio1 * face.y))
+            r = int(round(ratio1 * face.r))
+            face.update_record(x=x, y=y, r=r)
+            
+def resize_photos(count, target_width=1200, target_height=800):
+    db = inject('db')
+    q = (db.TblPhotos.deleted != True) & (db.TblPhotos.width < target_width) & (db.TblPhotos.height < target_height)
+    lst = db(q).select(db.TblPhotos.id, limitby=(0, count))
+    lst = [prec.id for prec in lst]
+    for pid in lst:
+        resize_photo(pid, target_width, target_height)
+    n = db(q).count()
+    return dict(num_to_resize=n)
 
 def add_photos_from_drive(sub_folder):
     folder = local_photos_folder("orig")
