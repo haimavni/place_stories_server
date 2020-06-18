@@ -57,6 +57,7 @@ db.define_table('TblStories',
                 Field('language', type='string'),
                 Field('translated_from', type='integer'), ##db.TblStories 
                 Field('deleted', type='boolean', default=False),
+                Field('dead', type='boolean', default=False), #can not be undeleted
                 Field('visibility', type='integer', default=SV_PUBLIC),
                 Field('touch_time', type='date', default=NO_DATE), #used to promote stories
                 Field('last_version', type='integer'),

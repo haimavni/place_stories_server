@@ -545,7 +545,14 @@ def delete_checked_stories(vars):
             continue
         tbl = tbls[usage]
         db(tbl.story_id.belongs(story_ids)).update(deleted=deleted)
-        
+    return dict(num_deleted=n)
+
+@serve_json
+def burry_stories(vars):
+    params = vars.params
+    checked_stories = params.checked_story_list
+    q = db.TblStories.id.belongs(checked_stories)
+    n = db(q).update(dead=True)
     return dict(num_deleted=n)
 
 @serve_json
