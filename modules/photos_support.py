@@ -466,7 +466,7 @@ def save_member_face(params):
     face = params.face
     assert face.member_id > 0
     if params.make_profile_photo:
-        face_photo_url = save_profile_photo(face)
+        face_photo_url = save_profile_photo(face, is_article=False)
     else:
         face_photo_url = None
     if params.old_member_id:
@@ -489,21 +489,60 @@ def save_member_face(params):
         rec.update_record(**data)
     else:
         db.TblMemberPhotos.insert(**data)
-        if params.old_member_id and params.old_member_id != face.membe_id:
+        if params.old_member_id and params.old_member_id != face.member_id:
             db(q).delete()
     member_name = member_display_name(member_id=face.member_id)
     db(db.TblPhotos.id==face.photo_id).update(Recognized=True)
     return Storage(member_name=member_name, face_photo_url=face_photo_url)
 
-def save_profile_photo(face):
+def save_article_face(params):
+    db, auth = inject('db', 'auth')
+    face = params.face
+    assert face.article_id > 0
+    if params.make_profile_photo:
+        face_photo_url = save_profile_photo(face, is_article=True)
+    else:
+        face_photo_url = None
+    if params.old_article_id:
+        q = (db.TblArticlePhotos.photo_id == face.photo_id) & \
+            (db.TblArticlePhotos.article_id == params.old_article_id)
+    else:
+        q = (db.TblArticlePhotos.photo_id == face.photo_id) & \
+            (db.TblArticlePhotos.article_id == face.article_id)
+    who_identified = auth.current_user()
+    data = dict(
+        photo_id=face.photo_id,
+        article_id=face.article_id,
+        r=face.r,
+        x=face.x,
+        y=face.y,
+        who_identified=who_identified
+    )
+    rec = db(q).select().first()
+    if rec:
+        rec.update_record(**data)
+    else:
+        db.TblArticlePhotos.insert(**data)
+        if params.old_article_id and params.old_article_id != article.article_id:
+            db(q).delete()
+            
+    article_name = rec.name
+    db(db.TblPhotos.id==face.photo_id).update(Recognized=True)
+    return Storage(article_name=article_name, face_photo_url=face_photo_url)
+
+def save_profile_photo(face, is_article=False):
     db = inject('db')
     rec = get_photo_rec(face.photo_id)
     input_path = local_photos_folder() + rec.photo_path
     rnd = random.randint(0, 1000) #using same photo & just modify crop, change not seen - of caching
-    facePhotoURL = "PP-{}-{}-{:03}.jpg".format(face.member_id, face.photo_id, rnd)
+    prefix = "AP" if is_article else "PP"
+    facePhotoURL = "{}-{}-{}-{:03}.jpg".format(prefix, face.member_id, face.photo_id, rnd)
     output_path = local_photos_folder("profile_photos") + facePhotoURL
     crop(input_path, output_path, face)
-    db(db.TblMembers.id == face.member_id).update(facePhotoURL=facePhotoURL)
+    if is_article:
+        db(db.TblArticles.id == face.member_id).update(facePhotoURL=facePhotoURL)
+    else:
+        db(db.TblMembers.id == face.member_id).update(facePhotoURL=facePhotoURL)
     return photos_folder("profile_photos") + facePhotoURL
 
 def get_photo_rec(photo_id):

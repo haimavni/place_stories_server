@@ -174,42 +174,23 @@ db.define_table('TblFamilyConnectionTypes',
                 Field('IIDD', type='integer'),
 )
 
-db.define_table('TblHrefCategoryHrefs',
-                Field('CategoryID', type='string'),
-                Field('Category_id', type='string'),
-                Field('HrefID', type='integer'),
-                Field('Href_id', type='integer'),
-)
-
-db.define_table('TblHrefTypes',
-                Field('IIDD', type='integer'),
-                Field('Name', type='string'),
-)
-
-db.define_table('TblMemberConnections',
-                Field('ConnectToMemberID', type='integer'),
-                Field('ConnectToMember_id', type='integer'),
-                Field('ConnectionTypeID', type='integer'),
-                Field('ConnectionType_id', type='integer'),
-                Field('DateOfBirth', type='string'),
-                Field('IIDD', type='integer'),
-                Field('MemberID', type='integer'),
-                Field('Member_id', type='integer'),
-                Field('Name', type='string'),
-                Field('PlaceOfBirth', type='string'),
-                Field('Professions', type='string'),
-)
-
 db.define_table('TblMemberPhotos',
                 Field('MemberID', type='integer'),
                 Field('Member_id', type='integer'),
-                Field('MemberPhotoRank', type='integer'),
                 Field('PhotoID', type='integer'),
                 Field('Photo_id', type='integer'),
                 Field('x', type='integer'),   #location of face in the picture
                 Field('y', type='integer'),
                 Field('r', type='integer'),
-                Field('is_object', type='boolean', default=False),
+                Field('who_identified', type=db.auth_user)
+)
+
+db.define_table('TblArticlePhotos',
+                Field('article_id', type='integer'),
+                Field('photo_id', type='integer'),
+                Field('x', type='integer'),   #location of face in the picture
+                Field('y', type='integer'),
+                Field('r', type='integer'),
                 Field('who_identified', type=db.auth_user)
 )
 
@@ -272,7 +253,7 @@ db.define_table('TblMembers',
                 Field('approved', type='boolean')
 )
 
-db.define_table('TblObjects',
+db.define_table('TblArticles',
                 Field('name', type='string'),
                 Field('date_start', type='date', default=NO_DATE),
                 Field('date_start_dateunit', type='string', default='N'),
@@ -284,7 +265,7 @@ db.define_table('TblObjects',
                 Field('date_end_dateend', type='date', default=NO_DATE),
                 Field('story_id', type=db.TblStories),
                 Field('deleted', type='boolean', default=False),
-                Field('object_photo_id', type='integer'),
+                Field('facePhotoURL', type='string'),
                 Field('update_time', type='datetime'),
                 Field('updater_id', type=db.auth_user),
 )

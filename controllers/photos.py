@@ -1,5 +1,5 @@
 from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, \
-     save_uploaded_photo, rotate_photo, save_member_face, create_zip_file, get_photo_pairs, find_similar_photos, \
+     save_uploaded_photo, rotate_photo, save_member_face, save_article_face, create_zip_file, get_photo_pairs, find_similar_photos, \
      timestamped_photo_path, crop_a_photo, get_photo_topics
 import ws_messaging
 import stories_manager
@@ -161,8 +161,29 @@ def get_faces(vars):
     return dict(faces=faces, candidates=candidates)
 
 @serve_json
+def get_articles(vars):
+    '''
+    get all articles on photo
+    '''
+    photo_id = vars.photo_id
+    lst = db(db.TblArticlePhotos.photo_id == photo_id).select()
+    articles = []
+    for rec in lst:
+        article = Storage(x=rec.x, y=rec.y, r=rec.r or 20, photo_id=rec.photo_id)
+        if rec.article_id:
+            article.article_id = rec.article_id
+            article.name = rec.name
+        articles.append(article)
+    article_ids = set([article.article_id for articls in articles])
+    return dict(articles=articles)
+
+@serve_json
 def save_face(vars):
     return save_member_face(vars)
+
+@serve_json
+def save_article(vars):
+    return save_article_face(vars)
 
 @serve_json
 def detach_photo_from_member(vars):
