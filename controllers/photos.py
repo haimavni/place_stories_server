@@ -166,13 +166,15 @@ def get_articles(vars):
     get all articles on photo
     '''
     photo_id = vars.photo_id
-    lst = db(db.TblArticlePhotos.photo_id == photo_id).select()
+    q = (db.TblArticlePhotos.photo_id == photo_id) & (db.TblArticlePhotos.article_id == db.TblArticles.id)
+    lst = db(q).select()
     articles = []
-    for rec in lst:
+    for rec1 in lst:
+        rec = rec1.TblArticlePhotos
         article = Storage(x=rec.x, y=rec.y, r=rec.r or 20, photo_id=rec.photo_id)
         if rec.article_id:
             article.article_id = rec.article_id
-            article.name = rec.name
+            article.name = rec1.TblArticles.name
         articles.append(article)
     article_ids = set([article.article_id for articls in articles])
     return dict(articles=articles)

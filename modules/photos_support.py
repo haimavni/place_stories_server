@@ -522,10 +522,10 @@ def save_article_face(params):
     if rec:
         rec.update_record(**data)
     else:
-        db.TblArticlePhotos.insert(**data)
+        aid = db.TblArticlePhotos.insert(**data)
         if params.old_article_id and params.old_article_id != article.article_id:
             db(q).delete()
-            
+    rec = db(db.TblArticles.id==face.article_id).select().first()
     article_name = rec.name
     db(db.TblPhotos.id==face.photo_id).update(Recognized=True)
     return Storage(article_name=article_name, face_photo_url=face_photo_url)
@@ -536,11 +536,12 @@ def save_profile_photo(face, is_article=False):
     input_path = local_photos_folder() + rec.photo_path
     rnd = random.randint(0, 1000) #using same photo & just modify crop, change not seen - of caching
     prefix = "AP" if is_article else "PP"
-    facePhotoURL = "{}-{}-{}-{:03}.jpg".format(prefix, face.member_id, face.photo_id, rnd)
+    iid = face.article_id if is_article else face.member_id
+    facePhotoURL = "{}-{}-{}-{:03}.jpg".format(prefix, iid, face.photo_id, rnd)
     output_path = local_photos_folder("profile_photos") + facePhotoURL
     crop(input_path, output_path, face)
     if is_article:
-        db(db.TblArticles.id == face.member_id).update(facePhotoURL=facePhotoURL)
+        db(db.TblArticles.id == face.article_id).update(facePhotoURL=facePhotoURL)
     else:
         db(db.TblMembers.id == face.member_id).update(facePhotoURL=facePhotoURL)
     return photos_folder("profile_photos") + facePhotoURL
