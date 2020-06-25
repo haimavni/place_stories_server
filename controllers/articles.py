@@ -1,4 +1,5 @@
-from photos_support import save_article_face
+import stories_manager
+from photos_support import save_article_face, get_slides_from_photo_list
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
 from folders import photos_folder
 import ws_messaging
@@ -60,6 +61,55 @@ def create_new_article(vars):
     ws_messaging.send_message(key='ARTICLE_LISTS_CHANGED', group='ALL', article_rec=article_rec, new_article=True)
     return dict(article_id=article_id, article=rec)
 
+@serve_json
+def get_article_photo_list(vars):
+    if vars.member_id == "new":
+        return dict(photo_list=[])
+    article_id = int(vars.article_id)
+    if vars.what == 'story':
+        rec = db(db.TblArticles.story_id == article_id).select().first()
+        if rec:
+            article_id = rec.id
+        else:
+            return []
+    slides = get_article_slides(article_id)
+    return dict(photo_list=slides)
+
+@serve_json
+def get_article_details(vars):
+    if not vars.article_id:
+        raise User_Error(T('article does not exist yet!'))
+    if vars.article_id == "new":
+        rec = new_article_rec()
+        rec.article_info.name="articles.new-article"
+        return rec
+    art_id = int(vars.article_id)
+    if vars.what == 'story': #access article via its life story id
+        rec = db(db.TblArticles.story_id == art_id).select().first()
+        if rec:
+            art_id = rec.id
+        else:
+            raise Exception('No article for this story {mid}', art_id)
+    if vars.shift == 'next':
+        art_id += 1
+    elif vars.shift == 'prev':
+        art_id -= 1
+    article_stories = get_article_stories(art_id) + get_article_terms(art_id)
+    article_info = get_article_rec(art_id)
+    if not article_info:
+        raise User_Error('No article there')
+    sm = stories_manager.Stories()
+    story_info = sm.get_story(article_info.story_id) or Storage(display_version='New Story', topic="article.life-summary", story_versions=[], story_text='', story_id=None)
+    story_info.used_for = STORY4ARTICLE
+    slides = get_article_slides(art_id)
+    article_stories = [story_info] + article_stories;
+    return dict(article_info=article_info, 
+                story_info=story_info, 
+                slides=slides, #todo: duplicate?
+                article_stories=article_stories,
+                facePhotoURL = photos_folder('profile_photos') + (article_info.facePhotoURL or "dummy_face.png")
+                )
+
 ###---------------------support functions
 
 def new_article_rec(name=None):
@@ -103,3 +153,40 @@ def get_article_rec(article_id, prepend_path=False):
         rec.facePhotoURL = photos_folder('profile_photos') + (rec.facePhotoURL or 'dummy_face.png')
     return rec
 
+def get_article_slides(article_id):
+    q = (db.TblArticlePhotos.article_id == article_id) & \
+        (db.TblPhotos.id == db.TblArticlePhotos.photo_id) & \
+        (db.TblPhotos.deleted != True) &\
+        (db.TblPhotos.is_back_side != True)
+    return get_slides_from_photo_list(q)
+
+def get_article_stories(article_id):
+    if (article_id >= 0):  #not ready. remove this when articles have stories
+        return []
+    #not ready yet
+    q = (db.TblEventArticles.article_id == article_id) & \
+        (db.TblEventArticles.Event_id == db.TblEvents.id) & \
+        (db.TblEvents.story_id == db.TblStories.id) & \
+        (db.TblStories.deleted == False)
+    result = []
+    lst = db(q).select()
+    for rec in lst:
+        event = rec.TblEvents
+        story = rec.TblStories
+        dic = dict(
+            topic = event.Name,
+            name = story.name,
+            story_id = story.id,
+            story_text = story.story,
+            preview=get_reisha(story.preview, 30),
+            source = event.SSource,
+            used_for=story.used_for, 
+            author_id=story.author_id,
+            creation_date=story.creation_date,
+            last_update_date=story.last_update_date
+        )
+        result.append(dic)
+    return result
+
+def get_article_terms(article_id):
+    return [] #not ready yet

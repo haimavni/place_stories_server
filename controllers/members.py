@@ -477,7 +477,8 @@ def get_constants(vars):
             STORY4HELP=STORY4HELP,
             STORY4FEEDBACK=STORY4FEEDBACK,
             STORY4DOC=STORY4DOC,
-            STORY4AUDIO=STORY4AUDIO
+            STORY4AUDIO=STORY4AUDIO,
+            STORY4ARTICLE=STORY4ARTICLE
             ),
         visibility=dict(
             VIS_NEVER=VIS_NEVER, #for non existing members such as the child of a childless couple (it just connects the)
@@ -534,10 +535,10 @@ def delete_checked_stories(vars):
     deleted = not params.deleted_stories #will undelete if the list is of deleted stories
     q = db.TblStories.id.belongs(checked_stories)
     n = db(q).update(deleted=deleted)
-    tbls = {STORY4MEMBER: db.TblMembers, STORY4EVENT: db.TblEvents, STORY4PHOTO: db.TblPhotos, STORY4TERM: db.TblTerms, STORY4VIDEO: db.TblVideos, STORY4DOC: db.TblDocs}
+    tbls = {STORY4MEMBER: db.TblMembers, STORY4EVENT: db.TblEvents, STORY4PHOTO: db.TblPhotos, STORY4TERM: db.TblTerms, STORY4VIDEO: db.TblVideos, STORY4DOC: db.TblDocs, STORY4ARTICLE: db.TblArticles}
     
     #if story is associated with member, photo, video or document, need to skip it or delete the item too 
-    for usage in [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4AUDIO]:
+    for usage in [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4AUDIO, STORY4ARTICLE]:
         q1 = q & (db.TblStories.used_for == usage)
         lst = db(q1).select()
         story_ids = [rec.id for rec in lst]
@@ -1204,7 +1205,8 @@ def item_of_story_id(used_for, story_id):
         STORY4FEEDBACK: None,
         STORY4VIDEO: db.TblVideos,
         STORY4DOC: db.TblDocs,
-        STORY4AUDIO: db.TblAudios
+        STORY4AUDIO: db.TblAudios,
+        STORY4ARTICLE: db.TblArticles
     }
     tbl = tbls[used_for]
     if tbl:
@@ -1249,7 +1251,14 @@ def copy_story_date_to_object_date(story_rec):
                               audio_date_datespan=story_rec.story_date_datespan,
                               audio_date_dateend=story_rec.story_date_dateend,
                               )
-
+    #elif story_rec.used_for == STORY4ARTICLE:
+        #article_rec = db(db.Tblarticles.story_id==story_rec.id).select().first()
+        #article_rec.update_record(article_date=story_rec.story_date, 
+                              #article_date_dateunit=story_rec.story_date_dateunit,
+                              #article_date_datespan=story_rec.story_date_datespan,
+                              #article_date_dateend=story_rec.story_date_dateend,
+                              #)
+        
 @serve_json
 def qualified_members(vars):
     checked_answers = vars.checked_answers

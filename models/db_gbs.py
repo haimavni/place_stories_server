@@ -16,7 +16,8 @@ STORY4VIDEO = 8
 STORY4DOC = 9
 STORY4AUDIO = 10
 STORY4LETTER = 11
-STORY4USER = [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4AUDIO] 
+STORY4ARTICLE = 12
+STORY4USER = [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4AUDIO, STORY4ARTICLE] 
 
 VIS_NEVER = 0           #for non existing members such as the child of a childless couple (it just connects them)
 VIS_NOT_READY = 1
@@ -472,7 +473,8 @@ db.define_table('TblConfiguration',
                 Field('expose_developer', type='boolean', default=True),
                 Field('support_audio', type='boolean', default=False),
                 Field('help_messages_upload_time', type='datetime', default=NO_DATE),
-                Field('letter_templates_upload_time', type='datetime', default=NO_DATE)
+                Field('letter_templates_upload_time', type='datetime', default=NO_DATE),
+                Field('enable_articles', type='boolean', default=False)
                 )
 
 db.define_table('TblLocaleCustomizations',

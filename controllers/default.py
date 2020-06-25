@@ -114,6 +114,7 @@ def read_configuration(vars):
         config['quick_upload_button'] = config_rec.quick_upload_button
         config['expose_version_time'] = config_rec.expose_version_time
         config['expose_developer'] = config_rec.expose_developer
+        config['enable_articles'] = config_rec.enable_articles
     return dict(config=config)
 
 @serve_json
