@@ -63,6 +63,12 @@ def fix_is_tagged():
     
 def fix_visibility():
     db(db.TblStories.deleted!=True).update(visibility=SV_PUBLIC)
+    
+def fix_deleted_forever():
+    db(db.TblStories).update(dead=False)
+    
+def fix_photo_recognized():
+    db(db.TblPhotos.Recognized==None).update(Recognized=True)
 
 _fixes = {
     1: init_photo_back_sides,
@@ -70,7 +76,9 @@ _fixes = {
     3: init_story_dates,
     4: init_sampling,
     5: fix_is_tagged,
-    6: fix_visibility
+    6: fix_visibility,
+    7: fix_deleted_forever,
+    8: fix_photo_recognized
 }
 
 _init_configuration_table()

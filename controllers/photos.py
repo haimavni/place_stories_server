@@ -1,5 +1,5 @@
 from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, \
-     save_uploaded_photo, rotate_photo, save_member_face, create_zip_file, get_photo_pairs, find_similar_photos, \
+     save_uploaded_photo, rotate_photo, save_member_face, save_article_face, create_zip_file, get_photo_pairs, find_similar_photos, \
      timestamped_photo_path, crop_a_photo, get_photo_topics
 import ws_messaging
 import stories_manager
@@ -50,6 +50,9 @@ def get_photo_detail(vars):
                 photographer_name=photographer_name,
                 photographer_id=photographer_id,
                 photo_id=rec.id,
+                latitude=rec.latitude,
+                longitude=rec.longitude,
+                zoom=rec.zoom,
                 chatroom_id=story.chatroom_id)
 
 @serve_json
@@ -71,6 +74,14 @@ def update_photo_date(vars):
     rec = db((db.TblPhotos.id==int(vars.photo_id)) & (db.TblPhotos.deleted != True)).select().first()
     update_record_dates(rec, photo_dates_info)
     #todo: save in db
+    return dict()
+
+@serve_json
+def update_photo_location(vars):
+    longitude = float(vars.longitude)
+    latitude = float(vars.latitude)
+    zoom = int(vars.zoom)
+    db(db.TblPhotos.id==int(vars.photo_id)).update(longitude=longitude, latitude=latitude, zoom=zoom)
     return dict()
 
 @serve_json
@@ -150,8 +161,31 @@ def get_faces(vars):
     return dict(faces=faces, candidates=candidates)
 
 @serve_json
+def get_articles(vars):
+    '''
+    get all articles on photo
+    '''
+    photo_id = vars.photo_id
+    q = (db.TblArticlePhotos.photo_id == photo_id) & (db.TblArticlePhotos.article_id == db.TblArticles.id)
+    lst = db(q).select()
+    articles = []
+    for rec1 in lst:
+        rec = rec1.TblArticlePhotos
+        article = Storage(x=rec.x, y=rec.y, r=rec.r or 20, photo_id=rec.photo_id)
+        if rec.article_id:
+            article.article_id = rec.article_id
+            article.name = rec1.TblArticles.name
+        articles.append(article)
+    article_ids = set([article.article_id for articls in articles])
+    return dict(articles=articles)
+
+@serve_json
 def save_face(vars):
     return save_member_face(vars)
+
+@serve_json
+def save_article(vars):
+    return save_article_face(vars)
 
 @serve_json
 def detach_photo_from_member(vars):
@@ -181,10 +215,14 @@ def get_photo_list(vars):
     mprl = vars.max_photos_per_line or 8
     MAX_PHOTOS_COUNT = 100 + (mprl - 8) * 100
     selected_order_option = vars.selected_order_option or ""
+    last_photo_time = None
+    last_photo_date = None
     if selected_topics:
         lst = get_photo_list_with_topics(vars)
+        total_photos = len(lst)
     else:
         q = make_photos_query(vars)
+        total_photos = db(q).count()
         if selected_order_option == 'upload-time-order':
             if vars.count_limit:
                 n = int(vars.count_limit)
@@ -194,6 +232,7 @@ def get_photo_list(vars):
             last_photo_time = vars.last_photo_time
             if last_photo_time: 
                 q &= (db.TblPhotos.upload_date < last_photo_time)
+                total_photos = db(q).count()
             lst = db(q).select(orderby=~db.TblPhotos.id, limitby=(0, n))
         elif selected_order_option.startswith('chronological-order'):
             if vars.count_limit:
@@ -201,9 +240,13 @@ def get_photo_list(vars):
             else:
                 n = 200
             MAX_PHOTOS_COUNT = n
-            last_photo_time = vars.last_photo_time
-            if last_photo_time: 
-                q &= (db.TblPhotos.upload_date < last_photo_time)
+            last_photo_date = vars.last_photo_date
+            if last_photo_date:
+                if selected_order_option.endswith('reverse'):
+                    q &= (db.TblPhotos.photo_date < last_photo_date)
+                else:
+                    q &= (db.TblPhotos.photo_date > last_photo_date)
+                total_photos = db(q).count()
             field = db.TblPhotos.photo_date
             if selected_order_option.endswith('reverse'):
                 field = ~field
@@ -236,10 +279,12 @@ def get_photo_list(vars):
     result = process_photo_list(lst, photo_pairs)
     if selected_order_option == 'upload-time-order' and lst:
         last_photo_time = lst[-1].upload_date
+    elif selected_order_option.startswith('chronological') and lst:
+        last_photo_date = lst[-1].photo_date
     else:
         #could keep here date + id for chronological order
         last_photo_time = None
-    return dict(photo_list=result, last_photo_time=last_photo_time)
+    return dict(photo_list=result, last_photo_time=last_photo_time, last_photo_date=last_photo_date, total_photos=total_photos)
 
 @serve_json
 def get_theme_data(vars):
@@ -249,17 +294,15 @@ def get_theme_data(vars):
         header_background='header-background.png',
         top_background='top-background.png',
         footer_background='footer-background.png',
-        founders_group_photo='founders_group_photo.jpg',
         app_logo='app-logo.png',
-        himnon='himnon-givat-brenner.mp3',
-        content_background='bgs/body-bg.jpg',
-        mayflower='bgs/mayflower.jpg'
+        content_background='bgs/body-bg.jpg'
     )
     result = dict()
     for k in files:
         result[k] = path + files[k] if os.path.exists(local_path + files[k]) else ''
         if not os.path.exists(local_path + files[k]):
-            comment("file {} is missing", k)
+            pass
+            #comment("file {} is missing", k)
     return dict(files=result)
 
 @serve_json
@@ -369,10 +412,11 @@ def apply_topics_to_photo(vars):
     curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
     curr_tags = sorted(curr_tags)
     keywords = "; ".join(curr_tags)
+    is_tagged = len(curr_tags) > 0
     rec = db(db.TblPhotos.id == photo_id).select().first()
     rec.update_record(KeyWords=keywords, Recognized=True) #todo: the KeyWords part is obsolete?
     srec = db(db.TblStories.id==rec.story_id).select().first()
-    srec.update_record(keywords=keywords)
+    srec.update_record(keywords=keywords, is_tagged=is_tagged)
     
 @serve_json
 def assign_photo_photographer(vars):
@@ -655,9 +699,9 @@ def crop_photo(vars):
             face.update_record(x=face.x - crop_left, y=face.y - crop_top)
     rec = db(db.TblPhotos.id==vars.photo_id).select().first()
     path = local_photos_folder("orig") + rec.photo_path
-    crop_a_photo(path, path, crop_left, crop_top, crop_width, crop_height)
+    curr_dhash = crop_a_photo(path, path, crop_left, crop_top, crop_width, crop_height)
     last_mod_time = request.now
-    rec.update_record(width=crop_width, height=crop_height, last_mod_time=last_mod_time)
+    rec.update_record(width=crop_width, height=crop_height, last_mod_time=last_mod_time, curr_dhash=curr_dhash)
     return dict(photo_src=photos_folder('orig') + timestamped_photo_path(rec))
 
 @serve_json
@@ -860,6 +904,9 @@ def make_photos_query(vars):
         q &= ((db.TblPhotos.Recognized == True) | (db.TblPhotos.Recognized == None))
     elif vars.selected_recognition == 'unrecognized':
         q &= (db.TblPhotos.Recognized == False)
+    elif vars.selected_recognition == 'recognized-not-located':
+        lst = unlocated_faces()
+        q &= (db.TblPhotos.id.belongs(lst))
     if vars.show_untagged:
         q &= (db.TblPhotos.story_id==db.TblStories.id) & (db.TblStories.is_tagged==False)
     return q
@@ -893,6 +940,12 @@ def get_video_list_with_topics(vars):
     result = [dic[id] for id in bag]
     return result
 
+def unlocated_faces():
+    q = (db.TblPhotos.id == db.TblMemberPhotos.Photo_id) & (db.TblMemberPhotos.x == None)
+    lst = db(q).select(db.TblPhotos.id, db.TblMemberPhotos.id.count(), groupby=[db.TblPhotos.id], limitby=(0,5000))
+    lst = [prec.TblPhotos.id for prec in lst]
+    return lst
+    
 def make_videos_query(vars):
     q = init_query(db.TblVideos, editing=vars.editing)
     ###q = (db.TblVideos.deleted != True)

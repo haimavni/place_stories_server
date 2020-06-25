@@ -1,5 +1,6 @@
 import PIL
 from PIL import Image, ImageFile
+from PIL.ExifTags import TAGS, GPSTAGS
 import dhash
 from injections import inject
 import os
@@ -86,9 +87,21 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
         sub_folder = sub_folder or 'uploads/' + month + '/'
     path = local_photos_folder() + sub_folder
     dir_util.mkpath(path)
+    latitude = None
+    longitude = None
     try:
         stream = StringIO(blob)
         img = Image.open(stream)
+        exif_data = get_exif_data(img)
+        if 'GPSInfo' in exif_data:
+            try:
+                gps_info = exif_data['GPSInfo']
+                lng = gps_info['GPSLongitude']
+                lat = gps_info['GPSLatitude']
+                longitude = degrees_to_float(lng)
+                latitude = degrees_to_float(lat)
+            except Exception, e:
+                log_exception("getting photo geo data failed")
         width, height = img.size
         square_img = crop_to_square(img, width, height, 256)
         if square_img:
@@ -108,6 +121,9 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
             img.save(path + file_name)
             fix_owner(path)
             fix_owner(path + file_name)
+            width, height = resized(width, height)
+            img = img.resize((width, height), Image.LANCZOS)
+        elif height < MAX_HEIGHT and width < MAX_WIDTH:
             width, height = resized(width, height)
             img = img.resize((width, height), Image.LANCZOS)
         path = local_photos_folder() + sub_folder
@@ -131,6 +147,9 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
         photo_date=None,
         width=width,
         height=height,
+        latitude=latitude,
+        longitude=longitude,
+        zoom=12,
         crc=crc,
         dhash=dhash_value,
         oversize=oversize,
@@ -147,6 +166,7 @@ def get_image_info(image_path):
     img = Image.open(image_path)
     width, height = img.size
     faces = []
+    exif_data = get_exif_data(img)
     return Storage(width=width, height=height, faces=faces)
 
 def fit_size(rec):
@@ -313,6 +333,8 @@ def crop_a_photo(input_path, output_path, crop_left, crop_top, crop_width, crop_
     cropped_img = img.crop(area)
     #os.remove(input_path) #todo: for now keep the old file so changes in __test do not harm __www
     cropped_img.save(output_path)
+    curr_dhash = dhash_photo(photo_path=output_path)
+    return curr_dhash
     
 def crop_square(img_src, width, height, side_size):
     if width > height:
@@ -362,11 +384,54 @@ def rotate_photo(photo_id):
             new_photo_path = pname + new_fname
             new_file_name = path + new_photo_path
             os.rename(file_name, new_file_name)
+            curr_dhash = dhash_photo(photo_path=new_file_name)
+            photo_rec.update_record(curr_dhash=curr_dhash)
         else:
             img.save(path + new_photo_path)
 
     height, width = (photo_rec.width, photo_rec.height)
     photo_rec.update_record(width=width, height=height, photo_path=new_photo_path)
+    
+def resize_photo(photo_id, target_width=1200, target_height=800):
+    db = inject('db')
+    prec = db(db.TblPhotos.id==photo_id).select().first()
+    what = 'oversize' if prec.oversize else 'orig'
+    path = local_photos_folder(what)
+    input_file_name = path + prec.photo_path
+    if not os.path.exists(input_file_name):
+        return
+    img = Image.open(input_file_name)
+    path = local_photos_folder('orig')
+    file_name = path + prec.photo_path
+    image_width, image_height = img.size
+    rw = 1.0 * target_width / image_width
+    rh = 1.0 * target_height / image_height
+    ratio1 = min(rw, rh)
+    ratio2 = max(rw, rh)
+    if ratio2 < 1.0 or ratio1 > 1.0:
+        width = int(round(ratio1 * image_width))
+        height = int(round(ratio1 * image_height))
+        resized_img = img.resize((width, height), Image.LANCZOS)
+        prec.update_record(width=width, height=height)
+        resized_img.save(file_name)
+        faces = db(db.TblMemberPhotos.Photo_id == photo_id).select()
+        for face in faces:
+            if not face.x:
+                return
+            x = int(round(ratio1 * face.x))
+            y = int(round(ratio1 * face.y))
+            r = int(round(ratio1 * face.r))
+            face.update_record(x=x, y=y, r=r)
+            
+def resize_photos(count, target_width=1200, target_height=800):
+    db = inject('db')
+    q = (db.TblPhotos.deleted != True) & (db.TblPhotos.width < target_width) & (db.TblPhotos.height < target_height)
+    lst = db(q).select(db.TblPhotos.id, limitby=(0, count))
+    lst = [prec.id for prec in lst]
+    for pid in lst:
+        resize_photo(pid, target_width, target_height)
+    n = db(q).count()
+    return dict(num_to_resize=n)
 
 def add_photos_from_drive(sub_folder):
     folder = local_photos_folder("orig")
@@ -401,7 +466,7 @@ def save_member_face(params):
     face = params.face
     assert face.member_id > 0
     if params.make_profile_photo:
-        face_photo_url = save_profile_photo(face)
+        face_photo_url = save_profile_photo(face, is_article=False)
     else:
         face_photo_url = None
     if params.old_member_id:
@@ -424,21 +489,61 @@ def save_member_face(params):
         rec.update_record(**data)
     else:
         db.TblMemberPhotos.insert(**data)
-        if params.old_member_id and params.old_member_id != face.membe_id:
+        if params.old_member_id and params.old_member_id != face.member_id:
             db(q).delete()
     member_name = member_display_name(member_id=face.member_id)
     db(db.TblPhotos.id==face.photo_id).update(Recognized=True)
     return Storage(member_name=member_name, face_photo_url=face_photo_url)
 
-def save_profile_photo(face):
+def save_article_face(params):
+    db, auth = inject('db', 'auth')
+    face = params.face
+    assert face.article_id > 0
+    if params.make_profile_photo:
+        face_photo_url = save_profile_photo(face, is_article=True)
+    else:
+        face_photo_url = None
+    if params.old_article_id:
+        q = (db.TblArticlePhotos.photo_id == face.photo_id) & \
+            (db.TblArticlePhotos.article_id == params.old_article_id)
+    else:
+        q = (db.TblArticlePhotos.photo_id == face.photo_id) & \
+            (db.TblArticlePhotos.article_id == face.article_id)
+    who_identified = auth.current_user()
+    data = dict(
+        photo_id=face.photo_id,
+        article_id=face.article_id,
+        r=face.r,
+        x=face.x,
+        y=face.y,
+        who_identified=who_identified
+    )
+    rec = db(q).select().first()
+    if rec:
+        rec.update_record(**data)
+    else:
+        aid = db.TblArticlePhotos.insert(**data)
+        if params.old_article_id and params.old_article_id != article.article_id:
+            db(q).delete()
+    rec = db(db.TblArticles.id==face.article_id).select().first()
+    article_name = rec.name
+    db(db.TblPhotos.id==face.photo_id).update(Recognized=True)
+    return Storage(article_name=article_name, face_photo_url=face_photo_url)
+
+def save_profile_photo(face, is_article=False):
     db = inject('db')
     rec = get_photo_rec(face.photo_id)
     input_path = local_photos_folder() + rec.photo_path
     rnd = random.randint(0, 1000) #using same photo & just modify crop, change not seen - of caching
-    facePhotoURL = "PP-{}-{}-{:03}.jpg".format(face.member_id, face.photo_id, rnd)
+    prefix = "AP" if is_article else "PP"
+    iid = face.article_id if is_article else face.member_id
+    facePhotoURL = "{}-{}-{}-{:03}.jpg".format(prefix, iid, face.photo_id, rnd)
     output_path = local_photos_folder("profile_photos") + facePhotoURL
     crop(input_path, output_path, face)
-    db(db.TblMembers.id == face.member_id).update(facePhotoURL=facePhotoURL)
+    if is_article:
+        db(db.TblArticles.id == face.article_id).update(facePhotoURL=facePhotoURL)
+    else:
+        db(db.TblMembers.id == face.member_id).update(facePhotoURL=facePhotoURL)
     return photos_folder("profile_photos") + facePhotoURL
 
 def get_photo_rec(photo_id):
@@ -488,10 +593,12 @@ def find_similar_photos(photo_list=None, time_budget=60):
     db = inject('db')
     tree = BKTree(hamming_distance)
     cnt = 0
-    for photo_rec in db(db.TblPhotos.deleted != True).select(db.TblPhotos.dhash):
+    for photo_rec in db(db.TblPhotos.deleted != True).select(db.TblPhotos.dhash, db.TblPhotos.curr_dhash):
         if not photo_rec.dhash:
             continue
         tree.add(int(photo_rec.dhash, 16))
+        if photo_rec.curr_dhash:
+            tree.add(int(photo_rec.curr_dhash, 16))
         cnt += 1
     dup_list = []
     time0 = datetime.datetime.now()
@@ -509,7 +616,7 @@ def find_similar_photos(photo_list=None, time_budget=60):
     visited = set()
     no_dhash = 0
     nv = 0
-    for photo_rec in db(q).select(db.TblPhotos.id, db.TblPhotos.dhash, db.TblPhotos.dup_checked):
+    for photo_rec in db(q).select(db.TblPhotos.id, db.TblPhotos.dhash, db.TblPhotos.curr_dhash, db.TblPhotos.dup_checked):
         if not photo_rec.dhash:
             no_dhash += 1
             continue
@@ -521,6 +628,8 @@ def find_similar_photos(photo_list=None, time_budget=60):
         if elapsed > time_budget:
             break
         lst = tree.find(int(photo_rec.dhash, 16), threshold)
+        if photo_rec.curr_dhash:
+            lst += tree.find(int(photo_rec.curr_dhash, 16), threshold)
         if len(lst) > 1:
             cnt += 1
             for itm in lst:
@@ -528,8 +637,14 @@ def find_similar_photos(photo_list=None, time_budget=60):
             dist = lst[1][0]
             lst = [itm for itm in lst if itm[0] <= dist]
             dhash_values = ['{:032x}'.format(itm[1]) for itm in lst]
-            duplicate_photo_ids = db((db.TblPhotos.dhash.belongs(dhash_values)) & (db.TblPhotos.deleted != True)).select(db.TblPhotos.id, orderby=db.TblPhotos.id)
+            duplicate_photo_ids = db((db.TblPhotos.dhash.belongs(dhash_values)) & \
+                                     (db.TblPhotos.deleted != True)).select(db.TblPhotos.id, orderby=db.TblPhotos.id)
             duplicate_photo_ids = [p.id for p in duplicate_photo_ids]
+            curr_duplicate_photo_ids = db((db.TblPhotos.curr_dhash != None) & \
+                                          (db.TblPhotos.curr_dhash.belongs(dhash_values)) & \
+                                          (db.TblPhotos.deleted != True)).select(db.TblPhotos.id, orderby=db.TblPhotos.id)
+            curr_duplicate_photo_ids = [p.id for p in curr_duplicate_photo_ids]
+            duplicate_photo_ids += curr_duplicate_photo_ids
             if duplicate_photo_ids[0] in dic:
                 continue #this group already visited
             for pid in duplicate_photo_ids:
@@ -601,6 +716,24 @@ def create_watermark(image_path, final_image_path, watermark):
             main.paste(mark, (i, j), mark)
             main.thumbnail((8000, 8000), Image.ANTIALIAS)
             main.save(final_image_path, quality=100)
+            
+def get_exif_data(image):
+    """Returns a dictionary from the exif data of an PIL Image item. Also converts the GPS Tags"""
+    exif_data = {}
+    info = image._getexif()
+    if info:
+        for tag, value in info.items():
+            decoded = TAGS.get(tag, tag)
+            if decoded == "GPSInfo":
+                gps_data = {}
+                for t in value:
+                    sub_decoded = GPSTAGS.get(t, t)
+                    gps_data[sub_decoded] = value[t]
+
+                exif_data[decoded] = gps_data
+            else:
+                exif_data[decoded] = value
+    return exif_data            
 
 def get_photo_topics(photo_id):
     db = inject('db')
@@ -618,4 +751,9 @@ def make_unique(arr, key):
         dic[a[key]] = a
     arr = [dic[id] for id in sorted(dic)]
     return arr
+
+def degrees_to_float(tup):
+    degs, mins, secs = [t[0] for t in tup]
+    result = degs * 1.0 + mins * 1.0 / 60 + secs * 1.0 / 3600
+    return round(result, 8)
     

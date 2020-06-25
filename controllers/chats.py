@@ -7,14 +7,15 @@ def read_chatroom(vars):
     for msg in messages:
         msg.sender_name = auth.user_name(msg.author)
         msg.message = msg.message.replace('\n', '<br/>')
-    chatroom_name = db(db.TblChatGroup.id==int(vars.room_number)).select().first().name
+    crec = db(db.TblChatGroup.id==int(vars.room_number)).select().first()
+    chatroom_name = crec.name if crec else ""
     return dict(chatroom_name=chatroom_name,
                 messages=messages,
                 user_message='')
 
 @serve_json
 def read_chatrooms(vars):
-    lst = db(db.TblChatGroup.story_id==None).select() #only system-wide chats
+    lst = db(db.TblChatGroup.story_id==None).select() #chats with story id belong to specific objects
     for rec in lst:
         rec.user_message = 'bla'
     dic = dict()
@@ -57,7 +58,7 @@ def send_message(vars):
 
 @serve_json
 def delete_message(vars):
-    good = db(db.TblChats.id==vars.message.id).delete() == 1
+    good = db(db.TblChats.id==vars.message.id).delete()
     return dict(deleted=good)
 
 @serve_json
@@ -82,8 +83,37 @@ def rename_chatroom(vars):
 @serve_json
 def delete_chatroom(vars):
     chatroom_id = int(vars.room_number)
-    db(db.TblChatGroup.id==chatroom_id).delete()
+    q = db.TblChatGroup.id==chatroom_id
+    grec = db(q).select().first()
+    grec.update_record(story_id=None) #otherwise the story is deleted due to cascading
+    db(q).delete()
     ws_messaging.send_message(key='DELETE_CHATROOM', group='ALL', room_number=chatroom_id);
+    return dict()
+
+@serve_json
+def disconnect_chatroom(vars):
+    chatroom_id = int(vars.room_number)
+    n = db(db.TblChats.chat_group==chatroom_id).count()
+    if n > 0:
+        return dict()
+    chat_group = db(db.TblChatGroup.id==chatroom_id).select().first()
+    if not chat_group:
+        return dict()
+    story_id = chat_group.story_id
+    if not story_id:
+        return dict()
+    story_rec = db(db.TblStories.id==story_id).select().first()
+    if not story_rec:
+        return dict()
+    story_rec.update_record(chatroom_id=None)
+    return dict(disconnected=True)
+
+@serve_json
+def chatroom_deleted(vars):
+    story_id = int(vars.story_id)
+    srec = db(db.TblStories.id==story_id).select(db.TblStories.id, db.TblStories.chatroom_id).first()
+    if srec:
+        srec.update_record(chatroom_id=None)
     return dict()
 
 #---------------support functions---------------------

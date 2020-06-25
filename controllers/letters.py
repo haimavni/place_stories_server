@@ -1,6 +1,7 @@
 import stories_manager
 import csv, cStringIO
 from folders import local_folder
+import help_support
 
 @serve_json
 def get_letter(vars):
@@ -41,15 +42,11 @@ def default_csv_name():
     return local_folder('letters') + 'letters.csv'
 
 @serve_json
-def save_letters_to_csv(vars):
-    csv_name = vars.cvs_name or default_csv_name();
-    rows = db(db.TblStories.used_for==STORY4LETTER).select(db.TblStories.name, db.TblStories.topic, db.TblStories.story)
-    with open(csv_name, 'w') as f:
-        rows.export_to_csv_file(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
-    return dict(good=True)
+def save_letter_templates_to_csv(vars):
+    return help_support.save_letter_templates_to_csv(target=vars.target)
 
 @serve_json
-def load_letters_from_csv(vars):
+def load_letter_templates_from_csv(vars):
     csv_name = vars.cvs_name or default_csv_name();
     for rec in get_records(csv_name):
         name, topic, content = rec

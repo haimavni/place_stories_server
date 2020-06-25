@@ -107,10 +107,13 @@ def init_query(tbl, editing=False, is_deleted=False, user_id=None):
         if auth.has_membership(ARCHIVER, user_id):
             allowed.append(SV_ARCHIVER_ONLY)
     is_alive = not bool(is_deleted)
+    q = (db.TblStories.dead != True)
     if tbl == db.TblStories:
-        q = (tbl.deleted!=is_alive)
+        q &= (tbl.deleted!=is_alive)
+        if not is_alive:
+            return q
     else:
-        q = (tbl.story_id==db.TblStories.id) & (tbl.deleted!=is_alive)
+        q &= (tbl.story_id==db.TblStories.id) & (tbl.deleted!=is_alive)
     if editing and auth.has_membership(RESTRICTED, user_id):
         if tbl == db.TblStories:
             q &= (tbl.author_id == user_id)

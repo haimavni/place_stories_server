@@ -1,4 +1,5 @@
 cd /home/www-data/tol_server_$1
+rm logs/apply-fixes*.lock>&/dev/null
 git pull
 python ./private/create_all_app_indexes.py
 bash ./private/restart_servers.bash

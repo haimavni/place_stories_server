@@ -1,6 +1,7 @@
 from folders import *
 import zlib
 from cStringIO import StringIO
+import csv
 from PIL import Image, ImageFile
 from photos_support import save_uploaded_photo, photos_folder, timestamped_photo_path, get_photo_topics
 from topics_support import *
@@ -81,6 +82,32 @@ def upload_logo(vars):
     return dict(upload_result=dict(), logo_url=get_logo_url(group_id))
 
 @serve_json
+def upload_contacts(vars):
+    stream = StringIO(vars.file.BINvalue)
+    added = 0
+    group_id = vars.file.info.group_id
+    for rec in get_records_from_csv_stream(stream):
+        email, first_name, last_name = rec[:3] 
+        q = (db.TblGroupContacts.group_id==group_id) & (db.TblGroupContacts.email==email)
+        cont_rec =  db(q).select().first()
+        if cont_rec:
+            if cont_rec.deleted:
+                added += 1
+            cont_rec.update_record(deleted=False)
+        else:
+            added += 1
+            db.TblGroupContacts.insert(email=email, first_name=first_name, last_name=last_name, group_id=group_id)
+    ws_messaging.send_message(key='CONTACTS-FILE-UPLOADED', group='ALL', added=added)
+    return dict(upload_result=dict())
+
+def get_records_from_csv_stream(csvfile):
+    reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+    reader.next()     #skip header
+    for row in reader:
+        yield row
+    
+
+@serve_json
 def delete_group(vars):
     db(db.TblGroups.id==vars.group_id).delete()
     return dict()
@@ -123,6 +150,9 @@ def upload_photo(vars):
         photographer_name = photographer.name if photographer else ''
         photo_date_str = all_dates.photo_date.date
         photo_date_datespan = all_dates.photo_date.span
+        longitude = photo_rec.longitude
+        latitude = photo_rec.latitude
+        zoom = photo_rec.zoom
     else:
         photo_name = fil.name
         photo_story = ''
@@ -130,20 +160,26 @@ def upload_photo(vars):
         photographer_name = ''
         photo_date_str = ''
         photo_date_datespan = 0
+        longitude = None
+        latitude = None
+        zoom = 8
     photo_topics = get_photo_topics(photo_rec.id)
     
     ws_messaging.send_message(key='GROUP-PHOTO-UPLOADED', group=vars.file.info.ptp_key, photo_url=photo_url, photo_name=photo_name, 
                               photo_id=photo_id, photo_story=photo_story, duplicate=duplicate,
                               photographer_name=photographer_name,photo_date_str=photo_date_str,photo_date_datespan=photo_date_datespan,
+                              longitude=longitude,latitude=latitude,zoom=zoom,
                               photo_topics=photo_topics, photographer_id=photographer_id)
     return dict(photo_url=photo_url, upload_result=dict(duplicate=duplicate))
 
 @serve_json
 def attempt_login(vars):
     user_id = 0;
-    user_rec = db(db.auth_user.email==vars.email).select().first()
-    if user_rec:
-        user_id = user_rec.id
+    user = auth.login_bare(vars.email, "", sneak_in=True)
+    if isinstance(user, str):
+        return dict(warning_message=user)
+    if user:
+        user_id = user.id
     return dict(user_id=user_id)
 
 @serve_json
@@ -186,6 +222,7 @@ def save_photo_info(vars):
 def mail_contacts(vars):
     group_id = vars.group_id
     from_name = vars.from_name or 'Test'
+    comment("enter mail contacts, from: {}, group {}", from_name, group_id)
     recipients = db((db.TblGroupContacts.group_id==group_id) & (db.TblGroupContacts.deleted != True)).select()
     grec = db(db.TblGroups.id==group_id).select().first()
     campaign_name = grec.description

@@ -1,7 +1,8 @@
 import stories_manager
 import csv, cStringIO
-from folders import local_folder
+from folders import local_folder, system_folder
 import re
+import help_support
 
 @serve_json
 def get_help(vars):
@@ -19,52 +20,14 @@ def get_help(vars):
                              )
     return dict(story_info=story_info)
 
-def save_help(name, topic, content):
-    rec = db((db.TblStories.used_for==STORY4HELP) & (db.TblStories.topic==topic)).select().first()
-    if rec:
-        story_id = rec.id
-    else:
-        story_id = None
-    story_info = Storage(
-        name=name,
-        topic=topic,
-        story_text=content,
-        story_id=story_id,
-        used_for = STORY4HELP
-    )
-    sm = stories_manager.Stories()
-    if story_id:
-        sm.update_story(story_id, story_info)
-    else:
-        sm.add_story(story_info)
-
-def default_csv_name():
-    return local_folder('help') + 'help_messages.csv'
-
 @serve_json
 def save_help_messages_to_csv(vars):
-    csv_name = vars.cvs_name or default_csv_name();
-    rows = db(db.TblStories.used_for==STORY4HELP).select(db.TblStories.name, db.TblStories.topic, db.TblStories.story)
-    with open(csv_name, 'w') as f:
-        rows.export_to_csv_file(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
-    return dict(good=True)
+    return help_support.save_help_messages_to_csv(target=vars.target)
 
 @serve_json
 def load_help_messages_from_csv(vars):
-    csv_name = vars.cvs_name or default_csv_name();
-    for rec in get_records(csv_name):
-        name, topic, content = rec
-        save_help(name, topic, content)
-    db.commit()
-    return dict(good=True)
+    return help_support.load_help_messages_from_csv()
 
-def get_records(csv_name):
-    with open(csv_name, 'rb') as csvfile:
-        reader = csv.reader(csvfile, delimiter=',', quotechar='"')
-        reader.next()     #skip header
-        for row in reader:
-            yield row
-            
 @serve_json
 def print_all_messages(vars):
     file_name = vars.file_name or 'help_messages'
@@ -77,6 +40,24 @@ def print_all_messages(vars):
             s = break_to_lines(hrec.story)
             f.write(s)
             f.write('\n')
+    return dict()
+
+@serve_json
+def get_help_message(vars):
+    story_id = int(vars.story_id)
+    sm = stories_manager.Stories()
+    story_info = sm.get_story(story_id)
+    prev_story_info = sm.get_story(story_id, to_story_version=-1)
+    return dict(story_info=story_info, prev_story_info=prev_story_info)
+
+@serve_json
+def get_overridden_help_messages(vars):
+    return dict(message_list=help_support.get_overridden_help_messages())
+
+@serve_json
+def accept_system(vars):
+    story_id = int(vars.story_id)
+    db(db.TblStories.id == story_id).update(imported_from="system");
     return dict()
 
 def break_to_lines(s):

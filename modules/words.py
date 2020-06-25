@@ -109,7 +109,7 @@ def extract_story_words(story_id):
     rec = db(db.TblStories.id==story_id).select().first()
     if (not rec) or rec.deleted:
         return None
-    story_name = rec.name
+    story_name = rec.name or "Name missing"
     preview = rec.preview
     html = rec.story
     s = story_name.decode('utf8') + ' '

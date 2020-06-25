@@ -20,13 +20,19 @@ def index():
     if you need a simple wiki simply replace the two lines below with:
     return auth.wiki()
     """
+    key = request.vars.key
+    if key:
+        rec = db(db.TblShortcuts.key==key).select().first()
+        if rec:
+            if not ":8000" in request.env.http_host:
+                request.requires_https()
+            redirect(rec.url)
     app = request.application
     fname = '/{app}/static/aurelia/index.html'.format(app=app)
     fname1 = '{app}/static/aurelia/index-{app}.html'.format(app=app)
     if os.path.isfile('./applications/' + fname1):
         fname = '/' + fname1
     redirect("{}".format(fname))
-
 
 def user():
     """
@@ -72,7 +78,7 @@ def get_tornado_host(vars):
     group = messaging_group(group=vars.group)
     if request.is_https:
         ws = 'wss'
-        port = '8443'
+        port = '9443' if host == 'tol.life' else '8443'
     else:
         ws = 'ws'
         port = '8888'
@@ -104,6 +110,11 @@ def read_configuration(vars):
         config['enable_auto_registration'] = config_rec.enable_auto_registration
         config['expose_new_app_button'] = config_rec.expose_new_app_button
         config['support_audio'] = config_rec.support_audio
+        config['expose_feedback_button'] = config_rec.expose_feedback_button
+        config['quick_upload_button'] = config_rec.quick_upload_button
+        config['expose_version_time'] = config_rec.expose_version_time
+        config['expose_developer'] = config_rec.expose_developer
+        config['enable_articles'] = config_rec.enable_articles
     return dict(config=config)
 
 @serve_json
@@ -132,15 +143,21 @@ def verify_email():
 
 @serve_json
 def check_if_logged_in(vars):
-    return dict(is_logged_in = auth.is_logged_in())  ###temporary for dev!!!
+    is_logged_in = auth.is_logged_in()
+    user_id=auth.current_user()
+    comment("is logged in? {}, user_id: {}", is_logged_in, user_id)
+    return dict(is_logged_in=is_logged_in, user_id=user_id)
 
 @serve_json
 def login(vars):
     if not vars.email:
         return dict()
-    result = auth.login_bare(vars.email, vars.password)
+    result = auth.login_bare(vars.email, vars.password, sneak_in=vars.sneak_in)
     if isinstance(result, str):
-        raise User_Error(result)
+        if vars.sneak_in:
+            return dict(user=dict(id=0), unregistered=True)
+        else:
+            raise User_Error(result)
     user = Storage()
     for k in ['email', 'facebook', 'first_name', 'last_name', 'id', 'skype']:
         v = result[k]
@@ -322,12 +339,12 @@ def reset_password(vars):
     registration_key = am.replace_password(user_rec.id, vars.password)
     confirmation_url = '/{app}/default/confirm_password_reset?app_name={app_name}&registration_key={registration_key}&email={email}'. \
         format(app=request.application, app_name=app_name, registration_key=registration_key, email=vars.email)
-    confirmation_link = '{host}{confirmation_url}'.format(host=host, confirmation_url=confirmation_url)
+    confirmation_link = 'http://{host}{confirmation_url}'.format(host=host, confirmation_url=confirmation_url)
     mail_message_fmt = '''
     Hi {first_name} {last_name},<br><br>
-    
+
     Click {link} to confirm your new password.<br><br>
-    
+
     '''
     mail_message = ('', mail_message_fmt.format(first_name=user_rec.first_name, last_name=user_rec.last_name, link=confirmation_link))
     result = mail.send(to=vars.email, subject='New password', message=mail_message)
@@ -337,6 +354,31 @@ def reset_password(vars):
     else:
         return dict()
 
+@serve_json
+def get_shortcut(vars):
+    url = vars.url
+    rec = db(db.TblShortcuts.url==url).select().first()
+    if rec:
+        key = rec.key
+    else:
+        key = create_key() #if paranoid, ensure key is not in use yet
+        if db(db.TblShortcuts.key==key).count() > 0:
+            comment("duplicate key found in get shortcut")
+            raise Exception('Non unique key')
+        db.TblShortcuts.insert(url=url, key=key)
+    shortcut = '/' + request.application + '?key='  + key
+    comment("get shortcut: ", shortcut)
+    return dict(shortcut=shortcut)
+
+def create_key():
+    import random, base64
+    r = random.randint(0, 0xffffffffffffffff)
+    s = str(r)
+    s = base64.urlsafe_b64encode(s)
+    while s[-1] == "=":
+        s = s[:-1]
+    return s
+
 def confirm_password_reset():
     vars = request.vars
     user_rec = db(db.auth_user.email==vars.email).select().first()
@@ -344,7 +386,7 @@ def confirm_password_reset():
         raise Exception("Registration key mismatch")
     user_rec.update_record(registration_key="")
     return dict()
-    
+
 
 def notify_new_feedback():
     lst = db((db.auth_membership.group_id==ADMIN)&(db.auth_user.id==db.auth_membership.user_id)&(db.auth_user.id>1)).select(db.auth_user.email)
@@ -357,6 +399,6 @@ def notify_new_feedback():
     Click <a href="https://gbstories.org/{app}/static/aurelia/index.html#/feedbacks">here</a> to view.
     '''.format(app=app).replace('\n', '<br>'))
     mail.send(to=receivers, subject='New GB Stories Feedback', message=message)
-    
+
 
 

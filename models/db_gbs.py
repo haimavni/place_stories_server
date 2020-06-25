@@ -1,6 +1,7 @@
 import datetime
 import random
 NO_DATE = datetime.date(day=1, month=1, year=1)
+NO_TIME = datetime.datetime(day=1, month=1, year=1)
 FAR_FUTURE = datetime.date(day=1, month=1, year=3000)
 SAMPLING_SIZE = 10000
 
@@ -15,7 +16,8 @@ STORY4VIDEO = 8
 STORY4DOC = 9
 STORY4AUDIO = 10
 STORY4LETTER = 11
-STORY4USER = [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4AUDIO] 
+STORY4ARTICLE = 12
+STORY4USER = [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4AUDIO, STORY4ARTICLE] 
 
 VIS_NEVER = 0           #for non existing members such as the child of a childless couple (it just connects them)
 VIS_NOT_READY = 1
@@ -56,13 +58,15 @@ db.define_table('TblStories',
                 Field('language', type='string'),
                 Field('translated_from', type='integer'), ##db.TblStories 
                 Field('deleted', type='boolean', default=False),
+                Field('dead', type='boolean', default=False), #can not be undeleted
                 Field('visibility', type='integer', default=SV_PUBLIC),
                 Field('touch_time', type='date', default=NO_DATE), #used to promote stories
                 Field('last_version', type='integer'),
                 Field('approved_version', type='integer'),
                 Field('sampling_id', type='integer', default=random.randint(1, SAMPLING_SIZE)),
-                Field('chatroom_id', type=db.TblChatGroup),
-                Field('last_chat_time', type='datetime', default=NO_DATE)
+                Field('chatroom_id', type='integer'), # actually db.TblChatGroup),but then deletion of the chatroom deletes the story!
+                Field('last_chat_time', type='datetime', default=NO_DATE),
+                Field('imported_from', type='string')
 )                
 
 db.define_table('TblStoryVersions',
@@ -171,38 +175,20 @@ db.define_table('TblFamilyConnectionTypes',
                 Field('IIDD', type='integer'),
 )
 
-db.define_table('TblHrefCategoryHrefs',
-                Field('CategoryID', type='string'),
-                Field('Category_id', type='string'),
-                Field('HrefID', type='integer'),
-                Field('Href_id', type='integer'),
-)
-
-db.define_table('TblHrefTypes',
-                Field('IIDD', type='integer'),
-                Field('Name', type='string'),
-)
-
-db.define_table('TblMemberConnections',
-                Field('ConnectToMemberID', type='integer'),
-                Field('ConnectToMember_id', type='integer'),
-                Field('ConnectionTypeID', type='integer'),
-                Field('ConnectionType_id', type='integer'),
-                Field('DateOfBirth', type='string'),
-                Field('IIDD', type='integer'),
-                Field('MemberID', type='integer'),
-                Field('Member_id', type='integer'),
-                Field('Name', type='string'),
-                Field('PlaceOfBirth', type='string'),
-                Field('Professions', type='string'),
-)
-
 db.define_table('TblMemberPhotos',
                 Field('MemberID', type='integer'),
                 Field('Member_id', type='integer'),
-                Field('MemberPhotoRank', type='integer'),
                 Field('PhotoID', type='integer'),
                 Field('Photo_id', type='integer'),
+                Field('x', type='integer'),   #location of face in the picture
+                Field('y', type='integer'),
+                Field('r', type='integer'),
+                Field('who_identified', type=db.auth_user)
+)
+
+db.define_table('TblArticlePhotos',
+                Field('article_id', type='integer'),
+                Field('photo_id', type='integer'),
                 Field('x', type='integer'),   #location of face in the picture
                 Field('y', type='integer'),
                 Field('r', type='integer'),
@@ -268,11 +254,21 @@ db.define_table('TblMembers',
                 Field('approved', type='boolean')
 )
 
-db.define_table('TblObjects',
-                Field('Description', type='string'),
-                Field('HebrewDescription', type='string'),
-                Field('IIDD', type='integer'),
-                Field('Priority', type='integer'),
+db.define_table('TblArticles',
+                Field('name', type='string'),
+                Field('date_start', type='date', default=NO_DATE),
+                Field('date_start_dateunit', type='string', default='N'),
+                Field('date_start_datespan', type='integer', default=0),
+                Field('date_start_dateend', type='date', default=NO_DATE),
+                Field('date_end', type='date', default=NO_DATE),
+                Field('date_end_dateunit', type='string', default='N'),
+                Field('date_end_datespan', type='integer', default=0),
+                Field('date_end_dateend', type='date', default=NO_DATE),
+                Field('story_id', type=db.TblStories),
+                Field('deleted', type='boolean', default=False),
+                Field('facePhotoURL', type='string'),
+                Field('update_time', type='datetime'),
+                Field('updater_id', type=db.auth_user),
 )
 
 db.define_table('TblPhotographers',
@@ -310,6 +306,9 @@ db.define_table('TblPhotos',
                 Field('photo_date_dateunit', type='string', default='Y'), # D, M or Y for day, month, year
                 Field('photo_date_datespan', type='integer', default=1), # how many months or years in the range
                 Field('photo_date_dateend', type='date', default=NO_DATE),
+                Field('latitude', type='float'),
+                Field('longitude', type='float'),
+                Field('zoom', type='integer', default=12),
                 Field('PhotoRank', type='integer'),
                 Field('Photographer', type='string'), #obsolete
                 Field('photographer_id', type='integer'),
@@ -329,6 +328,7 @@ db.define_table('TblPhotos',
                 Field('is_back_side', type='boolean', default=False),
                 Field('crc', type='integer'),
                 Field('dhash', type='string'),
+                Field('curr_dhash', type='string'),  #after editing such as rotation and cropping. will be used to reload photo after using photoshop etc.
                 Field('dup_checked', type='boolean'),  #to be used only once, to detect all old dups. 
                 Field('usage', type='integer', default=0) #1=has identified members 2=has assigned tags 3=both, #todo need to populate, then use
                 #to select only relevant photos for opening slide show
@@ -467,7 +467,14 @@ db.define_table('TblConfiguration',
                 Field('initial_privileges', type='string', default='EDITOR;PHOTO_UPLOADER;CHATTER'),
                 Field('expiration_date', type='date'),
                 Field('expose_new_app_button', type='boolean', default=True),
-                Field('support_audio', type='boolean', default=False)
+                Field('expose_feedback_button', type='boolean', default=True),
+                Field('quick_upload_button', type='boolean', default=False),
+                Field('expose_version_time', type='boolean', default=True),
+                Field('expose_developer', type='boolean', default=True),
+                Field('support_audio', type='boolean', default=False),
+                Field('help_messages_upload_time', type='datetime', default=NO_DATE),
+                Field('letter_templates_upload_time', type='datetime', default=NO_DATE),
+                Field('enable_articles', type='boolean', default=False)
                 )
 
 db.define_table('TblLocaleCustomizations',
@@ -523,6 +530,24 @@ db.define_table('TblGroupContacts',
                 Field('last_name', type='string'),
                 Field('group_id', type=db.TblGroups),
                 Field('deleted', type='boolean', default=False)
+                )
+
+db.define_table('TblShortcuts',
+                Field('url', type='text'),
+                Field('key', type='string')
+                )
+
+db.define_table('TblAuthorRights',
+                Field('text', type='string')
+                )
+
+db.define_table('TblNotifications',
+                Field('notification_text', type='string')
+                )
+
+db.define_table('TblNotified',
+                Field('notified', type=db.auth_user),
+                Field('notification', type=db.TblNotifications)
                 )
 
 def write_indexing_sql_scripts():
