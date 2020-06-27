@@ -1257,7 +1257,7 @@ def get_story_members(event):
     #------------------articles-----------------------
     qa = (db.TblEventArticles.event_id == event.id) & (db.TblArticles.id == db.TblEventArticles.article_id)
     articles = db(qa).select()
-    articles = [a for a in articles]
+    articles = [a.TblArticles for a in articles]
     article_set = set([a.id for a in articles])
     added_articles_from_photos = photo_article_set - article_set
     added_articles_lst = [aid for aid in added_articles_from_photos]
@@ -1272,6 +1272,8 @@ def get_story_members(event):
             if not m['facePhotoURL']:
                 m['facePhotoURL'] = "dummy_face.png"
             m['facePhotoURL'] = photos_folder("profile_photos") + m['facePhotoURL']
+    for a in articles:
+        a['facePhotoURL'] = photos_folder("profile_photos") + a['facePhotoURL']
     return photos, members, candidates, articles, article_candidates
 
 def get_term_members(term):
@@ -1298,7 +1300,7 @@ def get_term_members(term):
     #------------------articles-----------------------
     qa = (db.TblTermArticles.term_id == term.id) & (db.TblArticles.id == db.TblTermArticles.article_id)
     articles = db(qa).select()
-    articles = [a for a in articles]
+    articles = [a.TblArticles for a in articles]
     article_set = set([a.id for a in articles])
     added_articles_from_photos = photo_article_set - article_set
     added_articles_lst = [aid for aid in added_articles_from_photos]
@@ -1313,4 +1315,6 @@ def get_term_members(term):
             if not m['facePhotoURL']:
                 m['facePhotoURL'] = "dummy_face.png"
             m['facePhotoURL'] = photos_folder("profile_photos") + m['facePhotoURL']
+    for a in articles:
+        a['facePhotoURL'] = photos_folder("profile_photos") + a['facePhotoURL']
     return photos, members, candidates, articles, article_candidates

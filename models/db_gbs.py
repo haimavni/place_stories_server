@@ -169,7 +169,7 @@ db.define_table('TblTermMembers',
 
 db.define_table('TblTermArticles',
                 Field('term_id', type='integer'),
-                Field('member_id', type='integer'),
+                Field('article_id', type='integer'),
 )
 
 db.define_table('TblTermPhotos',
