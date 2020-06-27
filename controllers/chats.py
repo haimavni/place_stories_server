@@ -47,8 +47,8 @@ def send_message(vars):
                        author=user_id,
                        timestamp=now,
                        message=vars.user_message)
-    ws_messaging.send_message(key='INCOMING_MESSAGE' + vars.room_number, 
-                              group='CHATROOM' + vars.room_number,
+    ws_messaging.send_message(key='INCOMING_MESSAGE' + str(vars.room_number),
+                              group='CHATROOM' + str(vars.room_number),
                               author=user_id,
                               timestamp=str(now)[:19],
                               sender_name=auth.user_name(user_id),

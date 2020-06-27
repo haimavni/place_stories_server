@@ -113,11 +113,13 @@ db.define_table('TblDefaults',
 )
 
 db.define_table('TblEventMembers',
-                Field('EventID', type='integer'),
                 Field('Event_id', type='integer'),
-                Field('EventMemberRank', type='integer'),
-                Field('MemberID', type='integer'),
                 Field('Member_id', type='integer'),
+)
+
+db.define_table('TblEventArticles',
+                Field('event_id', type='integer'),
+                Field('article_id', type='integer'),
 )
 
 db.define_table('TblEventPhotos',
@@ -163,6 +165,11 @@ db.define_table('TblEvents',
 db.define_table('TblTermMembers',
                 Field('term_id', type='integer'),
                 Field('Member_id', type='integer'),
+)
+
+db.define_table('TblTermArticles',
+                Field('term_id', type='integer'),
+                Field('member_id', type='integer'),
 )
 
 db.define_table('TblTermPhotos',
