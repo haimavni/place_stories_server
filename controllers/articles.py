@@ -3,6 +3,7 @@ from photos_support import save_article_face, get_slides_from_photo_list
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
 from folders import photos_folder
 import ws_messaging
+from words import get_reisha
 
 @serve_json
 def article_list(vars):
@@ -189,11 +190,8 @@ def get_article_slides(article_id):
     return get_slides_from_photo_list(q)
 
 def get_article_stories(article_id):
-    if (article_id >= 0):  #not ready. remove this when articles have stories
-        return []
-    #not ready yet
     q = (db.TblEventArticles.article_id == article_id) & \
-        (db.TblEventArticles.Event_id == db.TblEvents.id) & \
+        (db.TblEventArticles.event_id == db.TblEvents.id) & \
         (db.TblEvents.story_id == db.TblStories.id) & \
         (db.TblStories.deleted == False)
     result = []
