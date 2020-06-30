@@ -786,6 +786,11 @@ def _get_story_list(params, exact, checked):
         q = make_stories_query(params, exact) & (db.TblStories.story_date != NO_DATE)
         lst1 = db(q).select(orderby=db.TblStories.story_date | db.TblStories.name)
         lst1 = [r for r in lst1]
+    elif order_option == 'by-name':
+        checked = False
+        q = make_stories_query(params, exact)
+        lst1 = db(q).select(orderby=db.TblStories.name)
+        lst1 = [r for r in lst1]
     elif not query_has_data(params):
         lst1 = []
         for used_for in story_kinds():
@@ -1029,6 +1034,8 @@ def make_stories_query(params, exact):
         q &= (db.TblStories.story_date < to_date)
     if params.show_untagged:
         q &= (db.TblStories.is_tagged==False)
+    if params.start_name:
+        q &= (db.TblStories.name >= params.start_name)
     return q
 
 def calc_years_range(params):
