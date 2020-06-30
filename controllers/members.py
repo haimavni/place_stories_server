@@ -271,68 +271,18 @@ def get_story_detail(vars):
         return dict(story=story, members=[], photos=[])
     story_id = int(story_id)
     story=sm.get_story(story_id)
-    member_fields = [db.TblMembers.id, db.TblMembers.first_name, db.TblMembers.last_name, db.TblMembers.facePhotoURL]
     members = []
     candidates = [] #members found in the attached photos
-    photos = []
+    #photos = []
     if story.used_for == STORY4EVENT:
         event = db(db.TblEvents.story_id == story_id).select().first()
         if event:
-            qp = (db.TblEventPhotos.Event_id == event.id) & (db.TblPhotos.id == db.TblEventPhotos.Photo_id) & (db.TblPhotos.deleted != True)
-            photos = db(qp).select(db.TblPhotos.id, db.TblPhotos.photo_path)
-            photo_ids = [photo.id for photo in photos]
-            photo_member_set = photo_lst_member_ids(photo_ids)
-
-            photos = [p.as_dict() for p in photos]
-            for p in photos:
-                p['photo_path'] = photos_folder() + p['photo_path']
-            qm = (db.TblEventMembers.Event_id == event.id) & (db.TblMembers.id == db.TblEventMembers.Member_id) & (db.TblMembers.deleted != True)
-            members = db(qm).select(*member_fields)
-            members = [m for m in members]
-            member_set = set([m.id for m in members])
-            added_members_from_photos = photo_member_set - member_set
-            added_members_lst = [mid for mid in added_members_from_photos]
-            added_members = db(db.TblMembers.id.belongs(added_members_lst)).select(*member_fields)
-            candidates = [m.as_dict() for m in added_members]
-            members = [m.as_dict() for m in members]
-            lst = [members, candidates]
-            for arr in lst:
-                for m in arr:
-                    m['full_name'] = m['first_name'] + ' ' + m['last_name']
-                    if not m['facePhotoURL']:
-                        m['facePhotoURL'] = "dummy_face.png"
-                    m['facePhotoURL'] = photos_folder("profile_photos") + m['facePhotoURL']
+            photos, members, candidates, articles, article_candidates = get_story_members(event)
     elif story.used_for == STORY4TERM:  #todo: try to consolidate with the above
         term = db(db.TblTerms.story_id == story_id).select().first()
         if term:
-            qp = (db.TblTermPhotos.term_id == term.id) & (db.TblPhotos.id == db.TblTermPhotos.Photo_id) & (db.TblPhotos.deleted != True)
-            photos = db(qp).select(db.TblPhotos.id, db.TblPhotos.photo_path)
-            photo_ids = [photo.id for photo in photos]
-            photo_member_set = photo_lst_member_ids(photo_ids)
-
-            photos = [p.as_dict() for p in photos]
-            for p in photos:
-                p['photo_path'] = photos_folder() + p['photo_path']
-            qm = (db.TblTermMembers.term_id == term.id) & (db.TblMembers.id == db.TblTermMembers.Member_id)
-            members = db(qm).select(*member_fields)
-            members = [m for m in members]
-            member_set = set([m.id for m in members])
-            added_members_from_photos = photo_member_set - member_set
-            added_members_lst = [mid for mid in added_members_from_photos]
-            added_members = db(db.TblMembers.id.belongs(added_members_lst)).select(*member_fields)
-            candidates = [m.as_dict() for m in added_members]
-            members = [m.as_dict() for m in members]
-            lst = [members, candidates]
-            for arr in lst:
-                for m in arr:
-                    m['full_name'] = m['first_name'] + ' ' + m['last_name']
-                    if not m['facePhotoURL']:
-                        m['facePhotoURL'] = "dummy_face.png"
-                    m['facePhotoURL'] = photos_folder("profile_photos") + m['facePhotoURL']
-
-
-        #photos = [dict(photo_id=p.id, photo_path=photos_folder()+p.photo_path) for p in photos]
-    return dict(story=story, members=members, candidates=candidates, photos=photos)
+            photos, members, candidates, articles, article_candidates = get_term_members(term)
+    return dict(story=story, members=members, candidates=candidates, articles=articles, article_candidates=article_candidates, photos=photos)
 
 @serve_json
 def get_story_photo_list(vars):
@@ -829,12 +779,17 @@ def _get_story_list(params, exact, checked):
     elif order_option == 'new-to-old':
         checked = False
         q = make_stories_query(params, exact) & (db.TblStories.story_date != NO_DATE)
-        lst1 = db(q).select(orderby=~db.TblStories.story_date)
+        lst1 = db(q).select(orderby=~db.TblStories.story_date | db.TblStories.name)
         lst1 = [r for r in lst1]
     elif order_option == 'old-to-new':
         checked = False
         q = make_stories_query(params, exact) & (db.TblStories.story_date != NO_DATE)
-        lst1 = db(q).select(orderby=db.TblStories.story_date)
+        lst1 = db(q).select(orderby=db.TblStories.story_date | db.TblStories.name)
+        lst1 = [r for r in lst1]
+    elif order_option == 'by-name':
+        checked = False
+        q = make_stories_query(params, exact)
+        lst1 = db(q).select(orderby=db.TblStories.name)
         lst1 = [r for r in lst1]
     elif not query_has_data(params):
         lst1 = []
@@ -932,11 +887,23 @@ def photo_member_ids(photo_id):
     lst = db(qmp).select(db.TblMemberPhotos.Member_id)
     return [mp.Member_id for mp in lst]
 
+def photo_article_ids(photo_id):
+    qap = (db.TblArticlePhotos.photo_id == photo_id)
+    lst = db(qap).select(db.TblArticlePhotos.article_id)
+    return [ap.article_id for ap in lst]
+
 def photo_lst_member_ids(photo_id_lst):
     result = set([])
     for photo_id in photo_id_lst:
         member_ids = photo_member_ids(photo_id)
         result |= set(member_ids)
+    return result
+
+def photo_lst_article_ids(photo_id_lst):
+    result = set([])
+    for photo_id in photo_id_lst:
+        article_ids = photo_article_ids(photo_id)
+        result |= set(article_ids)
     return result
 
 def get_member_slides(member_id):
@@ -1067,6 +1034,8 @@ def make_stories_query(params, exact):
         q &= (db.TblStories.story_date < to_date)
     if params.show_untagged:
         q &= (db.TblStories.is_tagged==False)
+    if params.start_name:
+        q &= (db.TblStories.name >= params.start_name)
     return q
 
 def calc_years_range(params):
@@ -1271,3 +1240,88 @@ def story_kinds():
         story_kinds_arr += [STORY4HELP]
     return story_kinds_arr
     
+def get_story_members(event):
+    qp = (db.TblEventPhotos.Event_id == event.id) & (db.TblPhotos.id == db.TblEventPhotos.Photo_id) & (db.TblPhotos.deleted != True)
+    photos = db(qp).select(db.TblPhotos.id, db.TblPhotos.photo_path)
+    photo_ids = [photo.id for photo in photos]
+    photo_member_set = photo_lst_member_ids(photo_ids)
+    photo_article_set = photo_lst_article_ids(photo_ids)
+
+    photos = [p.as_dict() for p in photos]
+    for p in photos:
+        p['photo_path'] = photos_folder() + p['photo_path']
+    member_fields = [db.TblMembers.id, db.TblMembers.first_name, db.TblMembers.last_name, db.TblMembers.facePhotoURL]
+    #-----------------members-------------------
+    qm = (db.TblEventMembers.Event_id == event.id) & (db.TblMembers.id == db.TblEventMembers.Member_id) & (db.TblMembers.deleted != True)
+    members = db(qm).select(*member_fields)
+    members = [m for m in members]
+    member_set = set([m.id for m in members])
+    added_members_from_photos = photo_member_set - member_set
+    added_members_lst = [mid for mid in added_members_from_photos]
+    added_members = db(db.TblMembers.id.belongs(added_members_lst)).select(*member_fields)
+    candidates = [m.as_dict() for m in added_members]
+    members = [m.as_dict() for m in members]
+    #------------------articles-----------------------
+    qa = (db.TblEventArticles.event_id == event.id) & (db.TblArticles.id == db.TblEventArticles.article_id)
+    articles = db(qa).select()
+    articles = [a.TblArticles for a in articles]
+    article_set = set([a.id for a in articles])
+    added_articles_from_photos = photo_article_set - article_set
+    added_articles_lst = [aid for aid in added_articles_from_photos]
+    added_articles = db(db.TblArticles.id.belongs(added_articles_lst)).select()
+    article_candidates = [a.as_dict() for a in added_articles]
+    articles = [a.as_dict() for a in articles]
+    #--------------------------------------------------
+    lst = [members, candidates]
+    for arr in lst:
+        for m in arr:
+            m['full_name'] = m['first_name'] + ' ' + m['last_name']
+            if not m['facePhotoURL']:
+                m['facePhotoURL'] = "dummy_face.png"
+            m['facePhotoURL'] = photos_folder("profile_photos") + m['facePhotoURL']
+    for a in articles:
+        a['facePhotoURL'] = photos_folder("profile_photos") + a['facePhotoURL']
+    return photos, members, candidates, articles, article_candidates
+
+def get_term_members(term):
+    member_fields = [db.TblMembers.id, db.TblMembers.first_name, db.TblMembers.last_name, db.TblMembers.facePhotoURL]
+    qp = (db.TblTermPhotos.term_id == term.id) & (db.TblPhotos.id == db.TblTermPhotos.Photo_id) & (db.TblPhotos.deleted != True)
+    photos = db(qp).select(db.TblPhotos.id, db.TblPhotos.photo_path)
+    photo_ids = [photo.id for photo in photos]
+    photo_member_set = photo_lst_member_ids(photo_ids)
+    photo_article_set = photo_lst_article_ids(photo_ids)
+
+    photos = [p.as_dict() for p in photos]
+    for p in photos:
+        p['photo_path'] = photos_folder() + p['photo_path']
+    #-----------------members-------------------
+    qm = (db.TblTermMembers.term_id == term.id) & (db.TblMembers.id == db.TblTermMembers.Member_id)
+    members = db(qm).select(*member_fields)
+    members = [m for m in members]
+    member_set = set([m.id for m in members])
+    added_members_from_photos = photo_member_set - member_set
+    added_members_lst = [mid for mid in added_members_from_photos]
+    added_members = db(db.TblMembers.id.belongs(added_members_lst)).select(*member_fields)
+    candidates = [m.as_dict() for m in added_members]
+    members = [m.as_dict() for m in members]
+    #------------------articles-----------------------
+    qa = (db.TblTermArticles.term_id == term.id) & (db.TblArticles.id == db.TblTermArticles.article_id)
+    articles = db(qa).select()
+    articles = [a.TblArticles for a in articles]
+    article_set = set([a.id for a in articles])
+    added_articles_from_photos = photo_article_set - article_set
+    added_articles_lst = [aid for aid in added_articles_from_photos]
+    added_articles = db(db.TblArticles.id.belongs(added_articles_lst)).select()
+    article_candidates = [a.as_dict() for a in added_articles]
+    articles = [a.as_dict() for a in articles]
+    #--------------------------------------------------
+    lst = [members, candidates]
+    for arr in lst:
+        for m in arr:
+            m['full_name'] = m['first_name'] + ' ' + m['last_name']
+            if not m['facePhotoURL']:
+                m['facePhotoURL'] = "dummy_face.png"
+            m['facePhotoURL'] = photos_folder("profile_photos") + m['facePhotoURL']
+    for a in articles:
+        a['facePhotoURL'] = photos_folder("profile_photos") + a['facePhotoURL']
+    return photos, members, candidates, articles, article_candidates

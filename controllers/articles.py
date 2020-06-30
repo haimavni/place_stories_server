@@ -3,6 +3,7 @@ from photos_support import save_article_face, get_slides_from_photo_list
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
 from folders import photos_folder
 import ws_messaging
+from words import get_reisha
 
 @serve_json
 def article_list(vars):
@@ -63,7 +64,7 @@ def create_new_article(vars):
 
 @serve_json
 def get_article_photo_list(vars):
-    if vars.member_id == "new":
+    if vars.article_id == "new":
         return dict(photo_list=[])
     article_id = int(vars.article_id)
     if vars.what == 'story':
@@ -109,6 +110,34 @@ def get_article_details(vars):
                 article_stories=article_stories,
                 facePhotoURL = photos_folder('profile_photos') + (article_info.facePhotoURL or "dummy_face.png")
                 )
+
+@serve_json
+def set_article_story_id(vars):
+    db(db.TblArticles.id == vars.article_id).update(story_id=vars.story_id)
+    sm = stories_manager.Stories()
+    sm.set_used_for(vars.story_id, STORY4ARTICLE)
+    return dict()
+
+@serve_json
+def save_group_articles(vars):
+    return save_story_articles(vars.caller_id, vars.caller_type, vars.article_ids)
+
+@serve_json
+def add_story_article(vars):
+    article_id = vars.candidate_id
+    story_id = vars.story_id
+    story = db(db.TblStories.id==story_id).select().first()
+    if story.used_for == STORY4EVENT:
+        event = db(db.TblEvents.story_id == story_id).select().first()
+        db.TblEventArticles.insert(article_id=article_id, event_id=event.id)
+    elif story.used_for == STORY4TERM:
+        term = db(db.TblTerms.story_id == story_id).select().first()
+        db.TblTermArticles.insert(article_id=article_id, term_id=term.id)
+    else:
+        raise Exception("Incompatible story usage")
+    return dict()
+
+
 
 ###---------------------support functions
 
@@ -161,11 +190,8 @@ def get_article_slides(article_id):
     return get_slides_from_photo_list(q)
 
 def get_article_stories(article_id):
-    if (article_id >= 0):  #not ready. remove this when articles have stories
-        return []
-    #not ready yet
     q = (db.TblEventArticles.article_id == article_id) & \
-        (db.TblEventArticles.Event_id == db.TblEvents.id) & \
+        (db.TblEventArticles.event_id == db.TblEvents.id) & \
         (db.TblEvents.story_id == db.TblStories.id) & \
         (db.TblStories.deleted == False)
     result = []
@@ -190,3 +216,30 @@ def get_article_stories(article_id):
 
 def get_article_terms(article_id):
     return [] #not ready yet
+
+def save_story_articles(caller_id, caller_type, article_ids):
+    if caller_type == "story":
+        tbl = db.TblEvents
+        tbl1 = db.TblEventArticles
+        item_fld = tbl1.event_id
+    elif caller_type == "term":
+        tbl = db.TblTerms
+        tbl1 = db.TblTermArticles
+        item_fld = db.TblTermArticles.term_id
+    else:
+        return dict()
+    item = db(tbl.story_id == caller_id).select().first()
+    qm = (item_fld == item.id) & (db.TblArticles.id == tbl1.article_id)
+    old_articles = db(qm).select(db.TblArticles.id)
+    old_articles = [m.id for m in old_articles]
+    for a in old_articles:
+        if a not in article_ids:
+            db((tbl1.article_id == a) & (item_fld == item.id)).delete()
+    for a in article_ids:
+        if a not in old_articles:
+            if caller_type == "story":
+                tbl1.insert(article_id=a, event_id=item.id)
+            else:
+                tbl1.insert(article_id=a, term_id=item.id)
+    return dict()
+
