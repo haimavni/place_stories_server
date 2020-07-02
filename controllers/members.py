@@ -200,19 +200,23 @@ def get_story_list(vars):
     result1 = []
     result2 = []
     if qhd:
-        result0 = _get_story_list(vars.params, exact=True, checked=True)
-        if vars.params.search_type == 'advanced':
-            result1 = []
-        else:
-            result1 = _get_story_list(vars.params, exact=True, checked=False) #if keywords_str, only exact matches are returned, otherwise whatever the query gets
-        if vars.params.keywords_str or vars.params.search_type == 'advanced': #find all pages containing all words in this string
-            result2 = _get_story_list(vars.params, exact=False, checked=False)
-        else:
-            result2 = []
+        result0 = get_checked_stories(vars.params)
+        result0 = process_story_list(result0, checked=True)
+        checked_story_ids = set([r.id for r in result0])
+        
+        result1 = _get_story_list(vars.params, True)
+        result1 = process_story_list(result1, exact=True)
+        result1 = [r for r in result1 if r.id not in checked_story_ids]
+        
+        if vars.params.search_type == 'simple': #find all pages containing all words in this string
+            result2 = _get_story_list(vars.params, False)
+            result2 = process_story_list(result2)
+            checked_story_ids1 = set([r.id for r in result1])
+            checked_story_ids |= checked_story_ids1
+            result2 = [r for r in result2 if r.id not in checked_story_ids]
     else:
-        result0 = _get_story_list(vars.params, exact=True, checked=True)
-    exact_ids = set([r.id for r in result1])
-    result2 = [r for r in result2 if r.id not in exact_ids]
+        result0 = _get_story_list(vars.params, False)
+        result0 = process_story_list(result0)
     result = result0 + result1 + result2
     result_type_counters = dict()
     active_result_types = set()
@@ -767,29 +771,23 @@ def get_checked_stories(params):
         checked_story_list = []
     return checked_story_list
 
-def _get_story_list(params, exact, checked):
-    ###story_topics = get_story_topics()
+def _get_story_list(params, exact):
     order_option = params.order_option.value if params.order_option else 'normal'
     q = make_stories_query(params, exact)
     if order_option == 'by-chats':
-        checked = False
         q &= (db.TblStories.chatroom_id != None)
         lst1 = db(q).select(orderby=~db.TblStories.last_chat_time)
         lst1 = [r for r in lst1 if r.last_chat_time]
-        ###lst1 = sorted(lst1, key=lambda item: item.last_chat_time)
     elif order_option == 'new-to-old':
-        checked = False
         q &= (db.TblStories.story_date != NO_DATE)
-        lst1 = db(q).select(orderby=~db.TblStories.story_date | db.TblStories.name)
+        lst1 = db(q).select(orderby=~db.TblStories.story_date | db.TblStories.name, limitby=(0, 12000))
         lst1 = [r for r in lst1]
     elif order_option == 'old-to-new':
-        checked = False
         q &= (db.TblStories.story_date != NO_DATE)
-        lst1 = db(q).select(orderby=db.TblStories.story_date | db.TblStories.name)
+        lst1 = db(q).select(orderby=db.TblStories.story_date | db.TblStories.name, limitby=(0, 12000))
         lst1 = [r for r in lst1]
     elif order_option == 'by-name':
-        checked = False
-        lst1 = db(q).select(orderby=db.TblStories.name)
+        lst1 = db(q).select(orderby=db.TblStories.name, limitby=(0,120000))
         lst1 = [r for r in lst1]
     elif not query_has_data(params):
         lst1 = []
@@ -803,9 +801,6 @@ def _get_story_list(params, exact, checked):
             q &= (db.TblStories.sampling_id < threshold)
             lst0 = db(q).select()
             lst1 += lst0
-        checked = False
-    elif checked:
-        lst1 = get_checked_stories(params)
     else:
         if not q:
             return []
@@ -814,6 +809,9 @@ def _get_story_list(params, exact, checked):
             q1 = q & (db.TblStories.used_for==used_for)
             lst0 = db(q1).select(limitby=(0, 1000), orderby=~db.TblStories.story_len)
             lst1 += lst0
+    return lst1
+
+def process_story_list(lst1, checked=False, exact=False):
     user_list = calc_user_list()
     lst = []
     for rec in lst1:
@@ -821,8 +819,6 @@ def _get_story_list(params, exact, checked):
             r = rec.TblStories
         else:
             r = rec
-        if r.id in params.checked_story_list and not checked:
-            continue
         if r.author_id:
             user = user_list[r.author_id]
             r.author = user.first_name + ' ' + user.last_name
