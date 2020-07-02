@@ -770,25 +770,25 @@ def get_checked_stories(params):
 def _get_story_list(params, exact, checked):
     ###story_topics = get_story_topics()
     order_option = params.order_option.value if params.order_option else 'normal'
+    q = make_stories_query(params, exact)
     if order_option == 'by-chats':
         checked = False
-        q = (db.TblStories.deleted != True) & (db.TblStories.chatroom_id != None)
+        q &= (db.TblStories.chatroom_id != None)
         lst1 = db(q).select(orderby=~db.TblStories.last_chat_time)
         lst1 = [r for r in lst1 if r.last_chat_time]
         ###lst1 = sorted(lst1, key=lambda item: item.last_chat_time)
     elif order_option == 'new-to-old':
         checked = False
-        q = make_stories_query(params, exact) & (db.TblStories.story_date != NO_DATE)
+        q &= (db.TblStories.story_date != NO_DATE)
         lst1 = db(q).select(orderby=~db.TblStories.story_date | db.TblStories.name)
         lst1 = [r for r in lst1]
     elif order_option == 'old-to-new':
         checked = False
-        q = make_stories_query(params, exact) & (db.TblStories.story_date != NO_DATE)
+        q &= (db.TblStories.story_date != NO_DATE)
         lst1 = db(q).select(orderby=db.TblStories.story_date | db.TblStories.name)
         lst1 = [r for r in lst1]
     elif order_option == 'by-name':
         checked = False
-        q = make_stories_query(params, exact)
         lst1 = db(q).select(orderby=db.TblStories.name)
         lst1 = [r for r in lst1]
     elif not query_has_data(params):
@@ -807,18 +807,13 @@ def _get_story_list(params, exact, checked):
     elif checked:
         lst1 = get_checked_stories(params)
     else:
-        selected_topics = params.selected_topics or []
-        if selected_topics:
-            lst1 = get_story_list_with_topics(params, selected_topics, exact)
-        else:
-            q = make_stories_query(params, exact)
-            if not q:
-                return []
-            lst1 = []
-            for used_for in story_kinds():
-                q1 = q & (db.TblStories.used_for==used_for)
-                lst0 = db(q1).select(limitby=(0, 1000), orderby=~db.TblStories.story_len)
-                lst1 += lst0
+        if not q:
+            return []
+        lst1 = []
+        for used_for in story_kinds():
+            q1 = q & (db.TblStories.used_for==used_for)
+            lst0 = db(q1).select(limitby=(0, 1000), orderby=~db.TblStories.story_len)
+            lst1 += lst0
     user_list = calc_user_list()
     lst = []
     for rec in lst1:
@@ -1036,6 +1031,9 @@ def make_stories_query(params, exact):
         q &= (db.TblStories.is_tagged==False)
     if params.start_name:
         q &= (db.TblStories.name >= params.start_name)
+    if params.selected_topics:
+        q1 = get_topics_query(params.selected_topics)
+        q &= q1
     return q
 
 def calc_years_range(params):
@@ -1047,38 +1045,6 @@ def calc_years_range(params):
         if last_year and last_year > params.base_year + params.num_years - 5:
             last_year = 0
     return (first_year, last_year)
-
-def get_story_list_with_topics(params, selected_topics, exact):
-    first = True
-    topic_groups = calc_grouped_selected_options(selected_topics)
-    dic = dict()
-    bag = None
-    for topic_group in topic_groups:
-        q = make_stories_query(params, exact) #if we do not regenerate it the query becomes accumulated and necessarily fails
-        if not q:
-            return []
-        q &= (db.TblItemTopics.story_id == db.TblStories.id)
-
-        sign = topic_group[0]
-        topic_group = topic_group[1:]
-        q1 = db.TblItemTopics.topic_id.belongs(topic_group)
-        if sign == 'minus':
-            q1 = ~q1
-        q &= q1
-        lst = db(q).select()
-        ###lst = [rec.TblStories for rec in lst]
-        bag1 = set(r.TblStories.id for r in lst)
-        if first:
-            first = False
-            bag = bag1
-        else:
-            bag &= bag1
-        for r in lst:
-            dic[r.TblStories.id] = r
-    if not bag:
-        return []
-    result = [dic[id] for id in bag]
-    return result
 
 def _merge_members(mem1_id, mem2_id):
     photos1 = db(db.TblMemberPhotos.Member_id == mem1_id).select()
@@ -1325,3 +1291,16 @@ def get_term_members(term):
     for a in articles:
         a['facePhotoURL'] = photos_folder("profile_photos") + a['facePhotoURL']
     return photos, members, candidates, articles, article_candidates
+
+def get_topics_query(selected_topics):
+    topic_groups = calc_grouped_selected_options(selected_topics)
+    q = (db.TblItemTopics.story_id == db.TblStories.id)
+    for topic_group in topic_groups:
+        sign = topic_group[0]
+        topic_group = topic_group[1:]
+        q1 = db.TblItemTopics.topic_id.belongs(topic_group)
+        if sign == 'minus':
+            q1 = ~q1
+        q &= q1
+    return q
+
