@@ -108,7 +108,7 @@ def read_configuration(vars):
     config_rec = db(db.TblConfiguration).select().first()
     if config_rec:
         for fld in config_rec.keys():
-            if fld == 'delete_record':
+            if fld in ['delete_record', 'update_record']:
                 continue
             config[fld] = config_rec[fld]
     return dict(config=config)
