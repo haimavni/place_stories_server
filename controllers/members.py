@@ -178,15 +178,26 @@ def get_random_member(vars):
 
 @serve_json
 def get_stories_sample(vars):
-    q = (db.TblStories.used_for == STORY4EVENT) & (db.TblStories.deleted == False)
-    q1 = q & (db.TblStories.touch_time != NO_DATE)
+    crec = db(db.TblConfiguration).select().first()
+    expiration = crec.promoted_story_expiration
+    if not expiration:
+        expiration = 7
+        crec.update_record(promoted_story_expiration=expiration)
+    q = (db.TblStories.used_for == STORY4EVENT) & (db.TblStories.deleted == False) & (db.TblStories.visibility==SV_PUBLIC)
+    now = datetime.datetime.now()
+    delta = datetime.timedelta(days=expiration)
+    expiration_date = now - delta;
+    q1 = q & (db.TblStories.touch_time > expiration_date)
     lst1 = db(q1).select(limitby=(0, 10), orderby=~db.TblStories.touch_time)
     lst1 = [rec for rec in lst1]
-    q2 = q & (db.TblStories.touch_time == NO_DATE)
+    delta = datetime.timedelta(days=300)
+    expiration_date = now - delta
+    q2 = q & (db.TblStories.touch_time < expiration_date)
     lst2 = db(q2).select(limitby=(0, 200), orderby=~db.TblStories.story_len)
     lst2 = [rec for rec in lst2]
-    if len(lst2) > 10:
-        lst2 = random.sample(lst2, 10)
+    n = 20 - len(lst1)
+    if len(lst2) > n:
+        lst2 = random.sample(lst2, n)
     lst = lst1 + lst2;
     for r in lst:
         r.preview = get_reisha(r.preview, 16)

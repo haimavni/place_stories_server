@@ -481,7 +481,8 @@ db.define_table('TblConfiguration',
                 Field('support_audio', type='boolean', default=False),
                 Field('help_messages_upload_time', type='datetime', default=NO_DATE),
                 Field('letter_templates_upload_time', type='datetime', default=NO_DATE),
-                Field('enable_articles', type='boolean', default=False)
+                Field('enable_articles', type='boolean', default=False),
+                Field('promoted_story_expiration', type='integer', default=7)
                 )
 
 db.define_table('TblLocaleCustomizations',
