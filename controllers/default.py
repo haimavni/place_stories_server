@@ -104,13 +104,8 @@ def read_privileges(vars):
 
 @serve_json
 def read_configuration(vars):
-    config = dict(enable_auto_registration=False, expose_new_app_button=False, support_audio=False)
     config_rec = db(db.TblConfiguration).select().first()
-    if config_rec:
-        for fld in config_rec.keys():
-            if fld in ['delete_record', 'update_record']:
-                continue
-            config[fld] = config_rec[fld]
+    config = config_rec.as_dict()
     return dict(config=config)
 
 @serve_json
