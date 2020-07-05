@@ -137,6 +137,36 @@ def add_story_article(vars):
         raise Exception("Incompatible story usage")
     return dict()
 
+@serve_json
+def save_article_info(vars):
+    user_id = vars.user_id
+    article_info = vars.article_info
+    if 'facePhotoURL' in article_info:
+        del article_info.facePhotoURL #it is saved separately, not updated in client and can only destroy here
+    if article_info:
+        tbl = db.TblArticles
+        for fld in tbl:
+            if fld.type == 'date':
+                fld_name = fld.name
+                if fld_name + '_dateunit' not in article_info:
+                    continue
+                unit, date = parse_date(article_info[fld_name].date)
+                article_info[fld_name] = date
+                article_info[fld_name + '_dateunit'] = unit
+
+        ##--------------handle dates - end--------------------------
+        article_info.update_time = datetime.datetime.now()
+        article_info.updater_id = vars.user_id or auth.current_user() or 2
+        ###article_info.approved = auth.has_articleship(DATA_AUDITOR, user_id=vars.user_id)
+        arec = db(db.TblArticles.id==article_info.id).select().first()
+        arec.update_record(**article_info)
+        #article_rec = json_to_storage(arec)
+        #ws_messaging.send_message(key='ARTICLE_LISTS_CHANGED', group='ALL', article_rec=article_rec, new_article=new_article)
+    result = Storage(info=article_info)
+    #todo: read-modify-write below?
+    ##get_article_names() #todo: needed if we use caching again
+    
+    return dict()
 
 
 ###---------------------support functions
