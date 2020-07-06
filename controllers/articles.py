@@ -168,6 +168,11 @@ def save_article_info(vars):
     
     return dict()
 
+@serve_json
+def get_story(vars):
+    sm = stories_manager.Stories()
+    story_id = int(vars.story_id)
+    return dict(story=sm.get_story(story_id))
 
 ###---------------------support functions
 
