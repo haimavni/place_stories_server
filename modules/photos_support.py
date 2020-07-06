@@ -18,6 +18,7 @@ from members_support import member_display_name, older_display_name, get_member_
 import zipfile
 from pybktree import BKTree, hamming_distance
 import time
+import ws_messaging
 
 MAX_WIDTH = 1200
 MAX_HEIGHT = 800
@@ -544,7 +545,9 @@ def save_profile_photo(face, is_article=False):
         db(db.TblArticles.id == face.article_id).update(facePhotoURL=facePhotoURL)
     else:
         db(db.TblMembers.id == face.member_id).update(facePhotoURL=facePhotoURL)
-    return photos_folder("profile_photos") + facePhotoURL
+    facePhotoURL = photos_folder("profile_photos") + facePhotoURL    
+    ws_messaging.send_message('ARTICLE_PROFILE_CHANGED', group='ALL', article_id=face.article_id, face_photo_url=facePhotoURL)
+    return facePhotoURL
 
 def get_photo_rec(photo_id):
     db = inject('db')

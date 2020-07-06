@@ -196,6 +196,15 @@ def detach_photo_from_member(vars):
     good = db(q).delete() == 1
     return dict(photo_detached=good)
 
+@serve_json
+def detach_photo_from_article(vars):
+    article_id = vars.article_id
+    photo_id = vars.photo_id
+    q = (db.TblArticlePhotos.photo_id == photo_id) & \
+        (db.TblArticlePhotos.article_id == article_id)
+    good = db(q).delete() == 1
+    return dict(photo_detached=good)
+
 def remove_duplicate_photo_members(): #todo: remove after all sites are fixed
     lst = db(db.TblMemberPhotos).select(orderby=db.TblMemberPhotos.Member_id | \
                                         db.TblMemberPhotos.Photo_id | \
