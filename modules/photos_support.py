@@ -524,7 +524,7 @@ def save_article_face(params):
         rec.update_record(**data)
     else:
         aid = db.TblArticlePhotos.insert(**data)
-        if params.old_article_id and params.old_article_id != article.article_id:
+        if params.old_article_id and params.old_article_id != face.article_id:
             db(q).delete()
     rec = db(db.TblArticles.id==face.article_id).select().first()
     article_name = rec.name
