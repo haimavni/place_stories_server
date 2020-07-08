@@ -194,7 +194,7 @@ def detach_photo_from_member(vars):
     q = (db.TblMemberPhotos.Photo_id == photo_id) & \
         (db.TblMemberPhotos.Member_id == member_id)
     good = db(q).delete() == 1
-    ws_messaging.send_message(key='MEMBER_PHOTO_LIST_CHANGED', group='ALL', article_id=article_id, photo_id=photo_id)
+    ws_messaging.send_message(key='MEMBER_PHOTO_LIST_CHANGED', group='ALL', member_id=member_id, photo_id=photo_id)
     return dict(photo_detached=good)
 
 @serve_json
