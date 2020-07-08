@@ -397,7 +397,7 @@ def remove_member(vars):
     member_id = int(vars.member_id)
     deleted = db(db.TblMembers.id == member_id).update(deleted=True) == 1
     if deleted:
-        ws_messaging.send_message(key='MEMBER_DELETED', group='ALL', member_id=member_id)
+        ws_messaging.send_message(key='MEMBER_DELETED', group='ALL', member_id=member_id) #currently not handled in the client
     return dict(deleted=deleted)
 
 @serve_json

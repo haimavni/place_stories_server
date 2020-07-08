@@ -494,6 +494,7 @@ def save_member_face(params):
             db(q).delete()
     member_name = member_display_name(member_id=face.member_id)
     db(db.TblPhotos.id==face.photo_id).update(Recognized=True)
+    ws_messaging.send_message(key='MEMBER_PHOTO_LIST_CHANGED', group='ALL', article_id=face.article_id, photo_id=face.photo_id)
     return Storage(member_name=member_name, face_photo_url=face_photo_url)
 
 def save_article_face(params):
@@ -529,6 +530,7 @@ def save_article_face(params):
     rec = db(db.TblArticles.id==face.article_id).select().first()
     article_name = rec.name
     db(db.TblPhotos.id==face.photo_id).update(Recognized=True)
+    ws_messaging.send_message(key='ARTICLE_PHOTO_LIST_CHANGED', group='ALL', article_id=face.article_id, photo_id=face.photo_id)
     return Storage(article_name=article_name, face_photo_url=face_photo_url)
 
 def save_profile_photo(face, is_article=False):
