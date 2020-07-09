@@ -214,12 +214,12 @@ def get_story_list(vars):
         result0 = get_checked_stories(vars.params)
         result0 = process_story_list(result0, checked=True)
         checked_story_ids = set([r.id for r in result0])
-        
-        result1 = _get_story_list(vars.params, True)
-        result1 = process_story_list(result1, exact=True)
+        has_keywords = bool(vars.params.keywords_str) ### and vars.params.search_type in ['menu', 'simple']
+        result1 = _get_story_list(vars.params, has_keywords)
+        result1 = process_story_list(result1, exact=has_keywords)
         result1 = [r for r in result1 if r.id not in checked_story_ids]
         
-        if vars.params.search_type == 'simple': #find all pages containing all words in this string
+        if has_keywords and len(vars.params.keywords_str.split()) > 1: #find all pages containing all words in this string
             result2 = _get_story_list(vars.params, False)
             result2 = process_story_list(result2)
             checked_story_ids1 = set([r.id for r in result1])
@@ -782,7 +782,7 @@ def get_checked_stories(params):
         checked_story_list = []
     return checked_story_list
 
-def _get_story_list(params, exact):
+def _get_story_list(params, exact): #exact means looking only for the passed keywords string as a whole
     order_option = params.order_option.value if params.order_option else 'normal'
     q = make_stories_query(params, exact)
     if order_option == 'by-chats':
