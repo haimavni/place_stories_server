@@ -18,6 +18,7 @@ from members_support import member_display_name, older_display_name, get_member_
 import zipfile
 from pybktree import BKTree, hamming_distance
 import time
+import ws_messaging
 
 MAX_WIDTH = 1200
 MAX_HEIGHT = 800
@@ -493,6 +494,7 @@ def save_member_face(params):
             db(q).delete()
     member_name = member_display_name(member_id=face.member_id)
     db(db.TblPhotos.id==face.photo_id).update(Recognized=True)
+    ws_messaging.send_message(key='MEMBER_PHOTO_LIST_CHANGED', group='ALL', article_id=face.article_id, photo_id=face.photo_id)
     return Storage(member_name=member_name, face_photo_url=face_photo_url)
 
 def save_article_face(params):
@@ -523,11 +525,12 @@ def save_article_face(params):
         rec.update_record(**data)
     else:
         aid = db.TblArticlePhotos.insert(**data)
-        if params.old_article_id and params.old_article_id != article.article_id:
+        if params.old_article_id and params.old_article_id != face.article_id:
             db(q).delete()
     rec = db(db.TblArticles.id==face.article_id).select().first()
     article_name = rec.name
     db(db.TblPhotos.id==face.photo_id).update(Recognized=True)
+    ws_messaging.send_message(key='ARTICLE_PHOTO_LIST_CHANGED', group='ALL', article_id=face.article_id, photo_id=face.photo_id)
     return Storage(article_name=article_name, face_photo_url=face_photo_url)
 
 def save_profile_photo(face, is_article=False):
@@ -544,7 +547,9 @@ def save_profile_photo(face, is_article=False):
         db(db.TblArticles.id == face.article_id).update(facePhotoURL=facePhotoURL)
     else:
         db(db.TblMembers.id == face.member_id).update(facePhotoURL=facePhotoURL)
-    return photos_folder("profile_photos") + facePhotoURL
+    facePhotoURL = photos_folder("profile_photos") + facePhotoURL    
+    ws_messaging.send_message('ARTICLE_PROFILE_CHANGED', group='ALL', article_id=face.article_id, face_photo_url=facePhotoURL)
+    return facePhotoURL
 
 def get_photo_rec(photo_id):
     db = inject('db')

@@ -194,6 +194,22 @@ def detach_photo_from_member(vars):
     q = (db.TblMemberPhotos.Photo_id == photo_id) & \
         (db.TblMemberPhotos.Member_id == member_id)
     good = db(q).delete() == 1
+    ws_messaging.send_message(key='MEMBER_PHOTO_LIST_CHANGED', group='ALL', member_id=member_id, photo_id=photo_id)
+    return dict(photo_detached=good)
+
+@serve_json
+def detach_photo_from_article(vars):
+    article_id = vars.article_id
+    photo_id = vars.photo_id
+    q = (db.TblArticlePhotos.photo_id == photo_id) & \
+        (db.TblArticlePhotos.article_id == article_id)
+    good = db(q).delete() == 1
+    n = db(db.TblArticlePhotos.article_id == article_id).count()
+    if n == 0:
+        db(db.TblArticles.id==article_id).update(deleted=True)
+        ws_messaging.send_message(key='ARTICLE_DELETED', group='ALL', article_id=article_id)
+    else:
+        ws_messaging.send_message(key='ARTICLE_PHOTO_LIST_CHANGED', group='ALL', article_id=article_id, photo_id=photo_id)
     return dict(photo_detached=good)
 
 def remove_duplicate_photo_members(): #todo: remove after all sites are fixed

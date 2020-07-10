@@ -175,6 +175,12 @@ def set_quick_upload_option(vars):
     config_rec.update_record(quick_upload_button=quick_upload_on)
     return dict()
 
+@serve_json
+def set_promoted_story_expiration(vars):
+    config_rec = get_config_rec()
+    config_rec.update_record(promoted_story_expiration=int(vars.promoted_story_expiration))
+    return dict()
+
 def get_config_rec():
     config_rec = db(db.TblConfiguration).select().first()
     if not config_rec:

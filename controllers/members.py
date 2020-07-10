@@ -178,15 +178,26 @@ def get_random_member(vars):
 
 @serve_json
 def get_stories_sample(vars):
-    q = (db.TblStories.used_for == STORY4EVENT) & (db.TblStories.deleted == False)
-    q1 = q & (db.TblStories.touch_time != NO_DATE)
+    crec = db(db.TblConfiguration).select().first()
+    expiration = crec.promoted_story_expiration
+    if not expiration:
+        expiration = 7
+        crec.update_record(promoted_story_expiration=expiration)
+    q = (db.TblStories.used_for == STORY4EVENT) & (db.TblStories.deleted == False) & (db.TblStories.visibility==SV_PUBLIC)
+    now = datetime.datetime.now()
+    delta = datetime.timedelta(days=expiration)
+    expiration_date = now - delta;
+    q1 = q & (db.TblStories.touch_time > expiration_date)
     lst1 = db(q1).select(limitby=(0, 10), orderby=~db.TblStories.touch_time)
     lst1 = [rec for rec in lst1]
-    q2 = q & (db.TblStories.touch_time == NO_DATE)
+    delta = datetime.timedelta(days=300)
+    expiration_date = now - delta
+    q2 = q & (db.TblStories.touch_time < expiration_date)
     lst2 = db(q2).select(limitby=(0, 200), orderby=~db.TblStories.story_len)
     lst2 = [rec for rec in lst2]
-    if len(lst2) > 10:
-        lst2 = random.sample(lst2, 10)
+    n = 20 - len(lst1)
+    if len(lst2) > n:
+        lst2 = random.sample(lst2, n)
     lst = lst1 + lst2;
     for r in lst:
         r.preview = get_reisha(r.preview, 16)
@@ -200,19 +211,23 @@ def get_story_list(vars):
     result1 = []
     result2 = []
     if qhd:
-        result0 = _get_story_list(vars.params, exact=True, checked=True)
-        if vars.params.search_type == 'advanced':
-            result1 = []
-        else:
-            result1 = _get_story_list(vars.params, exact=True, checked=False) #if keywords_str, only exact matches are returned, otherwise whatever the query gets
-        if vars.params.keywords_str or vars.params.search_type == 'advanced': #find all pages containing all words in this string
-            result2 = _get_story_list(vars.params, exact=False, checked=False)
-        else:
-            result2 = []
+        result0 = get_checked_stories(vars.params)
+        result0 = process_story_list(result0, checked=True)
+        checked_story_ids = set([r.id for r in result0])
+        has_keywords = bool(vars.params.keywords_str) ### and vars.params.search_type in ['menu', 'simple']
+        result1 = _get_story_list(vars.params, has_keywords)
+        result1 = process_story_list(result1, exact=has_keywords)
+        result1 = [r for r in result1 if r.id not in checked_story_ids]
+        
+        if has_keywords and len(vars.params.keywords_str.split()) > 1: #find all pages containing all words in this string
+            result2 = _get_story_list(vars.params, False)
+            result2 = process_story_list(result2)
+            checked_story_ids1 = set([r.id for r in result1])
+            checked_story_ids |= checked_story_ids1
+            result2 = [r for r in result2 if r.id not in checked_story_ids]
     else:
-        result0 = _get_story_list(vars.params, exact=True, checked=True)
-    exact_ids = set([r.id for r in result1])
-    result2 = [r for r in result2 if r.id not in exact_ids]
+        result0 = _get_story_list(vars.params, False)
+        result0 = process_story_list(result0)
     result = result0 + result1 + result2
     result_type_counters = dict()
     active_result_types = set()
@@ -382,7 +397,7 @@ def remove_member(vars):
     member_id = int(vars.member_id)
     deleted = db(db.TblMembers.id == member_id).update(deleted=True) == 1
     if deleted:
-        ws_messaging.send_message(key='MEMBER_DELETED', group='ALL', member_id=member_id)
+        ws_messaging.send_message(key='MEMBER_DELETED', group='ALL', member_id=member_id) #currently not handled in the client
     return dict(deleted=deleted)
 
 @serve_json
@@ -767,29 +782,23 @@ def get_checked_stories(params):
         checked_story_list = []
     return checked_story_list
 
-def _get_story_list(params, exact, checked):
-    ###story_topics = get_story_topics()
+def _get_story_list(params, exact): #exact means looking only for the passed keywords string as a whole
     order_option = params.order_option.value if params.order_option else 'normal'
+    q = make_stories_query(params, exact)
     if order_option == 'by-chats':
-        checked = False
-        q = (db.TblStories.deleted != True) & (db.TblStories.chatroom_id != None)
+        q &= (db.TblStories.chatroom_id != None)
         lst1 = db(q).select(orderby=~db.TblStories.last_chat_time)
         lst1 = [r for r in lst1 if r.last_chat_time]
-        ###lst1 = sorted(lst1, key=lambda item: item.last_chat_time)
     elif order_option == 'new-to-old':
-        checked = False
-        q = make_stories_query(params, exact) & (db.TblStories.story_date != NO_DATE)
-        lst1 = db(q).select(orderby=~db.TblStories.story_date | db.TblStories.name)
+        q &= (db.TblStories.story_date != NO_DATE)
+        lst1 = db(q).select(orderby=~db.TblStories.story_date | db.TblStories.name, limitby=(0, 12000))
         lst1 = [r for r in lst1]
     elif order_option == 'old-to-new':
-        checked = False
-        q = make_stories_query(params, exact) & (db.TblStories.story_date != NO_DATE)
-        lst1 = db(q).select(orderby=db.TblStories.story_date | db.TblStories.name)
+        q &= (db.TblStories.story_date != NO_DATE)
+        lst1 = db(q).select(orderby=db.TblStories.story_date | db.TblStories.name, limitby=(0, 12000))
         lst1 = [r for r in lst1]
     elif order_option == 'by-name':
-        checked = False
-        q = make_stories_query(params, exact)
-        lst1 = db(q).select(orderby=db.TblStories.name)
+        lst1 = db(q).select(orderby=db.TblStories.name, limitby=(0,120000))
         lst1 = [r for r in lst1]
     elif not query_has_data(params):
         lst1 = []
@@ -803,22 +812,17 @@ def _get_story_list(params, exact, checked):
             q &= (db.TblStories.sampling_id < threshold)
             lst0 = db(q).select()
             lst1 += lst0
-        checked = False
-    elif checked:
-        lst1 = get_checked_stories(params)
     else:
-        selected_topics = params.selected_topics or []
-        if selected_topics:
-            lst1 = get_story_list_with_topics(params, selected_topics, exact)
-        else:
-            q = make_stories_query(params, exact)
-            if not q:
-                return []
-            lst1 = []
-            for used_for in story_kinds():
-                q1 = q & (db.TblStories.used_for==used_for)
-                lst0 = db(q1).select(limitby=(0, 1000), orderby=~db.TblStories.story_len)
-                lst1 += lst0
+        if not q:
+            return []
+        lst1 = []
+        for used_for in story_kinds():
+            q1 = q & (db.TblStories.used_for==used_for)
+            lst0 = db(q1).select(limitby=(0, 1000), orderby=~db.TblStories.story_len)
+            lst1 += lst0
+    return lst1
+
+def process_story_list(lst1, checked=False, exact=False):
     user_list = calc_user_list()
     lst = []
     for rec in lst1:
@@ -826,8 +830,6 @@ def _get_story_list(params, exact, checked):
             r = rec.TblStories
         else:
             r = rec
-        if r.id in params.checked_story_list and not checked:
-            continue
         if r.author_id:
             user = user_list[r.author_id]
             r.author = user.first_name + ' ' + user.last_name
@@ -1036,6 +1038,9 @@ def make_stories_query(params, exact):
         q &= (db.TblStories.is_tagged==False)
     if params.start_name:
         q &= (db.TblStories.name >= params.start_name)
+    if params.selected_topics:
+        q1 = get_topics_query(params.selected_topics)
+        q &= q1
     return q
 
 def calc_years_range(params):
@@ -1047,38 +1052,6 @@ def calc_years_range(params):
         if last_year and last_year > params.base_year + params.num_years - 5:
             last_year = 0
     return (first_year, last_year)
-
-def get_story_list_with_topics(params, selected_topics, exact):
-    first = True
-    topic_groups = calc_grouped_selected_options(selected_topics)
-    dic = dict()
-    bag = None
-    for topic_group in topic_groups:
-        q = make_stories_query(params, exact) #if we do not regenerate it the query becomes accumulated and necessarily fails
-        if not q:
-            return []
-        q &= (db.TblItemTopics.story_id == db.TblStories.id)
-
-        sign = topic_group[0]
-        topic_group = topic_group[1:]
-        q1 = db.TblItemTopics.topic_id.belongs(topic_group)
-        if sign == 'minus':
-            q1 = ~q1
-        q &= q1
-        lst = db(q).select()
-        ###lst = [rec.TblStories for rec in lst]
-        bag1 = set(r.TblStories.id for r in lst)
-        if first:
-            first = False
-            bag = bag1
-        else:
-            bag &= bag1
-        for r in lst:
-            dic[r.TblStories.id] = r
-    if not bag:
-        return []
-    result = [dic[id] for id in bag]
-    return result
 
 def _merge_members(mem1_id, mem2_id):
     photos1 = db(db.TblMemberPhotos.Member_id == mem1_id).select()
@@ -1325,3 +1298,16 @@ def get_term_members(term):
     for a in articles:
         a['facePhotoURL'] = photos_folder("profile_photos") + a['facePhotoURL']
     return photos, members, candidates, articles, article_candidates
+
+def get_topics_query(selected_topics):
+    topic_groups = calc_grouped_selected_options(selected_topics)
+    q = (db.TblItemTopics.story_id == db.TblStories.id)
+    for topic_group in topic_groups:
+        sign = topic_group[0]
+        topic_group = topic_group[1:]
+        q1 = db.TblItemTopics.topic_id.belongs(topic_group)
+        if sign == 'minus':
+            q1 = ~q1
+        q &= q1
+    return q
+

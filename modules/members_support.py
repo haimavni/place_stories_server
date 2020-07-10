@@ -107,9 +107,8 @@ def init_query(tbl, editing=False, is_deleted=False, user_id=None):
         if auth.has_membership(ARCHIVER, user_id):
             allowed.append(SV_ARCHIVER_ONLY)
     is_alive = not bool(is_deleted)
-    q = (db.TblStories.dead != True)
+    q = (db.TblStories.dead != True) & (db.TblStories.deleted!=is_alive)
     if tbl == db.TblStories:
-        q &= (tbl.deleted!=is_alive)
         if not is_alive:
             return q
     else:
