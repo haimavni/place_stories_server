@@ -298,9 +298,13 @@ def get_story_detail(vars):
         if term:
             photos, members, candidates, articles, article_candidates = get_term_members(term)
     story_topics = get_story_topics(story_id)
+    story_rec = db(db.TblStories.id==story_id).select(db.TblStories.sorting_key, db.TblStories.story_date, db.TblStories.story_date_dateunit, db.TblStories.story_date_datespan).first()
+    sorting_key = story_rec.sorting_key
+    sorting_key = decode_sorting_key(sorting_key)
+    dates = get_all_dates(story_rec)
     return dict(story=story, members=members, candidates=candidates, 
                 articles=articles, article_candidates=article_candidates, 
-                story_topics=story_topics, photos=photos)
+                story_topics=story_topics, photos=photos, sorting_key=sorting_key, story_date=dates.story_date)
 
 @serve_json
 def get_story_photo_list(vars):
@@ -1371,6 +1375,8 @@ def encode_sorting_key(sk):
     return '-'.join(sk)
 
 def decode_sorting_key(sk):
+    if not sk:
+        return []
     lst = sk.split('-')
     return [int(s) for s in lst]
 
