@@ -297,7 +297,10 @@ def get_story_detail(vars):
         term = db(db.TblTerms.story_id == story_id).select().first()
         if term:
             photos, members, candidates, articles, article_candidates = get_term_members(term)
-    return dict(story=story, members=members, candidates=candidates, articles=articles, article_candidates=article_candidates, photos=photos)
+    story_topics = get_story_topics(story_id)
+    return dict(story=story, members=members, candidates=candidates, 
+                articles=articles, article_candidates=article_candidates, 
+                story_topics=story_topics, photos=photos)
 
 @serve_json
 def get_story_photo_list(vars):
@@ -599,6 +602,62 @@ def apply_topics_to_selected_stories(vars):
     return dict(new_topic_was_added=new_topic_was_added)
 
 @serve_json
+def apply_topics_to_story(vars):
+    story_id = vars.story_id
+    used_for = vars.used_for
+    if used_for:
+        usage_chars = 'xMEPTxxxVDA'
+        usage_char = usage_chars[used_for]
+    else:
+        usage_char = 'x'
+    all_tags = calc_all_tags()
+    story_topics = vars.story_topics
+    current_ids = [topic.id for topic in story_topics]
+    current_ids = set(current_ids)
+    new_topic_was_added = False
+    tbl = db.TblEvents if usage_char == 'E' else db.TblTerms if usage_char == 'T' else None
+    if not tbl:
+        raise Exception("Not a story or term")
+    item_rec = db(tbl.story_id==story_id).select().first()
+    if item_rec:
+        curr_tag_ids = set(get_tag_ids(item_rec.id, usage_char))
+    else:
+        curr_tag_ids = set([])
+    for topic_id in current_ids:
+        if topic_id not in curr_tag_ids:
+            if item_rec:
+                item_id = item_rec.id
+            else:
+                item_id = None
+            new_id = db.TblItemTopics.insert(item_type=usage_char, story_id=story_id, item_id=item_id, topic_id=topic_id) 
+            curr_tag_ids |= set([topic_id])
+            ###added.append(item)
+            topic_rec = db(db.TblTopics.id == topic_id).select().first()
+            if topic_rec.topic_kind == 0: #never used
+                new_topic_was_added = True;
+            if usage_char not in topic_rec.usage:
+                usage = topic_rec.usage + usage_char
+                topic_rec.update_record(usage=usage, topic_kind=2) #topic is simple
+    for topic_id in curr_tag_ids:
+        if topic_id not in current_ids:
+            q = (db.TblItemTopics.item_type == usage_char) & (db.TblItemTopics.story_id == story_id) & (db.TblItemTopics.topic_id == topic_id)
+            ###deleted.append(item)
+            #should remove usage_char from usage if it was the last one...
+            db(q).delete()
+        curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
+        keywords = "; ".join(curr_tags)
+        rec = db(db.TblStories.id == story_id).select().first()
+        rec.update_record(keywords=keywords, is_tagged=bool(keywords))
+        if item_rec:
+            if usage_char in 'EMP':
+                item_rec.update_record(KeyWords=keywords)
+            else:
+                item_rec.update_record(keywords=keywords)
+
+    #todo: notify all users?
+    return dict(new_topic_was_added=new_topic_was_added)
+
+@serve_json
 def promote_stories(vars):
     checked_story_list = vars.params.checked_story_list
     q = (db.TblStories.id.belongs(checked_story_list))
@@ -719,6 +778,14 @@ def member_by_name(vars):
     member_ids = [rec.id for rec in members]
     return dict(member_ids=member_ids)
 
+@serve_json
+def save_sorting_key(vars):
+    story_id = vars.story_id
+    sorting_key = vars.sorting_key
+    sorting_key = encode_sorting_key(sorting_key)
+    db(db.TblStories.id==story_id).update(sorting_key=sorting_key)
+    return dict()
+
 ###---------------------support functions
 
 def new_member_rec(gender=None, first_name="", last_name=""):
@@ -791,14 +858,14 @@ def _get_story_list(params, exact): #exact means looking only for the passed key
         lst1 = [r for r in lst1 if r.last_chat_time]
     elif order_option == 'new-to-old':
         q &= (db.TblStories.story_date != NO_DATE)
-        lst1 = db(q).select(orderby=~db.TblStories.story_date | db.TblStories.name, limitby=(0, 12000))
+        lst1 = db(q).select(orderby=~db.TblStories.story_date | db.TblStories.sorting_key | db.TblStories.name, limitby=(0, 12000))
         lst1 = [r for r in lst1]
     elif order_option == 'old-to-new':
         q &= (db.TblStories.story_date != NO_DATE)
-        lst1 = db(q).select(orderby=db.TblStories.story_date | db.TblStories.name, limitby=(0, 12000))
+        lst1 = db(q).select(orderby=db.TblStories.story_date | db.TblStories.sorting_key | db.TblStories.name, limitby=(0, 12000))
         lst1 = [r for r in lst1]
     elif order_option == 'by-name':
-        lst1 = db(q).select(orderby=db.TblStories.name, limitby=(0,120000))
+        lst1 = db(q).select(orderby=db.TblStories.sorting_key | db.TblStories.name, limitby=(0,120000))
         lst1 = [r for r in lst1]
     elif not query_has_data(params):
         lst1 = []
@@ -916,6 +983,7 @@ def get_member_slides(member_id):
     return get_slides_from_photo_list(q)
 
 def save_story_data(story_info, user_id):
+    story_info.sorting_key = encode_sorting_key(story_info.sorting_key)
     story_id = story_info.story_id
     sm = stories_manager.Stories(user_id)
     if story_id:
@@ -977,21 +1045,6 @@ def get_member_terms(member_id):
         )
         result.append(dic)
     return result
-
-def _get_story_topics():
-    q = (db.TblItemTopics.story_id == db.TblStories.id) & (db.TblTopics.id == db.TblItemTopics.topic_id)
-    dic = dict()
-    for rec in db(q).select(db.TblStories.id, db.TblItemTopics.story_id, db.TblTopics.name):
-        story_id = rec.TblStories.id
-        topic_name = rec.TblTopics.name
-        if story_id not in dic:
-            dic[story_id] = []
-        dic[story_id].append(topic_name)
-    return dic
-
-def get_story_topics(refresh=False):
-    c = Cache('get_story_topics')
-    return c(_get_story_topics, refresh)
 
 def query_has_data(params):
     first_year, last_year = calc_years_range(params)
@@ -1310,4 +1363,14 @@ def get_topics_query(selected_topics):
             q1 = ~q1
         q &= q1
     return q
+
+def encode_sorting_key(sk):
+    if not sk:
+        return ""
+    sk = ['{:03}'.format(int(k)) for k in sk if k]
+    return '-'.join(sk)
+
+def decode_sorting_key(sk):
+    lst = sk.split('-')
+    return [int(s) for s in lst]
 

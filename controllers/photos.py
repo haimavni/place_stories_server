@@ -1,6 +1,6 @@
 from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, \
      save_uploaded_photo, rotate_photo, save_member_face, save_article_face, create_zip_file, get_photo_pairs, find_similar_photos, \
-     timestamped_photo_path, crop_a_photo, get_photo_topics
+     timestamped_photo_path, crop_a_photo
 import ws_messaging
 import stories_manager
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out

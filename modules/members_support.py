@@ -126,3 +126,30 @@ def init_query(tbl, editing=False, is_deleted=False, user_id=None):
         q &= (db.TblStories.visibility.belongs(allowed))
         return q
 
+def get_photo_topics(photo_id):
+    db = inject('db')
+    q = (db.TblItemTopics.item_id==photo_id) & (db.TblItemTopics.item_type=='P') & (db.TblTopics.id==db.TblItemTopics.topic_id)
+    lst = db(q).select()
+    lst = [itm.TblTopics.as_dict() for itm in lst]
+    for itm in lst:
+        itm['sign'] = ""
+    lst = make_unique(lst, 'id')
+    return lst
+
+def get_story_topics(story_id):
+    db = inject('db')
+    q = (db.TblItemTopics.story_id==story_id) & (db.TblTopics.id==db.TblItemTopics.topic_id)
+    lst = db(q).select()
+    lst = [itm.TblTopics.as_dict() for itm in lst]
+    for itm in lst:
+        itm['sign'] = ""
+    lst = make_unique(lst, 'id')
+    return lst
+
+def make_unique(arr, key):
+    dic = dict()
+    for a in arr:
+        dic[a[key]] = a
+    arr = [dic[id] for id in sorted(dic)]
+    return arr
+

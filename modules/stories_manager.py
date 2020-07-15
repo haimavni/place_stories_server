@@ -195,7 +195,8 @@ class Stories:
                 updater_id=self.author_id,
                 last_version=last_version,
                 language=language1,
-                imported_from=imported_from
+                imported_from=imported_from,
+                sorting_key=story_info.sorting_key
             )
             text_auditor = auth.user_has_privilege(TEXT_AUDITOR)
             if text_auditor:
@@ -207,7 +208,7 @@ class Stories:
                 creation_date=now,
                 author_id=self.author_id,
                 language=language1)
-        elif story_info.name != rec.name or story_info.source != rec.source:
+        elif story_info.name != rec.name or story_info.source != rec.source or story_info.sorting_key != rec.sorting_key:
             rec.update_record(name=story_info.name, source=story_info.source, last_update_date=now, updater_id=self.author_id)
         ###update_story_words_index(story_id)
         author_name = auth.user_name(self.author_id) #name of the mblbhd, not the source
