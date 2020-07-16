@@ -790,6 +790,17 @@ def save_sorting_key(vars):
     db(db.TblStories.id==story_id).update(sorting_key=sorting_key)
     return dict()
 
+@serve_json
+def update_story_date(vars):
+    story_date_str = vars.story_date_str
+    story_dates_info = dict(
+        story_date = (vars.story_date_str, int(vars.story_date_datespan))
+    )
+    rec = db((db.TblStories.id==int(vars.story_id)) & (db.TblStories.deleted != True)).select().first()
+    update_record_dates(rec, story_dates_info)
+    #todo: save in db
+    return dict()
+
 ###---------------------support functions
 
 def new_member_rec(gender=None, first_name="", last_name=""):
