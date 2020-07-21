@@ -1,6 +1,6 @@
 import datetime
 from docs_support import save_uploaded_doc, doc_url, calc_doc_story
-from members_support import calc_grouped_selected_options, calc_all_tags, get_tag_ids, init_query
+from members_support import calc_grouped_selected_options, calc_all_tags, get_tag_ids, init_query, get_topics_query
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
 import stories_manager
 
@@ -26,12 +26,9 @@ def get_doc_list(vars):
     else:
         lst0 = []
     selected_topics = params.selected_topics or []
-    if selected_topics:
-        lst = get_doc_list_with_topics(params)
-    else:
-        q = make_docs_query(params)
-        lst = db(q).select(orderby=~db.TblDocs.id)
-        lst = [r.TblDocs for r in lst]
+    q = make_docs_query(params)
+    lst = db(q).select(orderby=~db.TblDocs.id)
+    lst = [r.TblDocs for r in lst]
     selected_doc_list = params.selected_doc_list
     lst = [rec for rec in lst if rec.story_id not in params.checked_doc_list]
     lst = lst0 + lst
@@ -69,14 +66,13 @@ def apply_to_checked_docs(vars):
     changes = dict()
     new_topic_was_added = False
     for story_id in sdl:
-        drec = db(db.TblDocs.story_id==story_id).select().first()
-        curr_tag_ids = set(get_tag_ids(drec.id, 'D'))
+        drec = db(db.TblDocs.story_id==story_id).select().first() #get rid of _term_id_
+        curr_tag_ids = set(get_tag_ids(story_id, 'D'))
         for tpc in st:
             topic = tpc.option
-            ###item = dict(item_id=doc_id, topic_id=topic.id)
-            doc_id = drec.id
+            doc_id = drec.id #get rid of _term_id_
             if topic.sign=="plus" and topic.id not in curr_tag_ids:
-                new_id = db.TblItemTopics.insert(item_type='D', item_id=doc_id, topic_id=topic.id, story_id=story_id) 
+                new_id = db.TblItemTopics.insert(item_type='D', item_id=doc_id, topic_id=topic.id, story_id=story_id) #get rid of _term_id_
                 curr_tag_ids |= set([topic.id])
                 ###added.append(item)
                 topic_rec = db(db.TblTopics.id==topic.id).select().first()
@@ -86,7 +82,7 @@ def apply_to_checked_docs(vars):
                     usage = topic_rec.usage + 'D'
                     topic_rec.update_record(usage=usage, topic_kind=2) #topic is simple 
             elif topic.sign=="minus" and topic.id in curr_tag_ids:
-                q = (db.TblItemTopics.item_type=='D') & (db.TblItemTopics.item_id==doc_id) & (db.TblItemTopics.topic_id==topic.id)
+                q = (db.TblItemTopics.item_type=='D') & (db.TblItemTopics.story_id==story_id) & (db.TblItemTopics.topic_id==topic.id) #get rid of _item_id_
                 curr_tag_ids -= set([topic.id])
                 ###deleted.append(item)
                 db(q).delete()
@@ -104,33 +100,6 @@ def apply_to_checked_docs(vars):
     return dict(new_topic_was_added=new_topic_was_added)
 
 #----------------support functions-----------------
-
-def get_doc_list_with_topics(vars):
-    first = True
-    topic_groups = calc_grouped_selected_options(vars.selected_topics)
-    for topic_group in topic_groups:
-        q = make_docs_query(vars) #if we do not regenerate it the query becomes accumulated and necessarily fails
-        q &= (db.TblItemTopics.item_id==db.TblDocs.id) & (db.TblItemTopics.item_type.like('%D%'))
-        ##topic_ids = [t.id for t in topic_group]
-        sign = topic_group[0]
-        topic_group = topic_group[1:]
-        q1 = db.TblItemTopics.topic_id.belongs(topic_group)
-        if sign == 'minus':
-            q1 = ~q1
-        q &= q1
-        lst = db(q).select(orderby=~db.TblDocs.id)
-        lst = [rec.TblDocs for rec in lst]
-        bag1 = set(r.id for r in lst)
-        if first:
-            first = False
-            bag = bag1
-        else:
-            bag &= bag1
-    dic = {}
-    for r in lst:
-        dic[r.id] = r
-    result = [dic[id] for id in bag]
-    return result
 
 def make_docs_query(params):
     q = init_query(db.TblDocs, params.editing)
@@ -153,6 +122,9 @@ def make_docs_query(params):
         q &= (db.TblDocs.doc_date == NO_DATE)
     if params.selected_docs:
         q &= (db.TblDocs.story_id.belongs(params.selected_docs))
+    if params.selected_topics:
+        q1 = get_topics_query(params.selected_topics)
+        q &= q1
     return q
 
 def get_story_by_id(story_id):

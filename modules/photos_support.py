@@ -740,23 +740,6 @@ def get_exif_data(image):
                 exif_data[decoded] = value
     return exif_data            
 
-def get_photo_topics(photo_id):
-    db = inject('db')
-    q = (db.TblItemTopics.item_id==photo_id) & (db.TblItemTopics.item_type=='P') & (db.TblTopics.id==db.TblItemTopics.topic_id)
-    lst = db(q).select()
-    lst = [itm.TblTopics.as_dict() for itm in lst]
-    for itm in lst:
-        itm['sign'] = ""
-    lst = make_unique(lst, 'id')
-    return lst
-
-def make_unique(arr, key):
-    dic = dict()
-    for a in arr:
-        dic[a[key]] = a
-    arr = [dic[id] for id in sorted(dic)]
-    return arr
-
 def degrees_to_float(tup):
     degs, mins, secs = [t[0] for t in tup]
     result = degs * 1.0 + mins * 1.0 / 60 + secs * 1.0 / 3600

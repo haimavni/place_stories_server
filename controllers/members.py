@@ -556,12 +556,9 @@ def apply_topics_to_selected_stories(vars):
     checked_story_list = params.checked_story_list
     selected_topics = params.selected_topics
     new_topic_was_added = False
-    for eid in checked_story_list:
-        item_rec = item_of_story_id(used_for, eid)
-        if item_rec:
-            curr_tag_ids = set(get_tag_ids(item_rec.id, usage_char))
-        else:
-            curr_tag_ids = set([])
+    for story_id in checked_story_list:
+        curr_tag_ids = set(get_tag_ids(story_id, usage_char))
+        item_rec = item_of_story_id(used_for, story_id)
         for item in selected_topics:
             topic = item.option
             if topic.sign == "plus" and topic.id not in curr_tag_ids:
@@ -569,7 +566,7 @@ def apply_topics_to_selected_stories(vars):
                     item_id = item_rec.id
                 else:
                     item_id = None
-                new_id = db.TblItemTopics.insert(item_type=usage_char, story_id=eid, item_id=item_id, topic_id=topic.id) 
+                new_id = db.TblItemTopics.insert(item_type=usage_char, story_id=story_id, item_id=item_id, topic_id=topic.id) #get rid of _item_id_
                 curr_tag_ids |= set([topic.id])
                 ###added.append(item)
                 topic_rec = db(db.TblTopics.id == topic.id).select().first()
@@ -579,22 +576,22 @@ def apply_topics_to_selected_stories(vars):
                     usage = topic_rec.usage + usage_char
                     topic_rec.update_record(usage=usage, topic_kind=2) #topic is simple
             elif topic.sign == "minus" and topic.id in curr_tag_ids:
-                q = (db.TblItemTopics.item_type == usage_char) & (db.TblItemTopics.story_id == eid) & (db.TblItemTopics.topic_id == topic.id)
+                q = (db.TblItemTopics.item_type == usage_char) & (db.TblItemTopics.story_id == story_id) & (db.TblItemTopics.topic_id == topic.id)
                 curr_tag_ids -= set([topic.id])
                 ###deleted.append(item)
                 #should remove usage_char from usage if it was the last one...
                 db(q).delete()
         if dates_info:
-            story_rec = db(db.TblStories.id==eid).select().first()
+            story_rec = db(db.TblStories.id==story_id).select().first()
             update_record_dates(story_rec, dates_info)
             copy_story_date_to_object_date(story_rec)
         if visibility_option:
-            story_rec = db(db.TblStories.id==eid).select().first()
+            story_rec = db(db.TblStories.id==story_id).select().first()
             story_rec.update_record(visibility=visibility_option)
             
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         keywords = "; ".join(curr_tags)
-        rec = db(db.TblStories.id == eid).select().first()
+        rec = db(db.TblStories.id == story_id).select().first()
         rec.update_record(keywords=keywords, is_tagged=bool(keywords))
         if item_rec:
             if usage_char in 'EMP':
@@ -622,18 +619,15 @@ def apply_topics_to_story(vars):
     tbl = db.TblEvents if usage_char == 'E' else db.TblTerms if usage_char == 'T' else None
     if not tbl:
         raise Exception("Not a story or term")
-    item_rec = db(tbl.story_id==story_id).select().first()
-    if item_rec:
-        curr_tag_ids = set(get_tag_ids(item_rec.id, usage_char))
-    else:
-        curr_tag_ids = set([])
+    curr_tag_ids = set(get_tag_ids(story_id, usage_char))
+    item_rec = db(tbl.story_id==story_id).select().first() #get rid of _item_id_
     for topic_id in current_ids:
         if topic_id not in curr_tag_ids:
-            if item_rec:
+            if item_rec: #get rid of _item_id_
                 item_id = item_rec.id
             else:
                 item_id = None
-            new_id = db.TblItemTopics.insert(item_type=usage_char, story_id=story_id, item_id=item_id, topic_id=topic_id) 
+            new_id = db.TblItemTopics.insert(item_type=usage_char, story_id=story_id, item_id=item_id, topic_id=topic_id) #get rid of _item_id_
             curr_tag_ids |= set([topic_id])
             ###added.append(item)
             topic_rec = db(db.TblTopics.id == topic_id).select().first()
@@ -652,6 +646,7 @@ def apply_topics_to_story(vars):
         keywords = "; ".join(curr_tags)
         rec = db(db.TblStories.id == story_id).select().first()
         rec.update_record(keywords=keywords, is_tagged=bool(keywords))
+        ##get rid of _item_id_ - remove next block
         if item_rec:
             if usage_char in 'EMP':
                 item_rec.update_record(KeyWords=keywords)
@@ -800,6 +795,12 @@ def update_story_date(vars):
     update_record_dates(rec, story_dates_info)
     #todo: save in db
     return dict()
+
+@serve_json
+def get_book_list(vars):
+    lst = db(db.TblBooks).select()
+    book_list = [rec.as_dict() for rec in lst]
+    return dict(book_list=book_list)
 
 ###---------------------support functions
 
@@ -1366,18 +1367,6 @@ def get_term_members(term):
     for a in articles:
         a['facePhotoURL'] = photos_folder("profile_photos") + a['facePhotoURL']
     return photos, members, candidates, articles, article_candidates
-
-def get_topics_query(selected_topics):
-    topic_groups = calc_grouped_selected_options(selected_topics)
-    q = (db.TblItemTopics.story_id == db.TblStories.id)
-    for topic_group in topic_groups:
-        sign = topic_group[0]
-        topic_group = topic_group[1:]
-        q1 = db.TblItemTopics.topic_id.belongs(topic_group)
-        if sign == 'minus':
-            q1 = ~q1
-        q &= q1
-    return q
 
 def encode_sorting_key(sk):
     if not sk:

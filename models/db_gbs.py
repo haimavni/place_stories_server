@@ -67,6 +67,7 @@ db.define_table('TblStories',
                 Field('chatroom_id', type='integer'), # actually db.TblChatGroup),but then deletion of the chatroom deletes the story!
                 Field('last_chat_time', type='datetime', default=NO_DATE),
                 Field('sorting_key', type='string', default=''), # sequence of zero-padded integers
+                Field('book_id', type='integer'),
                 Field('imported_from', type='string')
 )                
 
@@ -264,6 +265,7 @@ db.define_table('TblMembers',
 
 db.define_table('TblArticles',
                 Field('name', type='string'),
+                Field('keywords', type='string'), #get rid of _item_id_
                 Field('date_start', type='date', default=NO_DATE),
                 Field('date_start_dateunit', type='string', default='N'),
                 Field('date_start_datespan', type='integer', default=0),
@@ -361,7 +363,7 @@ db.define_table('TblTopicGroups',
 
 db.define_table('TblItemTopics',
           Field('item_type', type='string', requires=IS_LENGTH(1)),  #M=Member, P=Photo, E=Event
-          Field('item_id', type='integer'),
+          Field('item_id', type='integer'), #get rid of _item_id_
           Field('topic_id', type=db.TblTopics),
           Field('story_id', type=db.TblStories)
 )
@@ -557,6 +559,11 @@ db.define_table('TblNotifications',
 db.define_table('TblNotified',
                 Field('notified', type=db.auth_user),
                 Field('notification', type=db.TblNotifications)
+                )
+
+db.define_table('TblBooks',
+                Field('name', type='string'),
+                Field('description', type='string')
                 )
 
 def write_indexing_sql_scripts():

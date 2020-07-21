@@ -1,6 +1,6 @@
 from words import calc_used_languages, read_words_index, get_all_story_previews, get_reisha
 import stories_manager
-from members_support import calc_grouped_selected_options, calc_all_tags, get_tag_ids, init_query
+from members_support import calc_grouped_selected_options, calc_all_tags, get_tag_ids, init_query, get_topics_query
 
 @serve_json
 def apply_to_checked_terms(vars):
@@ -13,13 +13,13 @@ def apply_to_checked_terms(vars):
     changes = dict()
     new_topic_was_added = False;
     for story_id in sdl:
-        trec = db(db.TblTerms.story_id==story_id).select().first()
-        curr_tag_ids = set(get_tag_ids(trec.id, 'T'))
+        trec = db(db.TblTerms.story_id==story_id).select().first() #get rid of _item_id_
+        curr_tag_ids = set(get_tag_ids(story_id, 'T'))
         for tpc in st:
             topic = tpc.option
-            term_id = trec.id
+            term_id = trec.id #get rid of _term_id_
             if topic.sign=="plus" and topic.id not in curr_tag_ids:
-                new_id = db.TblItemTopics.insert(item_type='T', item_id=term_id, topic_id=topic.id, story_id=story_id) 
+                new_id = db.TblItemTopics.insert(item_type='T', item_id=term_id, topic_id=topic.id, story_id=story_id) #get rid of _term_id_
                 curr_tag_ids |= set([topic.id])
                 ###added.append(item)
                 topic_rec = db(db.TblTopics.id==topic.id).select().first()
@@ -29,7 +29,7 @@ def apply_to_checked_terms(vars):
                     usage = topic_rec.usage + 'T'
                     topic_rec.update_record(usage=usage, topic_kind=2) #topic is simple 
             elif topic.sign=="minus" and topic.id in curr_tag_ids:
-                q = (db.TblItemTopics.item_type=='T') & (db.TblItemTopics.item_id==term_id) & (db.TblItemTopics.topic_id==topic.id)
+                q = (db.TblItemTopics.item_type=='T') & (db.TblItemTopics.story_id==story_id) & (db.TblItemTopics.topic_id==topic.id)
                 curr_tag_ids -= set([topic.id])
                 ###deleted.append(item)
                 db(q).delete()
@@ -52,12 +52,8 @@ def get_term_list(vars):
             rec.checked = True
     else:
         lst0 = []
-    selected_topics = params.selected_topics or []
-    if selected_topics:
-        lst = get_term_list_with_topics(params)
-    else:
-        q = make_terms_query(params)
-        lst = db(q).select(orderby=~db.TblTerms.id)
+    q = make_terms_query(params)
+    lst = db(q).select(orderby=~db.TblTerms.id)
     lst = [r.TblTerms for r in lst]
     selected_term_list = params.selected_term_list
     lst = [rec for rec in lst if rec.story_id not in params.checked_term_list]
@@ -71,36 +67,13 @@ def get_term_list(vars):
 
 #----------------support functions-----------------
 
-def get_term_list_with_topics(vars):
-    first = True
-    topic_groups = calc_grouped_selected_options(vars.selected_topics)
-    for topic_group in topic_groups:
-        q = make_terms_query(vars) #if we do not regenerate it the query becomes accumulated and necessarily fails
-        q &= (db.TblItemTopics.item_id==db.TblTerms.id) & (db.TblItemTopics.item_type.like('%T%'))
-        ##topic_ids = [t.id for t in topic_group]
-        sign = topic_group[0]
-        topic_group = topic_group[1:]
-        q1 = db.TblItemTopics.topic_id.belongs(topic_group)
-        if sign == 'minus':
-            q1 = ~q1
-        q &= q1
-        lst = db(q).select(orderby=~db.TblTerms.id)
-        bag1 = set(r.TblTerms.id for r in lst)
-        if first:
-            first = False
-            bag = bag1
-        else:
-            bag &= bag1
-    dic = {}
-    for r in lst:
-        dic[r.TblTerms.id] = r
-    result = [dic[id] for id in bag]
-    return result
-
 def make_terms_query(params):
     q = init_query(db.TblTerms)
     if params.selected_terms:
         q &= (db.TblTerms.story_id.belongs(params.selected_terms))
+    if params.selected_topics:
+        q1 = get_topics_query(params.selected_topics)
+        q &= q1
     return q
 
 def get_story_by_id(story_id):
