@@ -72,7 +72,7 @@ def apply_to_checked_docs(vars):
             topic = tpc.option
             doc_id = drec.id #get rid of _term_id_
             if topic.sign=="plus" and topic.id not in curr_tag_ids:
-                new_id = db.TblItemTopics.insert(item_type='D', item_id=doc_id, topic_id=topic.id, story_id=story_id) #get rid of _term_id_
+                new_id = db.TblItemTopics.insert(item_type='D', topic_id=topic.id, story_id=story_id)
                 curr_tag_ids |= set([topic.id])
                 ###added.append(item)
                 topic_rec = db(db.TblTopics.id==topic.id).select().first()
@@ -82,7 +82,7 @@ def apply_to_checked_docs(vars):
                     usage = topic_rec.usage + 'D'
                     topic_rec.update_record(usage=usage, topic_kind=2) #topic is simple 
             elif topic.sign=="minus" and topic.id in curr_tag_ids:
-                q = (db.TblItemTopics.item_type=='D') & (db.TblItemTopics.story_id==story_id) & (db.TblItemTopics.topic_id==topic.id) #get rid of _item_id_
+                q = (db.TblItemTopics.item_type=='D') & (db.TblItemTopics.story_id==story_id) & (db.TblItemTopics.topic_id==topic.id) #got rid of _item_id_
                 curr_tag_ids -= set([topic.id])
                 ###deleted.append(item)
                 db(q).delete()

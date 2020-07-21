@@ -344,11 +344,10 @@ def apply_to_selected_photos(vars):
         curr_tag_ids = set(get_tag_ids(story_id, "P")) if story_id else set([])
         for tpc in st:
             topic = tpc.option
-            item = dict(item_id=pid, topic_id=topic.id)
+            item = dict(story_id=story_id, topic_id=topic.id)
             if topic.sign == "plus" and topic.id not in curr_tag_ids:
                 new_id = db.TblItemTopics.insert(
                     item_type="P",
-                    item_id=pid, #get rid of _item_id_
                     topic_id=topic.id,
                     story_id=story_id)
                 curr_tag_ids |= set([topic.id])
@@ -372,7 +371,7 @@ def apply_to_selected_photos(vars):
         if story_id:
             db(db.TblStories.id == story_id).update(keywords=keywords, is_tagged=bool(keywords))
         if rec:
-            rec.update_record(KeyWords=keywords, Recognized=True) #get rid of _item_id_
+            rec.update_record(Recognized=True)
         if photographer_id:
             rec.update_record(photographer_id=photographer_id)
             rec1 = db(db.TblPhotographers.id == photographer_id).select().first()
@@ -401,7 +400,6 @@ def apply_topics_to_photo(vars):
             added |= set([tag_id])
             db.TblItemTopics.insert(
                 item_type="P",
-                item_id=photo_id, #get rid of _term_id_
                 topic_id=tag_id,
                 story_id=story_id)
             topic_rec = db(db.TblTopics.id == tag_id).select().first()
@@ -426,7 +424,7 @@ def apply_topics_to_photo(vars):
     is_tagged = len(curr_tags) > 0
     srec = db(db.TblStories.id==rec.story_id).select().first()
     srec.update_record(keywords=keywords, is_tagged=is_tagged)
-    rec.update_record(KeyWords=keywords, Recognized=True) #get rid of _item_id_
+    rec.update_record(Recognized=True)
     
 @serve_json
 def assign_photo_photographer(vars):
@@ -573,13 +571,12 @@ def apply_to_selected_videos(vars):
         curr_tag_ids = set(get_tag_ids(story_id, "V"))
         for tpc in st:
             topic = tpc.option
-            item = dict(item_id=vid, topic_id=topic.id)
+            item = dict(story_id=story_id, topic_id=topic.id)
             if topic.sign == "plus" and topic.id not in curr_tag_ids:
                 if not story_id:
                     continue
                 new_id = db.TblItemTopics.insert(
                     item_type="V",
-                    item_id=vid, #get rid of _item_id_
                     topic_id=topic.id,
                     story_id=story_id)
                 curr_tag_ids |= set([topic.id])
@@ -591,9 +588,8 @@ def apply_to_selected_videos(vars):
                     usage = topic_rec.usage + 'V'
                     topic_rec.update_record(usage=usage, topic_kind=2) #simple topic
             elif topic.sign == "minus" and topic.id in curr_tag_ids:
-                #get rid of _item_id_ below
                 q = (db.TblItemTopics.item_type == "V") & \
-                    (db.TblItemTopics.item_id == vid) & \
+                    (db.TblItemTopics.story_id == story_id) & \
                     (db.TblItemTopics.topic_id == topic.id)
                 curr_tag_ids -= set([topic.id])
                 deleted.append(item)
@@ -602,7 +598,6 @@ def apply_to_selected_videos(vars):
         keywords = "; ".join(curr_tags)
         changes[vid] = dict(keywords=keywords, video_id=vid)
         rec = db(db.TblVideos.id == vid).select().first()
-        rec.update_record(keywords=keywords) #todo: remove this line soon
         rec1 = db(db.TblStories.id == rec.story_id).select().first()
         rec1.update_record(keywords=keywords, is_tagged=bool(keywords))
         if photographer_id:
@@ -950,14 +945,21 @@ def process_photo_list(lst, photo_pairs=dict()):
     for rec in lst:
         fix_record_dates_out(rec)
     result = []
+    story_ids = [rec.story_id for rec in lst]
+    lst1 = db(db.TblStories.id.belongs(story_ids)).select(db.TblStories.id, db.TblStories.keywords)
+    kws = dict()
+    for rec in lst1:
+        kws[rec.id] = rec.keywords
     for rec in lst:
         tpp = timestamped_photo_path(rec)
+        keywords=kws[rec.story_id]
+        rec_title='{}: {}'.format(rec.Name, keywords)
         dic = Storage(
-            keywords=rec.KeyWords or "",
             description=rec.Description or "",
             name=rec.Name,
             original_file_name=rec.original_file_name,
-            title='{}: {}'.format(rec.Name, rec.KeyWords),
+            keywords=keywords,
+            title=rec_title,
             photo_date_datestr=rec.photo_date_datestr,
             photo_date_span=rec.photo_date_datespan,
             photographer_id=rec.photographer_id,

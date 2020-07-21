@@ -10,16 +10,14 @@ def apply_to_checked_terms(vars):
     st = params.selected_topics
     added = []
     deleted = []
-    changes = dict()
     new_topic_was_added = False;
     for story_id in sdl:
         trec = db(db.TblTerms.story_id==story_id).select().first() #get rid of _item_id_
         curr_tag_ids = set(get_tag_ids(story_id, 'T'))
         for tpc in st:
             topic = tpc.option
-            term_id = trec.id #get rid of _term_id_
             if topic.sign=="plus" and topic.id not in curr_tag_ids:
-                new_id = db.TblItemTopics.insert(item_type='T', item_id=term_id, topic_id=topic.id, story_id=story_id) #get rid of _term_id_
+                new_id = db.TblItemTopics.insert(item_type='T', topic_id=topic.id, story_id=story_id)
                 curr_tag_ids |= set([topic.id])
                 ###added.append(item)
                 topic_rec = db(db.TblTopics.id==topic.id).select().first()
@@ -35,9 +33,6 @@ def apply_to_checked_terms(vars):
                 db(q).delete()
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         keywords = "; ".join(curr_tags)
-        changes[term_id] = dict(keywords=keywords, term_id=term_id)
-        rec = db(db.TblTerms.id==term_id).select().first()
-        rec.update_record(keywords=keywords)  #todo: remove this line soon
         rec = db(db.TblStories.id==rec.story_id).select().first()
         rec.update_record(keywords=keywords, is_tagged=bool(keywords))
     return dict(new_topic_was_added=new_topic_was_added)

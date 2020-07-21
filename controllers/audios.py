@@ -64,7 +64,7 @@ def apply_to_checked_audios(vars):
         for tpc in st:
             topic = tpc.option
             if topic.sign=="plus" and topic.id not in curr_tag_ids:
-                new_id = db.TblItemTopics.insert(item_type='A', item_id=audio_id, topic_id=topic.id, story_id=story_id) #get rid of _item_id_ 
+                new_id = db.TblItemTopics.insert(item_type='A', topic_id=topic.id, story_id=story_id)
                 curr_tag_ids |= set([topic.id])
                 ###added.append(item)
                 topic_rec = db(db.TblTopics.id==topic.id).select().first()
@@ -85,9 +85,6 @@ def apply_to_checked_audios(vars):
         keywords = "; ".join(curr_tags)
         changes[audio_id] = dict(keywords=keywords, audio_id=audio_id)
         db(db.TblStories.id==story_id).update(keywords=keywords, is_tagged=bool(keywords))
-        #remove 2 lines below get rid of _item_id_
-        rec = db(db.TblAudios.id==audio_id).select().first()
-        rec.update_record(keywords=keywords)  #todo: remove this line soon
         if dates_info:
             update_record_dates(rec, dates_info)
     ###changes = [changes[audio_id] for audio_id in adl]

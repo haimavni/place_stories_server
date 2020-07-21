@@ -562,11 +562,7 @@ def apply_topics_to_selected_stories(vars):
         for item in selected_topics:
             topic = item.option
             if topic.sign == "plus" and topic.id not in curr_tag_ids:
-                if item_rec:
-                    item_id = item_rec.id
-                else:
-                    item_id = None
-                new_id = db.TblItemTopics.insert(item_type=usage_char, story_id=story_id, item_id=item_id, topic_id=topic.id) #get rid of _item_id_
+                new_id = db.TblItemTopics.insert(item_type=usage_char, story_id=story_id, topic_id=topic.id)
                 curr_tag_ids |= set([topic.id])
                 ###added.append(item)
                 topic_rec = db(db.TblTopics.id == topic.id).select().first()
@@ -620,14 +616,9 @@ def apply_topics_to_story(vars):
     if not tbl:
         raise Exception("Not a story or term")
     curr_tag_ids = set(get_tag_ids(story_id, usage_char))
-    item_rec = db(tbl.story_id==story_id).select().first() #get rid of _item_id_
     for topic_id in current_ids:
         if topic_id not in curr_tag_ids:
-            if item_rec: #get rid of _item_id_
-                item_id = item_rec.id
-            else:
-                item_id = None
-            new_id = db.TblItemTopics.insert(item_type=usage_char, story_id=story_id, item_id=item_id, topic_id=topic_id) #get rid of _item_id_
+            new_id = db.TblItemTopics.insert(item_type=usage_char, story_id=story_id, topic_id=topic_id)
             curr_tag_ids |= set([topic_id])
             ###added.append(item)
             topic_rec = db(db.TblTopics.id == topic_id).select().first()
@@ -646,12 +637,6 @@ def apply_topics_to_story(vars):
         keywords = "; ".join(curr_tags)
         rec = db(db.TblStories.id == story_id).select().first()
         rec.update_record(keywords=keywords, is_tagged=bool(keywords))
-        ##get rid of _item_id_ - remove next block
-        if item_rec:
-            if usage_char in 'EMP':
-                item_rec.update_record(KeyWords=keywords)
-            else:
-                item_rec.update_record(keywords=keywords)
 
     #todo: notify all users?
     return dict(new_topic_was_added=new_topic_was_added)

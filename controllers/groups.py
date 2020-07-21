@@ -133,7 +133,6 @@ def upload_photo(vars):
     if not duplicate:
         new_id = db.TblItemTopics.insert(
             item_type="P",
-            item_id=photo_id,
             topic_id=topic_id,
             story_id=photo_rec.story_id)
         if 'P' not in topic_rec.usage:
