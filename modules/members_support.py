@@ -156,13 +156,19 @@ def make_unique(arr, key):
 def get_topics_query(selected_topics):
     db = inject('db')
     topic_groups = calc_grouped_selected_options(selected_topics)
-    q = (db.TblItemTopics.story_id == db.TblStories.id)
+    
+    intersection = None
     for topic_group in topic_groups:
         sign = topic_group[0]
         topic_group = topic_group[1:]
         q1 = db.TblItemTopics.topic_id.belongs(topic_group)
         if sign == 'minus':
             q1 = ~q1
-        q &= q1
+        lst = [rec.story_id for rec in db(q1).select()]
+        if intersection:
+            intersection &= set(lst)
+        else:
+            intersection = set(lst)
+    q = (db.TblStories.id.belongs(list(intersection)))
     return q
 

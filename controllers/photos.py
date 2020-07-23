@@ -360,7 +360,7 @@ def apply_to_selected_photos(vars):
                     topic_rec.update_record(usage=usage, topic_kind=2) #simple topic
             elif topic.sign == "minus" and topic.id in curr_tag_ids:
                 q = (db.TblItemTopics.item_type == "P") & \
-                    (db.TblItemTopics.item_id == pid) & \
+                    (db.TblItemTopics.story_id == story_id) & \
                     (db.TblItemTopics.topic_id == topic.id)
                 curr_tag_ids -= set([topic.id])
                 deleted.append(item)

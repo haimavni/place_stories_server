@@ -586,14 +586,10 @@ def apply_topics_to_selected_stories(vars):
             story_rec.update_record(visibility=visibility_option)
             
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
+        curr_tags.sort()
         keywords = "; ".join(curr_tags)
         rec = db(db.TblStories.id == story_id).select().first()
         rec.update_record(keywords=keywords, is_tagged=bool(keywords))
-        if item_rec:
-            if usage_char in 'EMP':
-                item_rec.update_record(KeyWords=keywords)
-            else:
-                item_rec.update_record(keywords=keywords)
 
     #todo: notify all users?
     return dict(new_topic_was_added=new_topic_was_added)

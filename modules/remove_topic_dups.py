@@ -18,7 +18,7 @@ def make_item_topics_unique(topic_id):
     return ndups
 
 def make_all_item_topics_unique():
-    db = inject('db')
+    db, log_path = inject('db', 'log_path')
     topics = db(db.TblTopics).select()
     dups = []
     path = log_path() + 'duplicate_topic_stories.log'
