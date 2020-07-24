@@ -117,7 +117,7 @@ class Stories:
         story_text = story_text.replace('~1', '&').replace('~2', ';').replace('\n', '').replace('>', '>\n')
         now = datetime.datetime.now()
         db, auth, STORY4EVENT, STORY4TERM, STORY4PHOTO, STORY4DOC, STORY4AUDIO, TEXT_AUDITOR = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO', 'STORY4DOC', 'STORY4AUDIO', 'TEXT_AUDITOR')
-        source = story_info.source or auth.user_name(self.author_id)
+        source = story_info.source
         ###todo: handle language issues here and in update_story
         story_id = db.TblStories.insert(story=story_text, 
                                         author_id=self.author_id, 
@@ -177,7 +177,7 @@ class Stories:
         preview = ''
         if story_info.used_for == STORY4DOC:
             if rec.preview != story_info.preview or rec.name != story_info.name or rec.source!= story_info.source:
-                rec.update_record(preview=story_info.preview, name=story_info.name or rec.name, last_update_date=now, source=story_info.source or rec.source)
+                rec.update_record(preview=story_info.preview, name=story_info.name or rec.name, last_update_date=now, source=story_info.source)
             preview = story_info.preview
         elif rec.story != updated_story_text:
             merger = mim.Merger()
