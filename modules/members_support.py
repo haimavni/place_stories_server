@@ -172,3 +172,10 @@ def get_topics_query(selected_topics):
     q = (db.TblStories.id.belongs(list(intersection)))
     return q
 
+def member_photos_by_updater(updater_id):
+    lst = db((db.TblMembers.deleted!=True) & (db.TblMembers.updater_id==updater_id) &\
+             (db.TblMemberPhotos.Member_id==db.TblMembers.id)).\
+             select(db.TblMembers.id,db.TblMembers.first_name,db.TblMembers.last_name,db.TblMembers.updater_id,db.TblMemberPhotos.Photo_id,orderby=db.TblMembers.id)
+    return lst
+    
+    
