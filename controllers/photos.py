@@ -189,8 +189,8 @@ def save_article(vars):
 
 @serve_json
 def detach_photo_from_member(vars):
-    member_id = vars.member_id
-    photo_id = vars.photo_id
+    member_id = int(vars.member_id)
+    photo_id = int(vars.photo_id)
     q = (db.TblMemberPhotos.Photo_id == photo_id) & \
         (db.TblMemberPhotos.Member_id == member_id)
     good = db(q).delete() == 1

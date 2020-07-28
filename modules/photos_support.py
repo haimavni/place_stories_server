@@ -281,7 +281,6 @@ def calc_missing_dhash_values(max_to_hash=20000):
 def get_slides_from_photo_list(q):
     db = inject('db')
     q &= (db.TblPhotos.width > 0)
-    db = inject('db')
     lst = db(q).select()
     if not lst:
         return []
