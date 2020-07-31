@@ -170,8 +170,13 @@ def get_random_member(vars):
     if not lst:
         return dict(member_data = None)
     lst = sorted(lst, key=lambda rec: -rec.num_photos)
-    idx = random.randint(0, len(lst) / 5)
-    member_data=get_member_rec(lst[idx].member_id)
+    for i in range(50):
+        idx = random.randint(0, len(lst) / 5)
+        member_data=get_member_rec(lst[idx].member_id)
+        if member_data:
+            break
+    if not member_data:
+        return dict(member_data = None)
     member_data.face_photo_url = photos_folder('profile_photos') + member_data.facePhotoURL
     member_data.short_name = (member_data.title + ' ' if member_data.title else '') + member_data.first_name
     return dict(member_data=member_data)
@@ -206,28 +211,38 @@ def get_stories_sample(vars):
 @serve_json
 def get_story_list(vars):
     CHUNK = 100
+    params = vars.params;
     qhd = query_has_data(vars.params)
     result0 = []
     result1 = []
     result2 = []
-    if qhd:
-        result0 = get_checked_stories(vars.params)
+    if params.selected_book:
+        result0 = get_checked_stories(params)
+        result0 = process_story_list(result0, checked=True)
+        result1 = db(db.TblStories.book_id==params.selected_book.id).select()
+        result1 = process_story_list(result0)
+    elif qhd:
+        result0 = get_checked_stories(params)
         result0 = process_story_list(result0, checked=True)
         checked_story_ids = set([r.id for r in result0])
-        has_keywords = bool(vars.params.keywords_str) ### and vars.params.search_type in ['menu', 'simple']
-        result1 = _get_story_list(vars.params, has_keywords)
+        has_keywords = bool(params.keywords_str) ### and vars.params.search_type in ['menu', 'simple']
+        result1 = _get_story_list(params, has_keywords)
         result1 = process_story_list(result1, exact=has_keywords)
         result1 = [r for r in result1 if r.id not in checked_story_ids]
         
-        if has_keywords and len(vars.params.keywords_str.split()) > 1: #find all pages containing all words in this string
-            result2 = _get_story_list(vars.params, False)
+        if has_keywords and len(params.keywords_str.split()) > 1: #find all pages containing all words in this string
+            result2 = _get_story_list(params, False)
             result2 = process_story_list(result2)
-            checked_story_ids1 = set([r.id for r in result1])
-            checked_story_ids |= checked_story_ids1
-            result2 = [r for r in result2 if r.id not in checked_story_ids]
+            #checked_story_ids1 = set([r.id for r in result1])
+            #checked_story_ids |= checked_story_ids1
+            #result2 = [r for r in result2 if r.id not in checked_story_ids]
     else:
-        result0 = _get_story_list(vars.params, False)
+        result0 = _get_story_list(params, False)
         result0 = process_story_list(result0)
+    visited = set([r.id for r in result0])
+    result1 = [r for r in result1 if r.id not in visited]
+    visited |= set([r.id for i in result1])
+    result2 = [r for r in result2 if r.id not in visited]
     result = result0 + result1 + result2
     result_type_counters = dict()
     active_result_types = set()

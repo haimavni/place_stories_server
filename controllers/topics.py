@@ -149,13 +149,23 @@ def update_topic_name_and_description(vars):
 
 @serve_json
 def create_new_book(vars):
+    if not db(db.TblBooks.name==vars.book_name).isempty():
+        raise Exception("Name is already in use")
     book_id = db.TblBooks.insert(name=vars.book_name)
     return dict(book_id=book_id)
 
 @serve_json
 def modify_book_info(vars):
     #if vars.delete: delete the book
-    book_id = int(vars.book_id)
+    book = vars.book
+    book_id = int(book.id)
     book_rec = db(db.TblBooks.id==book_id).select().first()
-    book_rec.update_record(name=vars.book_name, description=vars.book_description)
+    book_rec.update_record(name=book.name, description=book.description)
+    return dict()
+
+@serve_json
+def remove_book(vars):
+    book = vars.book
+    db(db.TblStories.book_id==book.id).update(book_id=None)
+    db(db.TblBooks.id==book.id).delete()
     return dict()
