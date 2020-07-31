@@ -219,8 +219,10 @@ def get_story_list(vars):
     if params.selected_book:
         result0 = get_checked_stories(params)
         result0 = process_story_list(result0, checked=True)
-        result1 = db(db.TblStories.book_id==params.selected_book.id).select()
-        result1 = process_story_list(result0)
+        q = init_query(db.TblStories)
+        q &= (db.TblStories.book_id==params.selected_book.id)
+        result1 = db(q).select(orderby=db.TblStories.sorting_key)
+        result1 = process_story_list(result1)
     elif qhd:
         result0 = get_checked_stories(params)
         result0 = process_story_list(result0, checked=True)
@@ -233,15 +235,12 @@ def get_story_list(vars):
         if has_keywords and len(params.keywords_str.split()) > 1: #find all pages containing all words in this string
             result2 = _get_story_list(params, False)
             result2 = process_story_list(result2)
-            #checked_story_ids1 = set([r.id for r in result1])
-            #checked_story_ids |= checked_story_ids1
-            #result2 = [r for r in result2 if r.id not in checked_story_ids]
     else:
         result0 = _get_story_list(params, False)
         result0 = process_story_list(result0)
     visited = set([r.id for r in result0])
     result1 = [r for r in result1 if r.id not in visited]
-    visited |= set([r.id for i in result1])
+    visited |= set([r.id for r in result1])
     result2 = [r for r in result2 if r.id not in visited]
     result = result0 + result1 + result2
     result_type_counters = dict()
@@ -313,13 +312,17 @@ def get_story_detail(vars):
         if term:
             photos, members, candidates, articles, article_candidates = get_term_members(term)
     story_topics = get_story_topics(story_id)
-    story_rec = db(db.TblStories.id==story_id).select(db.TblStories.sorting_key, db.TblStories.story_date, db.TblStories.story_date_dateunit, db.TblStories.story_date_datespan).first()
+    story_rec = db(db.TblStories.id==story_id).select(db.TblStories.sorting_key, db.TblStories.story_date, db.TblStories.book_id,
+                                                      db.TblStories.story_date_dateunit, db.TblStories.story_date_datespan).first()
+    book_id = story_rec.book_id
+    book_name = db(db.TblBooks.id==book_id).select().first().name
     sorting_key = story_rec.sorting_key
     sorting_key = decode_sorting_key(sorting_key)
     dates = get_all_dates(story_rec)
     return dict(story=story, members=members, candidates=candidates, 
                 articles=articles, article_candidates=article_candidates, 
-                story_topics=story_topics, photos=photos, sorting_key=sorting_key, story_date=dates.story_date)
+                story_topics=story_topics, photos=photos, sorting_key=sorting_key, story_date=dates.story_date,
+                book_id=book_id, book_name=book_name)
 
 @serve_json
 def get_story_photo_list(vars):
@@ -567,6 +570,7 @@ def apply_topics_to_selected_stories(vars):
     else:
         dates_info = None
     visibility_option = params.selected_story_visibility
+    selected_book = params.selected_book
 
     checked_story_list = params.checked_story_list
     selected_topics = params.selected_topics
@@ -599,6 +603,9 @@ def apply_topics_to_selected_stories(vars):
         if visibility_option:
             story_rec = db(db.TblStories.id==story_id).select().first()
             story_rec.update_record(visibility=visibility_option)
+        if selected_book:
+            story_rec = db(db.TblStories.id==story_id).select().first()
+            story_rec.update_record(book_id=selected_book.id)
             
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         curr_tags.sort()
