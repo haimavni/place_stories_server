@@ -319,6 +319,9 @@ def get_story_detail(vars):
         book_name = db(db.TblBooks.id==book_id).select().first().name
         sorting_key = story_rec.sorting_key
         sorting_key = decode_sorting_key(sorting_key)
+    else:
+        book_name = None
+        sorting_key = None
     dates = get_all_dates(story_rec)
     return dict(story=story, members=members, candidates=candidates, 
                 articles=articles, article_candidates=article_candidates, 
