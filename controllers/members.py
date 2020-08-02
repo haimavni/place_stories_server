@@ -315,9 +315,10 @@ def get_story_detail(vars):
     story_rec = db(db.TblStories.id==story_id).select(db.TblStories.sorting_key, db.TblStories.story_date, db.TblStories.book_id,
                                                       db.TblStories.story_date_dateunit, db.TblStories.story_date_datespan).first()
     book_id = story_rec.book_id
-    book_name = db(db.TblBooks.id==book_id).select().first().name
-    sorting_key = story_rec.sorting_key
-    sorting_key = decode_sorting_key(sorting_key)
+    if book_id:
+        book_name = db(db.TblBooks.id==book_id).select().first().name
+        sorting_key = story_rec.sorting_key
+        sorting_key = decode_sorting_key(sorting_key)
     dates = get_all_dates(story_rec)
     return dict(story=story, members=members, candidates=candidates, 
                 articles=articles, article_candidates=article_candidates, 
