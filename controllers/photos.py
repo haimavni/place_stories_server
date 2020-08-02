@@ -442,7 +442,9 @@ def save_video(vars):
     if not params.id: #creation, not modification
         pats = dict(
             youtube=r'https://(?:www.youtube.com/watch\?v=|youtu\.be/)(?P<code>[^&]+)',
-            vimeo=r'https://vimeo.com/(?P<code>\d+)'
+            vimeo=r'https://vimeo.com/(?P<code>\d+)',
+            google_drive=r'https://drive.google.com/file/d/(?P<code>[^/]+?)/.*',
+            google_photos=r'https://photos.app.goo.gl/(?P<code>[^&]+)'
         )
         src = None
         for t in pats:
