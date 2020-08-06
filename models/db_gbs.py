@@ -1,5 +1,6 @@
 import datetime
 import random
+from folders import local_folder, url_folder
 NO_DATE = datetime.date(day=1, month=1, year=1)
 NO_TIME = datetime.datetime(day=1, month=1, year=1)
 FAR_FUTURE = datetime.date(day=1, month=1, year=3000)
@@ -571,7 +572,7 @@ def write_indexing_sql_scripts():
         ('TblPhotos',       'crc')
     ]
 
-    path = 'applications/' + request.application + '/logs/'
+    path = local_folder('logs')
     fname = path + 'indexes_created[{a}].txt'.format(a=request.application)
     if os.path.exists(fname):
         return

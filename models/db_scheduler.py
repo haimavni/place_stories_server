@@ -43,12 +43,12 @@ class MyScheduler(Scheduler):
         return task_id
 
     def on_update_task_status(self, task_id, data):
-        logger.debug("task {} status changed: {} ".format(task_id, data))
+        ##comment("task {} status changed: {} ", task_id, data)
         try:
             ###comment("task {task_id} status changed {data}", task_id=task_id, data=data)
             ws_messaging.send_message(key='task_status_changed', group='TASK_MONITOR', task_id=task_id, data=data)
         except Exception, e:
-            logger.error('failed broadcasting update task status')
+            log_exception('failed broadcasting update task status')
 
 def secs_to_dhms(t):
     s = t % 60
