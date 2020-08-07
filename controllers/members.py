@@ -579,6 +579,8 @@ def apply_topics_to_selected_stories(vars):
     checked_story_list = params.checked_story_list
     selected_topics = params.selected_topics
     new_topic_was_added = False
+    if selected_book: #to enable removing story from book
+        db(db.TblStories.book_id == selected_book.id).update(book_id=None)
     for story_id in checked_story_list:
         curr_tag_ids = set(get_tag_ids(story_id, usage_char))
         item_rec = item_of_story_id(used_for, story_id)
