@@ -1,6 +1,6 @@
 import datetime
 import random
-from folders import local_folder, url_folder
+from folders import local_folder, url_folder, safe_open
 NO_DATE = datetime.date(day=1, month=1, year=1)
 NO_TIME = datetime.datetime(day=1, month=1, year=1)
 FAR_FUTURE = datetime.date(day=1, month=1, year=3000)
@@ -576,10 +576,10 @@ def write_indexing_sql_scripts():
     fname = path + 'indexes_created[{a}].txt'.format(a=request.application)
     if os.path.exists(fname):
         return
-    with open(fname, 'w') as f:
+    with safe_open(fname, 'w') as f:
         f.write('Indexes create/drop sql scripts already created.\nDo not delete this file.')
-    with open(path + 'create_indexes[{a}].sql'.format(a=request.application), mode='w') as f:
-        with open(path + 'delete_indexes[{a}].sql'.format(a=request.application), mode='w') as g:
+    with safe_open(path + 'create_indexes[{a}].sql'.format(a=request.application), mode='w') as f:
+        with safe_open(path + 'delete_indexes[{a}].sql'.format(a=request.application), mode='w') as g:
             for tcc in indexes:
                 table = tcc[0]
                 fields = ', '.join(tcc[1:])

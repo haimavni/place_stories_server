@@ -14,6 +14,7 @@ from words import update_word_index_all
 from docs_support import calc_doc_stories
 import os
 from topics_support import fix_is_tagged
+from folders import safe_open
 
 def test_scheduler(msg):
     comment("test task {}", msg)
@@ -302,7 +303,7 @@ def verify_tasks_started():
         os.remove(lock_file_name)
     if os.path.isfile(lock_file_name):
         return
-    with open(lock_file_name, 'w') as f:
+    with safe_open(lock_file_name, 'w') as f:
         f.write('locked')
     for function_name in permanent_tasks:
         ###if db(db.scheduler_task.function_name==function_name).isempty():
