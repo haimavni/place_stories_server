@@ -47,10 +47,10 @@ def local_images_folder():
 def get_user_id():
     request = inject("request")
     host = request.env.http_host
-    if host == '127.0.0.1:8000':
-        uname = "haim"
-    else:
-        uname = 'www-data'
+    #if host == '127.0.0.1:8000':
+        #uname = "haim"
+    #else:
+    uname = 'www-data'
     return pwd.getpwnam(uname).pw_uid
     
 def safe_open(filename, mode):
