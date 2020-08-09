@@ -169,7 +169,7 @@ def set_articles_option(vars):
     return dict()
 
 @serve_json
-def set_enable_books_option(vars):
+def set_books_option(vars):
     config_rec = db(db.TblConfiguration).select().first()
     if not config_rec:
         db.TblConfiguration.insert()
