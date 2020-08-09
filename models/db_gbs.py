@@ -477,6 +477,8 @@ db.define_table('TblConfiguration',
                 Field('help_messages_upload_time', type='datetime', default=NO_DATE),
                 Field('letter_templates_upload_time', type='datetime', default=NO_DATE),
                 Field('enable_articles', type='boolean', default=False),
+                Field('enable_member_of_the_day', type='boolean', default=True),
+                Field('enable_books', type='boolean', default=True),
                 Field('promoted_story_expiration', type='integer', default=7)
                 )
 

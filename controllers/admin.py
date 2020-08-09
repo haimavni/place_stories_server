@@ -169,6 +169,26 @@ def set_articles_option(vars):
     return dict()
 
 @serve_json
+def set_enable_books_option(vars):
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    books_on = vars.option == 'user.enable-books-on' or vars.option == None
+    config_rec.update_record(enable_books=books_on)
+    return dict()
+
+@serve_json
+def set_member_of_the_day_option(vars):
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    member_of_the_day_on = vars.option == 'user.enable-member-of-the-day-on'
+    config_rec.update_record(enable_member_of_the_day=member_of_the_day_on)
+    return dict()
+
+@serve_json
 def set_quick_upload_option(vars):
     config_rec = get_config_rec()
     quick_upload_on = vars.option == 'user.quick-upload-on'
