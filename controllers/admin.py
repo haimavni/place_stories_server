@@ -174,7 +174,7 @@ def set_books_option(vars):
     if not config_rec:
         db.TblConfiguration.insert()
         config_rec = db(db.TblConfiguration).select().first()
-    books_on = vars.option == 'user.enable-books-on' or vars.option == None
+    books_on = vars.option == 'user.enable-books-on'
     config_rec.update_record(enable_books=books_on)
     return dict()
 
