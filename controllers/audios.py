@@ -17,7 +17,7 @@ def get_audio_list(vars):
     q = make_audios_query(params)
     lst = db(q).select(orderby=~db.TblAudios.id)
     selected_audio_list = params.selected_audio_list
-    lst = [rec for rec in lst if rec.story_id not in params.checked_audio_list]
+    lst = [rec.TblAudios for rec in lst if rec.TblAudios.story_id not in params.checked_audio_list]
     lst = lst0 + lst
     audio_list = [rec for rec in lst]
     for rec in audio_list:

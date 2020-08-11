@@ -19,6 +19,8 @@ word_pat = r'([{alef}-{tav}]+|[0-9./]+|[a-zA-Z]+)'.format(alef=alef, tav=tav)
 word_regex = re.compile(word_pat, re.UNICODE | re.MULTILINE)
 
 def remove_all_tags(html):
+    if not html:
+        return ""
     html = html.replace('>', '> ')  #to prevent words that are separated by tags only to stick together
     html = re.sub(r'&quot;', '"', html)
     html = re.sub(r'&#39;', "'", html)
