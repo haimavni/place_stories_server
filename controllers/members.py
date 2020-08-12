@@ -219,7 +219,7 @@ def get_story_list(vars):
     if params.selected_book:
         result0 = get_checked_stories(params)
         result0 = process_story_list(result0, checked=True)
-        q = init_query(db.TblStories)
+        q = make_stories_query(params, True)
         q &= (db.TblStories.book_id==params.selected_book.id)
         result1 = db(q).select(orderby=db.TblStories.sorting_key)
         result1 = process_story_list(result1)
@@ -579,7 +579,7 @@ def apply_topics_to_selected_stories(vars):
     checked_story_list = params.checked_story_list
     selected_topics = params.selected_topics
     new_topic_was_added = False
-    if selected_book: #to enable removing story from book
+    if selected_book and checked_story_list: #we remove all stories and then add the ones from the selected books
         db(db.TblStories.book_id == selected_book.id).update(book_id=None)
     for story_id in checked_story_list:
         curr_tag_ids = set(get_tag_ids(story_id, usage_char))
