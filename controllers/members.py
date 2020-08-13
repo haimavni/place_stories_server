@@ -460,6 +460,16 @@ def push_message_up(vars):
     return dict()
 
 @serve_json
+def pin_message(vars):
+    sid = vars.story_id
+    rec = db(db.TblStories.id == sid).select().first()
+    now = datetime.datetime.now()
+    far_future = now + datetime.timedelta(days=1461*25) #hundred years
+    if rec:
+        rec.update_record(creation_date=far_future, last_update_date=far_future)
+    return dict()
+
+@serve_json
 def get_constants(vars):
     return dict(
         story_type=dict(
