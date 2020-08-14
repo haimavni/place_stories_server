@@ -52,7 +52,7 @@ ln --symbolic -T ../../$server $app_name
 cd ..
 
 #init the database. create owners account with all privileges
-python web2py.py -S $app_name/init_app/init_database$args
+python web2py.py -S $app_name/init_app/init_database $args
 
 #load help messages
 python web2py.py -S $app_name/help/load_help_messages_from_csv
@@ -62,5 +62,9 @@ python /home/www-data/$server/private/add_app_to_scheduler.py $app_name
 echo daemon reload
 systemctl daemon-reload
 echo restart scheduler
+
+#create app version of index.html
+python /home/www-data/$server/private/create_all_app_indexes $app_name
+
 ##todo: it hangs! systemctl restart web2py-scheduler.service
 echo finished creation of $app_name
