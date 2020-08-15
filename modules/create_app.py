@@ -15,7 +15,7 @@ def create_an_app(rec):
     os.chdir(path)
     command = 'bash create_app.bash {app_name} test {email} {password} {first_name} {last_name}'. \
         format(app_name=rec.app_name, email=rec.email, password=rec.password, first_name=rec.first_name, last_name=rec.last_name)
-    with open(logs_path, 'w') as log_file:
+    with open(logs_path + "app_creation.log", 'w') as log_file:
         code = subprocess.call(command, stdout=log_file, stderr=log_file, shell=True)
     comment('finished creation of {}. code = {}', rec.app_name, code)
     os.chdir(orig_dir)
