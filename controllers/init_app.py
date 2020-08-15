@@ -43,8 +43,8 @@ def request_new_app(vars):
             locale=vars.locale
         )
         error_message = ""
-        ###host=request.env.http_host.split(':')[0]  
-        host = 'tol.life'
+        host=request.env.http_host.split(':')[0]  
+        ###host = 'tol.life'
         confirmation_url = '/{app}/init_app/confirm_new_app?app_name={app_name}&confirmation_key={confirmation_key}'. \
             format(app=request.application, app_name=app_name, confirmation_key=confirmation_key)
         confirmation_link = '{host}{confirmation_url}'.format(host=host, confirmation_url=confirmation_url)
