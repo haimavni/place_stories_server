@@ -6,6 +6,7 @@ import re
 import os
 
 def init_database():
+    comment("init database args: ", str(request.args))
     if len(request.args) < 4:
         return "database initialized without admin"
     email,password,first_name,last_name = request.args

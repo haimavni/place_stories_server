@@ -18,17 +18,13 @@ then
 else
     if [ -z "$first" ]
     then
-        first_name="Admin"
-    else
-        first_name="$first"
+        first="Admin"
     fi
     if [ -z "$last" ]
     then
-        last_name="Admin"
-    else
-        last_name="$last"
+        last="Admin"
     fi
-    args="/$email/$password/$first_name/$last_name"
+    args="/$email/$password/$first/$last"
     server="tol_server_$ver"
 fi
 ###----------------------temporary. for local only!-------------------
@@ -52,7 +48,7 @@ ln --symbolic -T ../../$server $app_name
 cd ..
 
 #init the database. create owners account with all privileges
-python web2py.py -S $app_name/init_app/init_database $args
+python web2py.py -S $app_name/init_app/init_database$args
 
 #load help messages
 python web2py.py -S $app_name/help/load_help_messages_from_csv
