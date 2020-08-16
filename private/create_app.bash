@@ -64,7 +64,7 @@ systemctl daemon-reload
 echo restart scheduler
 
 #create app version of index.html
-python /home/www-data/$server/private/create_all_app_indexes $app_name
+python /home/www-data/$server/private/create_all_app_indexes.py $app_name
 
 ##todo: it hangs! systemctl restart web2py-scheduler.service
 echo finished creation of $app_name
