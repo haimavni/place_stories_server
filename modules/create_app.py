@@ -25,11 +25,13 @@ def create_an_app(rec):
         notify_customer(rec)
     else:
         notify_developer(rec, False)
-    command = 'systemctl restart web2py-scheduler'
-    with open(log_file_name, 'a') as log_file:
-        log_file.write('before systemctl restart')
-        code = subprocess.call(command, stdout=log_file, stderr=log_file, shell=True)
-        log_file.write('after systemctl restart')                       
+    #command = 'systemctl restart web2py-scheduler'
+    with open('/home/www-data/tol_server_test/private/restart_now', 'w') as f:
+        f.write("restart now")
+    #with open(log_file_name, 'a') as log_file:
+        #log_file.write('before systemctl restart')
+        #code = subprocess.call(command, stdout=log_file, stderr=log_file, shell=True)
+        #log_file.write('after systemctl restart')                       
     return code
 
 def notify_customer(rec):
@@ -74,7 +76,8 @@ def notify_developer(rec, success):
 def create_pending_apps():
     db, log_exception = inject('db', 'log_exception')
     try:
-        for rec in db((db.TblCustomers.created==False) & (db.TblCustomers.confirmation_key=='')).select():
+        lst = db((db.TblCustomers.created==False) & (db.TblCustomers.confirmation_key=='')).select()
+        for rec in lst:
             rec.update_record(created=True)
             db.commit()
             code = create_an_app(rec)
