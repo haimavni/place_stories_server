@@ -724,7 +724,11 @@ def create_watermark(image_path, final_image_path, watermark):
 def get_exif_data(image):
     """Returns a dictionary from the exif data of an PIL Image item. Also converts the GPS Tags"""
     exif_data = {}
-    info = image._getexif()
+    info = None
+    try:
+        info = image._getexif()
+    except Exception, e:
+        pass #png, for example
     if info:
         for tag, value in info.items():
             decoded = TAGS.get(tag, tag)

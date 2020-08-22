@@ -181,10 +181,16 @@ class Stories:
             data = Storage(last_update_date=now, story_text=updated_story_text)
             if story_info.preview and rec.preview != story_info.preview:
                 data.preview = story_info.preview
+            else:
+                data.preview = rec.preview
             if story_info.name and rec.name != story_info.name:
                 data.name = story_info.name
+            else:
+                data.name = rec.name
             if story_info.source:
                 data.source = story_info.source
+            else:    
+                data.source = rec.source
             rec.update_record(**data)
         elif rec.story != updated_story_text:
             merger = mim.Merger()

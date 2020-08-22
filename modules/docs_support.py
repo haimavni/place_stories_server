@@ -85,6 +85,7 @@ def calc_doc_story(doc_id):
             log_exception('PDF to text error in {}. Name: {}'.format(doc_rec.doc_path, doc_rec.original_file_name))
             txt = ''
             good = False
+            raise
         if not txt:
             txt = '- - - - -'
         if doc_rec.story_id:

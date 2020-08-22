@@ -19,26 +19,28 @@ def upload_doc(vars):
 def get_doc_list(vars):
     params = vars.params
     if params.checked_doc_list:
-        lst0 = db(db.TblDocs.story_id.belongs(params.checked_doc_list)).select()
+        q = (db.TblDocs.story_id.belongs(params.checked_doc_list)) & (db.TblStories.id==db.TblDocs.story_id)
+        lst0 = db(q).select()
         lst0 = [rec for rec in lst0]
         for rec in lst0:
-            rec.checked = True
+            rec.TblDocs.checked = True
     else:
         lst0 = []
     selected_topics = params.selected_topics or []
     q = make_docs_query(params)
     lst = db(q).select(orderby=~db.TblDocs.id)
-    lst = [r.TblDocs for r in lst]
-    selected_doc_list = params.selected_doc_list
-    lst = [rec for rec in lst if rec.story_id not in params.checked_doc_list]
+    lst = [rec for rec in lst if rec.TblDocs.story_id not in params.checked_doc_list]
     lst = lst0 + lst
-    doc_list = [rec for rec in lst]
-    for rec in doc_list:
+    doc_list = []
+    for rec1 in lst:
+        rec = rec1.TblDocs
         fix_record_dates_out(rec)
         story = get_story_by_id(rec.story_id)
         rec.story = story
         rec.doc_url = doc_url(rec.story_id)
         rec.doc_jpg_url = rec.doc_url.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', '.jpg')
+        rec.keywords = rec1.TblStories.keywords
+        doc_list.append(rec)
     return dict(doc_list=doc_list, no_results=not doc_list)
 
 @serve_json
@@ -90,7 +92,6 @@ def apply_to_checked_docs(vars):
         keywords = "; ".join(curr_tags)
         changes[doc_id] = dict(keywords=keywords, doc_id=doc_id)
         rec = db(db.TblDocs.id==doc_id).select().first()
-        rec.update_record(keywords=keywords)  #todo: remove this line soon
         rec = db(db.TblStories.id==rec.story_id).select().first()
         rec.update_record(keywords=keywords, is_tagged=bool(keywords))
         if dates_info:

@@ -807,8 +807,11 @@ def save_sorting_key(vars):
 @serve_json
 def update_story_date(vars):
     story_date_str = vars.story_date_str
+    story_date_datespan = int(vars.story_date_datespan or 0)
+    if not story_date_str:
+        story_date_str = '01-01-01'
     story_dates_info = dict(
-        story_date = (vars.story_date_str, int(vars.story_date_datespan))
+        story_date = (story_date_str, story_date_datespan)
     )
     rec = db((db.TblStories.id==int(vars.story_id)) & (db.TblStories.deleted != True)).select().first()
     update_record_dates(rec, story_dates_info)

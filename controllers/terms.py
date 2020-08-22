@@ -41,23 +41,26 @@ def apply_to_checked_terms(vars):
 def get_term_list(vars):
     params = vars.params
     if params.checked_term_list:
-        lst0 = db(db.TblTerms.story_id.belongs(params.checked_term_list)).select()
+        q = (db.TblTerms.story_id.belongs(params.checked_term_list)) & (db.TblStories.id==db.TblTerms.story_id)
+        lst0 = db(q).select()
         lst0 = [rec for rec in lst0]
         for rec in lst0:
-            rec.checked = True
+            rec.TblTerms.checked = True
     else:
         lst0 = []
     q = make_terms_query(params)
     lst = db(q).select(orderby=~db.TblTerms.id)
-    lst = [r.TblTerms for r in lst]
-    selected_term_list = params.selected_term_list
-    lst = [rec for rec in lst if rec.story_id not in params.checked_term_list]
-    lst = sorted(lst, cmp=lambda itm1, itm2: -1 if itm1.Name < itm2.Name else +1 if itm1.Name > itm2.Name else 0)
+    lst = [r for r in lst]
+    lst = [rec for rec in lst if rec.TblTerms.story_id not in params.checked_term_list]
+    lst = sorted(lst, cmp=lambda itm1, itm2: -1 if itm1.TblTerms.Name < itm2.TblTerms.Name else +1 if itm1.TblTerms.Name > itm2.TblTerms.Name else 0)
     lst = lst0 + lst
-    term_list = [rec for rec in lst]
-    for rec in term_list:
+    term_list = []
+    for rec1 in lst:
+        rec = rec1.TblTerms
         story = get_story_by_id(rec.story_id)
         rec.story = story
+        rec.keywords = rec1.TblStories.keywords
+        term_list.append(rec)
     return dict(term_list=term_list, no_results=not term_list)
 
 #----------------support functions-----------------

@@ -8,23 +8,26 @@ import stories_manager
 def get_audio_list(vars):
     params = vars.params
     if params.checked_audio_list:
-        lst0 = db(db.TblAudios.story_id.belongs(params.checked_audio_list)).select()
+        q = (db.TblAudios.story_id.belongs(params.checked_audio_list)) & (db.TblStories.id==db.TblAudios.story_id)
+        lst0 = db.select(q)
         lst0 = [rec for rec in lst0]
         for rec in lst0:
-            rec.checked = True
+            rec.TblAudios.checked = True
     else:
         lst0 = []
     q = make_audios_query(params)
     lst = db(q).select(orderby=~db.TblAudios.id)
-    selected_audio_list = params.selected_audio_list
     lst = [rec.TblAudios for rec in lst if rec.TblAudios.story_id not in params.checked_audio_list]
     lst = lst0 + lst
-    audio_list = [rec for rec in lst]
-    for rec in audio_list:
+    audio_list = []
+    for rec1 in lst:
+        rec = rec1.TblAudios
         fix_record_dates_out(rec)
         story = get_story_by_id(rec.story_id)
         rec.story = story
         rec.audio_path = audio_url(rec.story_id)
+        rec.keywords = rec1.keywords
+        audio_list.append(rec)
     return dict(audio_list=audio_list, no_results=not audio_list)
 
 @serve_json

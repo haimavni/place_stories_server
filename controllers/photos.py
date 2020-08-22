@@ -528,22 +528,24 @@ def get_video_list(vars):
     lst = db(q).select()
     selected_video_list = vars.selected_video_list
     result = []
+    q = (db.TblVideos.id.belongs(selected_video_list)) & (db.TblStories.id==db.TblVideos.story_id)
     if selected_video_list:
-        lst1 = db(db.TblVideos.id.belongs(selected_video_list)).select()
+        lst1 = db(q).select()
         lst1 = [rec for rec in lst1]
         for rec in lst1:
-            rec.selected = True
+            rec.TblVideos.selected = True
     else:
         lst1 = []
-    lst1_ids = [rec.id for rec in lst1]
-    if lst and 'TblVideos' in lst[0]:
-        lst = [r.TblVideos for r in lst]
-    lst = [rec for rec in lst if rec.id not in lst1_ids]
+    lst1_ids = [rec.TblVideos.id for rec in lst1]
+    lst = [rec for rec in lst if rec.TblVideos.id not in lst1_ids]
     lst = lst1 + lst
     ##lst = db(db.TblVideos.deleted != True).select()
-    video_list = [rec for rec in lst]
-    for rec in video_list:
+    video_list = []
+    for rec1 in lst:
+        rec = rec1.TblVideos
         fix_record_dates_out(rec)
+        rec.keywords = rec1.TblStories.keywords
+        video_list.append(rec)
     return dict(video_list=video_list)
 
 @serve_json
