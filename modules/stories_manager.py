@@ -178,6 +178,7 @@ class Stories:
         if story_info.used_for == STORY4DOC:
             if not story_info.preview:
                 story_info.preview = get_reisha(updated_story_text)
+            preview = story_info.preview
             data = Storage(last_update_date=now, story_text=updated_story_text)
             if story_info.preview and rec.preview != story_info.preview:
                 data.preview = story_info.preview
@@ -187,10 +188,7 @@ class Stories:
                 data.name = story_info.name
             else:
                 data.name = rec.name
-            if story_info.source:
-                data.source = story_info.source
-            else:    
-                data.source = rec.source
+            data.source = story_info.source
             rec.update_record(**data)
         elif rec.story != updated_story_text:
             merger = mim.Merger()
