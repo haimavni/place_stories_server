@@ -228,7 +228,7 @@ def schedule_update_word_index_all():
         start_time=now,
         stop_time=now + datetime.timedelta(days=1461),
         repeats=0,
-        period=60,   # minute
+        period=180,   # 3 minutes
         timeout = 600, # will time out if running for 10 minutes
     )
 

@@ -177,7 +177,8 @@ def update_word_index_all():
         comment("Start indexing story words cycle")
         q = db.TblStories.last_update_date > db.TblStories.indexing_date
         if db(q).isempty():
-            return
+            comment("Nothing to do")
+            return dict(good=True)
         time_budget = 600 - 15 #will exit the loop 15 seconds before the a new cycle starts
         t0 = datetime.datetime.now()
         while True:
@@ -199,6 +200,8 @@ def update_word_index_all():
     except Exeption, e:
         log_exception('Error updating word index')
         raise
+    else:
+        return dict(good=True)
             
 def find_or_insert_word(wrd):            
     from injections import inject
