@@ -231,7 +231,7 @@ def get_story_list(vars):
         result1 = _get_story_list(params, has_keywords)
         result1 = process_story_list(result1, exact=has_keywords)
         result1 = [r for r in result1 if r.id not in checked_story_ids]
-        
+
         if has_keywords and len(params.keywords_str.split()) > 1: #find all pages containing all words in this string
             result2 = _get_story_list(params, False)
             result2 = process_story_list(result2)
@@ -440,14 +440,23 @@ def remove_parent(vars):
 
 @serve_json
 def get_message_list(vars):
+    pinned = db(db.TblPinned).select()
+    pinned = [rec.story_id for rec in pinned]
     q = (db.TblStories.used_for == STORY4MESSAGE) & (db.TblStories.author_id == db.auth_user.id) & (db.TblStories.deleted != True)
-    lst = db(q).select(orderby=~db.TblStories.creation_date, limitby=(0, vars.limit or 100))
-    result = [dict(story_text=rec.TblStories.story,
-                   preview=rec.TblStories.story, #it is short anyway
-                   name=rec.TblStories.name, 
-                   story_id=rec.TblStories.id, 
-                   timestamp=rec.TblStories.last_update_date, 
-                   author=rec.auth_user.first_name + ' ' + rec.auth_user.last_name) for rec in lst]
+    result = []
+    for p in [True, False]:
+        if p:
+            q1 = q & (db.TblStories.id.belongs(pinned))
+        else:
+            q1 = q & (~db.TblStories.id.belongs(pinned))
+        lst = db(q1).select(orderby=~db.TblStories.creation_date, limitby=(0, vars.limit or 100))
+        result += [dict(story_text=rec.TblStories.story,
+                        preview=rec.TblStories.story, #it is short anyway
+                        name=rec.TblStories.name, 
+                        story_id=rec.TblStories.id, 
+                        timestamp=rec.TblStories.last_update_date,
+                        pinned=p,
+                        author=rec.auth_user.first_name + ' ' + rec.auth_user.last_name) for rec in lst]
     return dict(message_list=result)
 
 @serve_json
@@ -462,12 +471,14 @@ def push_message_up(vars):
 @serve_json
 def pin_message(vars):
     sid = vars.story_id
-    rec = db(db.TblStories.id == sid).select().first()
-    now = datetime.datetime.now()
-    far_future = now + datetime.timedelta(days=1461*25) #hundred years
-    if rec:
-        rec.update_record(creation_date=far_future, last_update_date=far_future)
-    return dict()
+    q = (db.TblPinned.story_id == sid)
+    pinned = False
+    if db(q).isempty():
+        db.TblPinned.insert(story_id=sid)
+        pinned = True
+    else:
+        db(q).delete()
+    return dict(pinned=pinned)
 
 @serve_json
 def get_constants(vars):
@@ -502,7 +513,7 @@ def get_constants(vars):
             SV_ADMIN=SV_ADMIN_ONLY,
             SV_ARCHIVER=SV_ARCHIVER_ONLY,
             SV_LOGGEDIN=SV_LOGGEDIN_ONLY
-        ),
+            ),
         ptp_key=web2py_uuid()
     )    
 
@@ -540,7 +551,7 @@ def delete_checked_stories(vars):
     q = db.TblStories.id.belongs(checked_stories)
     n = db(q).update(deleted=deleted)
     tbls = {STORY4MEMBER: db.TblMembers, STORY4EVENT: db.TblEvents, STORY4PHOTO: db.TblPhotos, STORY4TERM: db.TblTerms, STORY4VIDEO: db.TblVideos, STORY4DOC: db.TblDocs, STORY4ARTICLE: db.TblArticles}
-    
+
     #if story is associated with member, photo, video or document, need to skip it or delete the item too 
     for usage in [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4AUDIO, STORY4ARTICLE]:
         q1 = q & (db.TblStories.used_for == usage)
@@ -622,7 +633,7 @@ def apply_topics_to_selected_stories(vars):
         if selected_book:
             story_rec = db(db.TblStories.id==story_id).select().first()
             story_rec.update_record(book_id=selected_book.id)
-            
+
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         curr_tags.sort()
         keywords = "; ".join(curr_tags)
@@ -1280,18 +1291,18 @@ def copy_story_date_to_object_date(story_rec):
     elif story_rec.used_for == STORY4AUDIO:
         audio_rec = db(db.TblAudios.story_id==story_rec.id).select().first()
         audio_rec.update_record(audio_date=story_rec.story_date, 
-                              audio_date_dateunit=story_rec.story_date_dateunit,
-                              audio_date_datespan=story_rec.story_date_datespan,
+                                audio_date_dateunit=story_rec.story_date_dateunit,
+                                audio_date_datespan=story_rec.story_date_datespan,
                               audio_date_dateend=story_rec.story_date_dateend,
                               )
     #elif story_rec.used_for == STORY4ARTICLE:
         #article_rec = db(db.Tblarticles.story_id==story_rec.id).select().first()
         #article_rec.update_record(article_date=story_rec.story_date, 
-                              #article_date_dateunit=story_rec.story_date_dateunit,
-                              #article_date_datespan=story_rec.story_date_datespan,
-                              #article_date_dateend=story_rec.story_date_dateend,
-                              #)
-        
+                                #article_date_dateunit=story_rec.story_date_dateunit,
+                                #article_date_datespan=story_rec.story_date_datespan,
+                                #article_date_dateend=story_rec.story_date_dateend,
+                                #)
+
 @serve_json
 def qualified_members(vars):
     checked_answers = vars.checked_answers
@@ -1303,7 +1314,7 @@ def story_kinds():
     if auth.user_has_privilege(HELP_AUTHOR):
         story_kinds_arr += [STORY4HELP]
     return story_kinds_arr
-    
+
 def get_story_members(event):
     qp = (db.TblEventPhotos.Event_id == event.id) & (db.TblPhotos.id == db.TblEventPhotos.Photo_id) & (db.TblPhotos.deleted != True)
     photos = db(qp).select(db.TblPhotos.id, db.TblPhotos.photo_path)
