@@ -5,30 +5,33 @@ import os
 import subprocess
 
 def create_an_app(rec):
-    request, comment = inject('request', 'comment')
+    request, comment, log_path = inject('request', 'comment', 'log_path')
     folder = os.path.abspath(request.folder)
     path = folder + '/private'
-    log_path = folder + '/logs/create-{app}.log'.format(app=rec.app_name)
+    logs_path = log_path()
     ###comment('in create app. path: {p}, folder: {f}, request.folder: {rf}', p=path, f=folder, rf=request.folder)
     comment('about to create {app}'.format(app=rec.app_name))
     orig_dir = os.getcwd()
     os.chdir(path)
     command = 'bash create_app.bash {app_name} test {email} {password} {first_name} {last_name}'. \
         format(app_name=rec.app_name, email=rec.email, password=rec.password, first_name=rec.first_name, last_name=rec.last_name)
-    with open(log_path, 'w') as log_file:
+    log_file_name = logs_path + "app-creation-{}.log".format(rec.app_name)
+    with open(log_file_name, 'w') as log_file:
         code = subprocess.call(command, stdout=log_file, stderr=log_file, shell=True)
-    comment('finished creation of {}', rec.app_name)
+    comment('finished creation of {}. code = {}', rec.app_name, code)
     os.chdir(orig_dir)
     if code == 0:
         notify_developer(rec, True)
         notify_customer(rec)
     else:
         notify_developer(rec, False)
-    command = 'systemctl restart web2py-scheduler'
-    with open(log_path, 'a') as log_file:
-        log_file.write('before systemctl restart')
-        code = subprocess.call(command, stdout=log_file, stderr=log_file, shell=True)
-        log_file.write('after systemctl restart')                       
+    #command = 'systemctl restart web2py-scheduler'
+    with open('/home/www-data/tol_server_test/private/restart_now', 'w') as f:
+        f.write("restart now")
+    #with open(log_file_name, 'a') as log_file:
+        #log_file.write('before systemctl restart')
+        #code = subprocess.call(command, stdout=log_file, stderr=log_file, shell=True)
+        #log_file.write('after systemctl restart')                       
     return code
 
 def notify_customer(rec):
@@ -73,7 +76,8 @@ def notify_developer(rec, success):
 def create_pending_apps():
     db, log_exception = inject('db', 'log_exception')
     try:
-        for rec in db((db.TblCustomers.created==False) & (db.TblCustomers.confirmation_key=='')).select():
+        lst = db((db.TblCustomers.created==False) & (db.TblCustomers.confirmation_key=='')).select()
+        for rec in lst:
             rec.update_record(created=True)
             db.commit()
             code = create_an_app(rec)

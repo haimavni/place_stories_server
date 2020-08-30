@@ -176,9 +176,20 @@ class Stories:
         now = datetime.datetime.now()
         preview = ''
         if story_info.used_for == STORY4DOC:
-            if rec.preview != story_info.preview or rec.name != story_info.name or rec.source!= story_info.source:
-                rec.update_record(preview=story_info.preview, name=story_info.name or rec.name, last_update_date=now, source=story_info.source)
+            if not story_info.preview:
+                story_info.preview = get_reisha(updated_story_text)
             preview = story_info.preview
+            data = Storage(last_update_date=now, story_text=updated_story_text)
+            if story_info.preview and rec.preview != story_info.preview:
+                data.preview = story_info.preview
+            else:
+                data.preview = rec.preview
+            if story_info.name and rec.name != story_info.name:
+                data.name = story_info.name
+            else:
+                data.name = rec.name
+            data.source = story_info.source
+            rec.update_record(**data)
         elif rec.story != updated_story_text:
             merger = mim.Merger()
             delta = merger.diff_make(rec.story, updated_story_text)
@@ -195,7 +206,8 @@ class Stories:
                 updater_id=self.author_id,
                 last_version=last_version,
                 language=language1,
-                imported_from=imported_from
+                imported_from=imported_from,
+                sorting_key=story_info.sorting_key
             )
             text_auditor = auth.user_has_privilege(TEXT_AUDITOR)
             if text_auditor:
@@ -207,7 +219,7 @@ class Stories:
                 creation_date=now,
                 author_id=self.author_id,
                 language=language1)
-        elif story_info.name != rec.name or story_info.source != rec.source:
+        elif story_info.name != rec.name or story_info.source != rec.source or story_info.sorting_key != rec.sorting_key:
             rec.update_record(name=story_info.name, source=story_info.source, last_update_date=now, updater_id=self.author_id)
         ###update_story_words_index(story_id)
         author_name = auth.user_name(self.author_id) #name of the mblbhd, not the source

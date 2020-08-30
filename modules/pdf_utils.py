@@ -8,6 +8,9 @@ pdf utils:
 import re
 import fitz
 from pdf2image import convert_from_path
+import subprocess
+import os
+from injections import inject
 
 PAT = '[א-תךםןףץ]'
 PAT_HEB = PAT.replace(']', ']{2,100}').decode('utf-8')
@@ -41,7 +44,7 @@ def detect_rtl(doc):
                 return True
     return n2 > n1
 
-def pdf_to_text(pdfname):
+def old_pdf_to_text(pdfname):
     '''pdf to html'''
     doc = fitz.open(pdfname)
     rtl_lines = detect_rtl(doc)
@@ -59,6 +62,26 @@ def pdf_to_text(pdfname):
             result += tmp_s + '<br>'
     result += '\n</body>\n</html>'
     result = result.encode('utf-8')
+    return result
+
+def pdf_to_text(pdfname):
+    #after porting to python 3 we can use poppler-utils library
+    log_path = inject('log_path')
+    logs_path = log_path()
+    log_file_name = logs_path + "pdf_to_text.log"
+    command = "pdftotext {fn} {fn}.txt".format(fn=pdfname)
+    with open(log_file_name, 'a') as log_file:
+        log_file.write('\n pdf to text {}\n'.format(pdfname))
+        code = subprocess.call(command, stdout=log_file, stderr=log_file, shell=True)
+    result = ''
+    txtname = pdfname + '.txt'
+    with open(txtname) as f:
+        for s in f:
+            s = s.strip()
+            #fix parentheses etc.
+            result += s + ' \n'
+    if os.path.isfile(txtname):
+        os.remove(txtname)
     return result
 
 def highlight_pdf(fname, outfname, keywords):
