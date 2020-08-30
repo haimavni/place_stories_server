@@ -139,11 +139,7 @@ def collect_mail():
         logger.debug('collecting mail')
         for msg in email_photos_collector.collect():
             user_id = get_user_id_of_sender(msg.sender_email, msg.sender_name)
-            if not user_id:
-                emsg = 'mail sent by {} {}'.format(msg.sender_email, msg.sender_name)
-                mail.send(sender="admin@gbstories.org", to=receivers, subject="incoming email to gbstories from unknown sender", message=emsg)
-                continue
-            ###user_id = user_id or 1 #todo: if we decide not to create new user
+            user_id = user_id or 1 #todo: if we decide not to create new user
             text = msg.html_content or msg.plain_content
             comment('New email: subject: {subject}, images: {image_names} sent by {sender}', 
                     subject=msg.subject, image_names=msg.images.keys(), sender=msg.sender_email)

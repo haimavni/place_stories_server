@@ -1,27 +1,25 @@
 import cgi
 from my_cache import Cache
 from langs import fix_utf8
-from folders import url_folder, local_folder
 
 #---------------------------------------------------------------------------
 # Show Logs
 #---------------------------------------------------------------------------
 
-def logs_path():
-    return local_folder('logs')
-
-def logs_url():
-    return url_folder('logs')
+def log_Path():  #upper case to prevent collision with model function log_path
+    path = 'applications' + URL(r=request, c='logs')
+    r = path.rfind('/')
+    return path[:r]
 
 @serve_json
 def log_file_list(vars):
-    lst = sorted(os.listdir(logs_path()))
+    lst = sorted(os.listdir(log_Path()))
     log_files = [dict(fn=fn) for fn in lst]
     return dict(log_files=log_files)
 
 @serve_json
 def log_file_data(vars):
-    fname = logs_path() + '/' + vars.file_name
+    fname = log_Path() + '/' + vars.file_name
     with open(fname, 'r') as f:
         text=f.read()
     data = fix_utf8(text)
@@ -32,7 +30,7 @@ def log_file_data(vars):
 
 @serve_json
 def delete_log_file(vars):
-    filename = logs_path() + '/' + vars.file_name
+    filename = log_Path() + '/' + vars.file_name
     import os
     os.remove(filename)
     return dict()
@@ -47,7 +45,7 @@ def download_file():
 @serve_json
 def download_log_file(vars):
     fname = vars.file_name
-    filename = logs_url() + '/' + fname
+    filename = log_Path() + '/' + fname
     return dict(file_path=filename)
 
 

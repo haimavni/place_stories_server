@@ -76,11 +76,10 @@ import traceback
 import signal
 import socket
 import datetime
-##import logging
+import logging
 import optparse
 import types
 import Queue
-from injections import inject
 
 path = os.getcwd()
 
@@ -99,34 +98,14 @@ except ImportError:
         from gluon.contrib.simplejson import loads, dumps
 
 IDENTIFIER = "%s#%s" % (socket.gethostname(), os.getpid())
-##logger = logging.getLogger('web2py.scheduler.%s' % IDENTIFIER)
 
-class DummyLogger:
-    def __init__(self):
-        request = inject('request')
-        self.log_name = "applications/{app}/logs/logfile.log".format(app=request.application)
-        
-    def write_log(self, *args, **kargs):
-        pass
-        #uncomment below if necessary
-        #with open(self.log_name, 'a') as f:
-            #f.write('args: {a} kargs: {k}\n'.format(a=str(args), k=str(kargs)))
-            
-    def debug(self, *args, **kargs):
-        self.write_log(args, kargs)
-        
-    def info(self, *args, **kargs):
-        self.write_log(args, kargs)
-
-    def error(self, *args, **kargs):
-        self.write_log(args, kargs)
-
-logger = DummyLogger()
+logger = logging.getLogger('web2py.scheduler.%s' % IDENTIFIER)
 
 from gluon import DAL, Field, IS_NOT_EMPTY, IS_IN_SET, IS_NOT_IN_DB
 from gluon import IS_INT_IN_RANGE, IS_DATETIME, IS_IN_DB
 from gluon.utils import web2py_uuid
 from gluon.storage import Storage
+
 
 QUEUED = 'QUEUED'
 ASSIGNED = 'ASSIGNED'
@@ -306,13 +285,13 @@ def executor(queue, task, out):
             os.chdir(os.environ['WEB2PY_PATH'])
             from gluon.shell import env, parse_path_info
             from gluon import current
-            ###level = logging.getLogger().getEffectiveLevel()
-            ###logging.getLogger().setLevel(logging.WARN)
+            level = logging.getLogger().getEffectiveLevel()
+            logging.getLogger().setLevel(logging.WARN)
             # Get controller-specific subdirectory if task.app is of
             # form 'app/controller'
             (a, c, f) = parse_path_info(task.app)
             _env = env(a=a, c=c, import_models=True)
-            ###logging.getLogger().setLevel(level)
+            logging.getLogger().setLevel(level)
             f = task.function
             functions = current._scheduler.tasks
             if not functions:
@@ -1533,7 +1512,7 @@ def main():
         tasks = {}
     group_names = [x.strip() for x in options.group_names.split(',')]
 
-    ###logging.getLogger().setLevel(options.logger_level)
+    logging.getLogger().setLevel(options.logger_level)
 
     print 'groups for this worker: ' + ', '.join(group_names)
     print 'connecting to database in folder: ' + options.db_folder or './'

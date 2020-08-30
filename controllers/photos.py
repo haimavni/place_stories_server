@@ -1,6 +1,6 @@
 from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, \
      save_uploaded_photo, rotate_photo, save_member_face, save_article_face, create_zip_file, get_photo_pairs, find_similar_photos, \
-     timestamped_photo_path, crop_a_photo
+     timestamped_photo_path, crop_a_photo, get_photo_topics
 import ws_messaging
 import stories_manager
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
@@ -37,7 +37,7 @@ def get_photo_detail(vars):
     photographer = db(db.TblPhotographers.id==rec.photographer_id).select().first()
     photographer_name = photographer.name if photographer else ''
     photographer_id = photographer.id if photographer else None
-    photo_topics = get_photo_topics(rec.story_id)
+    photo_topics = get_photo_topics(rec.id)
     return dict(photo_src=photos_folder() + timestamped_photo_path(rec),
                 photo_name=rec.Name,
                 original_file_name=rec.original_file_name,
@@ -189,8 +189,8 @@ def save_article(vars):
 
 @serve_json
 def detach_photo_from_member(vars):
-    member_id = int(vars.member_id)
-    photo_id = int(vars.photo_id)
+    member_id = vars.member_id
+    photo_id = vars.photo_id
     q = (db.TblMemberPhotos.Photo_id == photo_id) & \
         (db.TblMemberPhotos.Member_id == member_id)
     good = db(q).delete() == 1
@@ -233,45 +233,49 @@ def get_photo_list(vars):
     selected_order_option = vars.selected_order_option or ""
     last_photo_time = None
     last_photo_date = None
-    q = make_photos_query(vars)
-    total_photos = db(q).count()
-    if selected_order_option == 'upload-time-order':
-        if vars.count_limit:
-            n = int(vars.count_limit)
-        else:
-            n = 200
-        MAX_PHOTOS_COUNT = n
-        last_photo_time = vars.last_photo_time
-        if last_photo_time: 
-            q &= (db.TblPhotos.upload_date < last_photo_time)
-            total_photos = db(q).count()
-        lst = db(q).select(orderby=~db.TblPhotos.id, limitby=(0, n))
-    elif selected_order_option.startswith('chronological-order'):
-        if vars.count_limit:
-            n = int(vars.count_limit)
-        else:
-            n = 200
-        MAX_PHOTOS_COUNT = n
-        last_photo_date = vars.last_photo_date
-        if last_photo_date:
-            if selected_order_option.endswith('reverse'):
-                q &= (db.TblPhotos.photo_date < last_photo_date)
-            else:
-                q &= (db.TblPhotos.photo_date > last_photo_date)
-            total_photos = db(q).count()
-        field = db.TblPhotos.photo_date
-        if selected_order_option.endswith('reverse'):
-            field = ~field
-        lst = db(q).select(orderby=field, limitby=(0, n))
+    if selected_topics:
+        lst = get_photo_list_with_topics(vars)
+        total_photos = len(lst)
     else:
-        n = db(q).count()
-        if n > MAX_PHOTOS_COUNT:
-            frac = max(MAX_PHOTOS_COUNT * 100 / n, 1)
-            sample = random.sample(range(1, 101), frac)
-            ##q &= (db.TblPhotos.random_photo_key <= frac)
-            q &= (db.TblPhotos.random_photo_key.belongs(sample)) #we don't want to bore our users 
-        lst = db(q).select() ###, db.TblPhotographers.id) ##, db.TblPhotographers.id)
-        last_photo_time = None
+        q = make_photos_query(vars)
+        total_photos = db(q).count()
+        if selected_order_option == 'upload-time-order':
+            if vars.count_limit:
+                n = int(vars.count_limit)
+            else:
+                n = 200
+            MAX_PHOTOS_COUNT = n
+            last_photo_time = vars.last_photo_time
+            if last_photo_time: 
+                q &= (db.TblPhotos.upload_date < last_photo_time)
+                total_photos = db(q).count()
+            lst = db(q).select(orderby=~db.TblPhotos.id, limitby=(0, n))
+        elif selected_order_option.startswith('chronological-order'):
+            if vars.count_limit:
+                n = int(vars.count_limit)
+            else:
+                n = 200
+            MAX_PHOTOS_COUNT = n
+            last_photo_date = vars.last_photo_date
+            if last_photo_date:
+                if selected_order_option.endswith('reverse'):
+                    q &= (db.TblPhotos.photo_date < last_photo_date)
+                else:
+                    q &= (db.TblPhotos.photo_date > last_photo_date)
+                total_photos = db(q).count()
+            field = db.TblPhotos.photo_date
+            if selected_order_option.endswith('reverse'):
+                field = ~field
+            lst = db(q).select(orderby=field, limitby=(0, n))
+        else:
+            n = db(q).count()
+            if n > MAX_PHOTOS_COUNT:
+                frac = max(MAX_PHOTOS_COUNT * 100 / n, 1)
+                sample = random.sample(range(1, 101), frac)
+                ##q &= (db.TblPhotos.random_photo_key <= frac)
+                q &= (db.TblPhotos.random_photo_key.belongs(sample)) #we don't want to bore our users 
+            lst = db(q).select() ###, db.TblPhotographers.id) ##, db.TblPhotographers.id)
+            last_photo_time = None
     if len(lst) > MAX_PHOTOS_COUNT:
         lst1 = random.sample(lst, MAX_PHOTOS_COUNT)
         lst = lst1
@@ -339,15 +343,16 @@ def apply_to_selected_photos(vars):
     deleted = []
     new_topic_was_added = False
     for pid in spl:
-        rec = db(db.TblPhotos.id == pid).select().first()
-        story_id = rec.story_id if rec else None
-        curr_tag_ids = set(get_tag_ids(story_id, "P")) if story_id else set([])
+        curr_tag_ids = set(get_tag_ids(pid, "P"))
         for tpc in st:
             topic = tpc.option
-            item = dict(story_id=story_id, topic_id=topic.id)
+            item = dict(item_id=pid, topic_id=topic.id)
             if topic.sign == "plus" and topic.id not in curr_tag_ids:
+                rec = db(db.TblPhotos.id == pid).select().first()
+                story_id = rec.story_id if rec else None
                 new_id = db.TblItemTopics.insert(
                     item_type="P",
+                    item_id=pid,
                     topic_id=topic.id,
                     story_id=story_id)
                 curr_tag_ids |= set([topic.id])
@@ -360,7 +365,7 @@ def apply_to_selected_photos(vars):
                     topic_rec.update_record(usage=usage, topic_kind=2) #simple topic
             elif topic.sign == "minus" and topic.id in curr_tag_ids:
                 q = (db.TblItemTopics.item_type == "P") & \
-                    (db.TblItemTopics.story_id == story_id) & \
+                    (db.TblItemTopics.item_id == pid) & \
                     (db.TblItemTopics.topic_id == topic.id)
                 curr_tag_ids -= set([topic.id])
                 deleted.append(item)
@@ -368,10 +373,10 @@ def apply_to_selected_photos(vars):
                 db(q).delete()
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         keywords = "; ".join(curr_tags)
-        if story_id:
-            db(db.TblStories.id == story_id).update(keywords=keywords, is_tagged=bool(keywords))
-        if rec:
-            rec.update_record(Recognized=True)
+        rec = db(db.TblPhotos.id == pid).select().first()
+        rec.update_record(KeyWords=keywords, Recognized=True) #todo: the KeyWords part is obsolete?
+        rec1 = db(db.TblStories.id == rec.story_id).select().first()
+        rec1.update_record(keywords=keywords, is_tagged=bool(keywords))
         if photographer_id:
             rec.update_record(photographer_id=photographer_id)
             rec1 = db(db.TblPhotographers.id == photographer_id).select().first()
@@ -388,18 +393,20 @@ def apply_to_selected_photos(vars):
 def apply_topics_to_photo(vars):
     all_tags = calc_all_tags()
     photo_id = int(vars.photo_id)
-    rec = db(db.TblPhotos.id == photo_id).select().first()
-    story_id = rec.story_id if rec else None
     topics = vars.topics
-    curr_tag_ids = set(get_tag_ids(story_id, "P"))
+    curr_tag_ids = set(get_tag_ids(photo_id, "P"))
     new_tag_ids = set([t.id for t in topics])
     added = set([])
     deleted = set([])
     for tag_id in new_tag_ids:
         if tag_id not in curr_tag_ids:
             added |= set([tag_id])
+            item = dict(item_id=photo_id, topic_id=tag_id)
+            rec = db(db.TblPhotos.id == photo_id).select().first()
+            story_id = rec.story_id if rec else None
             db.TblItemTopics.insert(
                 item_type="P",
+                item_id=photo_id,
                 topic_id=tag_id,
                 story_id=story_id)
             topic_rec = db(db.TblTopics.id == tag_id).select().first()
@@ -411,7 +418,7 @@ def apply_topics_to_photo(vars):
         if tag_id not in new_tag_ids:
             deleted |= set([tag_id])
             q = (db.TblItemTopics.item_type == "P") & \
-                (db.TblItemTopics.story_id == story_id) & \
+                (db.TblItemTopics.item_id == photo_id) & \
                 (db.TblItemTopics.topic_id == tag_id)
             #should remove 'P' from usage if it was the last one...
             db(q).delete()
@@ -422,9 +429,10 @@ def apply_topics_to_photo(vars):
     curr_tags = sorted(curr_tags)
     keywords = "; ".join(curr_tags)
     is_tagged = len(curr_tags) > 0
+    rec = db(db.TblPhotos.id == photo_id).select().first()
+    rec.update_record(KeyWords=keywords, Recognized=True) #todo: the KeyWords part is obsolete?
     srec = db(db.TblStories.id==rec.story_id).select().first()
     srec.update_record(keywords=keywords, is_tagged=is_tagged)
-    rec.update_record(Recognized=True)
     
 @serve_json
 def assign_photo_photographer(vars):
@@ -442,9 +450,7 @@ def save_video(vars):
     if not params.id: #creation, not modification
         pats = dict(
             youtube=r'https://(?:www.youtube.com/watch\?v=|youtu\.be/)(?P<code>[^&]+)',
-            vimeo=r'https://vimeo.com/(?P<code>\d+)',
-            google_drive=r'https://drive.google.com/file/d/(?P<code>[^/]+?)/.*',
-            google_photos=r'https://photos.app.goo.gl/(?P<code>[^&]+)'
+            vimeo=r'https://vimeo.com/(?P<code>\d+)'
         )
         src = None
         for t in pats:
@@ -524,28 +530,29 @@ def delete_video(vars):
 @serve_json
 def get_video_list(vars):
     selected_topics = vars.selected_topics or []
-    q = make_videos_query(vars)
-    lst = db(q).select()
+    if selected_topics:
+        lst = get_video_list_with_topics(vars)
+    else:
+        q = make_videos_query(vars)
+        lst = db(q).select()
     selected_video_list = vars.selected_video_list
     result = []
-    q = (db.TblVideos.id.belongs(selected_video_list)) & (db.TblStories.id==db.TblVideos.story_id)
     if selected_video_list:
-        lst1 = db(q).select()
+        lst1 = db(db.TblVideos.id.belongs(selected_video_list)).select()
         lst1 = [rec for rec in lst1]
         for rec in lst1:
-            rec.TblVideos.selected = True
+            rec.selected = True
     else:
         lst1 = []
-    lst1_ids = [rec.TblVideos.id for rec in lst1]
-    lst = [rec for rec in lst if rec.TblVideos.id not in lst1_ids]
+    lst1_ids = [rec.id for rec in lst1]
+    if lst and 'TblVideos' in lst[0]:
+        lst = [r.TblVideos for r in lst]
+    lst = [rec for rec in lst if rec.id not in lst1_ids]
     lst = lst1 + lst
     ##lst = db(db.TblVideos.deleted != True).select()
-    video_list = []
-    for rec1 in lst:
-        rec = rec1.TblVideos
+    video_list = [rec for rec in lst]
+    for rec in video_list:
         fix_record_dates_out(rec)
-        rec.keywords = rec1.TblStories.keywords
-        video_list.append(rec)
     return dict(video_list=video_list)
 
 @serve_json
@@ -570,17 +577,18 @@ def apply_to_selected_videos(vars):
     changes = dict()
     new_topic_was_added = False
     for vid in svl:
-        vrec = db(db.TblVideos.id == vid).select().first()
-        story_id = vrec.story_id if vrec else None
-        curr_tag_ids = set(get_tag_ids(story_id, "V"))
+        curr_tag_ids = set(get_tag_ids(vid, "V"))
         for tpc in st:
             topic = tpc.option
-            item = dict(story_id=story_id, topic_id=topic.id)
+            item = dict(item_id=vid, topic_id=topic.id)
             if topic.sign == "plus" and topic.id not in curr_tag_ids:
+                vrec = db(db.TblVideos.id == vid).select().first()
+                story_id = vrec.story_id if vrec else None
                 if not story_id:
                     continue
                 new_id = db.TblItemTopics.insert(
                     item_type="V",
+                    item_id=vid,
                     topic_id=topic.id,
                     story_id=story_id)
                 curr_tag_ids |= set([topic.id])
@@ -593,7 +601,7 @@ def apply_to_selected_videos(vars):
                     topic_rec.update_record(usage=usage, topic_kind=2) #simple topic
             elif topic.sign == "minus" and topic.id in curr_tag_ids:
                 q = (db.TblItemTopics.item_type == "V") & \
-                    (db.TblItemTopics.story_id == story_id) & \
+                    (db.TblItemTopics.item_id == vid) & \
                     (db.TblItemTopics.topic_id == topic.id)
                 curr_tag_ids -= set([topic.id])
                 deleted.append(item)
@@ -602,6 +610,7 @@ def apply_to_selected_videos(vars):
         keywords = "; ".join(curr_tags)
         changes[vid] = dict(keywords=keywords, video_id=vid)
         rec = db(db.TblVideos.id == vid).select().first()
+        rec.update_record(keywords=keywords) #todo: remove this line soon
         rec1 = db(db.TblStories.id == rec.story_id).select().first()
         rec1.update_record(keywords=keywords, is_tagged=bool(keywords))
         if photographer_id:
@@ -827,6 +836,36 @@ def replace_photo(pgroup):
             member_photo_rec.update_record(x=x, y=y, r=r)
     return data
 
+def get_photo_list_with_topics(vars):
+    first = True
+    topic_groups = calc_grouped_selected_options(vars.selected_topics)
+    for topic_group in topic_groups:
+        q = make_photos_query(vars) #if we do not regenerate it the query becomes accumulated and \
+                                    # necessarily fails
+        q &= (db.TblItemTopics.item_id == db.TblPhotos.id) & \
+            (db.TblItemTopics.item_type.like('%P%'))
+        ##topic_ids = [t.id for t in topic_group]
+        sign = topic_group[0]
+        topic_group = topic_group[1:]
+        q1 = db.TblItemTopics.topic_id.belongs(topic_group)
+        if sign == 'minus':
+            q1 = ~q1
+        q &= q1
+        lst = db(q).select()
+        bag1 = set(r.TblPhotos.id for r in lst)
+        if first:
+            first = False
+            bag = bag1
+        else:
+            bag &= bag1
+    dic = {}
+    for r in lst:
+        dic[r.TblPhotos.id] = r
+    result = [dic[id] for id in bag]
+    if vars.selected_order_option == 'upload-time-order': 
+        result = sorted(result, reverse=True, key=lambda r: r.TblPhotos.id)
+    return result
+
 def make_photos_query(vars):
     q = init_query(db.TblPhotos, editing=vars.editing, is_deleted=vars.deleted, user_id=vars.user_id)
     q &= (db.TblPhotos.width > 0) & \
@@ -886,10 +925,36 @@ def make_photos_query(vars):
         q &= (db.TblPhotos.id.belongs(lst))
     if vars.show_untagged:
         q &= (db.TblPhotos.story_id==db.TblStories.id) & (db.TblStories.is_tagged==False)
-    if vars.selected_topics:
-        q1 = get_topics_query(vars.selected_topics)
-        q &= q1
     return q
+
+def get_video_list_with_topics(vars):
+    first = True
+    topic_groups = calc_grouped_selected_options(vars.selected_topics)
+    for topic_group in topic_groups:
+        q = make_videos_query(vars) # if we do not regenerate it the query becomes accumulated and
+                                    # necessarily fails
+        q &= (db.TblItemTopics.item_id == db.TblVideos.id) & \
+            (db.TblItemTopics.item_type.like('%V%'))
+        ##topic_ids = [t.id for t in topic_group]
+        sign = topic_group[0]
+        topic_group = topic_group[1:]
+        q1 = db.TblItemTopics.topic_id.belongs(topic_group)
+        if sign == 'minus':
+            q1 = ~q1
+        q &= q1
+        lst = db(q).select()
+        ###lst = [rec.TblVideos for rec in lst]
+        bag1 = set(r.TblVideos.id for r in lst)
+        if first:
+            first = False
+            bag = bag1
+        else:
+            bag &= bag1
+    dic = {}
+    for r in lst:
+        dic[r.TblVideos.id] = r
+    result = [dic[id] for id in bag]
+    return result
 
 def unlocated_faces():
     q = (db.TblPhotos.id == db.TblMemberPhotos.Photo_id) & (db.TblMemberPhotos.x == None)
@@ -921,9 +986,6 @@ def make_videos_query(vars):
         q &= (db.TblVideos.video_date != NO_DATE)
     elif opt == 'undated':
         q &= (db.TblVideos.video_date == NO_DATE)
-    if vars.selected_topics:
-        q1 = get_topics_query(vars.selected_topics)
-        q &= q1
     return q
 
 def pair_photos(front_id, back_id):
@@ -949,21 +1011,14 @@ def process_photo_list(lst, photo_pairs=dict()):
     for rec in lst:
         fix_record_dates_out(rec)
     result = []
-    story_ids = [rec.story_id for rec in lst]
-    lst1 = db(db.TblStories.id.belongs(story_ids)).select(db.TblStories.id, db.TblStories.keywords)
-    kws = dict()
-    for rec in lst1:
-        kws[rec.id] = rec.keywords
     for rec in lst:
         tpp = timestamped_photo_path(rec)
-        keywords=kws[rec.story_id]
-        rec_title='{}: {}'.format(rec.Name, keywords)
         dic = Storage(
+            keywords=rec.KeyWords or "",
             description=rec.Description or "",
             name=rec.Name,
             original_file_name=rec.original_file_name,
-            keywords=keywords,
-            title=rec_title,
+            title='{}: {}'.format(rec.Name, rec.KeyWords),
             photo_date_datestr=rec.photo_date_datestr,
             photo_date_span=rec.photo_date_datespan,
             photographer_id=rec.photographer_id,

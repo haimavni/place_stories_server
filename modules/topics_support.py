@@ -1,12 +1,23 @@
 from injections import inject
 
-def recalc_keywords_str(item_type, story_id):
+def recalc_keywords_str(item_type, item_id):
     db = inject('db')
-    q = (db.TblItemTopics.story_id==story_id) & (db.TblItemTopics.item_type==item_type) & (db.TblTopics.id==db.TblItemTopics.topic_id)
+    tables = dict(
+        M=db.TblMembers,
+        E=db.TblEvents,
+        P=db.TblPhotos,
+        T=db.TblTerms,
+        V=db.TblVideos
+    )
+    tbl = tables[item_type]
+    q = (db.TblItemTopics.item_id==item_id) & (db.TblItemTopics.item_type==item_type) & (db.TblTopics.id==db.TblItemTopics.topic_id)
     lst = db(q).select()
     topic_names = [r.TblTopics.name for r in lst]
     topics_str = ';'.join(topic_names)
-    db(db.TblStories.id==story_id).update(keywords=topics_str)
+    if item_type in 'TV':
+        db(tbl.id==item_id).update(keywords=topics_str)
+    else:
+        db(tbl.id==item_id).update(KeyWords=topics_str)
 
 def item_list_to_grouped_options(item_list):
     groups = dict()

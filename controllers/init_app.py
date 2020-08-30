@@ -6,7 +6,6 @@ import re
 import os
 
 def init_database():
-    comment("init database args: ", str(request.args))
     if len(request.args) < 4:
         return "database initialized without admin"
     email,password,first_name,last_name = request.args
@@ -44,8 +43,7 @@ def request_new_app(vars):
             locale=vars.locale
         )
         error_message = ""
-        host=request.env.http_host.split(':')[0]  
-        host = 'gbstories.org' #for some reason, if host is tol.life the link does not show as such in the email message
+        host=request.env.http_host.split(':')[0]
         confirmation_url = '/{app}/init_app/confirm_new_app?app_name={app_name}&confirmation_key={confirmation_key}'. \
             format(app=request.application, app_name=app_name, confirmation_key=confirmation_key)
         confirmation_link = '{host}{confirmation_url}'.format(host=host, confirmation_url=confirmation_url)

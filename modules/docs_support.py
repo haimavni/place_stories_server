@@ -83,22 +83,14 @@ def calc_doc_story(doc_id):
             txt = pdf_to_text(doc_file_name)
         except Exception, e:
             log_exception('PDF to text error in {}. Name: {}'.format(doc_rec.doc_path, doc_rec.original_file_name))
-            txt = ''
+            txt = 'Failed to extract text from this document'
             good = False
-            raise
         if not txt:
-            txt = '- - - - -'
-        if doc_rec.story_id:
-            story_info = Storage(
-                story_text=txt
-            )
-            sm.update_story(doc_rec.story_id, story_info)
-            doc_rec.update_record(text_extracted=True)
-        else:
-            story_info = sm.get_empty_story(used_for=STORY4DOC, story_text=txt, name=doc_rec.original_file_name)
-            result = sm.add_story(story_info)
-            story_id = result.story_id
-            doc_rec.update_record(story_id=story_id, text_extracted=True)
+            txt = '- - -'
+        story_info = sm.get_empty_story(used_for=STORY4DOC, story_text=txt, name=doc_rec.original_file_name)
+        result = sm.add_story(story_info)
+        story_id = result.story_id
+        doc_rec.update_record(story_id=story_id)
     except Exception, e:
         log_exception('Error calculating {}'.format(doc_rec.doc_path))
         return False
@@ -109,11 +101,11 @@ def calc_doc_stories(time_budget=None):
         db, comment, log_exception = inject('db', 'comment', 'log_exception')
         chunk = 10
         comment("Start calc doc stories cycle")
-        q = (db.TblDocs.text_extracted != True) & (db.TblDocs.deleted != True)
+        q = (db.TblDocs.story_id == None) & (db.TblDocs.deleted != True)
         n = db(q).count()
         comment('Start calc doc stories. {} documents left to calculate.', n)
         if not n:
-            return dict(result="nothing to recalculate")
+            return
         time_budget = time_budget or (500 - 25) #will exit the loop 25 seconds before the a new cycle starts
         t0 = datetime.datetime.now()
         ns = 0
@@ -124,20 +116,22 @@ def calc_doc_stories(time_budget=None):
                 elapsed = int(dif.total_seconds())
                 if elapsed > time_budget:
                     break
+                n = db(q).count()
                 doc_ids = []
-                comment('Calc doc stories. {} documents left to calculate.', n)
-                lst = db(q).select(db.TblDocs.id, limitby=(0, chunk))
-                for rec in lst:
-                    if calc_doc_story(rec.id):
-                        doc_ids.append(rec.id)
-                        ns += 1
-                    else:
-                        nf += 1
-                db.commit()
-                comment("{} good, {} bad uploaded", ns, nf)
-                ws_messaging.send_message('DOCS_WERE_UPLOADED', group='ALL', doc_ids=doc_ids)
-                if ns + nf >= n:
-                    break;
+                if n > 0:
+                    comment('Calc doc stories. {} documents left to calculate.', n)
+                    lst = db(q).select(db.TblDocs.id, limitby=(0, chunk))
+                    for rec in lst:
+                        if calc_doc_story(rec.id):
+                            doc_ids.append(rec.id)
+                            ns += 1
+                        else:
+                            nf += 1
+                    db.commit()
+                    comment("{} good, {} bad uploaded", ns, nf)
+                    ws_messaging.send_message('DOCS_WERE_UPLOADED', group='ALL', doc_ids=doc_ids)
+                else:
+                    sleep(5)
         except:
             log_exception('Error while calculating doc stories')
         finally:

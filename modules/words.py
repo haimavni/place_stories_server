@@ -19,8 +19,6 @@ word_pat = r'([{alef}-{tav}]+|[0-9./]+|[a-zA-Z]+)'.format(alef=alef, tav=tav)
 word_regex = re.compile(word_pat, re.UNICODE | re.MULTILINE)
 
 def remove_all_tags(html):
-    if not html:
-        return ""
     html = html.replace('>', '> ')  #to prevent words that are separated by tags only to stick together
     html = re.sub(r'&quot;', '"', html)
     html = re.sub(r'&#39;', "'", html)
@@ -177,8 +175,7 @@ def update_word_index_all():
         comment("Start indexing story words cycle")
         q = db.TblStories.last_update_date > db.TblStories.indexing_date
         if db(q).isempty():
-            comment("Nothing to do")
-            return dict(good=True)
+            return
         time_budget = 600 - 15 #will exit the loop 15 seconds before the a new cycle starts
         t0 = datetime.datetime.now()
         while True:
@@ -200,8 +197,6 @@ def update_word_index_all():
     except Exeption, e:
         log_exception('Error updating word index')
         raise
-    else:
-        return dict(good=True)
             
 def find_or_insert_word(wrd):            
     from injections import inject

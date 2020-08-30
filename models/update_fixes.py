@@ -70,10 +70,6 @@ def fix_deleted_forever():
 def fix_photo_recognized():
     db(db.TblPhotos.Recognized==None).update(Recognized=True)
 
-def fix_pdf_texts():
-    db(db.TblDocs.text_extracted==None).update(text_extracted=False)
-    db.commit()
-            
 _fixes = {
     1: init_photo_back_sides,
     2: fix_all_date_ends,
@@ -82,8 +78,7 @@ _fixes = {
     5: fix_is_tagged,
     6: fix_visibility,
     7: fix_deleted_forever,
-    8: fix_photo_recognized,
-    9: fix_pdf_texts
+    8: fix_photo_recognized
 }
 
 _init_configuration_table()

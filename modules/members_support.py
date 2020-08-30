@@ -89,9 +89,9 @@ def flatten_option(option):
         result = [option.id]
     return result
 
-def get_tag_ids(story_id, item_type):
+def get_tag_ids(item_id, item_type):
     db = inject('db')
-    q = (db.TblItemTopics.item_type==item_type) & (db.TblItemTopics.story_id==story_id)
+    q = (db.TblItemTopics.item_type==item_type) & (db.TblItemTopics.item_id==item_id)
     lst = db(q).select()
     return [rec.topic_id for rec in lst]
 
@@ -126,56 +126,3 @@ def init_query(tbl, editing=False, is_deleted=False, user_id=None):
         q &= (db.TblStories.visibility.belongs(allowed))
         return q
 
-def get_photo_topics(story_id):
-    db = inject('db')
-    q = (db.TblItemTopics.story_id==story_id) & (db.TblItemTopics.item_type=='P') & (db.TblTopics.id==db.TblItemTopics.topic_id)
-    lst = db(q).select()
-    lst = [itm.TblTopics.as_dict() for itm in lst]
-    for itm in lst:
-        itm['sign'] = ""
-    lst = make_unique(lst, 'id')
-    return lst
-
-def get_story_topics(story_id):
-    db = inject('db')
-    q = (db.TblItemTopics.story_id==story_id) & (db.TblTopics.id==db.TblItemTopics.topic_id)
-    lst = db(q).select()
-    lst = [itm.TblTopics.as_dict() for itm in lst]
-    for itm in lst:
-        itm['sign'] = ""
-    lst = make_unique(lst, 'id')
-    return lst
-
-def make_unique(arr, key):
-    dic = dict()
-    for a in arr:
-        dic[a[key]] = a
-    arr = [dic[id] for id in sorted(dic)]
-    return arr
-
-def get_topics_query(selected_topics):
-    db = inject('db')
-    topic_groups = calc_grouped_selected_options(selected_topics)
-    
-    intersection = None
-    for topic_group in topic_groups:
-        sign = topic_group[0]
-        topic_group = topic_group[1:]
-        q1 = db.TblItemTopics.topic_id.belongs(topic_group)
-        if sign == 'minus':
-            q1 = ~q1
-        lst = [rec.story_id for rec in db(q1).select()]
-        if intersection:
-            intersection &= set(lst)
-        else:
-            intersection = set(lst)
-    q = (db.TblStories.id.belongs(list(intersection)))
-    return q
-
-def member_photos_by_updater(updater_id):
-    lst = db((db.TblMembers.deleted!=True) & (db.TblMembers.updater_id==updater_id) &\
-             (db.TblMemberPhotos.Member_id==db.TblMembers.id)).\
-             select(db.TblMembers.id,db.TblMembers.first_name,db.TblMembers.last_name,db.TblMembers.updater_id,db.TblMemberPhotos.Photo_id,orderby=db.TblMembers.id)
-    return lst
-    
-    

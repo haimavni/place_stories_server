@@ -281,6 +281,7 @@ def calc_missing_dhash_values(max_to_hash=20000):
 def get_slides_from_photo_list(q):
     db = inject('db')
     q &= (db.TblPhotos.width > 0)
+    db = inject('db')
     lst = db(q).select()
     if not lst:
         return []
@@ -724,11 +725,7 @@ def create_watermark(image_path, final_image_path, watermark):
 def get_exif_data(image):
     """Returns a dictionary from the exif data of an PIL Image item. Also converts the GPS Tags"""
     exif_data = {}
-    info = None
-    try:
-        info = image._getexif()
-    except Exception, e:
-        pass #png, for example
+    info = image._getexif()
     if info:
         for tag, value in info.items():
             decoded = TAGS.get(tag, tag)
@@ -742,6 +739,23 @@ def get_exif_data(image):
             else:
                 exif_data[decoded] = value
     return exif_data            
+
+def get_photo_topics(photo_id):
+    db = inject('db')
+    q = (db.TblItemTopics.item_id==photo_id) & (db.TblItemTopics.item_type=='P') & (db.TblTopics.id==db.TblItemTopics.topic_id)
+    lst = db(q).select()
+    lst = [itm.TblTopics.as_dict() for itm in lst]
+    for itm in lst:
+        itm['sign'] = ""
+    lst = make_unique(lst, 'id')
+    return lst
+
+def make_unique(arr, key):
+    dic = dict()
+    for a in arr:
+        dic[a[key]] = a
+    arr = [dic[id] for id in sorted(dic)]
+    return arr
 
 def degrees_to_float(tup):
     degs, mins, secs = [t[0] for t in tup]

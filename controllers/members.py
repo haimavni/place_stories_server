@@ -170,13 +170,8 @@ def get_random_member(vars):
     if not lst:
         return dict(member_data = None)
     lst = sorted(lst, key=lambda rec: -rec.num_photos)
-    for i in range(50):
-        idx = random.randint(0, len(lst) / 5)
-        member_data=get_member_rec(lst[idx].member_id)
-        if member_data:
-            break
-    if not member_data:
-        return dict(member_data = None)
+    idx = random.randint(0, len(lst) / 5)
+    member_data=get_member_rec(lst[idx].member_id)
     member_data.face_photo_url = photos_folder('profile_photos') + member_data.facePhotoURL
     member_data.short_name = (member_data.title + ' ' if member_data.title else '') + member_data.first_name
     return dict(member_data=member_data)
@@ -211,37 +206,28 @@ def get_stories_sample(vars):
 @serve_json
 def get_story_list(vars):
     CHUNK = 100
-    params = vars.params;
     qhd = query_has_data(vars.params)
     result0 = []
     result1 = []
     result2 = []
-    if params.selected_book:
-        result0 = get_checked_stories(params)
-        result0 = process_story_list(result0, checked=True)
-        q = make_stories_query(params, True)
-        q &= (db.TblStories.book_id==params.selected_book.id)
-        result1 = db(q).select(orderby=db.TblStories.sorting_key)
-        result1 = process_story_list(result1)
-    elif qhd:
-        result0 = get_checked_stories(params)
+    if qhd:
+        result0 = get_checked_stories(vars.params)
         result0 = process_story_list(result0, checked=True)
         checked_story_ids = set([r.id for r in result0])
-        has_keywords = bool(params.keywords_str) ### and vars.params.search_type in ['menu', 'simple']
-        result1 = _get_story_list(params, has_keywords)
+        has_keywords = bool(vars.params.keywords_str) ### and vars.params.search_type in ['menu', 'simple']
+        result1 = _get_story_list(vars.params, has_keywords)
         result1 = process_story_list(result1, exact=has_keywords)
         result1 = [r for r in result1 if r.id not in checked_story_ids]
-
-        if has_keywords and len(params.keywords_str.split()) > 1: #find all pages containing all words in this string
-            result2 = _get_story_list(params, False)
+        
+        if has_keywords and len(vars.params.keywords_str.split()) > 1: #find all pages containing all words in this string
+            result2 = _get_story_list(vars.params, False)
             result2 = process_story_list(result2)
+            checked_story_ids1 = set([r.id for r in result1])
+            checked_story_ids |= checked_story_ids1
+            result2 = [r for r in result2 if r.id not in checked_story_ids]
     else:
-        result0 = _get_story_list(params, False)
+        result0 = _get_story_list(vars.params, False)
         result0 = process_story_list(result0)
-    visited = set([r.id for r in result0])
-    result1 = [r for r in result1 if r.id not in visited]
-    visited |= set([r.id for r in result1])
-    result2 = [r for r in result2 if r.id not in visited]
     result = result0 + result1 + result2
     result_type_counters = dict()
     active_result_types = set()
@@ -297,7 +283,7 @@ def get_story_detail(vars):
     used_for = int(vars.used_for) if vars.used_for and vars.used_for != 'undefined' else STORY4EVENT
     if story_id == 'new':
         story = sm.get_empty_story(used_for=used_for)
-        return dict(story=story, members=[], photos=[], story_date=dict(date="",span_size=None))
+        return dict(story=story, members=[], photos=[])
     story_id = int(story_id)
     story=sm.get_story(story_id)
     members = []
@@ -311,22 +297,7 @@ def get_story_detail(vars):
         term = db(db.TblTerms.story_id == story_id).select().first()
         if term:
             photos, members, candidates, articles, article_candidates = get_term_members(term)
-    story_topics = get_story_topics(story_id)
-    story_rec = db(db.TblStories.id==story_id).select(db.TblStories.sorting_key, db.TblStories.story_date, db.TblStories.book_id,
-                                                      db.TblStories.story_date_dateunit, db.TblStories.story_date_datespan).first()
-    book_id = story_rec.book_id
-    if book_id:
-        book_name = db(db.TblBooks.id==book_id).select().first().name
-        sorting_key = story_rec.sorting_key
-        sorting_key = decode_sorting_key(sorting_key)
-    else:
-        book_name = None
-        sorting_key = None
-    dates = get_all_dates(story_rec)
-    return dict(story=story, members=members, candidates=candidates, 
-                articles=articles, article_candidates=article_candidates, 
-                story_topics=story_topics, photos=photos, sorting_key=sorting_key, story_date=dates.story_date,
-                book_id=book_id, book_name=book_name)
+    return dict(story=story, members=members, candidates=candidates, articles=articles, article_candidates=article_candidates, photos=photos)
 
 @serve_json
 def get_story_photo_list(vars):
@@ -440,23 +411,14 @@ def remove_parent(vars):
 
 @serve_json
 def get_message_list(vars):
-    pinned = db(db.TblPinned).select()
-    pinned = [rec.story_id for rec in pinned]
     q = (db.TblStories.used_for == STORY4MESSAGE) & (db.TblStories.author_id == db.auth_user.id) & (db.TblStories.deleted != True)
-    result = []
-    for p in [True, False]:
-        if p:
-            q1 = q & (db.TblStories.id.belongs(pinned))
-        else:
-            q1 = q & (~db.TblStories.id.belongs(pinned))
-        lst = db(q1).select(orderby=~db.TblStories.creation_date, limitby=(0, vars.limit or 100))
-        result += [dict(story_text=rec.TblStories.story,
-                        preview=rec.TblStories.story, #it is short anyway
-                        name=rec.TblStories.name, 
-                        story_id=rec.TblStories.id, 
-                        timestamp=rec.TblStories.last_update_date,
-                        pinned=p,
-                        author=rec.auth_user.first_name + ' ' + rec.auth_user.last_name) for rec in lst]
+    lst = db(q).select(orderby=~db.TblStories.creation_date, limitby=(0, vars.limit or 100))
+    result = [dict(story_text=rec.TblStories.story,
+                   preview=rec.TblStories.story, #it is short anyway
+                   name=rec.TblStories.name, 
+                   story_id=rec.TblStories.id, 
+                   timestamp=rec.TblStories.last_update_date, 
+                   author=rec.auth_user.first_name + ' ' + rec.auth_user.last_name) for rec in lst]
     return dict(message_list=result)
 
 @serve_json
@@ -467,18 +429,6 @@ def push_message_up(vars):
     if rec:
         rec.update_record(creation_date=now, last_update_date=now)
     return dict()
-
-@serve_json
-def pin_message(vars):
-    sid = vars.story_id
-    q = (db.TblPinned.story_id == sid)
-    pinned = False
-    if db(q).isempty():
-        db.TblPinned.insert(story_id=sid)
-        pinned = True
-    else:
-        db(q).delete()
-    return dict(pinned=pinned)
 
 @serve_json
 def get_constants(vars):
@@ -513,7 +463,7 @@ def get_constants(vars):
             SV_ADMIN=SV_ADMIN_ONLY,
             SV_ARCHIVER=SV_ARCHIVER_ONLY,
             SV_LOGGEDIN=SV_LOGGEDIN_ONLY
-            ),
+        ),
         ptp_key=web2py_uuid()
     )    
 
@@ -551,7 +501,7 @@ def delete_checked_stories(vars):
     q = db.TblStories.id.belongs(checked_stories)
     n = db(q).update(deleted=deleted)
     tbls = {STORY4MEMBER: db.TblMembers, STORY4EVENT: db.TblEvents, STORY4PHOTO: db.TblPhotos, STORY4TERM: db.TblTerms, STORY4VIDEO: db.TblVideos, STORY4DOC: db.TblDocs, STORY4ARTICLE: db.TblArticles}
-
+    
     #if story is associated with member, photo, video or document, need to skip it or delete the item too 
     for usage in [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4AUDIO, STORY4ARTICLE]:
         q1 = q & (db.TblStories.used_for == usage)
@@ -595,20 +545,24 @@ def apply_topics_to_selected_stories(vars):
     else:
         dates_info = None
     visibility_option = params.selected_story_visibility
-    selected_book = params.selected_book
 
     checked_story_list = params.checked_story_list
     selected_topics = params.selected_topics
     new_topic_was_added = False
-    if selected_book and checked_story_list: #we remove all stories and then add the ones from the selected books
-        db(db.TblStories.book_id == selected_book.id).update(book_id=None)
-    for story_id in checked_story_list:
-        curr_tag_ids = set(get_tag_ids(story_id, usage_char))
-        item_rec = item_of_story_id(used_for, story_id)
+    for eid in checked_story_list:
+        item_rec = item_of_story_id(used_for, eid)
+        if item_rec:
+            curr_tag_ids = set(get_tag_ids(item_rec.id, usage_char))
+        else:
+            curr_tag_ids = set([])
         for item in selected_topics:
             topic = item.option
             if topic.sign == "plus" and topic.id not in curr_tag_ids:
-                new_id = db.TblItemTopics.insert(item_type=usage_char, story_id=story_id, topic_id=topic.id)
+                if item_rec:
+                    item_id = item_rec.id
+                else:
+                    item_id = None
+                new_id = db.TblItemTopics.insert(item_type=usage_char, story_id=eid, item_id=item_id, topic_id=topic.id) 
                 curr_tag_ids |= set([topic.id])
                 ###added.append(item)
                 topic_rec = db(db.TblTopics.id == topic.id).select().first()
@@ -618,70 +572,28 @@ def apply_topics_to_selected_stories(vars):
                     usage = topic_rec.usage + usage_char
                     topic_rec.update_record(usage=usage, topic_kind=2) #topic is simple
             elif topic.sign == "minus" and topic.id in curr_tag_ids:
-                q = (db.TblItemTopics.item_type == usage_char) & (db.TblItemTopics.story_id == story_id) & (db.TblItemTopics.topic_id == topic.id)
+                q = (db.TblItemTopics.item_type == usage_char) & (db.TblItemTopics.story_id == eid) & (db.TblItemTopics.topic_id == topic.id)
                 curr_tag_ids -= set([topic.id])
                 ###deleted.append(item)
                 #should remove usage_char from usage if it was the last one...
                 db(q).delete()
         if dates_info:
-            story_rec = db(db.TblStories.id==story_id).select().first()
+            story_rec = db(db.TblStories.id==eid).select().first()
             update_record_dates(story_rec, dates_info)
             copy_story_date_to_object_date(story_rec)
         if visibility_option:
-            story_rec = db(db.TblStories.id==story_id).select().first()
+            story_rec = db(db.TblStories.id==eid).select().first()
             story_rec.update_record(visibility=visibility_option)
-        if selected_book:
-            story_rec = db(db.TblStories.id==story_id).select().first()
-            story_rec.update_record(book_id=selected_book.id)
-
-        curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
-        curr_tags.sort()
-        keywords = "; ".join(curr_tags)
-        rec = db(db.TblStories.id == story_id).select().first()
-        rec.update_record(keywords=keywords, is_tagged=bool(keywords))
-
-    #todo: notify all users?
-    return dict(new_topic_was_added=new_topic_was_added)
-
-@serve_json
-def apply_topics_to_story(vars):
-    story_id = vars.story_id
-    used_for = vars.used_for
-    if used_for:
-        usage_chars = 'xMEPTxxxVDA'
-        usage_char = usage_chars[used_for]
-    else:
-        usage_char = 'x'
-    all_tags = calc_all_tags()
-    story_topics = vars.story_topics
-    current_ids = [topic.id for topic in story_topics]
-    current_ids = set(current_ids)
-    new_topic_was_added = False
-    tbl = db.TblEvents if usage_char == 'E' else db.TblTerms if usage_char == 'T' else None
-    if not tbl:
-        raise Exception("Not a story or term")
-    curr_tag_ids = set(get_tag_ids(story_id, usage_char))
-    for topic_id in current_ids:
-        if topic_id not in curr_tag_ids:
-            new_id = db.TblItemTopics.insert(item_type=usage_char, story_id=story_id, topic_id=topic_id)
-            curr_tag_ids |= set([topic_id])
-            ###added.append(item)
-            topic_rec = db(db.TblTopics.id == topic_id).select().first()
-            if topic_rec.topic_kind == 0: #never used
-                new_topic_was_added = True;
-            if usage_char not in topic_rec.usage:
-                usage = topic_rec.usage + usage_char
-                topic_rec.update_record(usage=usage, topic_kind=2) #topic is simple
-    for topic_id in curr_tag_ids:
-        if topic_id not in current_ids:
-            q = (db.TblItemTopics.item_type == usage_char) & (db.TblItemTopics.story_id == story_id) & (db.TblItemTopics.topic_id == topic_id)
-            ###deleted.append(item)
-            #should remove usage_char from usage if it was the last one...
-            db(q).delete()
+            
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         keywords = "; ".join(curr_tags)
-        rec = db(db.TblStories.id == story_id).select().first()
+        rec = db(db.TblStories.id == eid).select().first()
         rec.update_record(keywords=keywords, is_tagged=bool(keywords))
+        if item_rec:
+            if usage_char in 'EMP':
+                item_rec.update_record(KeyWords=keywords)
+            else:
+                item_rec.update_record(keywords=keywords)
 
     #todo: notify all users?
     return dict(new_topic_was_added=new_topic_was_added)
@@ -807,34 +719,6 @@ def member_by_name(vars):
     member_ids = [rec.id for rec in members]
     return dict(member_ids=member_ids)
 
-@serve_json
-def save_sorting_key(vars):
-    story_id = vars.story_id
-    sorting_key = vars.sorting_key
-    sorting_key = encode_sorting_key(sorting_key)
-    db(db.TblStories.id==story_id).update(sorting_key=sorting_key)
-    return dict()
-
-@serve_json
-def update_story_date(vars):
-    story_date_str = vars.story_date_str
-    story_date_datespan = int(vars.story_date_datespan or 0)
-    if not story_date_str:
-        story_date_str = '01-01-01'
-    story_dates_info = dict(
-        story_date = (story_date_str, story_date_datespan)
-    )
-    rec = db((db.TblStories.id==int(vars.story_id)) & (db.TblStories.deleted != True)).select().first()
-    update_record_dates(rec, story_dates_info)
-    #todo: save in db
-    return dict()
-
-@serve_json
-def get_book_list(vars):
-    lst = db(db.TblBooks).select()
-    book_list = [rec.as_dict() for rec in lst]
-    return dict(book_list=book_list)
-
 ###---------------------support functions
 
 def new_member_rec(gender=None, first_name="", last_name=""):
@@ -907,14 +791,14 @@ def _get_story_list(params, exact): #exact means looking only for the passed key
         lst1 = [r for r in lst1 if r.last_chat_time]
     elif order_option == 'new-to-old':
         q &= (db.TblStories.story_date != NO_DATE)
-        lst1 = db(q).select(orderby=~db.TblStories.story_date | db.TblStories.sorting_key | db.TblStories.name, limitby=(0, 12000))
+        lst1 = db(q).select(orderby=~db.TblStories.story_date | db.TblStories.name, limitby=(0, 12000))
         lst1 = [r for r in lst1]
     elif order_option == 'old-to-new':
         q &= (db.TblStories.story_date != NO_DATE)
-        lst1 = db(q).select(orderby=db.TblStories.story_date | db.TblStories.sorting_key | db.TblStories.name, limitby=(0, 12000))
+        lst1 = db(q).select(orderby=db.TblStories.story_date | db.TblStories.name, limitby=(0, 12000))
         lst1 = [r for r in lst1]
     elif order_option == 'by-name':
-        lst1 = db(q).select(orderby=db.TblStories.sorting_key | db.TblStories.name, limitby=(0,120000))
+        lst1 = db(q).select(orderby=db.TblStories.name, limitby=(0,120000))
         lst1 = [r for r in lst1]
     elif not query_has_data(params):
         lst1 = []
@@ -1032,7 +916,6 @@ def get_member_slides(member_id):
     return get_slides_from_photo_list(q)
 
 def save_story_data(story_info, user_id):
-    story_info.sorting_key = encode_sorting_key(story_info.sorting_key)
     story_id = story_info.story_id
     sm = stories_manager.Stories(user_id)
     if story_id:
@@ -1094,6 +977,21 @@ def get_member_terms(member_id):
         )
         result.append(dic)
     return result
+
+def _get_story_topics():
+    q = (db.TblItemTopics.story_id == db.TblStories.id) & (db.TblTopics.id == db.TblItemTopics.topic_id)
+    dic = dict()
+    for rec in db(q).select(db.TblStories.id, db.TblItemTopics.story_id, db.TblTopics.name):
+        story_id = rec.TblStories.id
+        topic_name = rec.TblTopics.name
+        if story_id not in dic:
+            dic[story_id] = []
+        dic[story_id].append(topic_name)
+    return dic
+
+def get_story_topics(refresh=False):
+    c = Cache('get_story_topics')
+    return c(_get_story_topics, refresh)
 
 def query_has_data(params):
     first_year, last_year = calc_years_range(params)
@@ -1291,18 +1189,18 @@ def copy_story_date_to_object_date(story_rec):
     elif story_rec.used_for == STORY4AUDIO:
         audio_rec = db(db.TblAudios.story_id==story_rec.id).select().first()
         audio_rec.update_record(audio_date=story_rec.story_date, 
-                                audio_date_dateunit=story_rec.story_date_dateunit,
-                                audio_date_datespan=story_rec.story_date_datespan,
+                              audio_date_dateunit=story_rec.story_date_dateunit,
+                              audio_date_datespan=story_rec.story_date_datespan,
                               audio_date_dateend=story_rec.story_date_dateend,
                               )
     #elif story_rec.used_for == STORY4ARTICLE:
         #article_rec = db(db.Tblarticles.story_id==story_rec.id).select().first()
         #article_rec.update_record(article_date=story_rec.story_date, 
-                                #article_date_dateunit=story_rec.story_date_dateunit,
-                                #article_date_datespan=story_rec.story_date_datespan,
-                                #article_date_dateend=story_rec.story_date_dateend,
-                                #)
-
+                              #article_date_dateunit=story_rec.story_date_dateunit,
+                              #article_date_datespan=story_rec.story_date_datespan,
+                              #article_date_dateend=story_rec.story_date_dateend,
+                              #)
+        
 @serve_json
 def qualified_members(vars):
     checked_answers = vars.checked_answers
@@ -1314,7 +1212,7 @@ def story_kinds():
     if auth.user_has_privilege(HELP_AUTHOR):
         story_kinds_arr += [STORY4HELP]
     return story_kinds_arr
-
+    
 def get_story_members(event):
     qp = (db.TblEventPhotos.Event_id == event.id) & (db.TblPhotos.id == db.TblEventPhotos.Photo_id) & (db.TblPhotos.deleted != True)
     photos = db(qp).select(db.TblPhotos.id, db.TblPhotos.photo_path)
@@ -1401,15 +1299,15 @@ def get_term_members(term):
         a['facePhotoURL'] = photos_folder("profile_photos") + a['facePhotoURL']
     return photos, members, candidates, articles, article_candidates
 
-def encode_sorting_key(sk):
-    if not sk:
-        return ""
-    sk = ['{:03}'.format(int(k)) for k in sk if k]
-    return '-'.join(sk)
-
-def decode_sorting_key(sk):
-    if not sk:
-        return []
-    lst = sk.split('-')
-    return [int(s) for s in lst]
+def get_topics_query(selected_topics):
+    topic_groups = calc_grouped_selected_options(selected_topics)
+    q = (db.TblItemTopics.story_id == db.TblStories.id)
+    for topic_group in topic_groups:
+        sign = topic_group[0]
+        topic_group = topic_group[1:]
+        q1 = db.TblItemTopics.topic_id.belongs(topic_group)
+        if sign == 'minus':
+            q1 = ~q1
+        q &= q1
+    return q
 
