@@ -90,7 +90,7 @@ class AccessManager:
     def enable_all_roles(self, usr_id):
         groups = self.get_groups(False)
         for grp in groups:
-            if grp.role in ['ARCHIVER', 'HELP_AUTHOR']:
+            if grp.role in ['ARCHIVER', 'HELP_AUTHOR', 'RESTRICTED']:
                 continue
             self.modify_membership(usr_id, grp.id, True)
 

@@ -1,5 +1,6 @@
 import datetime
 import random
+from folders import local_folder, url_folder, safe_open
 NO_DATE = datetime.date(day=1, month=1, year=1)
 NO_TIME = datetime.datetime(day=1, month=1, year=1)
 FAR_FUTURE = datetime.date(day=1, month=1, year=3000)
@@ -66,6 +67,8 @@ db.define_table('TblStories',
                 Field('sampling_id', type='integer', default=random.randint(1, SAMPLING_SIZE)),
                 Field('chatroom_id', type='integer'), # actually db.TblChatGroup),but then deletion of the chatroom deletes the story!
                 Field('last_chat_time', type='datetime', default=NO_DATE),
+                Field('sorting_key', type='string', default=''), # sequence of zero-padded integers
+                Field('book_id', type='integer'),
                 Field('imported_from', type='string')
 )                
 
@@ -148,7 +151,6 @@ db.define_table('TblEvents',
                 Field('event_date_dateend', type='date', default=NO_DATE),
                 Field('EventRank', type='integer'),
                 Field('IIDD', type='integer'),
-                Field('KeyWords', type='string'),
                 Field('Name', type='string'),
                 Field('ObjectID', type='integer'),
                 Field('Object_id', type='integer'),
@@ -239,7 +241,6 @@ db.define_table('TblMembers',
                 Field('visible', type='boolean'), #obsolete
                 Field('visibility', type='integer'),
                 Field('Institute', type='string'),
-                Field('KeyWords', type='string'),
                 Field('LifeStory', type='text'),
                 Field('LifeStoryNoHtml', type='text'),
                 Field('story_id', type=db.TblStories),
@@ -300,7 +301,6 @@ db.define_table('TblPhotos',
                 Field('DescriptionNoHtml', type='text'),
                 Field('story_id', type=db.TblStories),
                 Field('IIDD', type='integer'),
-                Field('KeyWords', type='string'),
                 Field('LocationInDisk', type='string'),
                 Field('photo_path', type='string'),
                 Field('Name', type='string'),
@@ -360,14 +360,12 @@ db.define_table('TblTopicGroups',
 
 db.define_table('TblItemTopics',
           Field('item_type', type='string', requires=IS_LENGTH(1)),  #M=Member, P=Photo, E=Event
-          Field('item_id', type='integer'),
           Field('topic_id', type=db.TblTopics),
           Field('story_id', type=db.TblStories)
 )
 
 db.define_table('TblVideos',
                 Field('name', type='string'),
-                Field('keywords', type='string'),
                 Field('video_type', type='string'),
                 Field('src', type='string'),
                 Field('deleted', type='boolean', default=False),
@@ -384,10 +382,10 @@ db.define_table('TblVideos',
 
 db.define_table('TblDocs',
                 Field('name', type='string'),
-                Field('keywords', type='string'),
                 Field('doc_type', type='string'),
                 Field('deleted', type='boolean', default=False),
                 Field('story_id', type=db.TblStories),
+                Field('text_extracted', type='boolean', default=False),
                 Field('uploader', type=db.auth_user),
                 Field('doc_date', type='date', default=NO_DATE),
                 Field('doc_date_dateunit', type='string', default='Y'), # D, M or Y for day, month, year
@@ -402,7 +400,6 @@ db.define_table('TblDocs',
 
 db.define_table('TblAudios',
                 Field('name', type='string'),
-                Field('keywords', type='string'),
                 Field('audio_type', type='string'),
                 Field('deleted', type='boolean', default=False),
                 Field('story_id', type=db.TblStories),
@@ -439,7 +436,6 @@ db.define_table('TblTerms',
                 Field('InventedByMemberID', type='integer'),
                 Field('InventedByMember_id', type='integer'),
                 Field('Name', type='string'),
-                Field('keywords', type='string'),
                 Field('ObjectID', type='integer'),
                 Field('Object_id', type='integer'),
                 Field('PageHits', type='integer'),
@@ -482,6 +478,8 @@ db.define_table('TblConfiguration',
                 Field('help_messages_upload_time', type='datetime', default=NO_DATE),
                 Field('letter_templates_upload_time', type='datetime', default=NO_DATE),
                 Field('enable_articles', type='boolean', default=False),
+                Field('enable_member_of_the_day', type='boolean', default=True),
+                Field('enable_books', type='boolean', default=True),
                 Field('promoted_story_expiration', type='integer', default=7)
                 )
 
@@ -558,6 +556,15 @@ db.define_table('TblNotified',
                 Field('notification', type=db.TblNotifications)
                 )
 
+db.define_table('TblBooks',
+                Field('name', type='string'),
+                Field('description', type='string')
+                )
+
+db.define_table('TblPinned',
+                Field('story_id', type=db.TblStories)
+                )
+
 def write_indexing_sql_scripts():
     '''Creates a set of indexes if they do not exist.
        In a terminal, su postgres and issue the command
@@ -572,14 +579,14 @@ def write_indexing_sql_scripts():
         ('TblPhotos',       'crc')
     ]
 
-    path = 'applications/' + request.application + '/logs/'
+    path = local_folder('logs')
     fname = path + 'indexes_created[{a}].txt'.format(a=request.application)
     if os.path.exists(fname):
         return
-    with open(fname, 'w') as f:
+    with safe_open(fname, 'w') as f:
         f.write('Indexes create/drop sql scripts already created.\nDo not delete this file.')
-    with open(path + 'create_indexes[{a}].sql'.format(a=request.application), mode='w') as f:
-        with open(path + 'delete_indexes[{a}].sql'.format(a=request.application), mode='w') as g:
+    with safe_open(path + 'create_indexes[{a}].sql'.format(a=request.application), mode='w') as f:
+        with safe_open(path + 'delete_indexes[{a}].sql'.format(a=request.application), mode='w') as g:
             for tcc in indexes:
                 table = tcc[0]
                 fields = ', '.join(tcc[1:])

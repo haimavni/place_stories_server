@@ -1,15 +1,17 @@
-import logging
+#import logging
 
 import os
-logger = logging.getLogger("web2py.app.{}".format(request.application))
-logger.setLevel(logging.ERROR)
+###logger = logging.getLogger("web2py.app.{}".format(request.application))
+###logger.setLevel(logging.ERROR)
 #_debugging = request.function not in ('whats_up', 'log_file_data')
 #if _debugging:
     #logger.debug("\n        NEW REQUEST {}".format(request.function))
 import datetime
-from misc_utils import fix_log_owner
+###from misc_utils import fix_log_owner
+from injections import inject
 ###logging.disable(logging.DEBUG)
-
+from scheduler import logger
+from folders import safe_open
 
 def roll_over(base_name, max_number):
     for i in range(max_number - 1, 0, -1):
@@ -23,8 +25,8 @@ def roll_over(base_name, max_number):
     if os.path.exists(dfn):
         os.remove(dfn)
     os.rename(base_name, dfn)
-    open(base_name, 'w')
-    fix_log_owner(base_name)
+    safe_open(base_name, 'w')
+    ###fix_log_owner(base_name)
 
 def my_log(s, file_name="log_all"):
     size_limit = 400000
@@ -35,10 +37,10 @@ def my_log(s, file_name="log_all"):
         roll_over(fname, 10)
     s1 = "{ts}: {s}\n\n".format(ts=datetime.datetime.now(), s=s)
     try:
-        with open(fname, 'a') as f:
+        with safe_open(fname, 'a') as f:
             f.write(s1)
-        if need_fixing:
-            fix_log_owner(fname)
+        #if need_fixing:
+            #fix_log_owner(fname)
     except:
         fname = fname = '{p}{n}[{a}].log'.format(p=log_path(), n=file_name.upper(), a=request.application)
         with open(fname, 'a') as f:
@@ -56,7 +58,7 @@ def log_exception(p):
     if isinstance(p, unicode):
         p = p.encode('utf8')
     log_exception_only(p)
-    logger.exception(p)
+    ###logger.exception(p)
 
 def comment(s, *args, **kargs):
     s = s.format(*args, **kargs).replace('\n', '\n    ')

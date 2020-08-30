@@ -31,7 +31,7 @@ def load_help_messages_from_csv(vars):
 @serve_json
 def print_all_messages(vars):
     file_name = vars.file_name or 'help_messages'
-    fname = '{p}{n}[{a}].hlp'.format(p=log_path(), n=file_name, a=request.application)
+    fname = '{p}{n}[{a}].txt'.format(p=local_folder('logs'), n=file_name, a=request.application)
     with open(fname, 'w') as f:
         lst = db(db.TblStories.used_for==STORY4HELP).select(db.TblStories.id, db.TblStories.name, db.TblStories.topic, db.TblStories.story, orderby=db.TblStories.topic)
         for hrec in lst:

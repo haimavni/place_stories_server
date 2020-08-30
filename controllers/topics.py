@@ -39,10 +39,10 @@ def get_topic_list(vars):
 def remove_topic(vars):
     topic_id = vars.topic_id
     lst = db(db.TblItemTopics.topic_id==topic_id).select()
-    lst = [Storage(item_type=rec.item_type, item_id=rec.item_id) for rec in lst]
+    lst = [Storage(item_type=rec.item_type, story_id=rec.story_id) for rec in lst]
     n = db(db.TblTopics.id==topic_id).delete()
     for rec in lst:
-        recalc_keywords_str(rec.item_type, rec.item_id)
+        recalc_keywords_str(rec.item_type, rec.story_id)
     return dict()
    
 @serve_json
@@ -145,4 +145,27 @@ def update_topic_name_and_description(vars):
     if n > 0:
         return dict(user_error='multi-select.duplicate')
     db(db.TblTopics.id==topic.id).update(name=topic.name, description=topic.description)
+    return dict()
+
+@serve_json
+def create_new_book(vars):
+    if not db(db.TblBooks.name==vars.book_name).isempty():
+        raise Exception("Name is already in use")
+    book_id = db.TblBooks.insert(name=vars.book_name)
+    return dict(book_id=book_id)
+
+@serve_json
+def modify_book_info(vars):
+    #if vars.delete: delete the book
+    book = vars.book
+    book_id = int(book.id)
+    book_rec = db(db.TblBooks.id==book_id).select().first()
+    book_rec.update_record(name=book.name, description=book.description)
+    return dict()
+
+@serve_json
+def remove_book(vars):
+    book = vars.book
+    db(db.TblStories.book_id==book.id).update(book_id=None)
+    db(db.TblBooks.id==book.id).delete()
     return dict()
