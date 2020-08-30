@@ -14,6 +14,7 @@ from words import update_word_index_all
 from docs_support import calc_doc_stories
 import os
 from topics_support import fix_is_tagged
+from folders import safe_open
 
 def test_scheduler(msg):
     comment("test task {}", msg)
@@ -43,12 +44,12 @@ class MyScheduler(Scheduler):
         return task_id
 
     def on_update_task_status(self, task_id, data):
-        logger.debug("task {} status changed: {} ".format(task_id, data))
+        ##comment("task {} status changed: {} ", task_id, data)
         try:
             ###comment("task {task_id} status changed {data}", task_id=task_id, data=data)
             ws_messaging.send_message(key='task_status_changed', group='TASK_MONITOR', task_id=task_id, data=data)
         except Exception, e:
-            logger.error('failed broadcasting update task status')
+            log_exception('failed broadcasting update task status')
 
 def secs_to_dhms(t):
     s = t % 60
@@ -227,7 +228,7 @@ def schedule_update_word_index_all():
         start_time=now,
         stop_time=now + datetime.timedelta(days=1461),
         repeats=0,
-        period=60,   # minute
+        period=180,   # 3 minutes
         timeout = 600, # will time out if running for 10 minutes
     )
 
@@ -302,7 +303,7 @@ def verify_tasks_started():
         os.remove(lock_file_name)
     if os.path.isfile(lock_file_name):
         return
-    with open(lock_file_name, 'w') as f:
+    with safe_open(lock_file_name, 'w') as f:
         f.write('locked')
     for function_name in permanent_tasks:
         ###if db(db.scheduler_task.function_name==function_name).isempty():
