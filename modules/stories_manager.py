@@ -149,7 +149,7 @@ class Stories:
         
         ###update_story_words_index(story_id)
         promote_word_indexing()
-        return Storage(story_id=story_id, creation_date=now, author=source, preview=preview)
+        return Storage(story_id=story_id, creation_date=now, author=source, preview=preview, name=name)
 
     def update_story(self, story_id, story_info, language=None, change_language=False, imported_from=''):
         db, auth, STORY4EVENT, STORY4TERM, STORY4PHOTO, STORY4DOC, STORY4AUDIO, TEXT_AUDITOR = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO', 'STORY4DOC', 'STORY4AUDIO', 'TEXT_AUDITOR')
@@ -239,7 +239,7 @@ class Stories:
             audio_rec = db(db.TblAudios.story_id==story_id).select().first()
             audio_rec.update_record(name=name)
         promote_word_indexing()
-        return Storage(story_id=story_id, last_update_date=now, updater_name=author_name, author=story_info.source, language=language, preview=preview)
+        return Storage(story_id=story_id, last_update_date=now, updater_name=author_name, author=story_info.source, language=language, name=name, preview=preview)
     
     def update_story_name(self, story_id, new_name, language=None):
         db = inject('db')
