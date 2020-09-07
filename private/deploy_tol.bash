@@ -78,10 +78,11 @@ echo "
 lcd /home/haim/
 cd /home/www-data/tol_server_${TARGET}/static/aurelia
 put curr_version.tmp
-" > ../server/tol_server/private/deploy.batch
-sftp -b ../server/tol_server/private/deploy.batch gbstories.org
+" > ../server/tol_server/private/deploy1.batch
+sftp -b ../server/tol_server/private/deploy1.batch gbstories.org
 
 ssh root@gbstories.org bash /home/www-data/tol_server_${TARGET}/private/update_target.bash $TARGET
+rm ../server/tol_server/private/deploy1.batch
 rm ../server/tol_server/private/deploy.batch
 
 popd
