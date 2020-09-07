@@ -45,7 +45,7 @@ def get_siblings(member_id):
     for rec in lst:
         if not rec.date_of_birth:
             rec.date_of_birth = datetime.date(year=1, month=1, day=1) #should not happen but it did...
-    lst = sorted(lst, key=lambda rec: rec.date_of_birth)
+    lst = sorted(lst, key=lambda rec:rec.date_of_birth.raw)
     return lst
 
 def get_children(member_id, hidden_too=False):

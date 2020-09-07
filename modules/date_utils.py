@@ -47,6 +47,7 @@ def get_all_dates(rec):
                     date_str = date_str.replace('1900', str(year))
             fld_span = fld + DATE_SPAN_SUFFIX
             item = Storage(
+                raw=date,
                 date=date_str,
                 span=rec[fld_span]
             )
