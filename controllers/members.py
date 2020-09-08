@@ -1306,7 +1306,11 @@ def copy_story_date_to_object_date(story_rec):
 @serve_json
 def qualified_members(vars):
     checked_answers = vars.checked_answers
-    qualified_members = use_quiz(checked_answers)
+    nota_questions = vars.nota_questions
+    qualified_members = use_quiz(checked_answers, nota_questions)
+    if nota_questions:
+        lst = db(~db.TblMembers.id.belongs(qualified_members)).select(db.TblMembers.id)
+        qualified_members = [mem.id for mem in lst]
     return dict(qualified_members=qualified_members)
 
 def story_kinds():
