@@ -303,6 +303,7 @@ db.define_table('TblPhotos',
                 Field('IIDD', type='integer'),
                 Field('LocationInDisk', type='string'),
                 Field('photo_path', type='string'),
+                Field('webp_photo_path', type='string'),
                 Field('Name', type='string'),
                 Field('original_file_name', type='string'),
                 Field('ObjectID', type='integer'), #obsolete, to be replaced by the following line

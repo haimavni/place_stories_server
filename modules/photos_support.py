@@ -297,7 +297,6 @@ def get_slides_from_photo_list(q):
     
     photo_ids = [rec.id for rec in lst]
     photo_pairs = get_photo_pairs(photo_ids)
-    folder = photos_folder()
     slides = []
     for rec in lst:
         dic = dict(
@@ -305,11 +304,11 @@ def get_slides_from_photo_list(q):
             side='front',
             front=dict(
                 photo_id=rec.id,
-                src=folder + timestamped_photo_path(rec),
+                src=timestamped_photo_path(rec),
                 width=rec.width,
                 height=rec.height,
             ),
-            src=folder + timestamped_photo_path(rec),
+            src=timestamped_photo_path(rec),
             width=rec.width,
             height=rec.height,
             title=rec.Description or rec.Name)
@@ -668,8 +667,9 @@ def find_similar_photos(photo_list=None, time_budget=60):
     
     return (result, candidates)
 
-def timestamped_photo_path(photo_rec):
-    result = photo_rec.photo_path
+def timestamped_photo_path(photo_rec, webp_supported=True, what='orig'):
+    folder = photos_folder(what)
+    result = folder + (photo_rec.photo_path_webp if webp_supported and photo_rec.webp_photo_path else photo_rec.photo_path)
     if photo_rec.last_mod_time:
         utime = time.mktime(photo_rec.last_mod_time.timetuple())
         result += '?' + str(utime)
@@ -741,7 +741,32 @@ def get_exif_data(image):
                 exif_data[decoded] = gps_data
             else:
                 exif_data[decoded] = value
-    return exif_data            
+    return exif_data   
+
+def jpg_to_webp(file_name):
+    img = Image.open(file_name).convert("RGB")
+    r = file_name.rfind('.')
+    out_name = file_name[:r] + '.webp'
+    img.save(out_name, "webp")
+    
+def convert_to_webp(photo_id):
+    db = inject('db')
+    photo_rec = db(db.TblPhotos.id==photo_id).select().first()
+    path = local_photos_folder() + photo_rec.photo_path
+    jpg_to_webp(path)
+    if photo_rec.oversize:
+        path = local_photos_folder('oversize') + photo_rec.photo_path
+        jpg_to_webp(path)
+    path = local_photos_folder('squares') + photo_rec.photo_path
+    jpg_to_webp(path)
+    r = photo_rec.photo_path.rfind('.')
+    webp_photo_path = photo_rec.photo_path[:r] + '.webp'
+    photo_rec.update_record(webp_photo_path=webp_photo_path)
+    
+def get_photo_url(what, photo_rec, webp_supported):
+    path = photos_folder(what)
+    photo_path = photo_rec.photo_path_webp if photo_path_webp and webp_supported else photo_rec.photo_path
+    return path + photo_path
 
 def degrees_to_float(tup):
     degs, mins, secs = [t[0] for t in tup]

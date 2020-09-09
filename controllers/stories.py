@@ -83,7 +83,7 @@ def save_story(vars):
 @serve_json
 def get_photo_info(vars):
     rec = get_photo_rec(vars.photo_id)
-    rec.photo_url = photos_folder() + timestamped_photo_path(rec)
+    rec.photo_url = timestamped_photo_path(rec)
     sm = stories_manager.Stories()
     story_info = sm.get_story(rec.story_id)
     rec.name = rec.Name or story_info.name

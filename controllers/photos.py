@@ -38,7 +38,7 @@ def get_photo_detail(vars):
     photographer_name = photographer.name if photographer else ''
     photographer_id = photographer.id if photographer else None
     photo_topics = get_photo_topics(rec.story_id)
-    return dict(photo_src=photos_folder() + timestamped_photo_path(rec),
+    return dict(photo_src=timestamped_photo_path(rec),
                 photo_name=rec.Name,
                 original_file_name=rec.original_file_name,
                 photo_topics=photo_topics,
@@ -709,7 +709,7 @@ def crop_photo(vars):
     curr_dhash = crop_a_photo(path, path, crop_left, crop_top, crop_width, crop_height)
     last_mod_time = request.now
     rec.update_record(width=crop_width, height=crop_height, last_mod_time=last_mod_time, curr_dhash=curr_dhash)
-    return dict(photo_src=photos_folder('orig') + timestamped_photo_path(rec))
+    return dict(photo_src=timestamped_photo_path(rec))
 
 @serve_json
 def clear_photo_group(vars):
@@ -970,14 +970,14 @@ def process_photo_list(lst, photo_pairs=dict()):
             selected=rec.selected if 'selected' in rec else '',
             side='front',
             photo_id=rec.id,
-            src=photos_folder('orig') + tpp,
-            square_src=photos_folder('squares') + tpp,
+            src=tpp,
+            square_src=timestamped_photo_path(rec, what='squares'),
             width=rec.width,
             height=rec.height,
             front=Storage(
                 photo_id=rec.id,
-                src=photos_folder('orig') + tpp,
-                square_src=photos_folder('squares') + tpp,
+                src=tpp,
+                square_src=timestamped_photo_path(rec, what='squares'),
                 width=rec.width,
                 height=rec.height,
             )

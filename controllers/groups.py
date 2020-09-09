@@ -138,7 +138,7 @@ def upload_photo(vars):
         if 'P' not in topic_rec.usage:
             usage = topic_rec.usage + 'P'
             topic_rec.update_record(usage=usage, topic_kind=2) #simple topic
-    photo_url=photos_folder() + timestamped_photo_path(photo_rec)
+    photo_url=timestamped_photo_path(photo_rec)
     if duplicate:
         story_rec = db(db.TblStories.id==photo_rec.story_id).select().first()
         photo_name = story_rec.name
