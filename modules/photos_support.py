@@ -71,7 +71,7 @@ def save_uploaded_photo_collection(collection, user_id):
     return Storage(failed=failed,
                    duplicates=duplicates,
                    photo_ids=photo_ids)
-        
+
 def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
     auth, log_exception, db, STORY4PHOTO = inject('auth', 'log_exception', 'db', 'STORY4PHOTO')
     user_id = user_id or auth.current_user()
@@ -241,7 +241,7 @@ def scan_all_unscanned_photos():
                                                             # merge with record photo_id-member_id
         db.commit()
         missing = db((db.TblPhotos.photo_missing == True) & \
-                  (db.TblPhotos.deleted != True)).count()
+                     (db.TblPhotos.deleted != True)).count()
         done = db((db.TblPhotos.width > 0) & (db.TblPhotos.deleted != True)).count()
         total = db((db.TblPhotos) & (db.TblPhotos.deleted != True)).count()
     return dict(done=done, total=total, missing=missing, to_scan=to_scan, failed_crops=failed_crops)
@@ -294,7 +294,7 @@ def get_slides_from_photo_list(q):
         visited |= set([rec.id])
         lst1.append(rec)
     lst = lst1
-    
+
     photo_ids = [rec.id for rec in lst]
     photo_pairs = get_photo_pairs(photo_ids)
     slides = []
@@ -307,7 +307,7 @@ def get_slides_from_photo_list(q):
                 src=timestamped_photo_path(rec),
                 width=rec.width,
                 height=rec.height,
-            ),
+                ),
             src=timestamped_photo_path(rec),
             width=rec.width,
             height=rec.height,
@@ -325,7 +325,7 @@ def crop(input_path, output_path, face, size=100):
     cropped_img = img.crop(area)
     resized_img = cropped_img.resize((size, size), Image.LANCZOS)
     resized_img.save(output_path)
-    
+
 def crop_a_photo(input_path, output_path, crop_left, crop_top, crop_width, crop_height):
     img = Image.open(input_path)
     area = (crop_left, crop_top, crop_left + crop_width, crop_top + crop_height)
@@ -334,7 +334,7 @@ def crop_a_photo(input_path, output_path, crop_left, crop_top, crop_width, crop_
     cropped_img.save(output_path)
     curr_dhash = dhash_photo(photo_path=output_path)
     return curr_dhash
-    
+
 def crop_square(img_src, width, height, side_size):
     if width > height:
         x = (width - height) / 2
@@ -387,10 +387,10 @@ def rotate_photo(photo_id):
             photo_rec.update_record(curr_dhash=curr_dhash)
         else:
             img.save(path + new_photo_path)
-
+            ws_messaging.send_message(key='PHOTO_WAS_ROTATED', group='ALL', photo_id=photo_id)
     height, width = (photo_rec.width, photo_rec.height)
     photo_rec.update_record(width=width, height=height, photo_path=new_photo_path)
-    
+
 def resize_photo(photo_id, target_width=1200, target_height=800):
     db = inject('db')
     prec = db(db.TblPhotos.id==photo_id).select().first()
@@ -421,7 +421,7 @@ def resize_photo(photo_id, target_width=1200, target_height=800):
             y = int(round(ratio1 * face.y))
             r = int(round(ratio1 * face.r))
             face.update_record(x=x, y=y, r=r)
-            
+
 def resize_photos(count, target_width=1200, target_height=800):
     db = inject('db')
     q = (db.TblPhotos.deleted != True) & (db.TblPhotos.width < target_width) & (db.TblPhotos.height < target_height)
@@ -445,7 +445,7 @@ def add_photos_from_drive(sub_folder):
                 continue
             #delete the file. it has been saved using crc as name and was possibly resized
             os.remove(path)
-    
+
 def fix_owner(file_name):
     request = inject('request')
     host = request.env.http_host or ""
@@ -563,7 +563,7 @@ def create_zip_file(zip_name, file_list):
 def get_photo_pairs(photo_list):
     db = inject('db')
     q = (db.TblPhotoPairs.front_id.belongs(photo_list) & \
-        (db.TblPhotos.id == db.TblPhotoPairs.back_id) & \
+         (db.TblPhotos.id == db.TblPhotoPairs.back_id) & \
         (db.TblPhotos.deleted != True))
     lst = db(q).select(db.TblPhotoPairs.front_id, db.TblPhotoPairs.back_id,
                        db.TblPhotos.photo_path, db.TblPhotos.width, db.TblPhotos.height)
@@ -664,10 +664,11 @@ def find_similar_photos(photo_list=None, time_budget=60):
     for photo_rec in result:
         photo_rec.dup_group = dic[photo_rec.id]
     result = sorted(result, cmp=lambda prec1, prec2: +1 if prec1.dup_group > prec2.dup_group else -1 if prec1.dup_group < prec2.dup_group else +1 if prec1.id < prec2.id else -1)
-    
+
     return (result, candidates)
 
 def timestamped_photo_path(photo_rec, webp_supported=True, what='orig'):
+    #todo: if file for type of webp support is missing, create it?
     folder = photos_folder(what)
     result = folder + (photo_rec.photo_path_webp if webp_supported and photo_rec.webp_photo_path else photo_rec.photo_path)
     if photo_rec.last_mod_time:
@@ -720,7 +721,7 @@ def create_watermark(image_path, final_image_path, watermark):
             main.paste(mark, (i, j), mark)
             main.thumbnail((8000, 8000), Image.ANTIALIAS)
             main.save(final_image_path, quality=100)
-            
+
 def get_exif_data(image):
     """Returns a dictionary from the exif data of an PIL Image item. Also converts the GPS Tags"""
     exif_data = {}
@@ -748,7 +749,7 @@ def jpg_to_webp(file_name):
     r = file_name.rfind('.')
     out_name = file_name[:r] + '.webp'
     img.save(out_name, "webp")
-    
+
 def convert_to_webp(photo_id):
     db = inject('db')
     photo_rec = db(db.TblPhotos.id==photo_id).select().first()
@@ -762,7 +763,7 @@ def convert_to_webp(photo_id):
     r = photo_rec.photo_path.rfind('.')
     webp_photo_path = photo_rec.photo_path[:r] + '.webp'
     photo_rec.update_record(webp_photo_path=webp_photo_path)
-    
+
 def get_photo_url(what, photo_rec, webp_supported):
     path = photos_folder(what)
     photo_path = photo_rec.photo_path_webp if photo_path_webp and webp_supported else photo_rec.photo_path
@@ -772,4 +773,4 @@ def degrees_to_float(tup):
     degs, mins, secs = [t[0] for t in tup]
     result = degs * 1.0 + mins * 1.0 / 60 + secs * 1.0 / 3600
     return round(result, 8)
-    
+

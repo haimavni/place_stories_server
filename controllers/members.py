@@ -1317,6 +1317,8 @@ def story_kinds():
     story_kinds_arr = STORY4USER
     if auth.user_has_privilege(HELP_AUTHOR):
         story_kinds_arr += [STORY4HELP]
+    if auth.user_has_privilege(ADMIN):
+        story_kinds_arr += [STORY4MESSAGE]
     return story_kinds_arr
 
 def get_story_members(event):

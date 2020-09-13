@@ -1,5 +1,5 @@
 import stories_manager
-from photos_support import save_article_face, get_slides_from_photo_list
+from photos_support import save_article_face, get_slides_from_photo_list, timestamped_photo_path
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
 from folders import photos_folder
 import ws_messaging
@@ -15,9 +15,18 @@ def article_list(vars):
                    date_end=rec.date_end,
                    has_profile_photo=bool(rec.facePhotoURL), #used in client!
                    rnd=random.randint(0, 1000000),
-                   facePhotoURL=photos_folder('profile_photos') + (rec.facePhotoURL or "dummy_face.png")) for rec in lst]
+                   facePhotoURL=face_photo_url(rec, vars.webpSupported)) for rec in lst]
     arr.sort(key=lambda item: item.rnd)
     return dict(article_list=arr)
+
+def face_photo_url(article_rec, webp_supported):
+    folder = photos_folder('profile_photos')
+    if webp_supported:
+        path = article_rec.facePhotoURL_webp or article_rec.facePhotoURL
+    else:
+        path = article_rec.facePhotoURL
+    path = path or 'dummy_face.png'
+    return folder + path
 
 @serve_json
 def remove_article(vars):

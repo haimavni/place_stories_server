@@ -123,6 +123,8 @@ def calc_date_end(date, unit, span):
     elif unit == 'D':
         td = datetime.timedelta(days = span)
         return date + td
+    elif unit == 'N':
+        return date
     else:
         raise Exception('date has no unit')
             

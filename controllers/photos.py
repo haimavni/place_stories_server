@@ -38,7 +38,7 @@ def get_photo_detail(vars):
     photographer_name = photographer.name if photographer else ''
     photographer_id = photographer.id if photographer else None
     photo_topics = get_photo_topics(rec.story_id)
-    return dict(photo_src=timestamped_photo_path(rec),
+    return dict(photo_src=timestamped_photo_path(rec, webp_supported=vars.webpSupported),
                 photo_name=rec.Name,
                 original_file_name=rec.original_file_name,
                 photo_topics=photo_topics,
@@ -288,7 +288,7 @@ def get_photo_list(vars):
     lst = lst1 + lst
     photo_ids = [rec.id for rec in lst]
     photo_pairs = get_photo_pairs(photo_ids)
-    result = process_photo_list(lst, photo_pairs)
+    result = process_photo_list(lst, photo_pairs, webpSupported=vars.webpSupported)
     if selected_order_option == 'upload-time-order' and lst:
         last_photo_time = lst[-1].upload_date
     elif selected_order_option.startswith('chronological') and lst:
@@ -709,7 +709,7 @@ def crop_photo(vars):
     curr_dhash = crop_a_photo(path, path, crop_left, crop_top, crop_width, crop_height)
     last_mod_time = request.now
     rec.update_record(width=crop_width, height=crop_height, last_mod_time=last_mod_time, curr_dhash=curr_dhash)
-    return dict(photo_src=timestamped_photo_path(rec))
+    return dict(photo_src=timestamped_photo_path(rec, webp_supported=vars.webpSupported))
 
 @serve_json
 def clear_photo_group(vars):
@@ -945,7 +945,7 @@ def flip_photo_pair(front_id, back_id):
     db(db.TblPhotos.id == front_id).update(is_back_side=True)
     db(db.TblPhotos.id == back_id).update(is_back_side=False)
 
-def process_photo_list(lst, photo_pairs=dict()):
+def process_photo_list(lst, photo_pairs=dict(), webpSupported=False):
     for rec in lst:
         fix_record_dates_out(rec)
     result = []
@@ -955,7 +955,7 @@ def process_photo_list(lst, photo_pairs=dict()):
     for rec in lst1:
         kws[rec.id] = rec.keywords
     for rec in lst:
-        tpp = timestamped_photo_path(rec)
+        tpp = timestamped_photo_path(rec, webp_supported=webpSupported)
         keywords=kws[rec.story_id]
         rec_title='{}: {}'.format(rec.Name, keywords)
         dic = Storage(
@@ -971,13 +971,13 @@ def process_photo_list(lst, photo_pairs=dict()):
             side='front',
             photo_id=rec.id,
             src=tpp,
-            square_src=timestamped_photo_path(rec, what='squares'),
+            square_src=timestamped_photo_path(rec, what='squares', webp_supported=webpSupported),
             width=rec.width,
             height=rec.height,
             front=Storage(
                 photo_id=rec.id,
                 src=tpp,
-                square_src=timestamped_photo_path(rec, what='squares'),
+                square_src=timestamped_photo_path(rec, what='squares', webp_supported=webpSupported),
                 width=rec.width,
                 height=rec.height,
             )
