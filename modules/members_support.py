@@ -172,7 +172,14 @@ def get_topics_query(selected_topics):
     q = (db.TblStories.id.belongs(list(intersection)))
     return q
 
+def pin_story(story_id):
+    db = inject('db')
+    q = (db.TblPinned.story_id == story_id)
+    if db(q).isempty():
+        db.TblPinned.insert(story_id=story_id)
+
 def member_photos_by_updater(updater_id):
+    db = inject('db')
     lst = db((db.TblMembers.deleted!=True) & (db.TblMembers.updater_id==updater_id) &\
              (db.TblMemberPhotos.Member_id==db.TblMembers.id)).\
              select(db.TblMembers.id,db.TblMembers.first_name,db.TblMembers.last_name,db.TblMembers.updater_id,db.TblMemberPhotos.Photo_id,orderby=db.TblMembers.id)

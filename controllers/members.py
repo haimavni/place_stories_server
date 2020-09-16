@@ -157,6 +157,8 @@ def save_story_info(vars):
     user_id = vars.user_id
     story_info = vars.story_info
     info = save_story_data(story_info, user_id=user_id)
+    if vars.pinned:
+        pin_story(story_info.story_id)
     return dict(info=info)
 
 @serve_json
@@ -288,6 +290,19 @@ def get_story_previews(vars):
 def get_story(vars):
     sm = stories_manager.Stories()
     story_id = int(vars.story_id)
+    return dict(story=sm.get_story(story_id))
+
+@serve_json
+def get_app_description(vars):
+    desc_name = '__description'
+    sm = stories_manager.Stories()
+    story = db(db.TblStories.name==desc_name).select().first()
+    if story:
+        story_id = story.id
+    else:
+        story_info = sm.get_empty_story(used_for=STORY4MESSAGE, story_text="Site description", name=desc_name)
+        data = sm.add_story(story_info)
+        story_id = data.story_id
     return dict(story=sm.get_story(story_id))
 
 @serve_json
