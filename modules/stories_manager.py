@@ -3,6 +3,7 @@ import datetime
 from injections import inject
 from gluon.storage import Storage
 from words import *
+import re
 
 def display_date(dt):
     return str(dt)[:19]
@@ -296,15 +297,31 @@ def promote_word_indexing():
 def mark_diffs(txt1, txt2):
     merger = mim.Merger()
     delta = merger.diff_make(txt1, txt2)
-    lst = delta.split('\n')
-    with open('/home/haim/delta.txt', 'w') as f:
-        f.write('text 1\n')
-        for i, s in enumerate(txt1.split('\n')):
-            f.write('{i:3}: {s}\n'.format(i=i, s=s) )
-        f.write('\n\ntext 2\n')
-        for i, s in enumerate(txt2.split('\n')):
-            f.write('{i:3}: {s}\n'.format(i=i, s=s) )
-        f.write('diffs:\n')
-        f.write(delta)
-    n = len(lst)
+    txt1_lst = txt1.split('\n')
+    pat = r'@@ -'
+    diffs = re.split(pat, delta)
+    diffs = diffs[1:]
+    diffs.reverse()
+    for dif in diffs:
+        lst = dif.split('\n')
+        idx, span = calc_idx_span(lst[0])
+        marked_rows = mark_marked_rows(lst[1:])
+        txt1_lst[idx:idx+span] = marked_rows
+    txt1 = '\n'.join(txt1_lst)
+    return txt1
+    
+def calc_idx_span(s):
+    lst = re.findall(r'\d+', s)
+    idx, span = int(lst[0]), int(lst[1])
+    return idx, span
+
+def mark_marked_rows(lst):
+    result = []
+    for s in lst:
+        if s.startswith('-'):
+            s = '<span class="removed">' + s[1:] + '</span>'
+        elif s.startswith('+'):
+            s = '<span class="added">' + s[1:] + '</span>'
+        result.append(s)        
+    return result
     

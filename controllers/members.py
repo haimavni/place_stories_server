@@ -162,6 +162,15 @@ def save_story_info(vars):
     return dict(info=info)
 
 @serve_json
+def approve_story_info(vars):
+    user_id = vars.user_id
+    story_info = vars.story_info
+    story_id = int(story_info.story_id)
+    rec = db(db.TblStories.id==story_id).select().first()
+    db(db.TblStories.id==story_id).update(approved_version=rec.last_version)
+    return dict()
+
+@serve_json
 def get_stories_index(vars):
     words_index = read_words_index()
     return dict(stories_index=words_index)
@@ -861,6 +870,7 @@ def get_story_versions(vars):
         prev_story_info = sm.get_story(story_id, to_story_version=story_info.approved_version) 
         if request.env.http_host == 'gbstories:8000': #still experimenting
             txt = stories_manager.mark_diffs(prev_story_info.story_text, story_info.story_text)
+            prev_story_info.story_text = txt
     return dict(unapproved=unapproved, story_info=story_info, prev_story_info=prev_story_info)
 
 ###---------------------support functions
@@ -1158,7 +1168,7 @@ def make_stories_query(params, exact):
         q &= (db.TblStories.last_update_date>date0)
     if params.approval_state:
         if params.approval_state.id == 2:
-            q &= (db.TblStories.last_version > 0) & (db.TblStories.last_version > db.TblStories.approved_version)
+            q &= (db.TblStories.last_version > db.TblStories.approved_version)
         if params.approval_state.id == 3:
             q &= (db.TblStories.last_version == db.TblStories.approved_version)
     first_year, last_year = calc_years_range(params)
