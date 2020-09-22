@@ -93,7 +93,9 @@ class Stories:
             story_curr_version=to_story_version,
             story_versions=story_versions,
             display_version=display_version,
-            chatroom_id=rec.chatroom_id
+            chatroom_id=rec.chatroom_id,
+            approved_version=rec.approved_version,
+            last_version=rec.last_version
         )
         return story_info
     
@@ -290,3 +292,19 @@ class Stories:
 def promote_word_indexing():
     promote_task = inject('promote_task')
     promote_task('update_word_index_all')
+    
+def mark_diffs(txt1, txt2):
+    merger = mim.Merger()
+    delta = merger.diff_make(txt1, txt2)
+    lst = delta.split('\n')
+    with open('/home/haim/delta.txt', 'w') as f:
+        f.write('text 1\n')
+        for i, s in enumerate(txt1.split('\n')):
+            f.write('{i:3}: {s}\n'.format(i=i, s=s) )
+        f.write('\n\ntext 2\n')
+        for i, s in enumerate(txt2.split('\n')):
+            f.write('{i:3}: {s}\n'.format(i=i, s=s) )
+        f.write('diffs:\n')
+        f.write(delta)
+    n = len(lst)
+    

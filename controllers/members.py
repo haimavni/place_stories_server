@@ -850,6 +850,19 @@ def get_book_list(vars):
     book_list = [rec.as_dict() for rec in lst]
     return dict(book_list=book_list)
 
+@serve_json
+def get_story_versions(vars):
+    story_id = int(vars.story_id)
+    sm = stories_manager.Stories()
+    story_info = sm.get_story(story_id)
+    unapproved = story_info.approved_version < story_info.last_version
+    prev_story_info = None
+    if unapproved:
+        prev_story_info = sm.get_story(story_id, to_story_version=story_info.approved_version) 
+        if request.env.http_host == 'gbstories:8000': #still experimenting
+            txt = stories_manager.mark_diffs(prev_story_info.story_text, story_info.story_text)
+    return dict(unapproved=unapproved, story_info=story_info, prev_story_info=prev_story_info)
+
 ###---------------------support functions
 
 def new_member_rec(gender=None, first_name="", last_name=""):
@@ -920,6 +933,10 @@ def _get_story_list(params, exact): #exact means looking only for the passed key
         q &= (db.TblStories.chatroom_id != None)
         lst1 = db(q).select(orderby=~db.TblStories.last_chat_time)
         lst1 = [r for r in lst1 if r.last_chat_time]
+    elif order_option == 'by-update':
+        q &= (db.TblStories.last_update_date != None)
+        lst1 = db(q).select(orderby=~db.TblStories.last_update_date)
+        lst1 = [r for r in lst1 if r.last_update_date]
     elif order_option == 'new-to-old':
         q &= (db.TblStories.story_date != NO_DATE)
         lst1 = db(q).select(orderby=~db.TblStories.story_date | db.TblStories.sorting_key | db.TblStories.name, limitby=(0, 12000))
