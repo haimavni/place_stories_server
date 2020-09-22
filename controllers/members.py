@@ -855,7 +855,7 @@ def get_story_versions(vars):
     story_id = int(vars.story_id)
     sm = stories_manager.Stories()
     story_info = sm.get_story(story_id)
-    unapproved = story_info.approved_version < story_info.last_version
+    unapproved = story_info.last_version > 0 and (story_info.approved_version < story_info.last_version)
     prev_story_info = None
     if unapproved:
         prev_story_info = sm.get_story(story_id, to_story_version=story_info.approved_version) 
@@ -1158,7 +1158,7 @@ def make_stories_query(params, exact):
         q &= (db.TblStories.last_update_date>date0)
     if params.approval_state:
         if params.approval_state.id == 2:
-            q &= (db.TblStories.last_version > db.TblStories.approved_version)
+            q &= (db.TblStories.last_version > 0) & (db.TblStories.last_version > db.TblStories.approved_version)
         if params.approval_state.id == 3:
             q &= (db.TblStories.last_version == db.TblStories.approved_version)
     first_year, last_year = calc_years_range(params)
