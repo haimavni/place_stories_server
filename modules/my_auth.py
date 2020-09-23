@@ -130,6 +130,15 @@ class MyAuth(Auth):
         user = db(db.auth_user.id==user_id).select().first()
         return user.first_name + ' ' + user.last_name
     
+    def user_info(self, user_id):
+        db = self.db
+        user = db(db.auth_user.id==user_id).select().first()
+        info = Storage(
+            name=self.user_name(user_id),
+            email=user.email
+        )
+        return info
+    
     def get_privileges(self):
         if not self.user:
             return

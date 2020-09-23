@@ -864,14 +864,17 @@ def get_story_versions(vars):
     story_id = int(vars.story_id)
     sm = stories_manager.Stories()
     story_info = sm.get_story(story_id)
+    last_update_date=story_info.last_update_date
     unapproved = story_info.approved_version < story_info.last_version
     prev_story_info = None
+    updater = None
+    author = auth.user_info(story_info.author_id)
     if unapproved and story_info.last_version > 0:
         prev_story_info = sm.get_story(story_id, to_story_version=story_info.approved_version) 
-        if request.env.http_host == 'gbstories:8000': #still experimenting
-            txt = stories_manager.mark_diffs(prev_story_info.story_text, story_info.story_text)
-            prev_story_info.story_text = txt
-    return dict(unapproved=unapproved, story_info=story_info, prev_story_info=prev_story_info)
+        txt = stories_manager.mark_diffs(prev_story_info.story_text, story_info.story_text)
+        prev_story_info.story_text = txt
+        updater = auth.user_info(story_info.updater_id)
+    return dict(unapproved=unapproved, story_info=story_info, prev_story_info=prev_story_info, author=author, updater=updater, last_update_date=last_update_date)
 
 ###---------------------support functions
 

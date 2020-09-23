@@ -96,7 +96,9 @@ class Stories:
             display_version=display_version,
             chatroom_id=rec.chatroom_id,
             approved_version=rec.approved_version,
-            last_version=rec.last_version
+            last_version=rec.last_version,
+            last_update_date = rec.last_update_date,
+            updater_id = rec.updater_id
         )
         return story_info
     
