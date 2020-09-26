@@ -468,7 +468,7 @@ def save_member_face(params):
         face_photo_url = save_profile_photo(face, is_article=False)
     else:
         face_photo_url = None
-    if params.old_member_id:
+    if params.old_member_id >= 0:
         q = (db.TblMemberPhotos.Photo_id == face.photo_id) & \
             (db.TblMemberPhotos.Member_id == params.old_member_id)
     else:
@@ -488,7 +488,7 @@ def save_member_face(params):
         rec.update_record(**data)
     else:
         db.TblMemberPhotos.insert(**data)
-        if params.old_member_id and params.old_member_id != face.member_id:
+        if params.old_member_id >= 0 and params.old_member_id != face.member_id:
             db(q).delete()
     member_name = member_display_name(member_id=face.member_id)
     db(db.TblPhotos.id==face.photo_id).update(Recognized=True)
