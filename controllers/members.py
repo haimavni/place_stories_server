@@ -1363,6 +1363,14 @@ def qualified_members(vars):
         lst = db(~db.TblMembers.id.belongs(qualified_members)).select(db.TblMembers.id)
         qualified_members = [mem.id for mem in lst]
     return dict(qualified_members=qualified_members)
+                
+@serve_json
+def collect_search_stats(vars):
+    rec = db(db.TblSearches.pattern == vars.search_pattern).select().first()
+    if rec:
+        rec.update_record(count=rec.count + 1)
+    else:
+        db.TblSearches.insert(pattern=vars.search_pattern, count=1)
 
 def story_kinds():
     story_kinds_arr = STORY4USER
