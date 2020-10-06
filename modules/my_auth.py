@@ -1,7 +1,4 @@
 from gluon.tools import Auth
-from gluon.validators import *
-from gluon.utils import web2py_uuid
-from gluon.dal import Row
 from gluon.storage import Storage
 from injections import inject
 from admin_support.access_manager import AccessManager
@@ -31,7 +28,7 @@ class MyAuth(Auth):
             self.add_membership(ACCESS_MANAGER, id)
 
     def current_user(self):
-        #use session.current_user to fake another user
+        # use session.current_user to fake another user
         session, request = inject('session', 'request')
         if self.user:
             return session.current_user or self.user.id

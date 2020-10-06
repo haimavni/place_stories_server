@@ -81,6 +81,7 @@ import optparse
 import types
 import Queue
 from injections import inject
+from __future__ import print_function    # (at top of module)
 
 path = os.getcwd()
 
@@ -247,7 +248,7 @@ class JobGraph(object):
 def demo_function(*argv, **kwargs):
     """ test function """
     for i in range(argv[0]):
-        print 'click', i
+        print('click', i)
         time.sleep(1)
     return 'done'
 
@@ -338,9 +339,12 @@ def executor(queue, task, out):
                 *loads(task.args, object_hook=_decode_dict),
                 **loads(task.vars, object_hook=_decode_dict))
         queue.put(TaskReport('COMPLETED', result=result))
-    except BaseException, e:
+    except NameError as e:
         tb = traceback.format_exc()
         queue.put(TaskReport('FAILED', tb=tb))
+    except Exception as e:
+        tb = traceback.format_exc()
+
     del stdout
 
 

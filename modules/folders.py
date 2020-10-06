@@ -1,14 +1,19 @@
 from injections import inject
 from distutils import dir_util
 import os
-import pwd
+try:
+    import pwd
+except ImportError:
+    pwd = None
+
 
 def url_folder(kind):
     request = inject('request')
-    app = request.application.split('__')[0]  #we want dev, test and www apps share the same photos
-    #app appears twice: one to reach static, the other is to separate different customers
+    app = request.application.split('__')[0]  # we want dev, test and www apps share the same photos
+    # app appears twice: one to reach static, the other is to separate different customers
     h = 'https' if request.is_https else 'http'
     return '{h}://{host}/{app}/static/gb_photos/{app}/{kind}/'.format(h=h, host=request.env.http_host, app=app, kind=kind)
+
 
 def local_folder(kind):
     request = inject('request')
@@ -21,6 +26,7 @@ def local_folder(kind):
         os.chown(path, uid, uid)
     return path
 
+
 def system_folder():
     path = '/gb_photos/system_data/'
     curr_uid = os.geteuid()
@@ -30,19 +36,24 @@ def system_folder():
         os.chown(path, uid, uid)
     return path
 
+
 def photos_folder(what="orig"):
-    #what may be orig, squares or profile_photos.
+    # what may be orig, squares or profile_photos.
     return url_folder('photos') + what + '/'
+
 
 def images_folder():
     return url_folder('images')
 
+
 def local_photos_folder(what="orig"):
-    #what may be orig, squares,images or profile_photos. (images is for customer-specific images such as logo)
+    # what may be orig, squares,images or profile_photos. (images is for customer-specific images such as logo)
     return local_folder('photos' + '/' + what)
+
 
 def local_images_folder():
     return local_folder('images')
+
 
 def get_user_id():
     request = inject("request")
@@ -52,12 +63,16 @@ def get_user_id():
     else:
         uname = 'www-data'
     return pwd.getpwnam(uname).pw_uid
+
     
 def safe_open(filename, mode):
-    curr_uid = os.geteuid()
-    uid = get_user_id()
-    f = open(filename, mode)
-    if curr_uid == 0:
-        os.chown(filename, uid, uid)
-    return f   
-            
+    if pwd:
+        curr_uid = os.geteuid()
+        uid = get_user_id()
+        f = open(filename, mode)
+        if curr_uid == 0:
+            os.chown(filename, uid, uid)
+    else:
+        f = open(filename, mode)
+    return f
+

@@ -19,13 +19,13 @@ myconf = AppConfig(reload=True)
 def __open_db():
     dbname = request.application
     adapter = 'psycopg2:'
-    _debugging = False ###request.function not in ('whats_up', 'log_file_data')
+    _debugging = False  # request.function not in ('whats_up', 'log_file_data')
     try:
         db = DAL('postgres:{ad}//lifestone:V3geHanu@localhost/{dbn}'.format(ad=adapter, dbn=dbname), 
                  pool_size=10,
                  debug=_debugging,
-                 lazy_tables=False) #it causes an exeption!
-    except Exception, e:
+                 lazy_tables=False)  # it causes an exeption!
+    except Exception as e:
         comment('Failed to open db {}. Error: {}.'.format(dbname, e))
         raise
     return db
@@ -131,7 +131,7 @@ try:
         admin_id = register_new_user('admin@gbs.com', '931632', 'admin', 'admin')
         auth.login_bare('admin@gbs.com', '931632')
         auth.set_access_manager(ACCESS_MANAGER, admin_id)
-except Exception, e:
+except Exception as e:
     pass
 
 base_app_dir = 'applications/' + request.application + '/'
