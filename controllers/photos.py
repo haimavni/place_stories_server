@@ -813,7 +813,7 @@ def replace_photo(pgroup):
         last_mod_time=request.now,
         oversize=old_photo.oversize,
         crc=old_photo.crc,
-        dhash=old_photo.dhash,
+    dhash=old_photo.dhash,
     )
     ###data['status'] = 'regular'
     if old_photo.width != new_photo.width:
@@ -872,10 +872,13 @@ def make_photos_query(vars):
         q &= (db.TblPhotos.photo_date != NO_DATE)
     elif opt == 'undated':
         q &= (db.TblPhotos.photo_date == NO_DATE)
+    member_ids = None
     if vars.selected_member_id:
-        member_id = vars.selected_member_id
-        q1 = (db.TblMemberPhotos.Member_id == member_id) & \
-            (db.TblPhotos.id == db.TblMemberPhotos.Photo_id)
+        member_ids = [vars.selected_member_id]
+    elif vars.selected_member_ids:
+        member_ids = [int(mid) for mid in vars.selected_member_ids]
+    if member_ids:
+        q1 = with_members_query(member_ids)
         q &= q1
     if vars.selected_recognition == 'recognized':
         q &= ((db.TblPhotos.Recognized == True) | (db.TblPhotos.Recognized == None))
@@ -889,7 +892,19 @@ def make_photos_query(vars):
     if vars.selected_topics:
         q1 = get_topics_query(vars.selected_topics)
         q &= q1
-    return q
+    return q 
+
+def with_members_query(member_ids):
+    result = None
+    for mid in member_ids:
+        q = (db.TblPhotos.id == db.TblMemberPhotos.Photo_id) & (db.TblMemberPhotos.Member_id == mid)
+        lst = db(q).select(db.TblPhotos.id)
+        lst = [r.id for r in lst]
+        if result:
+            result &= set(lst)
+        else:
+            result = set(lst)
+    return (db.TblPhotos.id.belongs(result))
 
 def unlocated_faces():
     q = (db.TblPhotos.id == db.TblMemberPhotos.Photo_id) & (db.TblMemberPhotos.x == None)
