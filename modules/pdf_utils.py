@@ -10,7 +10,7 @@ import fitz
 from pdf2image import convert_from_path
 import subprocess
 import os
-from injections import inject
+from .injections import inject
 
 PAT = '[א-תךםןףץ]'
 PAT_HEB = PAT.replace(']', ']{2,100}').decode('utf-8')
@@ -91,7 +91,7 @@ def highlight_pdf(fname, outfname, keywords):
     doc = fitz.open(fname)
     if not isinstance(keywords, list):
         keywords = [keywords]
-    keywords = [w if isinstance(w, unicode) else w.decode('utf-8') for w in keywords]
+    keywords = [w if isinstance(w, str) else w.decode('utf-8') for w in keywords]
     for kwd in keywords:
         if HEB_REGEX.match(kwd):
             kwd = reverse(kwd)
@@ -151,5 +151,5 @@ if __name__ == '__main__':
     test_pdf_jpg()
     test_pdf2text()
     test_highlight()
-    print 'done'
+    print('done')
     

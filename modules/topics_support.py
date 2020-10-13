@@ -1,4 +1,4 @@
-from injections import inject
+from .injections import inject
 
 def recalc_keywords_str(item_type, story_id):
     db = inject('db')

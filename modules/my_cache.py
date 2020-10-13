@@ -1,4 +1,4 @@
-from injections import inject
+from .injections import inject
 from gluon.contrib.memcache import memcache
 import re
 
@@ -13,12 +13,12 @@ class Cache:
 
     @staticmethod
     def make_key(name, *args, **kargs):
-        result = name.func_name if callable(name) else name
+        result = name.__name__ if callable(name) else name
         args = [str(a) for a in args]
         s = '-'.join(args)
         if s:
             result += '-' + s
-        lst = [k + '-' + str(v) for k, v in kargs.items()]
+        lst = [k + '-' + str(v) for k, v in list(kargs.items())]
         s = '-'.join(lst)
         if s:
             result += '-' + s

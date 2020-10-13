@@ -4,12 +4,12 @@ import re
 import zlib
 from os import listdir
 from os.path import isfile, join, splitext
-from photos_support import save_uploaded_photo_collection
+from .photos_support import save_uploaded_photo_collection
 from gluon.storage import Storage
 from email.header import decode_header
 from shutil import move
-from injections import inject
-from cStringIO import StringIO
+from .injections import inject
+from io import StringIO
 from mammoth import convert_to_html
 
 class EmailCollector:
@@ -146,7 +146,7 @@ def collect_mail():
             ###user_id = user_id or 1 #todo: if we decide not to create new user
             text = msg.html_content or msg.plain_content
             comment('New email: subject: {subject}, images: {image_names} sent by {sender}', 
-                    subject=msg.subject, image_names=msg.images.keys(), sender=msg.sender_email)
+                    subject=msg.subject, image_names=list(msg.images.keys()), sender=msg.sender_email)
             if msg.images:
                 result = save_uploaded_photo_collection(msg.images, user_id)
                 results.append(result)
@@ -158,7 +158,7 @@ def collect_mail():
                 else:
                     s = "strange text"
                     m = msg[fld]
-                    if isinstance(m, unicode):
+                    if isinstance(m, str):
                         s = m
                     else:
                         try:
@@ -171,7 +171,7 @@ def collect_mail():
                 comment("mail was forwarded")
             else:
                 comment("forwarding mail failed: {}", mail.error)
-    except Exception, e:
+    except Exception as e:
         log_exception('Error collecting mail')
         raise
             

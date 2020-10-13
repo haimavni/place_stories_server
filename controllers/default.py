@@ -2,7 +2,7 @@
 # this file is released under public domain and you can use without limitations
 
 from ws_messaging import send_message, messaging_group
-from admin_support.access_manager import AccessManager
+from .admin_support import access_manager
 
 #########################################################################
 ## This is a sample controller
@@ -324,7 +324,7 @@ def notify_new_files(vars):
 @serve_json
 def reset_password(vars):
     user_rec = db(db.auth_user.email==vars.email).select().first()
-    am = AccessManager()
+    am = access_manager.AccessManager()
     app_name = request.application
     host=request.env.http_host.split(':')[0]
     registration_key = am.replace_password(user_rec.id, vars.password)

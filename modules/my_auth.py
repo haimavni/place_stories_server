@@ -1,12 +1,12 @@
 from gluon.tools import Auth
 from gluon.storage import Storage
-from injections import inject
-from admin_support.access_manager import AccessManager
+from .injections import inject
+from .admin_support.access_manager import AccessManager
 
 class MyAuth(Auth):
 
     def change_password(self, old_password, new_password, uid=None):
-        from admin_support.access_manager import encrypt_password
+        from .admin_support.access_manager import encrypt_password
         db = self.db
         curr_password = db(db.auth_user.id==uid).select(db.auth_user.password).first().password
         if curr_password != encrypt_password(old_password):
@@ -51,7 +51,7 @@ class MyAuth(Auth):
             to=user_rec.email,
             subject=self.messages.verify_email_subject,
             message=self.messages.verify_email % dict(key=user_rec.registration_key))):
-            raise Exception(T('Failed to resend verify email to {}').format(user_rec.email))
+                raise Exception('Failed to resend verify email to {}').format(user_rec.email)
         
     def verify_email(self, key):
         """
@@ -92,7 +92,7 @@ class MyAuth(Auth):
     
     def notify_registration(self, user_info):
         request, db, mail, ACCESS_MANAGER = inject('request', 'db', 'mail', 'ACCESS_MANAGER')
-        app = reqeuest.application
+        app = request.application
         ui = user_info
         user_name = ui.first_name + ' ' + ui.last_name
         email = ui.email

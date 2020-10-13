@@ -108,13 +108,13 @@ def blacklist():
     return result
 
 def range_pat(tup):
-    s = unichr(tup[0])
+    s = chr(tup[0])
     if (len(tup) > 1) and (tup[0] != tup[1]):
-        s += '-' + unichr(tup[1])
+        s += '-' + chr(tup[1])
     return s
 
 def lang_pat(seq)        :
-    s = u'['
+    s = '['
     for tup in seq:
         s += range_pat(tup)
     s += '"\']+'
@@ -122,43 +122,43 @@ def lang_pat(seq)        :
 
 def get_emoticons():
     #emoticons taken from http://en.wikipedia.org/wiki/List_of_emoticons
-    emoticons = u':-\) :\) :o\) :\] :3 :c\) :> \=\] 8\) \=\) :\} :\^\) :ã£\) '                 # smile, happy
-    emoticons += u':-D :D 8-D 8D x-D xD X-D XD =-D =D =-3 =3 B\^D ' + u':-\)\) '   # laugh
-    emoticons += u">:\[ :-\( :\( :-c :c :-< :ã£C :< :-\[ :\[ :\{ " + u";\( "          # sad
-    emoticons += u':-\|\| :@ >:\( '                                                # angry
-    emoticons += u":'-\( :'\( "                                                   # crying
-    emoticons += u":'-\) :'\) "                                                   # tears of happiness
-    emoticons += u"D:< D: D8 D; D= DX v\.v D-': "                                # great dismay
-    emoticons += u">:O :-O :O :-o :o 8-0 O_O o-o O_o o_O o_o O-O "              # surprise, shock, yawn
-    emoticons += u":\* :\^\* \('\}\{'\) "                                            # kiss
-    emoticons += u">:P :-P :P X-P x-p xp XP :-p :p =p :-Ãž :Ãž :Ã¾ :-Ã¾ :-b :b d: " # Tongue sticking out, cheeky/playful
-    emoticons += u">:\ >:/ :-/ :-\. :\ =/ =\ :L =L :S >\.< "                   # Skeptical, annoyed, undecided, uneasy, hesitant
-    emoticons += u":\|\|:-\|\| "                                                  # Straight face[4] no expression, indecision
-    emoticons += u":\$ "                                                         # Embarrassed 
-    emoticons += u":-X :X :-# :# "
-    emoticons += u"O:-\) 0:-3 0:3 0:-\) 0:\) 0;\^\) "
-    emoticons += u">:\) >;\) >:-\) "
-    emoticons += u"o/\\o \^5 >_>\^ \^<_< "                                          # high five
-    emoticons += u"\|;-\) \|-O "     
+    emoticons = ':-\) :\) :o\) :\] :3 :c\) :> \=\] 8\) \=\) :\} :\^\) :ã£\) '                 # smile, happy
+    emoticons += ':-D :D 8-D 8D x-D xD X-D XD =-D =D =-3 =3 B\^D ' + ':-\)\) '   # laugh
+    emoticons += ">:\[ :-\( :\( :-c :c :-< :ã£C :< :-\[ :\[ :\{ " + ";\( "          # sad
+    emoticons += ':-\|\| :@ >:\( '                                                # angry
+    emoticons += ":'-\( :'\( "                                                   # crying
+    emoticons += ":'-\) :'\) "                                                   # tears of happiness
+    emoticons += "D:< D: D8 D; D= DX v\.v D-': "                                # great dismay
+    emoticons += ">:O :-O :O :-o :o 8-0 O_O o-o O_o o_O o_o O-O "              # surprise, shock, yawn
+    emoticons += ":\* :\^\* \('\}\{'\) "                                            # kiss
+    emoticons += ">:P :-P :P X-P x-p xp XP :-p :p =p :-Ãž :Ãž :Ã¾ :-Ã¾ :-b :b d: " # Tongue sticking out, cheeky/playful
+    emoticons += ">:\ >:/ :-/ :-\. :\ =/ =\ :L =L :S >\.< "                   # Skeptical, annoyed, undecided, uneasy, hesitant
+    emoticons += ":\|\|:-\|\| "                                                  # Straight face[4] no expression, indecision
+    emoticons += ":\$ "                                                         # Embarrassed 
+    emoticons += ":-X :X :-# :# "
+    emoticons += "O:-\) 0:-3 0:3 0:-\) 0:\) 0;\^\) "
+    emoticons += ">:\) >;\) >:-\) "
+    emoticons += "o/\\o \^5 >_>\^ \^<_< "                                          # high five
+    emoticons += "\|;-\) \|-O "     
 
-    emoticons += u":-& :& "
-    emoticons += u"#-\) "
-    emoticons += u"%-\) %\) "
-    emoticons += u":-###\.\. :###\.\. "
-    emoticons += u"<:-\| "
-    emoticons += u"à² _à²  "
-    emoticons += u"<\*\)\)\)-\{ ><\(\(\(\*> ><>"
+    emoticons += ":-& :& "
+    emoticons += "#-\) "
+    emoticons += "%-\) %\) "
+    emoticons += ":-###\.\. :###\.\. "
+    emoticons += "<:-\| "
+    emoticons += "à² _à²  "
+    emoticons += "<\*\)\)\)-\{ ><\(\(\(\*> ><>"
 
     emoticons = emoticons.strip().replace(' ', '|')
     return emoticons
 
 def multi_language_word_extractor():
-    s = u''
+    s = ''
     for lang in charsets:
         pat = lang_pat(lang)
         s +=  pat + '|'
     ###s += get_emoticons()
-    s = u"[a-z]+(?:[\'â€™]t|[\'â€™]s)|" +  s
+    s = "[a-z]+(?:[\'â€™]t|[\'â€™]s)|" +  s
     s += '[0-9]+'
     ###s += '| (?P<URL>http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F])))+'
     s = s.encode('utf8')
@@ -200,7 +200,7 @@ def remove_annoying_characters(text):
         char = match.group(0)
         return chars[char]
 
-    return re.sub('(' + '|'.join(chars.keys()) + ')', replace_chars, text)
+    return re.sub('(' + '|'.join(list(chars.keys())) + ')', replace_chars, text)
 
 utf8_pattern = '''
 (?P<good> ([\000-\177]            # 1-byte pattern
@@ -237,7 +237,7 @@ def clean_word(w):
         uin = w.decode('utf8')
     except:
         return w
-    uout = u''
+    uout = ''
     for c in uin:
         if c in '"\':':
             uout += c
@@ -268,7 +268,7 @@ def extract_words(s):
     #s = fix_utf8(s)
     #s = remove_annoying_characters(s)
     #s = url_regex.sub('', s)
-    if isinstance(s, unicode):
+    if isinstance(s, str):
         s = s.encode('utf8')
     result0 = _pat.findall(s)
     result1 = []
@@ -307,7 +307,7 @@ def extract_words(s):
     return result
 
 def unpunctuate(unistr):
-    result = u""
+    result = ""
     for c in unistr:
         if 0x0591 <= ord(c) < 0x05c8:
             continue
@@ -316,7 +316,7 @@ def unpunctuate(unistr):
         
 
 def test():
-    s = u"סִפּוּרֵי גִּבְעַת בְּרֶנֶר"
+    s = "סִפּוּרֵי גִּבְעַת בְּרֶנֶר"
     x = normalize('NFC', s)
     y = normalize('NFD', s)
     s1 = unpunctuate(s)
@@ -328,7 +328,7 @@ def test():
     s += 'pal"mach'
     lst = extract_words(s)
     for i, x in enumerate(lst):
-        print '{:3} word:  {} '.format(i, x)
+        print('{:3} word:  {} '.format(i, x))
             
 if __name__ == '__main__':
     test()

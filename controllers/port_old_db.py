@@ -451,7 +451,7 @@ def port_from_old_db():
         comment("start calculating visibility")
         calc_members_visibility()
         comment('Porting done')
-    except Exception, e:
+    except Exception as e:
         log_exception('Porting old db failed')
         return 'Porting old db failed: ' + e.message
     db.commit()
@@ -577,7 +577,7 @@ class RefsFixer:
                 return RefsFixer.story_ref_format.format(sid=self.refs_map['term'][ref_id])
             if what == 'photo':
                 return RefsFixer.photo_ref_format.format(path=self.refs_map['photo'][ref_id])
-        except Exception, e:
+        except Exception as e:
             self.num_errors += 1
             pass
         #todo: implement the transformation

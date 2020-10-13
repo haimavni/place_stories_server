@@ -25,8 +25,6 @@ VIS_NOT_READY = 1
 VIS_VISIBLE = 2
 VIS_HIGH = 3            #
 
-T.force('he')
-
 db.define_table('TblChatGroup',
                 Field('name', type='string'),
                 Field('key', type='string'),

@@ -2,23 +2,23 @@ import PIL
 from PIL import Image, ImageFile
 from PIL.ExifTags import TAGS, GPSTAGS
 import dhash
-from injections import inject
+from .injections import inject
 import os
 import datetime
 from distutils import dir_util
 import zlib
-from cStringIO import StringIO
-from date_utils import datetime_from_str
+from io import StringIO
+from .date_utils import datetime_from_str
 from gluon.storage import Storage
 import random
 import pwd
-from stories_manager import Stories
-from folders import *
-from members_support import member_display_name, older_display_name, get_member_rec, init_query #init_query is used indirectly
+from .stories_manager import Stories
+from .folders import *
+from .members_support import member_display_name, older_display_name, get_member_rec, init_query #init_query is used indirectly
 import zipfile
 from pybktree import BKTree, hamming_distance
 import time
-import ws_messaging
+from . import ws_messaging
 
 MAX_WIDTH = 1200
 MAX_HEIGHT = 800
@@ -101,7 +101,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
                 lat = gps_info['GPSLatitude']
                 longitude = degrees_to_float(lng)
                 latitude = degrees_to_float(lat)
-            except Exception, e:
+            except Exception as e:
                 log_exception("getting photo geo data failed")
         width, height = img.size
         square_img = crop_to_square(img, width, height, 256)
@@ -132,7 +132,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
         fix_owner(path)
         fix_owner(path + file_name)
         dhash_value = dhash_photo(img=img)
-    except Exception, e:
+    except Exception as e:
         log_exception("saving photo {} failed".format(original_file_name))
         return Storage(failed=1)
     sm = Stories()
@@ -183,7 +183,7 @@ def fit_size(rec):
         img = img.resize((width, height), Image.LANCZOS)
         img.save(fname)
         rec.update_record(width=width, height=height)
-    except Exception, e:
+    except Exception as e:
         log_exception("resizing file {} failed.".format(rec.photo_path))
         rec.update_record(photo_missing=True)
         return False
@@ -728,10 +728,10 @@ def get_exif_data(image):
     info = None
     try:
         info = image._getexif()
-    except Exception, e:
+    except Exception as e:
         pass #png, for example
     if info:
-        for tag, value in info.items():
+        for tag, value in list(info.items()):
             decoded = TAGS.get(tag, tag)
             if decoded == "GPSInfo":
                 gps_data = {}

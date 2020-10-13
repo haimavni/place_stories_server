@@ -1,4 +1,4 @@
-from injections import inject
+from .injections import inject
 from distutils import dir_util
 import os
 try:

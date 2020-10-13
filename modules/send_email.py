@@ -2,8 +2,8 @@ import requests
 import re
 from collections import Iterable
 import xml.etree.ElementTree as ET
-from cStringIO import StringIO
-from injections import inject
+from io import StringIO
+from .injections import inject
 
 api_token = "669gxifj8b1r5y71qcvcei0wu"
 username = "haimavni"

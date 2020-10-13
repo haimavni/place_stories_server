@@ -1,8 +1,8 @@
-import merge_in_memory as mim
+from . import merge_in_memory as mim
 import datetime
-from injections import inject
+from .injections import inject
 from gluon.storage import Storage
-from words import *
+from .words import *
 import re
 
 def display_date(dt):

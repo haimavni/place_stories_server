@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from injections import inject
+from .injections import inject
 import os
 import subprocess
 
@@ -81,6 +81,6 @@ def create_pending_apps():
             rec.update_record(created=True)
             db.commit()
             code = create_an_app(rec)
-    except Exception, e:
+    except Exception as e:
         log_exception('Error creating apps')
         raise

@@ -1,8 +1,8 @@
-import stories_manager
-import csv, cStringIO
-from folders import local_folder, system_folder
+from . import stories_manager
+import csv, io
+from .folders import local_folder, system_folder
 import re
-from injections import inject
+from .injections import inject
 import os, datetime
 from gluon.storage import Storage
 
@@ -92,7 +92,7 @@ def _save_system_stories_to_csv(target=None, used_for=None):
 def get_records(csv_name):
     with open(csv_name, 'rb') as csvfile:
         reader = csv.reader(csvfile, delimiter=',', quotechar='"')
-        reader.next()     #skip header
+        next(reader)     #skip header
         for row in reader:
             yield row
 
@@ -116,7 +116,7 @@ def _update_system_stories(used_for=None):
             crec.update_record(**data)
             return 'updated'
         ###comment("Exit updating system stories {}", used_for)
-    except Exception, e:
+    except Exception as e:
         log_exception("Update system stories failed")
     return 'No updates'
 

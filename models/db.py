@@ -30,7 +30,7 @@ def __open_db():
         raise
     return db
 
-db = __open_db()  
+db = __open_db()
 
 ## by default give a view/generic.extension to all actions from localhost
 ## none otherwise. a pattern can be 'controller/function.extension'

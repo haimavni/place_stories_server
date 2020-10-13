@@ -2,15 +2,15 @@
 
 import re
 from bs4 import BeautifulSoup
-from langs import extract_words, language_name
+from .langs import extract_words, language_name
 from langdetect import detect, detect_langs
-from my_cache import Cache
-from injections import inject
+from .my_cache import Cache
+from .injections import inject
 #from base64 import b64decode, b64encode
 from math import log
 import datetime
 from time import sleep
-import ws_messaging
+from . import ws_messaging
 
 alef = "א"
 tav = "ת"
@@ -106,7 +106,7 @@ def tally_words(html, dic, story_id, story_name, preview=''):
     return True
 
 def extract_story_words(story_id):
-    from injections import inject
+    from .injections import inject
     db, STORY4DOC = inject('db', 'STORY4DOC')
     rec = db(db.TblStories.id==story_id).select().first()
     if (not rec) or rec.deleted:
@@ -129,7 +129,7 @@ def extract_story_words(story_id):
     return dic
 
 def retrieve_story_words(story_id):
-    from injections import inject
+    from .injections import inject
     db = inject('db')
     q = (db.TblWordStories.story_id==story_id) & (db.TblWords.id==db.TblWordStories.word_id)
     lst = db(q).select()
@@ -197,14 +197,14 @@ def update_word_index_all():
             for rec in lst:
                 update_story_words_index(rec.id)
                 db.commit()
-    except Exeption, e:
+    except Exception as e:
         log_exception('Error updating word index')
         raise
     else:
         return dict(good=True)
             
 def find_or_insert_word(wrd):            
-    from injections import inject
+    from .injections import inject
     db = inject('db')
     rec = db(db.TblWords.word==wrd).select().first()
     if rec:
@@ -213,7 +213,7 @@ def find_or_insert_word(wrd):
         return db.TblWords.insert(word=wrd), True
 
 def tally_all_stories():   
-    from injections import inject
+    from .injections import inject
     db, STORY4DOC = inject('db', 'STORY4DOC')
     dic = dict()
     N = 0
@@ -236,7 +236,7 @@ def create_word_index():
             db.TblWordStories.insert(word_id=word_id, story_id=story_id, word_count=dic[wrd][story_id])
     elapsed = datetime.datetime.now() - t0
     db.commit()
-    print elapsed
+    print(elapsed)
 
 def read_words_index():
     db = inject('db')

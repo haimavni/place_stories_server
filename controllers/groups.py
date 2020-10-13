@@ -1,6 +1,6 @@
 from folders import *
 import zlib
-from cStringIO import StringIO
+from io import StringIO
 import csv
 from PIL import Image, ImageFile
 from photos_support import save_uploaded_photo, photos_folder, timestamped_photo_path, get_photo_topics
@@ -102,7 +102,7 @@ def upload_contacts(vars):
 
 def get_records_from_csv_stream(csvfile):
     reader = csv.reader(csvfile, delimiter=',', quotechar='"')
-    reader.next()     #skip header
+    next(reader)     #skip header
     for row in reader:
         yield row
     

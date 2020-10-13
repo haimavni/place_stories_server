@@ -1,7 +1,7 @@
-from injections import inject
+from .injections import inject
 from gluon.storage import Storage
-from folders import *
-from date_utils import get_all_dates
+from .folders import *
+from .date_utils import get_all_dates
 
 def get_member_rec(member_id, member_rec=None, prepend_path=False):
     db, auth = inject('db', 'auth')

@@ -18,15 +18,15 @@ def evaluate_script(vars):
     old_environment = dict(environment)
     try:
         ccode = compile(code.replace('\r\n', '\n'), 'Script', 'exec')
-    except Exception, e:
+    except Exception as e:
         return dict(error=repr(e))
     try:
-        exec ccode in environment
+        exec(ccode, environment)
         dic = dict()
         for v in environment:
             if v not in old_environment or environment[v] != old_environment[v]:
                 dic[v] = environment[v]
-    except Exception, e:
+    except Exception as e:
         log_exception('Error in ad-hoc script')
         dic = dict(error=str(e))
         return dict(results=dic)

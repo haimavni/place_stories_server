@@ -1,17 +1,17 @@
-from injections import inject
+from .injections import inject
 import os
 import datetime
 from distutils import dir_util
 import zlib
-from date_utils import datetime_from_str
+from .date_utils import datetime_from_str
 from gluon.storage import Storage
 import random
 import pwd
-from stories_manager import Stories
-from folders import url_folder, local_folder
-from pdf_utils import pdf_to_text, save_pdf_jpg
+from .stories_manager import Stories
+from .folders import url_folder, local_folder
+from .pdf_utils import pdf_to_text, save_pdf_jpg
 from time import sleep
-import ws_messaging
+from . import ws_messaging
 
 def save_uploaded_doc(file_name, blob, user_id, sub_folder=None):
     auth, log_exception, db, STORY4DOC = inject('auth', 'log_exception', 'db', 'STORY4DOC')
@@ -34,7 +34,7 @@ def save_uploaded_doc(file_name, blob, user_id, sub_folder=None):
         path = local_docs_folder() + sub_folder
         with open(doc_file_name, 'w') as f:
             f.write(blob)
-    except Exception, e:
+    except Exception as e:
         log_exception("saving doc {} failed".format(original_file_name))
         return 'failed'
     doc_id = db.TblDocs.insert(
@@ -81,7 +81,7 @@ def calc_doc_story(doc_id):
         good = True
         try:
             txt = pdf_to_text(doc_file_name)
-        except Exception, e:
+        except Exception as e:
             log_exception('PDF to text error in {}. Name: {}'.format(doc_rec.doc_path, doc_rec.original_file_name))
             txt = ''
             good = False
@@ -99,7 +99,7 @@ def calc_doc_story(doc_id):
             result = sm.add_story(story_info)
             story_id = result.story_id
             doc_rec.update_record(story_id=story_id, text_extracted=True)
-    except Exception, e:
+    except Exception as e:
         log_exception('Error calculating {}'.format(doc_rec.doc_path))
         return False
     return good
@@ -142,7 +142,7 @@ def calc_doc_stories(time_budget=None):
             log_exception('Error while calculating doc stories')
         finally:
             comment("Finished cycle of calculating doc stories")
-    except Exception, e:
+    except Exception as e:
         log_exception('Error calculating doc stories')
         raise
     return dict(good=ns, bad=nf)

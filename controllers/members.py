@@ -873,7 +873,7 @@ def get_story_versions(vars):
     if unapproved and story_info.last_version > 0:
         try:
             prev_story_info = sm.get_story(story_id, to_story_version=story_info.approved_version)
-        except Exception, e:
+        except Exception as e:
             failed = True
             log_exception("Failed to recover previous version")
             return dict(failed=True)
@@ -1039,14 +1039,14 @@ def assign_photos(story_list):
             photo_story_list[story.story_id] = story
         elif story.used_for == STORY4VIDEO:
             video_story_list[story.story_id] = story
-    photo_story_ids = photo_story_list.keys()
+    photo_story_ids = list(photo_story_list.keys())
     q = db.TblPhotos.story_id.belongs(photo_story_ids) & (db.TblPhotos.deleted != True)
     lst = db(q).select(db.TblPhotos.story_id, db.TblPhotos.photo_path, db.TblPhotos.id)
     for photo in lst:
         photo_src = photos_folder('squares') + photo.photo_path
         photo_story_list[photo.story_id].photo_src = photo_src
         photo_story_list[photo.story_id].photo_id = photo.id
-    video_story_ids = video_story_list.keys()
+    video_story_ids = list(video_story_list.keys())
     lst = db(db.TblVideos.story_id.belongs(video_story_ids)).select(db.TblVideos.story_id, db.TblVideos.src)
     for video in lst:
         video_story_list[video.story_id].video_src = "//www.youtube.com/embed/" + video.src + "?wmode=opaque"

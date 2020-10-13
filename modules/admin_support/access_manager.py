@@ -1,7 +1,5 @@
 from injections import inject
-from gluon.storage import Storage
-from gluon.utils import simple_hash, web2py_uuid    
-import datetime
+from gluon.packages.dal.pydal.validators import simple_hash
 from gluon.utils import web2py_uuid
 
 def encrypt_password(password):

@@ -267,7 +267,7 @@ def get_photo_list(vars):
         n = db(q).count()
         if n > MAX_PHOTOS_COUNT:
             frac = max(MAX_PHOTOS_COUNT * 100 / n, 1)
-            sample = random.sample(range(1, 101), frac)
+            sample = random.sample(list(range(1, 101)), frac)
             ##q &= (db.TblPhotos.random_photo_key <= frac)
             q &= (db.TblPhotos.random_photo_key.belongs(sample)) #we don't want to bore our users 
         lst = db(q).select() ###, db.TblPhotographers.id) ##, db.TblPhotographers.id)
