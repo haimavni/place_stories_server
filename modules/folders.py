@@ -1,10 +1,9 @@
 from .injections import inject
 from distutils import dir_util
 import os
-try:
+from sys import platform
+if platform == 'linux':
     import pwd
-except ImportError:
-    pwd = None
 
 
 def url_folder(kind):
@@ -19,6 +18,8 @@ def local_folder(kind):
     request = inject('request')
     app = request.application.split('__')[0]  ## we want gbs__dev, gbs__test etc. all to use the same data
     path = '/gb_photos/{app}/{kind}/'.format(app=app, kind=kind)
+    if platform != 'linux':
+        return path
     curr_uid = os.geteuid()
     uid = get_user_id()
     dir_util.mkpath(path)
@@ -29,6 +30,8 @@ def local_folder(kind):
 
 def system_folder():
     path = '/gb_photos/system_data/'
+    if platform != 'linux':
+        return path
     curr_uid = os.geteuid()
     uid = get_user_id()
     dir_util.mkpath(path)
@@ -66,7 +69,7 @@ def get_user_id():
 
     
 def safe_open(filename, mode):
-    if pwd:
+    if platform == 'linux':
         curr_uid = os.geteuid()
         uid = get_user_id()
         f = open(filename, mode)

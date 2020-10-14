@@ -161,12 +161,11 @@ def multi_language_word_extractor():
     s = "[a-z]+(?:[\'â€™]t|[\'â€™]s)|" +  s
     s += '[0-9]+'
     ###s += '| (?P<URL>http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F])))+'
-    s = s.encode('utf8')
-    return re.compile(s, re.UNICODE | re.IGNORECASE)
+    return re.compile(s, re.IGNORECASE)
 
 _pat = multi_language_word_extractor()
 _bl = blacklist()
-_emoticons = re.compile(get_emoticons().encode('utf8'))
+###_emoticons = re.compile(get_emoticons())
 
 def remove_annoying_characters(text):
     chars = {
@@ -328,7 +327,7 @@ def test():
     s += 'pal"mach'
     lst = extract_words(s)
     for i, x in enumerate(lst):
-        print('{:3} word:  {} '.format(i, x))
+        print(('{:3} word:  {} '.format(i, x)))
             
 if __name__ == '__main__':
     test()

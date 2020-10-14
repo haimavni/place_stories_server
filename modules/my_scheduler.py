@@ -270,7 +270,7 @@ def _decode_list(lst):
 
 def _decode_dict(dct):
     newdict = {}
-    for k, v in dct.items():
+    for k, v in list(dct.items()):
         if isinstance(k, str):
             k = k.encode('utf-8')
         if isinstance(v, str):
@@ -1533,16 +1533,16 @@ def main():
         sys.path.append(path)
         print('importing tasks...')
         tasks = __import__(filename, globals(), locals(), [], -1).tasks
-        print('tasks found: ' + ', '.join(list(tasks.keys())))
+        print(('tasks found: ' + ', '.join(list(tasks.keys()))))
     else:
         tasks = {}
     group_names = [x.strip() for x in options.group_names.split(',')]
 
     ###logging.getLogger().setLevel(options.logger_level)
 
-    print('groups for this worker: ' + ', '.join(group_names))
-    print('connecting to database in folder: ' + options.db_folder or './')
-    print('using URI: ' + options.db_uri)
+    print(('groups for this worker: ' + ', '.join(group_names)))
+    print(('connecting to database in folder: ' + options.db_folder or './'))
+    print(('using URI: ' + options.db_uri))
     db = DAL(options.db_uri, folder=options.db_folder)
     print('instantiating scheduler...')
     scheduler = Scheduler(db=db,

@@ -6,7 +6,6 @@ import zlib
 from .date_utils import datetime_from_str
 from gluon.storage import Storage
 import random
-import pwd
 from .stories_manager import Stories
 from .folders import url_folder, local_folder
 from .pdf_utils import pdf_to_text, save_pdf_jpg

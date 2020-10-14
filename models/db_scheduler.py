@@ -48,7 +48,7 @@ class MyScheduler(Scheduler):
         try:
             ###comment("task {task_id} status changed {data}", task_id=task_id, data=data)
             ws_messaging.send_message(key='task_status_changed', group='TASK_MONITOR', task_id=task_id, data=data)
-        except Exception, e:
+        except Exception as e:
             log_exception('failed broadcasting update task status')
 
 def secs_to_dhms(t):
@@ -107,13 +107,13 @@ def execute_task(*args, **vars):
         command = vars['command']
         comment('Started task {}: {}'.format(name, command))
         function = scheduler.one_time_tasks[command]
-    except Exception, e:
+    except Exception as e:
         log_exception('error enter execute task ')
         raise
     try:
 
         result = function()
-    except Exception, e:
+    except Exception as e:
         log_exception('Error executing ' + name)
     else:
         comment('Finished task {}. Returned {}.'.format(name, result))

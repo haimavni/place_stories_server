@@ -55,6 +55,6 @@ with open(csv_name, 'rb') as csvfile:
             print(n)
             for i, v in enumerate(row):
                 u = ascii2unicode(v) 
-                print('    ' + header[i], ' = ', u)
+                print(('    ' + header[i], ' = ', u))
                 j = 999
 

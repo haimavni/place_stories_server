@@ -31,7 +31,7 @@ def __apply_fixes():
             comment("applying fix {}", f)
             try:
                 _fixes[f]()
-            except Exception, e:
+            except Exception as e:
                 log_exception('Error applying fixes')
                 break
             else:

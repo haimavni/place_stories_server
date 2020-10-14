@@ -11,7 +11,9 @@ from io import StringIO
 from .date_utils import datetime_from_str
 from gluon.storage import Storage
 import random
-import pwd
+from sys import platform
+if platform == 'linux':
+    import pwd
 from .stories_manager import Stories
 from .folders import *
 from .members_support import member_display_name, older_display_name, get_member_rec, init_query #init_query is used indirectly
@@ -447,6 +449,8 @@ def add_photos_from_drive(sub_folder):
             os.remove(path)
 
 def fix_owner(file_name):
+    if platform != 'linux':
+        return
     request = inject('request')
     host = request.env.http_host or ""
     if '8000' in host: #development

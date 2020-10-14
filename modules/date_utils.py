@@ -188,11 +188,11 @@ def string_date_to_date(s):
 
 def test():
     s = '2016-04-15'
-    print(date_of_date_str(s))
+    print((date_of_date_str(s)))
     s = '2017-??-??'
-    print(date_of_date_str(s))
+    print((date_of_date_str(s)))
     for s in ['', '1945', '08/1945', '25/8/1945']:
-        print(parse_date(s))
+        print((parse_date(s)))
         
 def datetime_from_str(s, date_only=False):
     date, time = s.split(' ')

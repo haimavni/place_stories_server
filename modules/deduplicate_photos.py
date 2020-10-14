@@ -24,7 +24,7 @@ def test():
     for fname in photos:
         path = photo_path + fname
         hv = hash_photo(path)
-        print('{:3}  {:X}'.format(n, hv))
+        print(('{:3}  {:X}'.format(n, hv)))
         n += 1
         tree.add(hv)
         
