@@ -1,12 +1,7 @@
-from scheduler import Scheduler
+from my_scheduler import Scheduler
 import datetime
-import time
 import random
-from gluon.storage import Storage
-import re
 import ws_messaging
-from injections import inject
-from photos_support import scan_all_unscanned_photos
 from help_support import update_help_messages, update_letter_templates
 from collect_emails import collect_mail
 from create_app import create_pending_apps

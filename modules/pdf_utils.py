@@ -6,16 +6,17 @@ pdf utils:
     higlight words in pdf
 '''
 import re
-import fitz
+#use poppler utils instead of the 2 below
+###import fitz
 from pdf2image import convert_from_path
-import subprocess
+###import subprocess
 import os
 from .injections import inject
 
 PAT = '[א-תךםןףץ]'
-PAT_HEB = PAT.replace(']', ']{2,100}').decode('utf-8')
+PAT_HEB = PAT.replace(']', ']{2,100}')
 HEB_REGEX = re.compile(PAT_HEB, flags=re.U)
-PAT_LAAZ = PAT.replace('[', '[^ ').replace(']', ']{2,100}').decode('utf-8')
+PAT_LAAZ = PAT.replace('[', '[^ ').replace(']', ']{2,100}')
 LAAZ_REGEX = re.compile(PAT_LAAZ, flags=re.U)
 
 def detect_rtl(doc):
@@ -44,26 +45,6 @@ def detect_rtl(doc):
                 return True
     return n2 > n1
 
-def old_pdf_to_text(pdfname):
-    '''pdf to html'''
-    doc = fitz.open(pdfname)
-    rtl_lines = detect_rtl(doc)
-    result = '<html>\n<head>\n<meta charset="utf-8">\n</head>\n<body dir="RTL">\n'
-    for page in doc:
-        text = page.getText()
-        lst = text.split('\n')
-        for tmp_s in lst:
-            if rtl_lines:
-                if HEB_REGEX.search(tmp_s):
-                    tmp_s = reverse(tmp_s)
-                    tmp_s = LAAZ_REGEX.sub(invert, tmp_s) #reverse non-hebrew words back
-            else:
-                tmp_s = HEB_REGEX.sub(invert, tmp_s)
-            result += tmp_s + '<br>'
-    result += '\n</body>\n</html>'
-    result = result.encode('utf-8')
-    return result
-
 def pdf_to_text(pdfname):
     #after porting to python 3 we can use poppler-utils library
     log_path = inject('log_path')
@@ -91,7 +72,7 @@ def highlight_pdf(fname, outfname, keywords):
     doc = fitz.open(fname)
     if not isinstance(keywords, list):
         keywords = [keywords]
-    keywords = [w if isinstance(w, str) else w.decode('utf-8') for w in keywords]
+    keywords = [w if isinstance(w, str) else w for w in keywords]
     for kwd in keywords:
         if HEB_REGEX.match(kwd):
             kwd = reverse(kwd)
