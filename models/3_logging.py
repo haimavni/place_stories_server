@@ -59,8 +59,6 @@ def log_exception_only(p, file_name='exceptions'):
 def log_exception(p):
     if len(p) > 300:
         p = p[:300] + ' ...'
-    if isinstance(p, str):
-        p = p.encode('utf8')
     log_exception_only(p)
     # logger.exception(p)
 

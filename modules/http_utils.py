@@ -53,7 +53,7 @@ def json_to_storage(data, key=None):
             for c in data:
                 data1 += chr(ord(c))
             return data1
-        return data.encode('utf8')
+        return data
     elif callable(data):
         data1 = data()
         return json_to_storage(data1)

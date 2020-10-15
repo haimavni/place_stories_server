@@ -21,6 +21,8 @@ def item_list_to_grouped_options(item_list):
 
 def get_topic_groups():
     db = inject('db')
+    if db(db.TblTopicGroups).isempty():
+        return []
     cmd = """
         SELECT TblTopicGroups.parent, array_agg(TblTopicGroups.child)
         FROM TblTopicGroups

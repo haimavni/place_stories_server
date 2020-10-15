@@ -158,13 +158,7 @@ def collect_mail():
                 else:
                     s = "strange text"
                     m = msg[fld]
-                    if isinstance(m, str):
-                        s = m
-                    else:
-                        try:
-                            s = m.decode('utf8')
-                        except:
-                            pass
+                    s = m
                     emsg += fld + ': ' + s + '\n'
             result = mail.send(sender="admin@gbstories.org", to=receivers, subject="incoming email to gbstories", message=emsg)
             if result:

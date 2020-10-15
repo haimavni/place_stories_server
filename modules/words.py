@@ -86,7 +86,7 @@ def guess_language(html):
     return lang
 
 def tally_words(html, dic, story_id, story_name, preview=''):
-    s = story_name.decode('utf8') + ' '
+    s = story_name + ' '
     if preview:
         s += remove_all_tags(preview) + ' '
     s += remove_all_tags(html)
@@ -114,7 +114,7 @@ def extract_story_words(story_id):
     story_name = rec.name or "Name missing"
     preview = rec.preview
     html = rec.story
-    s = story_name.decode('utf8') + ' '
+    s = story_name + ' '
     if preview and rec.used_for == STORY4DOC:
         s += remove_all_tags(preview) + ' '
     s += remove_all_tags(html)

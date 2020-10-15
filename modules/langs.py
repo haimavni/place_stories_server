@@ -232,10 +232,7 @@ def fix_utf8(text):
     return result
 
 def clean_word(w):
-    try:
-        uin = w.decode('utf8')
-    except:
-        return w
+    uin = w
     uout = ''
     for c in uin:
         if c in '"\':':
@@ -261,14 +258,12 @@ def clean_word(w):
     if len(uout) > 3 and uout[1] == '"':
         uout = uout[2:]  #for quoted segments which start with ב, ל, מ but מ"פ is OK
     uout = unpunctuate(uout)
-    return uout.encode('utf8') 
+    return uout
 
 def extract_words(s):
     #s = fix_utf8(s)
     #s = remove_annoying_characters(s)
     #s = url_regex.sub('', s)
-    if isinstance(s, str):
-        s = s.encode('utf8')
     result0 = _pat.findall(s)
     result1 = []
     for w in result0:
@@ -284,11 +279,11 @@ def extract_words(s):
     zain = 'ז'
     tsadik = 'צ'
     gimel = 'ג'
-    zain = zain.decode('utf8')
-    tsadik = tsadik.decode('utf8')
-    gimel = gimel.decode('utf8')
+    zain = zain
+    tsadik = tsadik
+    gimel = gimel
     for w1 in result1:
-        w = w1.decode('utf8')
+        w = w1
         if w.startswith("'"):
             quoted = True
             w = w[1:]
@@ -300,7 +295,6 @@ def extract_words(s):
                 w = w[:-1]
             quoted = False
         if w and len(w) > 1:
-            w = w.encode('utf8')
             result.append(w)
             
     return result
