@@ -41,6 +41,7 @@ def get_photo_detail(vars):
     return dict(photo_src=timestamped_photo_path(rec, webp_supported=vars.webpSupported),
                 photo_name=rec.Name,
                 original_file_name=rec.original_file_name,
+                embedded_photo_date=rec.embedded_photo_date,
                 photo_topics=photo_topics,
                 height=rec.height,
                 width=rec.width,

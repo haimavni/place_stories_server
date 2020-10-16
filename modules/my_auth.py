@@ -95,7 +95,7 @@ class MyAuth(Auth):
     
     def notify_registration(self, user_info):
         request, db, mail, ACCESS_MANAGER = inject('request', 'db', 'mail', 'ACCESS_MANAGER')
-        app = reqeuest.application
+        app = request.application
         ui = user_info
         user_name = ui.first_name + ' ' + ui.last_name
         email = ui.email
