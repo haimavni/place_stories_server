@@ -92,6 +92,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
     dir_util.mkpath(path)
     latitude = None
     longitude = None
+    embedded_photo_date = None
     try:
         stream = StringIO(blob)
         img = Image.open(stream)
@@ -105,6 +106,13 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
                 latitude = degrees_to_float(lat)
             except Exception as e:
                 log_exception("getting photo geo data failed")
+        if 'DateTimeDigitized' in exif_data:
+            s = exif_data['DateTimeDigitized']
+            try:
+                embedded_photo_date = datetime.datetime.strptime(s, '%Y/%m/%d %H:%M:%S')
+            except Exception as e:
+                log_exception('getting photo embedded date failed', s)
+                
         width, height = img.size
         square_img = crop_to_square(img, width, height, 256)
         if square_img:
@@ -145,6 +153,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
         photo_path=sub_folder + file_name,
         original_file_name=original_file_name,
         Name=original_file_name,
+        embedded_photo_date=embedded_photo_date,
         uploader=user_id,
         upload_date=datetime.datetime.now(),
         photo_date=None,

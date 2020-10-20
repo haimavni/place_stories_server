@@ -306,6 +306,7 @@ db.define_table('TblPhotos',
                 Field('webp_photo_path', type='string'),
                 Field('Name', type='string'),
                 Field('original_file_name', type='string'),
+                Field('embedded_photo_date', type='datetime'),
                 Field('ObjectID', type='integer'), #obsolete, to be replaced by the following line
                 Field('Object_id', type='integer'),
                 Field('PageHits', type='integer'),
