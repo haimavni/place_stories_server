@@ -5,6 +5,7 @@ if platform == 'linux':
 import os, stat
 import getpass
 from .injections import inject
+from operator import attrgetter
 
 def find_owner(filename):
     return getpwuid(os.stat(filename).st_uid).pw_name
@@ -35,8 +36,13 @@ def fix_log_owner(log_file_name):
         path, fname = os.path.split(log_file_name)
         with open(path + '/' + 'fix_log_owner_failed.log', 'a') as f:
             f.write('folder: ' + request.folder + ' log name: ' + log_file_name + ' error: ' + str(e) + '\n')
+
+def multisort(xs, specs):
+    for key, reverse in reversed(specs):
+        xs.sort(key=attrgetter(key), reverse=reverse)
+    return xs
             
 if __name__ == '__main__':
     fname = '/home/haim/aurelia-gbs/server/tol_server/logs/log_all.log'
     fix_log_owner(fname)
-    
+

@@ -26,7 +26,7 @@ def log_file_data(vars):
         text=f.read()
     data = fix_utf8(text)
     if not fname.endswith('html'):
-        data = cgi.escape(data)
+        ##data = cgi.escape(data)
         data = XML(data.replace(' ', '&nbsp;').replace('\n', '<BR />'))
     return dict(log_html=data)
 

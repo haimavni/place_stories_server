@@ -2,7 +2,8 @@
 Description=Web2py Scheduler service local development system
 
 [Service]
-ExecStart=/usr/bin/python /home/haim/aurelia-gbs/server/web2py/web2py.py -K gbs,gbs,gbs,gbs,gbs,gbs 
+#ExecStart=/home/haim/PycharmProjects/web2PyProject/venv/bin/python /home/haim/PycharmProjects/web2PyProject/web2py/web2py.py -K tol3
+ExecStart=/home/haim/PycharmProjects/web2PyProject/venv/bin/python3.8 /home/haim/PycharmProjects/web2PyProject/web2py/web2py.py -K tol3
 Type=simple
 Restart=always
 

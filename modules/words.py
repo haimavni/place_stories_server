@@ -240,14 +240,13 @@ def create_word_index():
 
 def read_words_index():
     db = inject('db')
-
+    lst = None
     cmd = """
-        SELECT TblWords.id, TblWords.word, array_agg(TblWordStories.story_id), sum(TblWordStories.word_count)
-        FROM TblWords, TblWordStories
-        WHERE (TblWords.id = TblWordStories.word_id)
-        GROUP BY TblWords.word, TblWords.id;
-    """
-
+            SELECT "TblWords"."id", "TblWords"."word", array_agg("TblWordStories"."story_id"), sum("TblWordStories"."word_count")
+            FROM "TblWords", "TblWordStories"
+            WHERE ("TblWords"."id" = "TblWordStories"."word_id")
+            GROUP BY "TblWords"."word", "TblWords"."id";
+        """
     lst = db.executesql(cmd)
     lst = sorted(lst, key=lambda item: item[1], reverse=False)
     ##lst = sorted(lst, key=lambda item: item[2], reverse=True)

@@ -17,6 +17,7 @@ def upload_photo(vars):
     comment("start handling uploaded files")
     user_id = int(vars.user_id) if vars.user_id else auth.current_user()
     fil = vars.file
+    #blob = to_bytes(fil.BINvalue)
     result = save_uploaded_photo(fil.name, fil.BINvalue, user_id)
     return dict(upload_result=result)
 

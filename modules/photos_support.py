@@ -4,10 +4,11 @@ from PIL.ExifTags import TAGS, GPSTAGS
 import dhash
 from .injections import inject
 import os
+import array
 import datetime
 from distutils import dir_util
 import zlib
-from io import StringIO
+from io import BytesIO
 from .date_utils import datetime_from_str
 from gluon.storage import Storage
 import random
@@ -21,6 +22,8 @@ import zipfile
 from pybktree import BKTree, hamming_distance
 import time
 from . import ws_messaging
+from gluon._compat import to_bytes
+from misc_utils import multisort
 
 MAX_WIDTH = 1200
 MAX_HEIGHT = 800
@@ -74,9 +77,10 @@ def save_uploaded_photo_collection(collection, user_id):
                    duplicates=duplicates,
                    photo_ids=photo_ids)
 
-def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
+def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
     auth, log_exception, db, STORY4PHOTO = inject('auth', 'log_exception', 'db', 'STORY4PHOTO')
     user_id = user_id or auth.current_user()
+    blob = to_bytes(s)
     crc = zlib.crc32(blob)
     cnt = db(db.TblPhotos.crc==crc).count()
     prec = db((db.TblPhotos.crc==crc) & (db.TblPhotos.deleted != True)).select().first()
@@ -94,7 +98,8 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
     longitude = None
     embedded_photo_date = None
     try:
-        stream = StringIO(blob)
+        blob = array.array('B', [x for x in map(ord, s)]).tobytes()
+        stream = BytesIO(blob)
         img = Image.open(stream)
         exif_data = get_exif_data(img)
         if 'GPSInfo' in exif_data:
@@ -107,6 +112,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
             except Exception as e:
                 log_exception("getting photo geo data failed")
         if 'DateTimeDigitized' in exif_data:
+
             s = exif_data['DateTimeDigitized']
             try:
                 embedded_photo_date = datetime.datetime.strptime(s, '%Y/%m/%d %H:%M:%S')
@@ -676,9 +682,9 @@ def find_similar_photos(photo_list=None, time_budget=60):
     result = db((db.TblPhotos.id.belongs(all_dup_ids)) & (db.TblPhotos.deleted != True)).select()
     for photo_rec in result:
         photo_rec.dup_group = dic[photo_rec.id]
-    result = sorted(result, cmp=lambda prec1, prec2: +1 if prec1.dup_group > prec2.dup_group else -1 if prec1.dup_group < prec2.dup_group else +1 if prec1.id < prec2.id else -1)
-
-    return (result, candidates)
+    ##result = sorted(result, cmp=lambda prec1, prec2: +1 if prec1.dup_group > prec2.dup_group else -1 if prec1.dup_group < prec2.dup_group else +1 if prec1.id < prec2.id else -1)
+    result = multisort(result, (('dup_group', False), ('id', True)))
+    return result, candidates
 
 def timestamped_photo_path(photo_rec, webp_supported=True, what='orig'):
     #todo: if file for type of webp support is missing, create it?

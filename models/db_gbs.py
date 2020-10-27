@@ -335,7 +335,7 @@ db.define_table('TblPhotos',
                 Field('random_photo_key', type='integer'),
                 Field('deleted', type='boolean', default=False),
                 Field('is_back_side', type='boolean', default=False),
-                Field('crc', type='integer'),
+                Field('crc', type='bigint'),
                 Field('dhash', type='string'),
                 Field('curr_dhash', type='string'),  #after editing such as rotation and cropping. will be used to reload photo after using photoshop etc.
                 Field('dup_checked', type='boolean'),  #to be used only once, to detect all old dups. 

@@ -1,7 +1,7 @@
 cmd = """
-    SELECT TblMemberPhotos.Member_id, TblMemberPhotos.Photo_id, count(TblMemberPhotos.id)
-    FROM TblMemberPhotos
-    GROUP BY TblMemberPhotos.Member_id, TblMemberPhotos.Photo_id;
+    SELECT "TblMemberPhotos"."Member_id", "TblMemberPhotos"."Photo_id", count("TblMemberPhotos"."id")
+    FROM "TblMemberPhotos"
+    GROUP BY "TblMemberPhotos"."Member_id", "TblMemberPhotos"."Photo_id";
 """
 
 lst = db.executesql(cmd)

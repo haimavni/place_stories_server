@@ -1,4 +1,4 @@
-from my_scheduler import Scheduler
+from gluon.scheduler import Scheduler
 import datetime
 import random
 import ws_messaging

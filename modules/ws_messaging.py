@@ -1,4 +1,4 @@
-from gluon.contrib.websocket_messaging import websocket_send
+from .websocket_messaging import websocket_send
 from .http_utils import jsondumps
 from .injections import inject
 from .my_cache import Cache

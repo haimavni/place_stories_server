@@ -24,9 +24,9 @@ def get_topic_groups():
     if db(db.TblTopicGroups).isempty():
         return []
     cmd = """
-        SELECT TblTopicGroups.parent, array_agg(TblTopicGroups.child)
-        FROM TblTopicGroups
-        GROUP BY TblTopicGroups.parent;
+        SELECT "TblTopicGroups"."parent", array_agg("TblTopicGroups"."child")
+        FROM "TblTopicGroups"
+        GROUP BY "TblTopicGroups"."parent";
     """
 
     lst = db.executesql(cmd)
@@ -39,9 +39,9 @@ def calculate_all_story_keywords(): #not in use. one time for upgrade
     q &= (db.TblTopics.topic_kind == 2)
     #lst = db(q)._select() #helped to create the sql command...
     cmd = '''
-        SELECT TblItemTopics.story_id, array_agg(TblTopics.name) FROM TblTopics, TblItemTopics, TblStories 
-        WHERE ((TblItemTopics.story_id = TblStories.id) AND (TblTopics.id = TblItemTopics.topic_id))
-        GROUP BY TblItemTopics.story_id;
+        SELECT "TblItemTopics"."story_id", array_agg("TblTopics"."name") FROM "TblTopics", "TblItemTopics", "TblStories" 
+        WHERE (("TblItemTopics"."story_id" = "TblStories"."id") AND ("TblTopics"."id" = "TblItemTopics"."topic_id"))
+        GROUP BY "TblItemTopics"."story_id";
     '''
     lst = db.executesql(cmd)
     for r in lst:

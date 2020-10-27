@@ -2,7 +2,7 @@
 Description=Tornado Messaging
 
 [Service]
-ExecStart=/usr/bin/python /home/haim/aurelia-gbs/server/web2py/gluon/contrib/websocket_messaging.py -k mykey -p 8888
+ExecStart=/home/haim/PycharmProjects/web2PyProject/venv/bin/python3.8 /home/haim/PycharmProjects/web2PyProject/tol3/modules/websocket_messaging.py -k mykey -p 8888
 Type=simple
 Restart=always
 
