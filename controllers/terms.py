@@ -1,7 +1,6 @@
-from words import calc_used_languages, read_words_index, get_all_story_previews, get_reisha
 import stories_manager
 from members_support import calc_grouped_selected_options, calc_all_tags, get_tag_ids, init_query, get_topics_query
-
+from misc_utils import multisort
 @serve_json
 def apply_to_checked_terms(vars):
     all_tags = calc_all_tags()
@@ -52,7 +51,7 @@ def get_term_list(vars):
     lst = db(q).select(orderby=~db.TblTerms.id)
     lst = [r for r in lst]
     lst = [rec for rec in lst if rec.TblTerms.story_id not in params.checked_term_list]
-    lst = sorted(lst, cmp=lambda itm1, itm2: -1 if itm1.TblTerms.Name < itm2.TblTerms.Name else +1 if itm1.TblTerms.Name > itm2.TblTerms.Name else 0)
+    sorted(lst, key=lambda term: term.TblTerms.Name)
     lst = lst0 + lst
     term_list = []
     for rec1 in lst:

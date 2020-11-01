@@ -177,7 +177,7 @@ def get_random_member(vars):
         return dict(member_data = None)
     lst = sorted(lst, key=lambda rec: -rec.num_photos)
     for i in range(50):
-        idx = random.randint(0, len(lst) / 5)
+        idx = random.randint(0, len(lst) // 5)
         member_data=get_member_rec(lst[idx].member_id)
         if member_data:
             break
@@ -915,10 +915,12 @@ def new_member_rec(gender=None, first_name="", last_name=""):
 
 def get_members_stats():
     q = (db.TblMembers.id == db.TblMemberPhotos.Member_id) & \
+        (db.TblMembers.deleted != True) & \
         (db.TblMembers.facePhotoURL != None) & (db.TblMembers.facePhotoURL != '')
         ##(db.TblMembers.id == db.TblEventMembers.Member_id)
     lst = db(q).select(db.TblMembers.id, db.TblMembers.id.count(), groupby=[db.TblMembers.id])
-    lst = [Storage(member_id=rec.TblMembers.id, num_photos=rec._extra['COUNT(TblMembers.id)']) for rec in lst]
+    key = 'COUNT("TblMembers"."id")'
+    lst = [Storage(member_id=rec.TblMembers.id, num_photos=rec._extra[key]) for rec in lst]
     return lst
 
 def calc_user_list():

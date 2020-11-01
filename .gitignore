@@ -8,11 +8,12 @@ __pycache__/
 errors/
 logs/
 databases/
-static/aurelia
+#static/aurelia/*
 private/deployment_folder
 
 pip-log.txt
 pip-delete-this-directory.txt
+*/web2py/applications/*
 
 # virtualenv
 .venv
@@ -25,3 +26,4 @@ sessions/
 private/junk/
 host_address.txt
 gbs_haim.wpr
+.web2py/
