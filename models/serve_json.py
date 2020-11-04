@@ -1,4 +1,4 @@
-import simplejson
+import json
 from http_utils import json_to_storage
 import datetime
 
@@ -14,14 +14,14 @@ def serve_json(func):
         t0 = datetime.datetime.now()
         s = request.body.read()
         if len(s) > 0:
-            y = simplejson.loads(s)
+            y = json.loads(s)
             vars = json_to_storage(y)
         else:
             vars = request.vars
         for k in vars:
             s = vars[k]
             if isinstance(s, str) and (s.startswith('{') or s.startswith('[')):
-                vars[k] = simplejson.loads(s)
+                vars[k] = json.loads(s)
         vars = json_to_storage(vars)
         try:
             result = func(vars)
@@ -32,10 +32,10 @@ def serve_json(func):
                 return response.json(e.headers)
             else:
                 log_exception('Error serving ' + func.__name__)
-                return response.json(dict(error=str(e)))
+                return json.dumps(dict(error=str(e)))
         except User_Error as e:
             log_exception('User error serving ' + func.__name__)
-            return response.json(dict(user_error=str(e)))
+            return json.dumps(dict(user_error=str(e)))
         except Exception as e:
             log_exception('Error serving ' + func.__name__)
             return response.json(dict(error=str(e)))
@@ -43,7 +43,7 @@ def serve_json(func):
             result = response.json(result)
         except Exception as e:
             result = dict(warning=str(e), result=str(result))
-            result = response.json(result)
+            result = json.dumps(result)
         return result
 
     return f
