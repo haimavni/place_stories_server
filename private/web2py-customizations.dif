@@ -1,4 +1,4 @@
-diff -r --no-dereference web2py/gluon/compileapp.py /home/haim/PycharmProjects/web2PyProject/web2py/gluon/compileapp.py
+diff -r --no-dereference /home/haim/web2py_src/web2py/gluon/compileapp.py /home/haim/PycharmProjects/web2PyProject/web2py/gluon/compileapp.py
 476c476,478
 < REGEX_EXPOSED = re.compile(r'^def\s+(_?[a-zA-Z0-9]\w*)\( *\)\s*:', re.MULTILINE)
 ---
@@ -6,13 +6,20 @@ diff -r --no-dereference web2py/gluon/compileapp.py /home/haim/PycharmProjects/w
 > ### haim'^def\s+(?P<name>_?[a-zA-Z0-9]\w*)\( *\)\s*:',
 > REGEX_EXPOSED = re.compile(r'^def\s+(?P<name>_?[a-zA-Z0-9]\w*)\( *(?:vars)?\)\s*:', re.MULTILINE)
 Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/contrib/markmin: __pycache__
-diff -r --no-dereference web2py/gluon/contrib/memcache/__init__.py /home/haim/PycharmProjects/web2PyProject/web2py/gluon/contrib/memcache/__init__.py
+diff -r --no-dereference /home/haim/web2py_src/web2py/gluon/contrib/memcache/__init__.py /home/haim/PycharmProjects/web2PyProject/web2py/gluon/contrib/memcache/__init__.py
 11,12c11
 < import cPickle as pickle
 < import thread
 ---
 > import pickle
-diff -r --no-dereference web2py/gluon/contrib/websocket_messaging.py /home/haim/PycharmProjects/web2PyProject/web2py/gluon/contrib/websocket_messaging.py
+Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/contrib/memcache: __pycache__
+Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/contrib/minify: __pycache__
+Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/contrib/plural_rules: __pycache__
+Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/contrib/pyaes: __pycache__
+Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/contrib: __pycache__
+Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/contrib/pymysql/constants: __pycache__
+Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/contrib/pymysql: __pycache__
+diff -r --no-dereference /home/haim/web2py_src/web2py/gluon/contrib/websocket_messaging.py /home/haim/PycharmProjects/web2PyProject/web2py/gluon/contrib/websocket_messaging.py
 86c86,87
 < from __future__ import print_function
 ---
@@ -38,7 +45,7 @@ diff -r --no-dereference web2py/gluon/contrib/websocket_messaging.py /home/haim/
 <                 if not gluon.utils.compare(to_native(signature), actual_signature):
 ---
 >                 if not u_compare(to_native(signature), actual_signature):
-diff -r --no-dereference web2py/gluon/packages/dal/pydal/adapters/base.py /home/haim/PycharmProjects/web2PyProject/web2py/gluon/packages/dal/pydal/adapters/base.py
+diff -r --no-dereference /home/haim/web2py_src/web2py/gluon/packages/dal/pydal/adapters/base.py /home/haim/PycharmProjects/web2PyProject/web2py/gluon/packages/dal/pydal/adapters/base.py
 222,223d221
 <         if PY2 and isinstance(value, unicode):
 <             value = value.encode("utf-8")
@@ -56,7 +63,18 @@ Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/packages/dal/pydal
 Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/packages/dal/pydal/representers: __pycache__
 Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/packages/yatl/yatl: __pycache__
 Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon: __pycache__
-diff -r --no-dereference web2py/gluon/widget.py /home/haim/PycharmProjects/web2PyProject/web2py/gluon/widget.py
+diff -r --no-dereference /home/haim/web2py_src/web2py/gluon/serializers.py /home/haim/PycharmProjects/web2PyProject/web2py/gluon/serializers.py
+99c99,101
+<         raise TypeError(repr(o) + " is not JSON serializable")
+---
+>         s = str(o)
+>         return s
+>         #raise TypeError(repr(o) + " is not JSON serializable")
+157c159
+< def json(value, default=custom_json, indent=None, sort_keys=False, cls=JSONEncoderForHTML):
+---
+> def json(value, default=custom_json, indent=None, sort_keys=True, cls=JSONEncoderForHTML):
+diff -r --no-dereference /home/haim/web2py_src/web2py/gluon/widget.py /home/haim/PycharmProjects/web2PyProject/web2py/gluon/widget.py
 662a663,673
 > def get_ip():
 >     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -77,9 +95,3 @@ diff -r --no-dereference web2py/gluon/widget.py /home/haim/PycharmProjects/web2P
 >     options.password = '<ask>'
 >     options.password = '931632'
 >     options.no_gui = True
-diff -r --no-dereference web2py/web2py.py /home/haim/PycharmProjects/web2PyProject/web2py/web2py.py
-37c37
-< 
----
-> sys.path += ['/home/haim/PycharmProjects/web2PyProject/web2py/gluon']
-
