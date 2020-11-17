@@ -105,10 +105,14 @@ def get_member_details(vars):
     story_info.used_for = STORY4MEMBER
     family_connections = get_family_connections(member_info.id)
     slides = get_member_slides(mem_id)
-    if member_info.gender == 'F':
-        spouses = 'husband' + ('s' if len(family_connections.spouses) > 1 else '')
-    else:
-        spouses = 'wife' + ('s' if len(family_connections.spouses) > 1 else '')
+    spouses = ''
+    if family_connections.spouses:
+        a_spouse = family_connections.spouses[0]
+        spouse_gender = a_spouse.gender
+        if spouse_gender == 'M':
+            spouses = 'husband' + ('s' if len(family_connections.spouses) > 1 else '')
+        else:
+            spouses = 'wife' + ('s' if len(family_connections.spouses) > 1 else '')
     member_stories = [story_info] + member_stories;
     return dict(member_info=member_info, 
                 story_info=story_info, 
