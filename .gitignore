@@ -19,7 +19,7 @@ pip-delete-this-directory.txt
 .venv
 venv/
 ENV/
-static/gb_photos
+static/apps_data
 static/aurelia
 static/aurelia_prev
 sessions/

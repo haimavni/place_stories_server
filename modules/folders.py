@@ -11,13 +11,13 @@ def url_folder(kind):
     app = request.application.split('__')[0]  # we want dev, test and www apps share the same photos
     # app appears twice: one to reach static, the other is to separate different customers
     h = 'https' if request.is_https else 'http'
-    return '{h}://{host}/{app}/static/gb_photos/{app}/{kind}/'.format(h=h, host=request.env.http_host, app=app, kind=kind)
+    return '{h}://{host}/{app}/static/apps_data/{app}/{kind}/'.format(h=h, host=request.env.http_host, app=app, kind=kind)
 
 
 def local_folder(kind):
     request = inject('request')
     app = request.application.split('__')[0]  ## we want gbs__dev, gbs__test etc. all to use the same data
-    path = '/gb_photos/{app}/{kind}/'.format(app=app, kind=kind)
+    path = '/apps_data/{app}/{kind}/'.format(app=app, kind=kind)
     if platform != 'linux':
         return path
     curr_uid = os.geteuid()
@@ -29,7 +29,7 @@ def local_folder(kind):
 
 
 def system_folder():
-    path = '/gb_photos/system_data/'
+    path = '/apps_data/system_data/'
     if platform != 'linux':
         return path
     curr_uid = os.geteuid()

@@ -14,7 +14,7 @@ def add_photos_from_drive(root_folder):
             d = modification_date(root + '/' + f)
 
 def main():
-    add_photos_from_drive('/gb_photos/gbs/photos/orig/uploads')
+    add_photos_from_drive('/apps_data/gbs/photos/orig/uploads')
     
 if __name__ == '__main__'    :
     main()

@@ -10,7 +10,7 @@ def hash_photo(photo_path):
     return dhash.dhash_int(img, SIZE)
 
 def test():
-    photo_path = '/gb_photos/gbs/photos/uploads/2018-01/'
+    photo_path = '/apps_data/gbs/photos/uploads/2018-01/'
     photos = ['10ab78e.jpg',  '3a861357.jpg', '67c677b1.jpg', 'a541fef8.jpg', 'df7290ee.jpg',
               '19a65c98.jpg', '4b8916af.jpg', '6a056f3b.jpg', 'ac0fdd94.jpg', 'e0089400.jpg',
               '22331c8b.jpg', '4da078e4.jpg', '78d4488.jpg',  'bc2d361d.jpg', 'e4d8b370.jpg',

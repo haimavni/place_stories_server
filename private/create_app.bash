@@ -39,8 +39,8 @@ fi
 #create database
 sudo -u postgres createdb $app_name
 #create photos and other resources folder
-cp -a /gb_photos/tolbase /gb_photos/$app_name
-chown -R www-data:www-data /gb_photos/$app_name
+cp -a /apps_data/tolbase /apps_data/$app_name
+chown -R www-data:www-data /apps_data/$app_name
 
 #create link to make the app accessible
 cd /home/www-data/web2py/applications
