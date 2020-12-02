@@ -197,3 +197,5 @@ systemctl start web2py-scheduler.service
 To push new branch to github:
 git push -u origin branch-name
 
+to install odbc:
+apt-get install python3-pyodbc

@@ -7,7 +7,8 @@ __pycache__/
 *.so
 errors/
 logs/
-databases/
+databases
+*/static/fontawesome/*
 #static/aurelia/*
 private/deployment_folder
 
