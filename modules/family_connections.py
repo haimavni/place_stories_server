@@ -51,12 +51,7 @@ def get_siblings(member_id):
 def get_children(member_id, hidden_too=False):
     member_rec = get_member_rec(member_id)
     db, VIS_NEVER = inject('db', 'VIS_NEVER')
-    if member_rec.gender=='F' :
-        q = db.TblMembers.mother_id==member_id
-    elif member_rec.gender=='M':
-        q = db.TblMembers.father_id==member_id
-    else:
-        return [] #error!
+    q = (db.TblMembers.mother_id==member_id) | (db.TblMembers.father_id==member_id)
     if not hidden_too:
         q &= (db.TblMembers.visibility != VIS_NEVER)
     q &= (db.TblMembers.deleted == False)
@@ -67,12 +62,9 @@ def get_children(member_id, hidden_too=False):
 def get_spouses(member_id):
     children = get_children(member_id, hidden_too=True)
     member_rec = get_member_rec(member_id)
-    if member_rec.gender == 'F':
-        spouses = [child.father_id for child in children if child.father_id and not child.divorced_parents]
-    elif member_rec.gender == 'M':
-        spouses = [child.mother_id for child in children if child.mother_id and not child.divorced_parents]
-    else:
-        spouses = [] ##error
+    spouses1 = [child.father_id for child in children if child.father_id and child.father_id != member_id and not child.divorced_parents]
+    spouses2 = [child.mother_id for child in children if child.mother_id and child.mother_id != member_id and not child.divorced_parents]
+    spouses = spouses1 + spouses2
     spouses = [sp for sp in spouses if sp]  #to handle incomplete data
     visited = set([])
     spouses1 = []
