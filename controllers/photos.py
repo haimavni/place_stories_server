@@ -248,6 +248,7 @@ def get_photo_list(vars):
             q &= (db.TblPhotos.upload_date < last_photo_time)
             total_photos = db(q).count()
         lst = db(q).select(orderby=~db.TblPhotos.id, limitby=(0, n))
+        lst = list(lst)
     elif selected_order_option.startswith('chronological-order'):
         if vars.count_limit:
             n = int(vars.count_limit)
@@ -265,6 +266,7 @@ def get_photo_list(vars):
         if selected_order_option.endswith('reverse'):
             field = ~field
         lst = db(q).select(orderby=field, limitby=(0, n))
+        lst = list(lst)
     else:
         n = db(q).count()
         if n > MAX_PHOTOS_COUNT:
@@ -273,6 +275,7 @@ def get_photo_list(vars):
             ##q &= (db.TblPhotos.random_photo_key <= frac)
             q &= (db.TblPhotos.random_photo_key.belongs(sample)) #we don't want to bore our users 
         lst = db(q).select() ###, db.TblPhotographers.id) ##, db.TblPhotographers.id)
+        lst = list(lst)
         last_photo_time = None
     if len(lst) > MAX_PHOTOS_COUNT:
         lst1 = random.sample(lst, MAX_PHOTOS_COUNT)
