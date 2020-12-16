@@ -8,10 +8,10 @@ if platform == 'linux':
 
 def url_folder(kind):
     request = inject('request')
-    app = request.application.split('__')[0]  # we want dev, test and www apps share the same photos
-    # app appears twice: one to reach static, the other is to separate different customers
+    app = request.application
+    app1 = app.split('__')[0]  # we want dev, test and www apps share the same photos
     h = 'https' if request.is_https else 'http'
-    return '{h}://{host}/{app}/static/apps_data/{app}/{kind}/'.format(h=h, host=request.env.http_host, app=app, kind=kind)
+    return '{h}://{host}/{app}/static/apps_data/{app1}/{kind}/'.format(h=h, host=request.env.http_host, app=app, kind=kind)
 
 
 def local_folder(kind):
