@@ -11,7 +11,7 @@ def url_folder(kind):
     app = request.application
     app1 = app.split('__')[0]  # we want dev, test and www apps share the same photos
     h = 'https' if request.is_https else 'http'
-    return '{h}://{host}/{app}/static/apps_data/{app1}/{kind}/'.format(h=h, host=request.env.http_host, app=app, kind=kind)
+    return '{h}://{host}/{app}/static/apps_data/{app1}/{kind}/'.format(h=h, host=request.env.http_host, app=app, app1=app1, kind=kind)
 
 
 def local_folder(kind):
