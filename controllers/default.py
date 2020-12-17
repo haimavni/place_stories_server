@@ -365,7 +365,9 @@ def create_key():
     import random, base64
     r = random.randint(0, 0xffffffffffffffff)
     s = str(r)
-    s = base64.urlsafe_b64encode(s)
+    s_bytes = s.encode('ascii')
+    s_64 = base64.b64encode(s_bytes)
+    s = s_64.decode('ascii')
     while s[-1] == "=":
         s = s[:-1]
     return s
