@@ -24,7 +24,7 @@ def index():
     if key:
         rec = db(db.TblShortcuts.key==key).select().first()
         if rec:
-            if not ":8000" in request.env.http_host:
+            if request.is_https and not ":8000" in request.env.http_host:
                 request.requires_https()
             redirect(rec.url)
     app = request.application
