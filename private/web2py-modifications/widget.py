@@ -10,7 +10,7 @@ GUI widget and services start function
 --------------------------------------
 """
 
-from __future__ import print_function
+
 
 import time
 import sys
@@ -117,8 +117,8 @@ class web2pyDialog(object):
         """ web2pyDialog constructor  """
 
         if PY2:
-            import Tkinter as tkinter
-            import tkMessageBox as messagebox
+            import tkinter as tkinter
+            import tkinter.messagebox as messagebox
         else:
             import tkinter
             from tkinter import messagebox
@@ -467,7 +467,7 @@ class web2pyDialog(object):
     def error(self, message):
         """ Shows error message """
         if PY2:
-            import tkMessageBox as messagebox
+            import tkinter.messagebox as messagebox
         else:
             from tkinter import messagebox
         messagebox.showerror('web2py start server', message)
@@ -546,7 +546,7 @@ class web2pyDialog(object):
             cpt.start()
 
         self.password.configure(state='readonly')
-        for ip in self.ips.values():
+        for ip in list(self.ips.values()):
             ip.configure(state='disabled')
         self.port_number.configure(state='readonly')
 
@@ -564,7 +564,7 @@ class web2pyDialog(object):
         self.button_start.configure(state='normal')
         self.button_stop.configure(state='disabled')
         self.password.configure(state='normal')
-        for ip in self.ips.values():
+        for ip in list(self.ips.values()):
             ip.configure(state='normal')
         self.port_number.configure(state='normal')
         self.server.stop()
@@ -590,7 +590,7 @@ class web2pyDialog(object):
                 data = fp.read(t1 - self.t0)
             self.p0 = pvalues + [10 + 90.0 / math.sqrt(1 + data.count('\n'))]
 
-            for i in xrange(points - 1):
+            for i in range(points - 1):
                 c = canvas.coords(self.q0[i])
                 canvas.coords(self.q0[i],
                                    (c[0], self.p0[i],
@@ -601,7 +601,7 @@ class web2pyDialog(object):
             self.t0 = t1
             self.p0 = [100] * points
             self.q0 = [canvas.create_line(i, 100, i + 1, 100,
-                       fill='green') for i in xrange(points - 1)]
+                       fill='green') for i in range(points - 1)]
 
         canvas.after(1000, self.update_canvas)
 
@@ -632,7 +632,7 @@ def start_schedulers(options):
 
     # Work around OS X problem: http://bugs.python.org/issue9405
     if PY2:
-        import urllib
+        import urllib.request, urllib.parse, urllib.error
     else:
         import urllib.request as urllib
     urllib.getproxies()
@@ -695,7 +695,7 @@ def start():
             # for backward compatibility
             if name == 'configure':
                 if PY2: input = raw_input
-                name = input("Your GAE app name: ")
+                name = eval(input("Your GAE app name: "))
             content = open(os.path.join('examples', 'app.example.yaml'), 'rb').read()
             open('app.yaml', 'wb').write(content.replace("yourappname", name))
         else:
@@ -729,7 +729,7 @@ def start():
         # all attached logging.StreamHandler instances currently
         # streaming on sys.stdout or sys.stderr
         loggers = [logging.getLogger()]
-        loggers.extend(logging.Logger.manager.loggerDict.values())
+        loggers.extend(list(logging.Logger.manager.loggerDict.values()))
         for l in loggers:
             if isinstance(l, logging.PlaceHolder): continue
             for h in l.handlers[:]:
@@ -797,7 +797,7 @@ def start():
     if (not options.no_gui and options.password == '<ask>') or options.taskbar:
         try:
             if PY2:
-                import Tkinter as tkinter
+                import tkinter as tkinter
             else:
                 import tkinter
             root = tkinter.Tk()
