@@ -13,6 +13,6 @@ def create_all_app_indexes():
         if app in ['welcome', 'tol_hub', 'gbs']:
             continue
         os.system('python ../web2py/web2py.py -S {app}/admin/create_app_index>>./logs/create_indexii.log'.format(app=app))
-    print 'all app indexes were created'
+    print('all app indexes were created')
 
 create_all_app_indexes()

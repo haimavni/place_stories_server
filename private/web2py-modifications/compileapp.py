@@ -27,7 +27,7 @@ import fnmatch
 import shutil
 
 from gluon._compat import (builtin, PY2, unicodeT, to_native, to_bytes,
-    iteritems, integer_types, basestring, xrange, reload)
+    iteritems, integer_types, str, xrange, reload)
 from gluon.storage import Storage, List
 from gluon.globals import current, Response
 from gluon import html, validators, rewrite
@@ -44,6 +44,7 @@ from gluon.fileutils import mktree, listdir, read_file, write_file, abspath, add
 from gluon.template import parse_template
 from gluon.cfs import getcfs
 from gluon.restricted import restricted, compile2
+import importlib
 
 CACHED_REGEXES = {}
 CACHED_REGEXES_MAX_SIZE = 1000
@@ -97,7 +98,7 @@ def LOAD(c=None, f='index', args=None, vars=None,
                               args=args, vars=vars, extension=extension,
                               user_signature=user_signature)
         # timing options
-        if isinstance(times, basestring):
+        if isinstance(times, str):
             if times.upper() in ("INFINITY", "CONTINUOUS"):
                 times = "Infinity"
             else:
@@ -283,7 +284,7 @@ def local_import_aux(name, reload_force=False, app='welcome'):
     for item in name.split(".")[1:]:
         module = getattr(module, item)
     if reload_force:
-        reload(module)
+        importlib.reload(module)
     return module
 #
 # OLD IMPLEMENTATION:

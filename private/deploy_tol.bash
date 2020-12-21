@@ -1,16 +1,18 @@
 #!/bin/bash
 
-if [ "$1" == "master" ]
+HOST="haimavni.site"
+echo host is ${HOST}
+if [ "$1" == "master3" ]
 then
-    BRANCH="master"
+    BRANCH="master3"
 else 
-    if [ "$1" == "test" ]
+    if [ "$1" == "test3" ]
     then
-        BRANCH="test"
+        BRANCH="test3"
     else 
-        if [ "$1" == "www" ]
+        if [ "$1" == "www3" ]
         then
-            BRANCH="www"
+            BRANCH="www3"
         else
             if [ "$1" == "flex" ]
             then
@@ -37,7 +39,7 @@ echo -d "Front branch is " $BRANCH1
 echo -e "Deploy to branch " $BRANCH >> ~/log/deploy_history.log
 echo -d "Front branch is " $BRANCH1 >> ~/log/deploy_history.log
 
-pushd ~/aurelia-gbs/gbs
+pushd ~/aurelia
 git pull
 git checkout $BRANCH1
 git pull
@@ -47,19 +49,19 @@ cp index.html index-orig.html
 rm -R -f scripts/*
 rm -R -f ~/deployment_folder/*
 
-python ~/aurelia-gbs/server/tol_server/private/handle_locale.py
-au build --env tmp_env tol_server
-rm tmp_env.ts
+python ~/tol3/private/handle_locale.py
+au build --env tmp_env
+rm aurelia_project/environments/tmp_env.ts
 cp -a ./scripts ~/deployment_folder/
 ls -l ~/deployment_folder/scripts >> ~/log/deploy_history.log
 git br -v >> ~/log/deploy_history.log
-python ~/aurelia-gbs/server/tol_server/private/fix_index_html.py
+python ~/tol3/private/fix_index_html.py
 cp ./index.html  ~/deployment_folder
 cp ./favicon.ico  ~/deployment_folder
 cp -a ./images ~/deployment_folder
 cp index-orig.html index.html
 rm index-orig.html
-git checkout master
+git checkout master3
 
 echo "
 lcd /home/haim/deployment_folder
@@ -68,21 +70,22 @@ rename aurelia aurelia_prev
 mkdir aurelia
 cd aurelia
 put -R *
-" > ../server/tol_server/private/deploy.batch
+mv aurelia_prev/fontawesome aurelia/
+" > ~/tol3/private/deploy.batch
 
-ssh gbstories.org rm -R -f /home/www-data/tol_server_${TARGET}/static/aurelia_prev/*
-sftp -b ../server/tol_server/private/deploy.batch gbstories.org
+ssh root@${HOST} rm -R -f /home/www-data/tol_server_${TARGET}/static/aurelia_prev/*
+sftp -b ~/tol3/private/deploy.batch ${HOST}
 
 #version file is uploaded last to prevent immature updates for users
 echo "
 lcd /home/haim/
 cd /home/www-data/tol_server_${TARGET}/static/aurelia
 put curr_version.tmp
-" > ../server/tol_server/private/deploy1.batch
-sftp -b ../server/tol_server/private/deploy1.batch gbstories.org
+" > ~/tol3/private/deploy1.batch
+sftp -b ~/tol3/private/deploy1.batch ${HOST}
 
-ssh root@gbstories.org bash /home/www-data/tol_server_${TARGET}/private/update_target.bash $TARGET
-rm ../server/tol_server/private/deploy1.batch
-rm ../server/tol_server/private/deploy.batch
-
+ssh root@${HOST} bash /home/www-data/tol_server_${TARGET}/private/update_target.bash $TARGET
+rm ~/tol3/private/deploy1.batch
+rm ~/tol3/private/deploy.batch
+###au build --env dev
 popd

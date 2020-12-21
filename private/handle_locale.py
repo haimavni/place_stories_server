@@ -4,22 +4,32 @@ from distutils import dir_util
 from shutil import copyfile
 import datetime
 
-os.chdir("/home/haim/aurelia-gbs/gbs")
+def to_bytes(obj, charset="utf-8", errors="strict"):
+    if obj is None:
+        return None
+    if isinstance(obj, (bytes, bytearray)):
+        return bytes(obj)
+    if isinstance(obj, str):
+        return obj.encode(charset, errors)
+    raise TypeError("Expected bytes")
+
+os.chdir("/home/haim/aurelia")
 cwd = os.getcwd()
-print "cwd: ", cwd
+print(("cwd: ", cwd))
 dic = dict()
 combined_crc = 0xffffffff
 for root, dirs, files in os.walk(cwd + '/locales', topdown=True):
     for file in files:
         if not file.endswith('.json'):
             continue
-        print root, file
+        print((root, file))
         fname = root + '/' + file
         with open(fname, 'r') as f:
             blob = f.read()
         file_name, ext = os.path.splitext(file)
         r = root.find('locales')
         tail = root[r:]
+        blob = to_bytes(blob)
         crc = zlib.crc32(blob)
         combined_crc ^= crc
         dic[tail] = dict(source=fname, target='/home/haim/deployment_folder/' + tail + '/' + file_name)
@@ -46,7 +56,7 @@ export default {{
 }};
 '''.format(s, combined_crc & 0xffffffff) 
 
-with open('aurelia_project/environments/tmp_env.ts', mode='w') as f:
+with open('/home/haim/aurelia/aurelia_project/environments/tmp_env.ts', mode='w') as f:
     f.write(env)
         
     

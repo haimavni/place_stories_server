@@ -23,7 +23,7 @@ Copyright (C) 2001-2010 Vinay Sajip. All Rights Reserved.
 To use, simply 'import logging' and log away!
 """
 
-import sys, os, stat, time, cStringIO, traceback, warnings, weakref
+import sys, os, stat, time, io, traceback, warnings, weakref
 from pwd import getpwnam, getpwuid
 import getpass
 
@@ -44,7 +44,7 @@ def fix_log_owner(log_file_name):
         if file_owner != u:
             os.chown(log_file_name, wuid, wgid)
             os.chmod(log_file_name, stat.S_IRGRP | stat.S_IWGRP | stat.S_IREAD | stat.S_IWRITE | stat.S_IROTH)
-    except Exception, e:
+    except Exception as e:
         path, fname = os.path.split(log_file_name)
         with open(path + '/' + 'fix_log_owner_failed.log', 'a') as f:
             f.write(str(e) + '\n')
@@ -61,9 +61,9 @@ try:
     import codecs
 except ImportError:
     codecs = None
-
+thread = None
 try:
-    import thread
+    import _thread
     import threading
 except ImportError:
     thread = None
@@ -77,7 +77,7 @@ __date__    = "07 February 2010"
 #   Miscellaneous module data
 #---------------------------------------------------------------------------
 try:
-    unicode
+    str
     _unicode = True
 except NameError:
     _unicode = False
@@ -301,10 +301,10 @@ class LogRecord(object):
         self.lineno = lineno
         self.funcName = func
         self.created = ct
-        self.msecs = (ct - long(ct)) * 1000
+        self.msecs = (ct - int(ct)) * 1000
         self.relativeCreated = (self.created - _startTime) * 1000
         if logThreads and thread:
-            self.thread = thread.get_ident()
+            self.thread = _thread.get_ident()
             self.threadName = threading.current_thread().name
         else:
             self.thread = None
@@ -321,7 +321,7 @@ class LogRecord(object):
                 # for an example
                 try:
                     self.processName = mp.current_process().name
-                except StandardError:
+                except Exception:
                     pass
         if logProcesses and hasattr(os, 'getpid'):
             self.process = os.getpid()
@@ -343,7 +343,7 @@ class LogRecord(object):
             msg = str(self.msg)
         else:
             msg = self.msg
-            if not isinstance(msg, basestring):
+            if not isinstance(msg, str):
                 try:
                     msg = str(self.msg)
                 except UnicodeError:
@@ -458,7 +458,7 @@ class Formatter(object):
         This default implementation just uses
         traceback.print_exception()
         """
-        sio = cStringIO.StringIO()
+        sio = io.StringIO()
         traceback.print_exception(ei[0], ei[1], ei[2], None, sio)
         s = sio.getvalue()
         sio.close()
@@ -874,7 +874,7 @@ class StreamHandler(Handler):
                 stream.write(fs % msg)
             else:
                 try:
-                    if (isinstance(msg, unicode) and
+                    if (isinstance(msg, str) and
                         getattr(stream, 'encoding', None)):
                         ufs = fs.decode(stream.encoding)
                         try:
@@ -1032,9 +1032,9 @@ class Manager(object):
         placeholder to now point to the logger.
         """
         rv = None
-        if not isinstance(name, basestring):
+        if not isinstance(name, str):
             raise TypeError('A logger name must be string or Unicode')
-        if isinstance(name, unicode):
+        if isinstance(name, str):
             name = name.encode('utf-8')
         _acquireLock()
         try:
@@ -1097,7 +1097,7 @@ class Manager(object):
         """
         name = alogger.name
         namelen = len(name)
-        for c in ph.loggerMap.keys():
+        for c in list(ph.loggerMap.keys()):
             #The if means ... if not c.parent.name.startswith(nm)
             if c.parent.name[:namelen] != name:
                 alogger.parent = c.parent
