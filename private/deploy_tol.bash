@@ -74,7 +74,7 @@ mv aurelia_prev/fontawesome aurelia/
 " > ~/tol3/private/deploy.batch
 
 ssh root@${HOST} rm -R -f /home/www-data/tol_server_${TARGET}/static/aurelia_prev/*
-sftp -b ~/tol3/private/deploy.batch ${HOST}
+sftp -b ~/tol3/private/deploy.batch root@${HOST}
 
 #version file is uploaded last to prevent immature updates for users
 echo "
@@ -82,7 +82,7 @@ lcd /home/haim/
 cd /home/www-data/tol_server_${TARGET}/static/aurelia
 put curr_version.tmp
 " > ~/tol3/private/deploy1.batch
-sftp -b ~/tol3/private/deploy1.batch ${HOST}
+sftp -b ~/tol3/private/deploy1.batch root@${HOST}
 
 ssh root@${HOST} bash /home/www-data/tol_server_${TARGET}/private/update_target.bash $TARGET
 rm ~/tol3/private/deploy1.batch
