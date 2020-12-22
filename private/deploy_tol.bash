@@ -24,7 +24,8 @@ else
 fi
 if [ "$BRANCH1" == "0" ]
 then
-    BRANCH1=$BRANCH
+    BRANCH1=${BRANCH}
+    echo branch1 is ${BRANCH1} -- $BRANCH1
 fi
 
 if [ -z "$2" ]
