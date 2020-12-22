@@ -216,9 +216,9 @@ def create_app_index():
     app = request.application
     path = 'applications/{app}/static/aurelia/'.format(app=app)
     src = path + 'index.html'
-    dst = path + 'index-{}.html'.format(request.application)
+    dst = path + f'index-{request.application}.html'
     if os.path.isfile(dst):
-        return '{dst} already exists'.format(dst=dst)
+        return f'{dst} already exists'
     with open(src, 'r') as f:
         s = f.read()
     pat = r'<title>.*?</title>'
