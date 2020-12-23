@@ -220,7 +220,7 @@ def create_app_index():
     dst = path + f'index-{request.application}.html'
     if os.path.isfile(dst):
         return f'{dst} already exists'
-    with open(src, 'r') as f:
+    with open(src, 'r', encoding='utf-8') as f:
         s = f.read()
     pat = r'<title>.*?</title>'
     s1 = re.sub(pat, replace_title, s)
