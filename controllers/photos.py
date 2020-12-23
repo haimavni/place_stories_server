@@ -255,6 +255,7 @@ def get_photo_list(vars):
         else:
             n = 200
         MAX_PHOTOS_COUNT = n
+        comment(f"max photos count {n}")
         last_photo_date = vars.last_photo_date
         if last_photo_date:
             if selected_order_option.endswith('reverse'):
@@ -271,6 +272,7 @@ def get_photo_list(vars):
         n = db(q).count()
         if n > MAX_PHOTOS_COUNT:
             frac = max(MAX_PHOTOS_COUNT * 100 / n, 1)
+            frac = round(frac)
             sample = random.sample(list(range(1, 101)), frac)
             ##q &= (db.TblPhotos.random_photo_key <= frac)
             q &= (db.TblPhotos.random_photo_key.belongs(sample)) #we don't want to bore our users 
