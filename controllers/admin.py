@@ -2,6 +2,7 @@ from admin_support.access_manager import AccessManager
 from admin_support.task_monitor import TaskMonitor
 import ws_messaging
 import os
+import re
 
 #---------------------------------------------------------------------------
 # Access Manager
@@ -225,7 +226,7 @@ def create_app_index():
     s1 = re.sub(pat, replace_title, s)
     if not app.startswith("gbs__"):
         s1 = s1.replace('gbstories.org', 'tol.life')
-    with open(dst, 'w') as f:
+    with open(dst, 'w', encoding='utf-8') as f:
         f.write(s1)
     return '{} was created'.format(dst)
 
