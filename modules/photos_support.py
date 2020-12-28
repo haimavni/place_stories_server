@@ -391,7 +391,7 @@ def rotate_photo(photo_id):
         img = img.transpose(Image.ROTATE_90)
         if what == 'orig':
             img.save(file_name)
-            with open(file_name) as f:
+            with open(file_name, 'rb') as f:
                 blob = f.read()
             crc = zlib.crc32(blob)
             pname, fname = os.path.split(photo_rec.photo_path)

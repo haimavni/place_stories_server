@@ -71,7 +71,7 @@ rename aurelia aurelia_prev
 mkdir aurelia
 cd aurelia
 put -R *
-mv aurelia_prev/fontawesome aurelia/
+cp -a /apps_data/fontawesome ./
 " > ~/tol3/private/deploy.batch
 
 ssh root@${HOST} rm -R -f /home/www-data/tol_server_${TARGET}/static/aurelia_prev/*

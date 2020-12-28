@@ -39,6 +39,11 @@ def get_photo_detail(vars):
     photographer_name = photographer.name if photographer else ''
     photographer_id = photographer.id if photographer else None
     photo_topics = get_photo_topics(rec.story_id)
+    photo_pairs = get_photo_pairs([rec.id])
+    if photo_pairs:
+        back = photo_pairs[rec.id]
+    else:
+        back = None
     return dict(photo_src=timestamped_photo_path(rec, webp_supported=vars.webpSupported),
                 photo_name=rec.Name,
                 original_file_name=rec.original_file_name,
@@ -46,6 +51,7 @@ def get_photo_detail(vars):
                 photo_topics=photo_topics,
                 height=rec.height,
                 width=rec.width,
+                back=back,
                 photo_story=story,
                 photo_date_str = all_dates.photo_date.date,
                 photo_date_datespan = all_dates.photo_date.span,
