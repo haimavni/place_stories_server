@@ -117,7 +117,7 @@ def calc_date_end(date, unit, span):
         return datetime.date(year=date.year + span, month=1, day=1)
     elif unit == 'M':
         m = date.month + span - 1
-        year = date.year + m / 12
+        year = date.year + m // 12
         month = m % 12 + 1
         return datetime.date(year=year, month=month, day=1)
     elif unit == 'D':
