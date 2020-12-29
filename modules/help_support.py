@@ -90,7 +90,7 @@ def _save_system_stories_to_csv(target=None, used_for=None):
     return dict(good=True)
 
 def get_records(csv_name):
-    with open(csv_name, 'rb') as csvfile:
+    with open(csv_name, 'r', encoding='utf-8') as csvfile:
         reader = csv.reader(csvfile, delimiter=',', quotechar='"')
         next(reader)     #skip header
         for row in reader:

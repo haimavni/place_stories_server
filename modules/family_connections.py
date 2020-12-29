@@ -76,7 +76,9 @@ def get_spouses(member_id):
             spouses1.append(sp_id)
     spouses = spouses1        
     ###spouses = list(set(spouses))  ## nice but does no preserve order
-    return [get_member_rec(m_id, prepend_path=True) for m_id in spouses]
+    result = [get_member_rec(m_id, prepend_path=True) for m_id in spouses]
+    result = [member for member in result if member]
+    return result
 
 def get_family_connections(member_id):
     auth, VIS_NEVER = inject('auth', 'VIS_NEVER')
