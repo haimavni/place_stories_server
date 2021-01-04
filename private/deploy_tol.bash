@@ -87,6 +87,6 @@ sftp -b ~/tol3/private/deploy1.batch root@${HOST}
 
 ssh root@${HOST} bash /home/www-data/tol_server_${TARGET}/private/update_target.bash $TARGET
 rm ~/tol3/private/deploy1.batch
-rm ~/tol3/private/deploy.batch
+###rm ~/tol3/private/deploy.batch
 ###au build --env dev
 popd

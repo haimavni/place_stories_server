@@ -336,6 +336,7 @@ db.define_table('TblPhotos',
                 Field('deleted', type='boolean', default=False),
                 Field('is_back_side', type='boolean', default=False),
                 Field('crc', type='bigint'),
+                Field('bigcrc', type='bigint'),
                 Field('dhash', type='string'),
                 Field('curr_dhash', type='string'),  #after editing such as rotation and cropping. will be used to reload photo after using photoshop etc.
                 Field('dup_checked', type='boolean'),  #to be used only once, to detect all old dups. 
@@ -396,7 +397,7 @@ db.define_table('TblDocs',
                 Field('touch_time', type='date', default=NO_DATE), #used to promote docs
                 Field('doc_path', type='string'),
                 Field('original_file_name', type='string'),
-                Field('crc', type='integer'),
+                Field('crc', type='bigint'),
                 Field('upload_date', type='datetime')
                 )
 
@@ -413,7 +414,7 @@ db.define_table('TblAudios',
                 Field('touch_time', type='date', default=NO_DATE), #used to promote docs
                 Field('audio_path', type='string'),
                 Field('original_file_name', type='string'),
-                Field('crc', type='integer'),
+                Field('crc', type='bigint'),
                 Field('upload_date', type='datetime'),
                 Field('recorder_id', type=db.TblRecorders)
                 )
