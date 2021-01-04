@@ -71,11 +71,10 @@ rename aurelia aurelia_prev
 mkdir aurelia
 cd aurelia
 put -R *
-cp -r /apps_data/fontawesome ./
 " > ~/tol3/private/deploy.batch
-
 ssh root@${HOST} rm -R -f /home/www-data/tol_server_${TARGET}/static/aurelia_prev/*
 sftp -b ~/tol3/private/deploy.batch root@${HOST}
+ssh root@${HOST} cp -r /apps_data/fontawesome /home/www-data/tol_server_${TARGET}/static/aurelia/
 
 #version file is uploaded last to prevent immature updates for users
 echo "
@@ -87,6 +86,6 @@ sftp -b ~/tol3/private/deploy1.batch root@${HOST}
 
 ssh root@${HOST} bash /home/www-data/tol_server_${TARGET}/private/update_target.bash $TARGET
 rm ~/tol3/private/deploy1.batch
-###rm ~/tol3/private/deploy.batch
+rm ~/tol3/private/deploy.batch
 ###au build --env dev
 popd
