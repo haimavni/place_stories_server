@@ -78,7 +78,7 @@ def save_uploaded_photo_collection(collection, user_id):
                    photo_ids=photo_ids)
 
 def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
-    auth, log_exception, db, STORY4PHOTO = inject('auth', 'log_exception', 'db', 'STORY4PHOTO')
+    auth, comment, log_exception, db, STORY4PHOTO = inject('auth', 'comment', 'log_exception', 'db', 'STORY4PHOTO')
     user_id = user_id or auth.current_user()
     blob = to_bytes(s)
     crc = zlib.crc32(blob)
@@ -115,9 +115,10 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
 
             s = exif_data['DateTimeDigitized']
             try:
-                embedded_photo_date = datetime.datetime.strptime(s, '%Y/%m/%d %H:%M:%S')
+                comment(f"embedded date is {s}")
+                embedded_photo_date = datetime.datetime.strptime(s, '%Y:%m:%d %H:%M:%S')
             except Exception as e:
-                log_exception('getting photo embedded date failed', s)
+                log_exception('getting photo embedded date failed')
                 
         width, height = img.size
         square_img = crop_to_square(img, width, height, 256)
