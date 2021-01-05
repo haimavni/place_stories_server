@@ -385,7 +385,7 @@ def crop_square(img_src, width, height, side_size):
         return False
     return True
 
-def rotate_photo(photo_id):
+def rotate_photo(photo_id, rotate_clockwise=False):
     db = inject('db')
     photo_rec = db((db.TblPhotos.id == photo_id) & (db.TblPhotos.deleted != True)).select().first()
     lst = ['orig', 'squares']
@@ -395,7 +395,8 @@ def rotate_photo(photo_id):
         path = local_photos_folder(what)
         file_name = path + photo_rec.photo_path
         img = Image.open(file_name)
-        img = img.transpose(Image.ROTATE_90)
+        angle = Image.ROTATE_270 if rotate_clockwise else Image.ROTATE_90
+        img = img.transpose(angle)
         if what == 'orig':
             img.save(file_name)
             with open(file_name, 'rb') as f:
