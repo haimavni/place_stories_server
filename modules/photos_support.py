@@ -78,11 +78,10 @@ def save_uploaded_photo_collection(collection, user_id):
                    photo_ids=photo_ids)
 
 def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
-    auth, comment, log_exception, db, STORY4PHOTO = inject('auth', 'comment', 'log_exception', 'db', 'STORY4PHOTO')
+    auth, comment, log_exception, db, STORY4PHOTO, NO_DATE = inject('auth', 'comment', 'log_exception', 'db', 'STORY4PHOTO', 'NO_DATE')
     user_id = user_id or auth.current_user()
     blob = to_bytes(s)
     crc = zlib.crc32(blob)
-    cnt = db(db.TblPhotos.crc==crc).count()
     prec = db((db.TblPhotos.crc==crc) & (db.TblPhotos.deleted != True)).select().first()
     if prec:
         return Storage(duplicate=prec.id)
@@ -112,7 +111,6 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
             except Exception as e:
                 log_exception("getting photo geo data failed")
         if 'DateTimeDigitized' in exif_data:
-
             s = exif_data['DateTimeDigitized']
             try:
                 comment(f"embedded date is {s}")
@@ -156,6 +154,14 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
     story_info = sm.get_empty_story(used_for=STORY4PHOTO, story_text="", name=original_file_name)
     result = sm.add_story(story_info)
     story_id = result.story_id
+    if embedded_photo_date:
+        photo_date = embedded_photo_date.date()
+        photo_date_dateunit = 'D'
+        photo_date_datespan = 1
+    else:
+        photo_date = NO_DATE
+        photo_date_dateunit = 'Y'
+        photo_date_datespan = 1
     photo_id = db.TblPhotos.insert(
         photo_path=sub_folder + file_name,
         original_file_name=original_file_name,
@@ -163,7 +169,9 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
         embedded_photo_date=embedded_photo_date,
         uploader=user_id,
         upload_date=datetime.datetime.now(),
-        photo_date=None,
+        photo_date=photo_date,
+        photo_date_dateunit=photo_date_dateunit,
+        photo_date_datespan=photo_date_datespan,
         width=width,
         height=height,
         latitude=latitude,
@@ -178,14 +186,12 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
         random_photo_key=random.randint(1, 101)
     )
     db.commit()
-    n = db(db.TblPhotos).count()
     return Storage(photo_id=photo_id)
 
 def get_image_info(image_path):
     img = Image.open(image_path)
     width, height = img.size
     faces = []
-    exif_data = get_exif_data(img)
     return Storage(width=width, height=height, faces=faces)
 
 def fit_size(rec):
@@ -795,3 +801,12 @@ def degrees_to_float(tup):
     result = degs * 1.0 + mins * 1.0 / 60 + secs * 1.0 / 3600
     return round(result, 8)
 
+def use_embedded_dates():
+    db, NO_DATE = inject('db', 'NO_DATE')
+    n = 0
+    db(db.TblPhotos.photo_date==None).update(photo_date=NO_DATE)
+    for prec in db((db.TblPhotos.photo_date==NO_DATE) & (db.TblPhotos.embedded_photo_date != None)).select():
+        photo_date = prec.embedded_photo_date.date()
+        prec.update_record(photo_date=photo_date, photo_date_dateunit='D', photo_date_datespan=1)
+        n += 1
+    return n
