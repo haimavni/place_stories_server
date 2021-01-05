@@ -871,19 +871,19 @@ def make_photos_query(vars):
         if days:
             upload_date = datetime.datetime.today() - datetime.timedelta(days=days)
             q &= (db.TblPhotos.upload_date >= upload_date)
-    opt = vars.selected_uploader
-    if opt == 'mine':
+    date_opt = vars.selected_uploader
+    if date_opt == 'mine':
         user_id = auth.current_user() or vars.user_id
         q &= (db.TblPhotos.uploader == user_id)
-    elif opt == 'users':
+    elif date_opt == 'users':
         q &= (db.TblPhotos.uploader != None)
-    opt = vars.selected_dates_option
+    date_opt = vars.selected_dates_option
     selected_order_option = vars.selected_order_option or ""
-    if opt == 'selected_dates_option':
+    if date_opt == 'selected_dates_option':
         pass
-    elif opt == 'dated' or selected_order_option.startswith('chronological-order'):
+    elif date_opt == 'dated' or selected_order_option.startswith('chronological-order'):
         q &= (db.TblPhotos.photo_date != NO_DATE)
-    elif opt == 'undated':
+    elif date_opt == 'undated':
         q &= (db.TblPhotos.photo_date == NO_DATE)
     member_ids = None
     if vars.selected_member_id:
@@ -894,7 +894,8 @@ def make_photos_query(vars):
         q1 = with_members_query(member_ids)
         q &= q1
     if vars.selected_recognition == 'recognized':
-        q &= ((db.TblPhotos.Recognized == True) | (db.TblPhotos.Recognized == None))
+        if date_opt != 'undated':
+            q &= ((db.TblPhotos.Recognized == True) | (db.TblPhotos.Recognized == None))
     elif vars.selected_recognition == 'unrecognized':
         q &= (db.TblPhotos.Recognized == False)
     elif vars.selected_recognition == 'recognized-not-located':
