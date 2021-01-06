@@ -122,7 +122,7 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
                 prec.update_record(has_geo_info=has_geo_info, longitude=longitude, latitude=latitude, zoom=zoom)
                 if prec.oversize:
                     fname = local_photos_folder("oversize") + prec.photo_path
-                    img.save(fname, quality=95, exif=img.info['exif'])
+                    img.save(fname, quality=95)  ###, exif=img.info['exif'])
         if prec:
             return Storage(duplicate=prec.id)
         if 'DateTimeDigitized' in exif_data:
@@ -149,7 +149,7 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
             oversize = True
             path = local_photos_folder("oversize") + sub_folder
             dir_util.mkpath(path)
-            img.save(path + file_name, quality=95, exif=img.info['exif'])
+            img.save(path + file_name, quality=95) ###, exif=img.info['exif'])
             fix_owner(path)
             fix_owner(path + file_name)
             width, height = resized(width, height)
@@ -158,7 +158,8 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
             width, height = resized(width, height)
             img = img.resize((width, height), Image.LANCZOS)
         path = local_photos_folder() + sub_folder
-        img.save(path + file_name, quality=100, exif=img.info['exif'])
+        ###exif = img.info['exif'] if img.info and 'exif' in img.info e
+        img.save(path + file_name, quality=100) ###, exif=img.info['exif'])
         fix_owner(path)
         fix_owner(path + file_name)
         dhash_value = dhash_photo(img=img)
