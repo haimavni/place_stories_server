@@ -123,7 +123,8 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
                 if prec.oversize:
                     fname = local_photos_folder("oversize") + prec.photo_path
                     img.save(fname, quality=95, exif=img.info['exif'])
-                return Storage(duplicate=prec.id)
+        if prec:
+            return Storage(duplicate=prec.id)
         if 'DateTimeDigitized' in exif_data:
             s = exif_data['DateTimeDigitized']
             try:
