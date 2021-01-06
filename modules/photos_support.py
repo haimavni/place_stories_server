@@ -148,7 +148,7 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
             oversize = True
             path = local_photos_folder("oversize") + sub_folder
             dir_util.mkpath(path)
-            img.save(path + file_name, quality=95, exif=exif_data)
+            img.save(path + file_name, quality=95, exif=img.info['exif'])
             fix_owner(path)
             fix_owner(path + file_name)
             width, height = resized(width, height)
