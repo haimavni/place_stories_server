@@ -84,7 +84,8 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
     crc = zlib.crc32(blob)
     prec = db((db.TblPhotos.crc==crc) & (db.TblPhotos.deleted != True)).select().first()
     if prec:
-        return Storage(duplicate=prec.id)
+        if prec.has_geo_info:
+            return Storage(duplicate=prec.id)
     original_file_name, ext = os.path.splitext(file_name)
     file_name = '{crc:x}{ext}'.format(crc=crc & 0xffffffff, ext=ext)
     today = datetime.date.today()
@@ -95,6 +96,7 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
     dir_util.mkpath(path)
     latitude = None
     longitude = None
+    zoom = None
     embedded_photo_date = None
     try:
         blob = array.array('B', [x for x in map(ord, s)]).tobytes()
@@ -108,8 +110,20 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
                 lat = gps_info['GPSLatitude']
                 longitude = degrees_to_float(lng)
                 latitude = degrees_to_float(lat)
+                if gps_info['GPSLatitudeRef'] == 'S':
+                    latitude = -latitude
+                if gps_info['GPSLongitudeRef'] == 'W':
+                    longitude = -longitude
+                zoom = 13
             except Exception as e:
                 log_exception("getting photo geo data failed")
+            if prec:
+                has_geo_info = longitude != None
+                prec.update_record(has_geo_info=has_geo_info, longitude=longitude, latitude=latitude, zoom=zoom)
+                if prec.oversize:
+                    fname = local_photos_folder("oversize") + prec.photo_path
+                    img.save(fname, quality=95, exif=img.info['exif'])
+                return Storage(duplicate=prec.id)
         if 'DateTimeDigitized' in exif_data:
             s = exif_data['DateTimeDigitized']
             try:
@@ -134,7 +148,7 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
             oversize = True
             path = local_photos_folder("oversize") + sub_folder
             dir_util.mkpath(path)
-            img.save(path + file_name)
+            img.save(path + file_name, quality=95, exif=exif_data)
             fix_owner(path)
             fix_owner(path + file_name)
             width, height = resized(width, height)
@@ -143,7 +157,7 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
             width, height = resized(width, height)
             img = img.resize((width, height), Image.LANCZOS)
         path = local_photos_folder() + sub_folder
-        img.save(path + file_name)
+        img.save(path + file_name, quality=100, exif=img.info['exif'])
         fix_owner(path)
         fix_owner(path + file_name)
         dhash_value = dhash_photo(img=img)
@@ -162,6 +176,7 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
         photo_date = NO_DATE
         photo_date_dateunit = 'Y'
         photo_date_datespan = 1
+    has_geo_info = longitude != None
     photo_id = db.TblPhotos.insert(
         photo_path=sub_folder + file_name,
         original_file_name=original_file_name,
@@ -176,7 +191,8 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
         height=height,
         latitude=latitude,
         longitude=longitude,
-        zoom=12,
+        has_geo_info=has_geo_info,
+        zoom=13,
         crc=crc,
         dhash=dhash_value,
         oversize=oversize,
@@ -798,7 +814,7 @@ def get_photo_url(what, photo_rec, webp_supported):
     return path + photo_path
 
 def degrees_to_float(tup):
-    degs, mins, secs = [t[0] for t in tup]
+    degs, mins, secs = tup
     result = degs * 1.0 + mins * 1.0 / 60 + secs * 1.0 / 3600
     return round(result, 8)
 
@@ -810,4 +826,34 @@ def use_embedded_dates():
         photo_date = prec.embedded_photo_date.date()
         prec.update_record(photo_date=photo_date, photo_date_dateunit='D', photo_date_datespan=1)
         n += 1
+    return n
+
+def calculate_photo_geo_info(prec):
+    log_exception = inject('log_exception')
+    folder = local_photos_folder()
+    fname = folder + prec.photo_path
+    if not os.path.exists(fname):
+        return
+    img = Image.open(fname)
+    exif_data = get_exif_data(img)
+    if 'GPSInfo' in exif_data:
+        try:
+            gps_info = exif_data['GPSInfo']
+            lng = gps_info['GPSLongitude']
+            lat = gps_info['GPSLatitude']
+            longitude = degrees_to_float(lng)
+            latitude = degrees_to_float(lat)
+        except Exception as e:
+            log_exception("getting photo geo data failed")
+        else:
+            prec.update_record(has_geo_info=True, longitude=longitude, latitude=latitude)
+    else:
+        prec.update_record(has_geo_info=False)
+
+def calculate_geo_info():
+    db = inject('db')
+    db(db.TblPhotos.longitude!=None).update(has_geo_info=True)
+    for prec in db(db.TblPhotos.has_geo_info==None).select(limitby=(0, 100), orderby=~db.TblPhotos.id):
+        calculate_photo_geo_info(prec)
+    n = db(db.TblPhotos.has_geo_info==None).count()
     return n
