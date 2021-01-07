@@ -859,3 +859,12 @@ def calculate_geo_info():
         calculate_photo_geo_info(prec)
     n = db(db.TblPhotos.has_geo_info==None).count()
     return n
+
+def recalculate_recognized():
+    db = inject('db')
+    db(db.TblPhotos.Recognized==None).update(Recognized=False)
+    for pm in db(db.TblMemberPhotos).select(db.TblMemberPhotos.Photo_id, db.TblMemberPhotos.Photo_id.count(),groupby=db.TblMemberPhotos.Photo_id):
+        db(db.TblPhotos.id==pm.TblMemberPhotos.Photo_id).update(Recognized=True)
+    for pm in db(db.TblArticlePhotos).select(db.TblArticlePhotos.photo_id, db.TblArticlePhotos.photo_id.count(), groupby=db.TblArticlePhotos.photo_id):
+        db(db.TblPhotos.id==pm.TblArticlePhotos.photo_id).update(Recognized=True)
+    return "done"
