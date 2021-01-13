@@ -261,18 +261,21 @@ def get_photo_list(vars):
         else:
             n = 200
         MAX_PHOTOS_COUNT = n
-        comment(f"max photos count {n}")
         last_photo_date = vars.last_photo_date
+        last_photo_id = vars.last_photo_id
         if last_photo_date:
             if selected_order_option.endswith('reverse'):
-                q &= (db.TblPhotos.photo_date < last_photo_date)
+                # since dates may be repeated, we need to sort by id too
+                q &= (db.TblPhotos.photo_date < last_photo_date) | (db.TblPhotos.photo_date == last_photo_date) & (db.TblPhotos.id < last_photo_id)
             else:
-                q &= (db.TblPhotos.photo_date > last_photo_date)
+                q &= (db.TblPhotos.photo_date > last_photo_date) | (db.TblPhotos.photo_date == last_photo_date) & (db.TblPhotos.id > last_photo_id)
             total_photos = db(q).count()
-        field = db.TblPhotos.photo_date
+        field1 = db.TblPhotos.photo_date
+        field2 = db.TblPhotos.id
         if selected_order_option.endswith('reverse'):
-            field = ~field
-        lst = db(q).select(orderby=field, limitby=(0, n))
+            field1 = ~field1
+            field2 = ~field2
+        lst = db(q).select(orderby=field1 | field2, limitby=(0, n))
         lst = list(lst)
     else:
         n = db(q).count()
@@ -309,10 +312,11 @@ def get_photo_list(vars):
             last_photo_id = 'END'
     elif selected_order_option.startswith('chronological') and lst:
         last_photo_date = lst[-1].photo_date
+        last_photo_id = lst[-1].id
         if selected_order_option.endswith('reverse'):
-            q1 = (db.TblPhotos.photo_date < last_photo_date)
+            q1 = (db.TblPhotos.photo_date < last_photo_date) | (db.TblPhotos.photo_date == last_photo_date) & (db.TblPhotos.id < last_photo_id)
         else:
-            q1 = (db.TblPhotos.photo_date > last_photo_date)
+            q1 = (db.TblPhotos.photo_date > last_photo_date) | (db.TblPhotos.photo_date == last_photo_date) & (db.TblPhotos.id > last_photo_id)
         if db(q & q1).count() == 0:
             last_photo_date = 'END'
     else:
