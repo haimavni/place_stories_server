@@ -235,11 +235,10 @@ def remove_duplicate_photo_members(): #todo: remove after all sites are fixed
 
 @serve_json
 def get_photo_list(vars):
-    selected_topics = vars.selected_topics or []
     mprl = vars.max_photos_per_line or 8
     MAX_PHOTOS_COUNT = 100 + (mprl - 8) * 100
     selected_order_option = vars.selected_order_option or ""
-    last_photo_time = None
+    last_photo_id = None
     last_photo_date = None
     q = make_photos_query(vars)
     total_photos = db(q).count()
@@ -249,12 +248,13 @@ def get_photo_list(vars):
         else:
             n = 200
         MAX_PHOTOS_COUNT = n
-        last_photo_time = vars.last_photo_time
-        if last_photo_time: 
-            q &= (db.TblPhotos.upload_date < last_photo_time)
+        last_photo_id = vars.last_photo_id
+        if last_photo_id:
+            q &= (db.TblPhotos.id < last_photo_id)
             total_photos = db(q).count()
         lst = db(q).select(orderby=~db.TblPhotos.id, limitby=(0, n))
         lst = list(lst)
+        last_photo_id = lst[-1].TblPhotos.id
     elif selected_order_option.startswith('chronological-order'):
         if vars.count_limit:
             n = int(vars.count_limit)
@@ -284,7 +284,7 @@ def get_photo_list(vars):
             q &= (db.TblPhotos.random_photo_key.belongs(sample)) #we don't want to bore our users 
         lst = db(q).select() ###, db.TblPhotographers.id) ##, db.TblPhotographers.id)
         lst = list(lst)
-        last_photo_time = None
+        last_photo_id = None
     if len(lst) > MAX_PHOTOS_COUNT:
         lst1 = random.sample(lst, MAX_PHOTOS_COUNT)
         lst = lst1
@@ -303,13 +303,22 @@ def get_photo_list(vars):
     photo_pairs = get_photo_pairs(photo_ids)
     result = process_photo_list(lst, photo_pairs, webpSupported=vars.webpSupported)
     if selected_order_option == 'upload-time-order' and lst:
-        last_photo_time = lst[-1].upload_date
+        last_photo_id = lst[-1].id
+        q1 = q & (db.TblPhotos.id < last_photo_id)
+        if db(q1).count() == 0:
+            last_photo_id = 'END'
     elif selected_order_option.startswith('chronological') and lst:
         last_photo_date = lst[-1].photo_date
+        if selected_order_option.endswith('reverse'):
+            q1 = (db.TblPhotos.photo_date < last_photo_date)
+        else:
+            q1 = (db.TblPhotos.photo_date > last_photo_date)
+        if db(q & q1).count() == 0:
+            last_photo_date = 'END'
     else:
         #could keep here date + id for chronological order
-        last_photo_time = None
-    return dict(photo_list=result, last_photo_time=last_photo_time, last_photo_date=last_photo_date, total_photos=total_photos)
+        last_photo_id = None
+    return dict(photo_list=result, last_photo_id=last_photo_id, last_photo_date=last_photo_date, total_photos=total_photos)
 
 @serve_json
 def get_theme_data(vars):
