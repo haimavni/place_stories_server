@@ -654,11 +654,17 @@ def delete_selected_photos(vars):
 def rotate_selected_photos(vars):
     selected_photo_list = vars.selected_photo_list
     rotate_clockwise = vars.rotate_clockwise
+    if isinstance(rotate_clockwise, str):
+        rotate_clockwise = rotate_clockwise == 'true';
     if not isinstance(selected_photo_list, list):
         selected_photo_list  = [int(selected_photo_list)];
     for photo_id in selected_photo_list:
         rotate_photo(photo_id, rotate_clockwise)
     return dict()
+
+@serve_json
+def mark_as_recogized(vars):
+    db(db.TblPhotos.id==int(vars.photo_id)).update(Recognized = True)
 
 @serve_json
 def promote_videos(vars):
