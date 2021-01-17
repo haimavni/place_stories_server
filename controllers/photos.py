@@ -254,7 +254,8 @@ def get_photo_list(vars):
             total_photos = db(q).count()
         lst = db(q).select(orderby=~db.TblPhotos.id, limitby=(0, n))
         lst = list(lst)
-        last_photo_id = lst[-1].TblPhotos.id
+        if lst:
+            last_photo_id = lst[-1].TblPhotos.id
     elif selected_order_option.startswith('chronological-order'):
         if vars.count_limit:
             n = int(vars.count_limit)
@@ -306,18 +307,24 @@ def get_photo_list(vars):
     photo_pairs = get_photo_pairs(photo_ids)
     result = process_photo_list(lst, photo_pairs, webpSupported=vars.webpSupported)
     if selected_order_option == 'upload-time-order' and lst:
-        last_photo_id = lst[-1].id
-        q1 = q & (db.TblPhotos.id < last_photo_id)
-        if db(q1).count() == 0:
+        if lst:
+            last_photo_id = lst[-1].id
+            q1 = q & (db.TblPhotos.id < last_photo_id)
+            if db(q1).count() == 0:
+                last_photo_id = 'END'
+        else:
             last_photo_id = 'END'
     elif selected_order_option.startswith('chronological') and lst:
-        last_photo_date = lst[-1].photo_date
-        last_photo_id = lst[-1].id
-        if selected_order_option.endswith('reverse'):
-            q1 = (db.TblPhotos.photo_date < last_photo_date) | (db.TblPhotos.photo_date == last_photo_date) & (db.TblPhotos.id < last_photo_id)
+        if lst:
+            last_photo_date = lst[-1].photo_date
+            last_photo_id = lst[-1].id
+            if selected_order_option.endswith('reverse'):
+                q1 = (db.TblPhotos.photo_date < last_photo_date) | (db.TblPhotos.photo_date == last_photo_date) & (db.TblPhotos.id < last_photo_id)
+            else:
+                q1 = (db.TblPhotos.photo_date > last_photo_date) | (db.TblPhotos.photo_date == last_photo_date) & (db.TblPhotos.id > last_photo_id)
+            if db(q & q1).count() == 0:
+                last_photo_date = 'END'
         else:
-            q1 = (db.TblPhotos.photo_date > last_photo_date) | (db.TblPhotos.photo_date == last_photo_date) & (db.TblPhotos.id > last_photo_id)
-        if db(q & q1).count() == 0:
             last_photo_date = 'END'
     else:
         #could keep here date + id for chronological order
