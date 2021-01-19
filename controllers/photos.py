@@ -8,6 +8,7 @@ from members_support import *
 import random
 import datetime
 import os
+import re
 from gluon.storage import Storage
 from gluon.utils import web2py_uuid
 
