@@ -87,10 +87,13 @@ def update_photo_date(vars):
 
 @serve_json
 def update_photo_location(vars):
-    longitude = float(vars.longitude)
-    latitude = float(vars.latitude)
+    longitude = float(vars.longitude) if vars.longitude else None
+    latitude = float(vars.latitude) if vars.latitude else None
     zoom = int(vars.zoom)
-    db(db.TblPhotos.id==int(vars.photo_id)).update(longitude=longitude, latitude=latitude, zoom=zoom)
+    if longitude:
+        db(db.TblPhotos.id==int(vars.photo_id)).update(longitude=longitude, latitude=latitude, zoom=zoom)
+    else:
+        db(db.TblPhotos.id == int(vars.photo_id)).update(zoom=zoom)
     return dict()
 
 @serve_json
