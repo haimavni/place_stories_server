@@ -79,3 +79,24 @@ def safe_open(filename, mode):
         f = open(filename, mode)
     return f
 
+def url_video_folder():
+    request = inject('request')
+    app = request.application
+    app1 = app.split('__')[0]  # we want dev, test and www apps share the same photos
+    h = 'https' if request.is_https else 'http'
+    return '{h}://{host}/{app}/static/apps_data/videos/{app1}/'.format(h=h, host=request.env.http_host, app=app, app1=app1)
+
+def local_video_folder():
+    request = inject('request')
+    app = request.application.split('__')[0]  ## we want gbs__dev, gbs__test etc. all to use the same data
+    path = '/apps_data/videos/{app}/'.format(app=app)
+    if platform != 'linux':
+        return path
+    curr_uid = os.geteuid()
+    uid = get_user_id()
+    dir_util.mkpath(path)
+    if curr_uid == 0:
+        os.chown(path, uid, uid)
+    return path
+
+
