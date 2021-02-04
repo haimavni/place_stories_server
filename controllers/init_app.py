@@ -1,9 +1,12 @@
 # coding: utf-8
 
-from admin_support.access_manager import register_new_user, AccessManager
-from gluon.utils import web2py_uuid
-import re
 import os
+import re
+
+from admin_support.access_manager import register_new_user, AccessManager
+
+from gluon.utils import web2py_uuid
+
 
 def init_database():
     comment("init database args: ", str(request.args))
@@ -22,7 +25,7 @@ def init_database():
 
 @serve_json
 def request_new_app(vars):
-    #check uniqueness first
+    # check uniqueness first
     app = request.application
     r = app.find('_')
     if r >= 0:
@@ -67,7 +70,7 @@ def request_new_app(vars):
         result = mail.send(to=vars.email, subject='Your new site', message=mail_message)
         if not result:
             error_message = mail.error.strerror
-        comment('confirmation mail was sent to {email} with result {result}. message: {msg}', email=vars.email, result=result, msg=mail_message)
+        comment(f'confirmation mail was sent to {vars.email} with result {result}. message: {mail_message}')
         customer_rec = db(db.TblCustomers.id==id).select().first()
         notify_developer(customer_rec)
     return dict(error_message=error_message)

@@ -72,11 +72,11 @@ def safe_open(filename, mode):
     if platform == 'linux':
         curr_uid = os.geteuid()
         uid = get_user_id()
-        f = open(filename, mode)
+        f = open(filename, mode, encoding="utf-8")
         if curr_uid == 0:
             os.chown(filename, uid, uid)
     else:
-        f = open(filename, mode)
+        f = open(filename, mode, encoding="utf-8")
     return f
 
 def url_video_folder():
