@@ -1,25 +1,22 @@
-from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, \
-     save_uploaded_photo, rotate_photo, save_member_face, save_article_face, create_zip_file, get_photo_pairs, find_similar_photos, \
-     timestamped_photo_path, crop_a_photo
 import ws_messaging
-import stories_manager
-from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
-from members_support import *
-import random
 import datetime
-import os
+import random
 import re
-from gluon.storage import Storage
-from gluon.utils import web2py_uuid
-from folders import local_video_folder, url_video_folder
+
+import stories_manager
+import ws_messaging
+from date_utils import update_record_dates, fix_record_dates_in, fix_record_dates_out
+from folders import url_video_folder
+from members_support import *
+
 
 @serve_json
 def save_video(vars):
-    #https://photos.app.goo.gl/TndZ4fgyih57pmzS6 - shared google photos
+    # https://photos.app.goo.gl/TndZ4fgyih57pmzS6 - shared google photos
     user_id = vars.user_id
     params = vars.params
     date_info = dict(video_date=(params.video_date_datestr, params.video_date_datespan))
-    if not params.id: #creation, not modification
+    if not params.id:  # creation, not modification
         pats = dict(
             youtube=r'https://(?:www.youtube.com/watch\?v=|youtu\.be/)(?P<code>[^&]+)',
             vimeo=r'https://vimeo.com/(?P<code>\d+)',
@@ -73,13 +70,13 @@ def save_video(vars):
     else:
         old_rec = db(db.TblVideos.id == params.id).select().first()
         vid = old_rec.id
-        del params['src'] #
-        #data = dict()
-        #for fld in old_rec:
-            #if fld in ('src', 'update_record', 'delete_record'):
-                #continue
-            #if old_rec[fld] != params[fld]:
-                #data[fld] = params[fld]
+        del params['src']  #
+        # data = dict()
+        # for fld in old_rec:
+        # if fld in ('src', 'update_record', 'delete_record'):
+        # continue
+        # if old_rec[fld] != params[fld]:
+        # data[fld] = params[fld]
         data = params
         if data:
             data_in = fix_record_dates_in(old_rec, data)
@@ -93,6 +90,7 @@ def save_video(vars):
                 ws_messaging.send_message(key='VIDEO-INFO-CHANGED', group='ALL', changes=data)
     return dict(video_id=vid)
 
+
 @serve_json
 def delete_video(vars):
     story_id = db(db.TblVideos.id == vars.video_id).select().first().story_id
@@ -101,6 +99,7 @@ def delete_video(vars):
     n = db(db.TblVideos.id == vars.video_id).update(deleted=True)
     return dict()
 
+
 @serve_json
 def get_video_list(vars):
     selected_topics = vars.selected_topics or []
@@ -108,7 +107,7 @@ def get_video_list(vars):
     lst = db(q).select()
     selected_video_list = vars.selected_video_list
     result = []
-    q = (db.TblVideos.id.belongs(selected_video_list)) & (db.TblStories.id==db.TblVideos.story_id)
+    q = (db.TblVideos.id.belongs(selected_video_list)) & (db.TblStories.id == db.TblVideos.story_id)
     if selected_video_list:
         lst1 = db(q).select()
         lst1 = [rec for rec in lst1]
@@ -127,6 +126,7 @@ def get_video_list(vars):
         rec.keywords = rec1.TblStories.keywords
         video_list.append(rec)
     return dict(video_list=video_list)
+
 
 @serve_json
 def apply_to_selected_videos(vars):
@@ -166,11 +166,11 @@ def apply_to_selected_videos(vars):
                 curr_tag_ids |= set([topic.id])
                 added.append(item)
                 topic_rec = db(db.TblTopics.id == topic.id).select().first()
-                if topic_rec.topic_kind == 0: #never used
+                if topic_rec.topic_kind == 0:  # never used
                     new_topic_was_added = True
                 if 'V' not in topic_rec.usage:
                     usage = topic_rec.usage + 'V'
-                    topic_rec.update_record(usage=usage, topic_kind=2) #simple topic
+                    topic_rec.update_record(usage=usage, topic_kind=2)  # simple topic
             elif topic.sign == "minus" and topic.id in curr_tag_ids:
                 q = (db.TblItemTopics.item_type == "V") & \
                     (db.TblItemTopics.story_id == story_id) & \
@@ -199,6 +199,7 @@ def apply_to_selected_videos(vars):
     ws_messaging.send_message('VIDEO-TAGS-CHANGED', group='ALL', changes=changes)
     return dict(new_topic_was_added=new_topic_was_added)
 
+
 @serve_json
 def promote_videos(vars):
     selected_video_list = vars.params.selected_video_list
@@ -206,6 +207,7 @@ def promote_videos(vars):
     today = datetime.date.today()
     db(q).update(touch_time=today)
     return dict()
+
 
 @serve_json
 def get_video_sample(vars):
@@ -221,17 +223,70 @@ def get_video_sample(vars):
     lst = lst1 + lst2
     return dict(video_list=lst)
 
+
 @serve_json
 def get_video_info(vars):
-    ##video_id = int(vars.video_id)
-    video_source = url_video_folder() + 'vid001.mp4' ##for development
-    cue_points = []
+    video_id = int(vars.video_id)
+    video_source = url_video_folder() + 'vid001.mp4'  ##for development
+    cue_points = calc_cue_points(video_id)
     ##sm = stories_manager.Stories()
     ###if not rec:
-        ##return dict(photo_name='???')
+    ##return dict(photo_name='???')
     video_story = dict(name='machzor 1953')
-    return dict(video_source=video_source, video_story=video_story)
+    return dict(video_source=video_source, video_story=video_story, cue_points=cue_points)
 
+@serve_json
+def update_video_cue_points(vars):
+    video_id = int(vars.video_id)
+    old_cp = db(db.TblVideoCuePoints.video_id==video_id).select()
+    old_cp_set = set([cp.time for cp in old_cp])
+    new_cp_set = set([cp.time for cp in vars.cue_points])
+    dic = dict()
+    for cp in vars.cue_points:
+        dic[cp.time] = cp.description
+    for t in old_cp_set:
+        if t not in new_cp_set:
+            db((db.TblVideoCuePoints.video_id == video_id)&(db.TblVideoCuePoints.time == t)).delete()
+    for t in new_cp_set:
+        if t in old_cp_set:
+            db((db.TblVideoCuePoints.video_id == video_id) & (db.TblVideoCuePoints.time == t)).update(description=dic[t])
+        else:
+            db.TblVideoCuePoints.insert(time=t, description=dic[t], video_id=video_id)
+    return dict()
+
+@serve_json
+def update_cue_members(vars):
+    video_id = int(vars.video_id)
+    time = int(vars.time)
+    member_ids = vars.member_ids
+    old_member_ids = calc_cue_members(video_id, time)
+    q = (db.TblVideoCuePoints.video_id == video_id) & \
+        (db.TblVideoCuePoints.time == time)
+    rec = db(q).select().first()
+    cue_id = rec.id
+    for mem_id in old_member_ids:
+        if mem_id not in member_ids:
+            q = (db.TblMembersVideoCuePoints.cue_point_id==cue_id) & \
+                (db.TblMembersVideoCuePoints.member_id == mem_id)
+            db(q).delete()
+    for mem_id in member_ids:
+        if mem_id not in old_member_ids:
+            db.TblMembersVideoCuePoints.insert(member_id=mem_id, cue_point_id=cue_id)
+    return dict()
+
+def calc_cue_members(video_id, time):
+    q = (db.TblMembersVideoCuePoints.cue_point_id == db.TblVideoCuePoints.id) & \
+        (db.TblVideoCuePoints.video_id == video_id) & \
+        (db.TblVideoCuePoints.time == time)
+    lst = db(q).select()
+    member_ids = [rec.TblMembersVideoCuePoints.member_id for rec in lst]
+    return member_ids
+
+def calc_cue_points(video_id):
+    q = (db.TblVideoCuePoints.video_id == video_id)
+    lst = db(q).select(orderby=db.TblVideoCuePoints.time)
+    cue_points = [dict(time=rec.time, description=rec.description, member_ids=calc_cue_members(video_id, rec.time)) for rec in lst]
+    return cue_points
 
 
 def make_videos_query(vars):
@@ -262,4 +317,3 @@ def make_videos_query(vars):
         q1 = get_topics_query(vars.selected_topics)
         q &= q1
     return q
-

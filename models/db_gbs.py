@@ -574,6 +574,17 @@ db.define_table('TblSearches',
                 Field('count', type='integer')
                 )
 
+db.define_table('TblVideoCuePoints',
+                Field('video_id', type=db.TblVideos),
+                Field('time', type='integer'),
+                Field('description', type='string')
+                )
+
+db.define_table('TblMembersVideoCuePoints',
+                Field('cue_point_id', db.TblVideoCuePoints),
+                Field('member_id', db.TblMembers)
+                )
+
 def write_indexing_sql_scripts():
     '''Creates a set of indexes if they do not exist.
        In a terminal, su postgres and issue the command
