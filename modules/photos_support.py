@@ -170,12 +170,15 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
     story_info = sm.get_empty_story(used_for=STORY4PHOTO, story_text="", name=original_file_name)
     result = sm.add_story(story_info)
     story_id = result.story_id
+
     if embedded_photo_date:
         photo_date = embedded_photo_date.date()
+        photo_date_dateend = photo_date + datetime.timedelta(days=1)
         photo_date_dateunit = 'D'
         photo_date_datespan = 1
     else:
         photo_date = NO_DATE
+        photo_date_dateend = NO_DATE
         photo_date_dateunit = 'Y'
         photo_date_datespan = 1
     has_geo_info = longitude != None
@@ -187,6 +190,7 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
         uploader=user_id,
         upload_date=datetime.datetime.now(),
         photo_date=photo_date,
+        photo_date_dateend=photo_date_dateend,
         photo_date_dateunit=photo_date_dateunit,
         photo_date_datespan=photo_date_datespan,
         width=width,
@@ -868,3 +872,12 @@ def recalculate_recognized():
     for pm in db(db.TblArticlePhotos).select(db.TblArticlePhotos.photo_id, db.TblArticlePhotos.photo_id.count(), groupby=db.TblArticlePhotos.photo_id):
         db(db.TblPhotos.id==pm.TblArticlePhotos.photo_id).update(Recognized=True)
     return "done"
+
+def fix_date_ends():
+    db, NO_DATE = inject('db', 'NO_DATE')
+    next_day = datetime.timedelta(days=1)
+    n = 0
+    for rec in db((db.TblPhotos.photo_date!=NO_DATE)&(db.TblPhotos.photo_date_dateend==NO_DATE)).select():
+        rec.update_record(photo_date_dateend=rec.photo_date + next_day)
+        n += 1
+    return f'{n} photos end-date fixed'

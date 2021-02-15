@@ -5,6 +5,7 @@ import sys
 def db_id(app):
     prefix = 'postgres:psycopg2://lifestone:V3geHanu@localhost/'
     uri = prefix + app
+    uri = uri.encode('utf-8')
     return md5(uri).hexdigest()
     
 def move_app(app=None, src=None, dst=None):
