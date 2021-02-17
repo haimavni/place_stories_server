@@ -399,6 +399,7 @@ db.define_table('TblDocs',
                 Field('doc_path', type='string'),
                 Field('original_file_name', type='string'),
                 Field('crc', type='bigint'),
+                Field('bigcrc', type='bigint'),
                 Field('upload_date', type='datetime')
                 )
 
@@ -416,6 +417,7 @@ db.define_table('TblAudios',
                 Field('audio_path', type='string'),
                 Field('original_file_name', type='string'),
                 Field('crc', type='bigint'),
+                Field('bigcrc', type='bigint'),
                 Field('upload_date', type='datetime'),
                 Field('recorder_id', type=db.TblRecorders)
                 )
