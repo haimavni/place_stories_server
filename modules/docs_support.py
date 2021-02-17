@@ -11,12 +11,12 @@ from .folders import url_folder, local_folder
 from .pdf_utils import pdf_to_text, save_pdf_jpg
 from time import sleep
 from . import ws_messaging
-from gluon._compat import to_bytes
+import array
 
-def save_uploaded_doc(file_name, blob, user_id, sub_folder=None):
+def save_uploaded_doc(file_name, s, user_id, sub_folder=None):
     auth, log_exception, db, STORY4DOC = inject('auth', 'log_exception', 'db', 'STORY4DOC')
     user_id = user_id or auth.current_user()
-    blob = to_bytes(blob)
+    blob = array.array('B', [x for x in map(ord, s)]).tobytes()
     crc = zlib.crc32(blob)
     cnt = db((db.TblDocs.crc == crc) & (db.TblDocs.deleted != True)).count()
     if cnt > 0:
