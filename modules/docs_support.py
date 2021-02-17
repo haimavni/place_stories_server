@@ -11,10 +11,12 @@ from .folders import url_folder, local_folder
 from .pdf_utils import pdf_to_text, save_pdf_jpg
 from time import sleep
 from . import ws_messaging
+from gluon._compat import to_bytes
 
 def save_uploaded_doc(file_name, blob, user_id, sub_folder=None):
     auth, log_exception, db, STORY4DOC = inject('auth', 'log_exception', 'db', 'STORY4DOC')
     user_id = user_id or auth.current_user()
+    blob = to_bytes(blob)
     crc = zlib.crc32(blob)
     cnt = db((db.TblDocs.crc == crc) & (db.TblDocs.deleted != True)).count()
     if cnt > 0:
@@ -31,11 +33,16 @@ def save_uploaded_doc(file_name, blob, user_id, sub_folder=None):
     doc_file_name = path + file_name
     try:
         path = local_docs_folder() + sub_folder
-        with open(doc_file_name, 'w') as f:
+        with open(doc_file_name, 'wb') as f:
             f.write(blob)
     except Exception as e:
         log_exception("saving doc {} failed".format(original_file_name))
         return 'failed'
+    sm = Stories()
+    story_info = sm.get_empty_story(used_for=STORY4DOC, story_text="", name=original_file_name)
+    result = sm.add_story(story_info)
+    story_id = result.story_id
+
     doc_id = db.TblDocs.insert(
         doc_path=sub_folder + file_name,
         original_file_name=original_file_name,
@@ -44,6 +51,7 @@ def save_uploaded_doc(file_name, blob, user_id, sub_folder=None):
         upload_date=datetime.datetime.now(),
         doc_date=doc_date,
         crc=crc,
+        story_id=story_id,
         deleted=False
     )
     pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/' + sub_folder
