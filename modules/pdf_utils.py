@@ -6,10 +6,10 @@ pdf utils:
     higlight words in pdf
 '''
 import re
-#use poppler utils instead of the 2 below
-###import fitz
+# use poppler utils instead of the 2 below
+import fitz
 from pdf2image import convert_from_path
-###import subprocess
+import subprocess
 import os
 from .injections import inject
 
