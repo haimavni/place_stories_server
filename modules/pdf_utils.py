@@ -7,7 +7,7 @@ pdf utils:
 '''
 import re
 # use poppler utils instead of the 2 below
-import fitz
+## import fitz causes problems
 from pdf2image import convert_from_path
 import subprocess
 import os
