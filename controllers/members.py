@@ -700,21 +700,13 @@ def apply_topics_to_selected_stories(vars):
             story_rec.update_record(visibility=visibility_option)
         if selected_book:
             story_rec = db(db.TblStories.id == story_id).select().first()
-            if story_rec:
-                story_rec.update_record(book_id=selected_book.id)
-            else:
-                pass
-                # report bug
+            story_rec.update_record(book_id=selected_book.id)
 
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         curr_tags.sort()
         keywords = "; ".join(curr_tags)
         rec = db(db.TblStories.id == story_id).select().first()
-        if rec:
-            rec.update_record(keywords=keywords, is_tagged=bool(keywords))
-        else:
-            pass
-        # report bug
+        rec.update_record(keywords=keywords, is_tagged=bool(keywords))
 
     # todo: notify all users?
     return dict(new_topic_was_added=new_topic_was_added)
