@@ -700,7 +700,11 @@ def apply_topics_to_selected_stories(vars):
             story_rec.update_record(visibility=visibility_option)
         if selected_book:
             story_rec = db(db.TblStories.id == story_id).select().first()
-            story_rec.update_record(book_id=selected_book.id)
+            if story_rec:
+                story_rec.update_record(book_id=selected_book.id)
+            else:
+                pass
+                # report bug
 
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         curr_tags.sort()
