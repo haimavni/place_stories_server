@@ -710,7 +710,11 @@ def apply_topics_to_selected_stories(vars):
         curr_tags.sort()
         keywords = "; ".join(curr_tags)
         rec = db(db.TblStories.id == story_id).select().first()
-        rec.update_record(keywords=keywords, is_tagged=bool(keywords))
+        if rec:
+            rec.update_record(keywords=keywords, is_tagged=bool(keywords))
+        else:
+            pass
+        # report bug
 
     # todo: notify all users?
     return dict(new_topic_was_added=new_topic_was_added)
