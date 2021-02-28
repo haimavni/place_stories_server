@@ -1579,6 +1579,7 @@ def encode_sorting_key(sk):
 
 
 def decode_sorting_key(sk):
+    sk = sk.strip()
     if not sk:
         return []
     lst = sk.split('-')
