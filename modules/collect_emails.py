@@ -92,6 +92,8 @@ class EmailCollector:
             
     def get_application_info(self, msg, content_subtype, result):
         disposition = msg.get('content-disposition')
+        if not disposition:
+            return
         if disposition.endswith('"'):
             disposition = disposition[:-1]
         x = decode_header(disposition)
