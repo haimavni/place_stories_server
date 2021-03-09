@@ -105,10 +105,14 @@ def get_member_details(vars):
     story_info.used_for = STORY4MEMBER
     family_connections = get_family_connections(member_info.id)
     slides = get_member_slides(mem_id)
-    if member_info.gender == 'F':
-        spouses = 'husband' + ('s' if len(family_connections.spouses) > 1 else '')
-    else:
-        spouses = 'wife' + ('s' if len(family_connections.spouses) > 1 else '')
+    spouses = ''
+    if family_connections.spouses:
+        a_spouse = family_connections.spouses[0]
+        spouse_gender = a_spouse.gender
+        if spouse_gender == 'M':
+            spouses = 'husband' + ('s' if len(family_connections.spouses) > 1 else '')
+        else:
+            spouses = 'wife' + ('s' if len(family_connections.spouses) > 1 else '')
     member_stories = [story_info] + member_stories;
     return dict(member_info=member_info, 
                 story_info=story_info, 
@@ -157,7 +161,18 @@ def save_story_info(vars):
     user_id = vars.user_id
     story_info = vars.story_info
     info = save_story_data(story_info, user_id=user_id)
+    if vars.pinned:
+        pin_story(story_info.story_id)
     return dict(info=info)
+
+@serve_json
+def approve_story_info(vars):
+    user_id = vars.user_id
+    story_info = vars.story_info
+    story_id = int(story_info.story_id)
+    rec = db(db.TblStories.id==story_id).select().first()
+    db(db.TblStories.id==story_id).update(approved_version=rec.last_version)
+    return dict()
 
 @serve_json
 def get_stories_index(vars):
@@ -288,6 +303,19 @@ def get_story_previews(vars):
 def get_story(vars):
     sm = stories_manager.Stories()
     story_id = int(vars.story_id)
+    return dict(story=sm.get_story(story_id))
+
+@serve_json
+def get_app_description(vars):
+    desc_name = '__description'
+    sm = stories_manager.Stories()
+    story = db(db.TblStories.name==desc_name).select().first()
+    if story:
+        story_id = story.id
+    else:
+        story_info = sm.get_empty_story(used_for=STORY4MESSAGE, story_text="Site description", name=desc_name)
+        data = sm.add_story(story_info)
+        story_id = data.story_id
     return dict(story=sm.get_story(story_id))
 
 @serve_json
@@ -835,6 +863,29 @@ def get_book_list(vars):
     book_list = [rec.as_dict() for rec in lst]
     return dict(book_list=book_list)
 
+@serve_json
+def get_story_versions(vars):
+    story_id = int(vars.story_id)
+    sm = stories_manager.Stories()
+    failed = False
+    story_info = sm.get_story(story_id)
+    last_update_date=story_info.last_update_date
+    unapproved = story_info.approved_version < story_info.last_version
+    prev_story_info = None
+    updater = None
+    author = auth.user_info(story_info.author_id)
+    if unapproved and story_info.last_version > 0:
+        try:
+            prev_story_info = sm.get_story(story_id, to_story_version=story_info.approved_version)
+        except Exception, e:
+            failed = True
+            log_exception("Failed to recover previous version")
+            return dict(failed=True)
+        txt = stories_manager.mark_diffs(prev_story_info.story_text, story_info.story_text)
+        prev_story_info.story_text = txt
+        updater = auth.user_info(story_info.updater_id)
+    return dict(unapproved=unapproved, story_info=story_info, prev_story_info=prev_story_info, author=author, updater=updater, last_update_date=last_update_date)
+
 ###---------------------support functions
 
 def new_member_rec(gender=None, first_name="", last_name=""):
@@ -905,6 +956,10 @@ def _get_story_list(params, exact): #exact means looking only for the passed key
         q &= (db.TblStories.chatroom_id != None)
         lst1 = db(q).select(orderby=~db.TblStories.last_chat_time)
         lst1 = [r for r in lst1 if r.last_chat_time]
+    elif order_option == 'by-update':
+        q &= (db.TblStories.last_update_date != None)
+        lst1 = db(q).select(orderby=~db.TblStories.last_update_date)
+        lst1 = [r for r in lst1 if r.last_update_date]
     elif order_option == 'new-to-old':
         q &= (db.TblStories.story_date != NO_DATE)
         lst1 = db(q).select(orderby=~db.TblStories.story_date | db.TblStories.sorting_key | db.TblStories.name, limitby=(0, 12000))
@@ -1306,13 +1361,27 @@ def copy_story_date_to_object_date(story_rec):
 @serve_json
 def qualified_members(vars):
     checked_answers = vars.checked_answers
-    qualified_members = use_quiz(checked_answers)
+    nota_questions = vars.nota_questions
+    qualified_members = use_quiz(checked_answers, nota_questions)
+    if nota_questions:
+        lst = db(~db.TblMembers.id.belongs(qualified_members)).select(db.TblMembers.id)
+        qualified_members = [mem.id for mem in lst]
     return dict(qualified_members=qualified_members)
+                
+@serve_json
+def collect_search_stats(vars):
+    rec = db(db.TblSearches.pattern == vars.search_pattern).select().first()
+    if rec:
+        rec.update_record(count=rec.count + 1)
+    else:
+        db.TblSearches.insert(pattern=vars.search_pattern, count=1)
 
 def story_kinds():
     story_kinds_arr = STORY4USER
     if auth.user_has_privilege(HELP_AUTHOR):
         story_kinds_arr += [STORY4HELP]
+    if auth.user_has_privilege(ADMIN):
+        story_kinds_arr += [STORY4MESSAGE]
     return story_kinds_arr
 
 def get_story_members(event):

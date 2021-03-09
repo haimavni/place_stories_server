@@ -32,9 +32,11 @@ class MyAuth(Auth):
 
     def current_user(self):
         #use session.current_user to fake another user
-        session = inject('session')
+        session, request = inject('session', 'request')
         if self.user:
             return session.current_user or self.user.id
+        if request.env.server_name == 'haim-VirtualBox':
+            return 2
         return None
     
     def user_id_of_email(self, email, name=None):
@@ -93,7 +95,7 @@ class MyAuth(Auth):
     
     def notify_registration(self, user_info):
         request, db, mail, ACCESS_MANAGER = inject('request', 'db', 'mail', 'ACCESS_MANAGER')
-        app = reqeuest.application
+        app = request.application
         ui = user_info
         user_name = ui.first_name + ' ' + ui.last_name
         email = ui.email
@@ -127,6 +129,21 @@ class MyAuth(Auth):
         db = self.db
         user = db(db.auth_user.id==user_id).select().first()
         return user.first_name + ' ' + user.last_name
+    
+    def user_info(self, user_id):
+        db = self.db
+        user = db(db.auth_user.id==user_id).select().first()
+        if user:
+            info = Storage(
+                name=self.user_name(user_id),
+                email=user.email
+            )
+        else:
+            info = Storage(
+                name="???",
+                email="???"
+            )
+        return info
     
     def get_privileges(self):
         if not self.user:

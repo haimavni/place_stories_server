@@ -47,6 +47,7 @@ def get_all_dates(rec):
                     date_str = date_str.replace('1900', str(year))
             fld_span = fld + DATE_SPAN_SUFFIX
             item = Storage(
+                raw=date,
                 date=date_str,
                 span=rec[fld_span]
             )
@@ -122,6 +123,8 @@ def calc_date_end(date, unit, span):
     elif unit == 'D':
         td = datetime.timedelta(days = span)
         return date + td
+    elif unit == 'N':
+        return date
     else:
         raise Exception('date has no unit')
             

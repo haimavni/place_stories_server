@@ -3,6 +3,7 @@ import datetime
 from injections import inject
 from gluon.storage import Storage
 from words import *
+import re
 
 def display_date(dt):
     return str(dt)[:19]
@@ -93,7 +94,11 @@ class Stories:
             story_curr_version=to_story_version,
             story_versions=story_versions,
             display_version=display_version,
-            chatroom_id=rec.chatroom_id
+            chatroom_id=rec.chatroom_id,
+            approved_version=rec.approved_version,
+            last_version=rec.last_version,
+            last_update_date = rec.last_update_date,
+            updater_id = rec.updater_id
         )
         return story_info
     
@@ -290,3 +295,91 @@ class Stories:
 def promote_word_indexing():
     promote_task = inject('promote_task')
     promote_task('update_word_index_all')
+    
+def mark_diffs(txt1, txt2):
+    txt1 = handle_html_tags(txt1)
+    txt2 = handle_html_tags(txt2)
+    merger = mim.Merger()
+    delta = merger.diff_make(txt1, txt2)
+    txt1_lst = txt1.split('\n')
+    pat = r'@@ -'
+    diffs = re.split(pat, delta)
+    diffs = diffs[1:]
+    diffs.reverse()
+    for dif in diffs:
+        lst = dif.split('\n')
+        idx, span = calc_idx_span(lst[0])
+        if idx > 0:
+            idx -= 1
+        else:
+            dbg = 999
+        marked_rows = mark_marked_rows(lst[1:])
+        txt1_lst[idx:idx+span] = marked_rows
+    txt1 = '\n'.join(txt1_lst)
+    return txt1
+
+def handle_html_tags(txt):
+    pat = r'<.*?>|[^<>]*'
+    txt = txt.replace('\n', '')
+    lst = re.findall(pat, txt)
+    result = ''
+    for s in lst:
+        if s.startswith('<'):
+            result += s + '\n'
+        else:
+            result += break_str(s, 50)
+    result += s
+    result.replace('\n', '')
+    return result
+
+def break_str(txt, lim):
+    lst = txt.split()
+    result = ''
+    row = ''
+    n = 0
+    for wrd in lst:
+        row += wrd
+        if len(row) > lim:
+            result += row + '\n'
+            row = ''
+        else:
+            row += ' '
+    if row:
+        result += row + '\n'
+    return result
+    
+def calc_idx_span(s):
+    lst = re.findall(r'\d+', s)
+    idx, span = int(lst[0]), int(lst[1])
+    return idx, span
+  
+def mark_marked_rows(lst):
+    result = []
+    state = 0
+    for s in lst:
+        if s.startswith('-') and '<' not in s:
+            if state == 2:
+                result[-1] = result[-1] + '</span>'
+            s = s[1:]
+            if state != 1:
+                s = '<span class="removed">' + s
+            state = 1
+        elif s.startswith('+') and '<' not in s:
+            if state == 1:
+                result[-1] = result[-1] + '</span>'
+            s = s[1:]
+            if state != 2:
+                s = '<span class="added">' + s
+            state = 2
+        else:
+            if state:
+                result[-1] = result[-1] + '</span>'
+            state = 0
+        if s.startswith('-') or s.startswith('+'):
+            s = s[1:]
+        result.append(s)
+        
+    if state:
+        result += '</span>'
+    return result
+    

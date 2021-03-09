@@ -22,9 +22,15 @@ def apply_quiz(items, answers):
                 continue
             db.TblItemAnswers.insert(item_id=itm, answer_id=ans_id)
             
-def use_quiz(answers):
+def use_quiz(answers, nota_questions):
     db = inject('db')
-    lst = db(db.TblAnswers.id.belongs(answers)).select(orderby=db.TblAnswers.question_id)
+    if answers:
+        lst = db(db.TblAnswers.id.belongs(answers)).select(orderby=db.TblAnswers.question_id)
+    elif nota_questions:
+        answers  = db(db.TblAnswers.question_id.belongs(nota_questions)).select()
+        answer_ids = [answer.id for answer in answers]
+        q = db.TblAnswers.id.belongs(answer_ids)
+        lst = db(q).select(orderby=db.TblAnswers.question_id)
     group = []
     group_arr = []
     prev_question = -1

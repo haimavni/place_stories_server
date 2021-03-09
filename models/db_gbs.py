@@ -255,6 +255,7 @@ db.define_table('TblMembers',
                 Field('StatusID', type='integer'),
                 Field('Status_id', type='integer'),
                 Field('facePhotoURL', type='string'),
+                Field('facePhotoURL_webp', type='string'),
                 Field('deleted', type='boolean', default=False),
                 Field('update_time', type='datetime'),
                 Field('updater_id', type=db.auth_user),
@@ -275,6 +276,7 @@ db.define_table('TblArticles',
                 Field('story_id', type=db.TblStories),
                 Field('deleted', type='boolean', default=False),
                 Field('facePhotoURL', type='string'),
+                Field('facePhotoURL_webp', type='string'),
                 Field('update_time', type='datetime'),
                 Field('updater_id', type=db.auth_user),
 )
@@ -303,8 +305,10 @@ db.define_table('TblPhotos',
                 Field('IIDD', type='integer'),
                 Field('LocationInDisk', type='string'),
                 Field('photo_path', type='string'),
+                Field('webp_photo_path', type='string'),
                 Field('Name', type='string'),
                 Field('original_file_name', type='string'),
+                Field('embedded_photo_date', type='datetime'),
                 Field('ObjectID', type='integer'), #obsolete, to be replaced by the following line
                 Field('Object_id', type='integer'),
                 Field('PageHits', type='integer'),
@@ -563,6 +567,11 @@ db.define_table('TblBooks',
 
 db.define_table('TblPinned',
                 Field('story_id', type=db.TblStories)
+                )
+
+db.define_table('TblSearches',
+                Field('pattern', type='string'),
+                Field('count', type='integer')
                 )
 
 def write_indexing_sql_scripts():
