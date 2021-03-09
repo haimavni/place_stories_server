@@ -76,7 +76,8 @@ class EmailCollector:
         content_subtype = msg.get_content_subtype();
         if content_type == 'image':
             filename, blob = self.handle_image(msg)
-            result.images[filename] = blob
+            if blob:
+            	result.images[filename] = blob
         elif content_type == 'text':
             if content_subtype == 'plain':
                 if not result.sender:  #some messages do not behave...
@@ -106,6 +107,8 @@ class EmailCollector:
 
     def handle_image(self, msg):
         disposition = msg.get('content-disposition')
+        if not disposition:
+	        return None,None
         if disposition.endswith('"'):
             disposition = disposition[:-1]
         x = decode_header(disposition)
