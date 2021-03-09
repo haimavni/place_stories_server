@@ -19,7 +19,7 @@ class EmailCollector:
         self.maildir = '/home/{}_mailbox/Maildir'.format(request.application)
         comment('init EmailCollector')
         logger.debug('init EmailCollector')
-        
+
 
     def collect(self):
         maildir_new = self.maildir + '/new'
@@ -42,7 +42,7 @@ class EmailCollector:
         dst = msg_file.replace('/new/', '/cur/')
         move(msg_file, dst)
         return result
-    
+
     def get_header_info(self, msg, result):
         comment = inject('comment')
         if result.sender:
@@ -77,7 +77,7 @@ class EmailCollector:
         if content_type == 'image':
             filename, blob = self.handle_image(msg)
             if blob:
-            	result.images[filename] = blob
+                result.images[filename] = blob
         elif content_type == 'text':
             if content_subtype == 'plain':
                 if not result.sender:  #some messages do not behave...
@@ -89,7 +89,7 @@ class EmailCollector:
             self.get_header_info(msg, result)
         elif content_type == 'application':
             self.get_application_info(msg, content_subtype, result)
-            
+
     def get_application_info(self, msg, content_subtype, result):
         disposition = msg.get('content-disposition')
         if disposition.endswith('"'):
@@ -98,7 +98,7 @@ class EmailCollector:
         blob = msg.get_payload(decode=True)
         if content_subtype == 'vnd.openxmlformats-officedocument.wordprocessingml.document':
             self.handle_docx(blob, result)
-    
+
     def handle_docx(self, blob, result):
         stream = StringIO(blob)
         temp = convert_to_html(stream)
@@ -107,8 +107,8 @@ class EmailCollector:
 
     def handle_image(self, msg):
         disposition = msg.get('content-disposition')
-	if not disposition:
-	    return None,NoneS
+        if not disposition:
+            return None,None
         if disposition.endswith('"'):
             disposition = disposition[:-1]
         x = decode_header(disposition)
@@ -177,6 +177,6 @@ def collect_mail():
     except Exception, e:
         log_exception('Error collecting mail')
         raise
-            
-        
+
+
     return results
