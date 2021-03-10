@@ -2,7 +2,7 @@ def index():
     host = request.env.http_host
     app = request.application
     url_base = '/{app}/static/aurelia/index.html#/'.format(host=host,app=app)
-    #temp. for the dev system
+    # temp. for the dev system
     if '8000' in host:
         host = "gbstories.org"
         url_base = 'http://{host}/{app}/static/aurelia/index.html#/'.format(host=host,app=app)

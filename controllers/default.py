@@ -200,6 +200,7 @@ def get_curr_version(vars):
 @serve_json
 def get_interested_contact(vars):
     name = vars.contact_name
+    host = request.env.http_host
     message = '''
     <html>
     <div direction="{rtltr}">
@@ -217,7 +218,7 @@ def get_interested_contact(vars):
     </div>
     </html>
     '''.format(rtltr=vars.rtltr, name=vars.contact_name, email=vars.contact_email, mobile=vars.contact_mobile, message=vars.contact_message)
-    result = mail.send(sender="admin@gbstories.org", to="haimavni@gmail.com", subject = "New Tol.Life prospect", message=('', message))
+    result = mail.send(sender=f"admin@{host}", to="haimavni@gmail.com", subject = "New Tol.Life prospect", message=('', message))
     error = "" if result else mail.error
     return dict(result=result, error=error)
 
@@ -385,12 +386,13 @@ def notify_new_feedback():
     lst = db((db.auth_membership.group_id==ADMIN)&(db.auth_user.id==db.auth_membership.user_id)&(db.auth_user.id>1)).select(db.auth_user.email)
     receivers = [r.email for r in lst]
     app = request.application
+    host = request.env.http_origin
     message = ('', '''
     New feedback has been received.
 
 
-    Click <a href="https://gbstories.org/{app}/static/aurelia/index.html#/feedbacks">here</a> to view.
-    '''.format(app=app).replace('\n', '<br>'))
+    Click <a href="{host}/{app}/static/aurelia/index.html#/feedbacks">here</a> to view.
+    '''.format(host=host,app=app).replace('\n', '<br>'))
     mail.send(to=receivers, subject='New GB Stories Feedback', message=message)
 
 

@@ -7,15 +7,19 @@ from .injections import inject
 
 api_token = "669gxifj8b1r5y71qcvcei0wu"
 username = "haimavni"
-from_address = "info@gbstories.org"
 service_address = 'https://capi.inforu.co.il/mail/api.php?xml'
+
+def from_address():
+    request = inject('request')
+    host = request.env.http_host
+    return f"info@{host}"
 
 def send_xml(xml):
     url= service_address + '=' + xml
     response = requests.post(url) 
     return response
 
-def create_xml(campaign_name="", from_address=from_address, from_name="", subject="", body="", recipients=""):
+def create_xml(campaign_name="", from_address=from_address(), from_name="", subject="", body="", recipients=""):
     body = re.sub(r'\&.+?;', '', body)
     #body = body.replace('&nbsp;', '')
     body = body.replace('#', '%23')
@@ -42,7 +46,7 @@ def create_xml(campaign_name="", from_address=from_address, from_name="", subjec
     </InfoMailClient>    
     '''
     result = template.format(username=username, api_token=api_token,
-                           campaign_name=campaign_name, from_address=from_address, 
+                           campaign_name=campaign_name, from_address=from_address(),
                            from_name=from_name, subject=subject, body=body, recipients=recipients)
     result = re.sub('\n\s*', '', result)
     return result
@@ -56,11 +60,11 @@ def create_recipients(recipient_list):
         result += s
     return result
 
-def send_email(campaign_name="", from_address=from_address, from_name="", subject="", body="", recipient_list=[]):
+def send_email(campaign_name="", from_address=from_address(), from_name="", subject="", body="", recipient_list=[]):
     comment = inject('comment')
     comment("about to send email")
     recipients = create_recipients(recipient_list)
-    xml = create_xml(campaign_name=campaign_name,from_address=from_address, 
+    xml = create_xml(campaign_name=campaign_name,from_address=from_address(),
                      from_name=from_name, subject=subject, body=body, recipients=recipients)
     result = send_xml(xml)
     comment("Send_email result: {}", result.text)

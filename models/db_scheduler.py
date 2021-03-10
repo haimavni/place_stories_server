@@ -81,7 +81,8 @@ def watchdog():
     message = '''
     Task(s) {tsks} of {app} {status} in the scheduler. Check the log files.
     '''.format(tsks=tsks_str, app=request.application, status=tsk.status)
-    mail.send(sender="admin@gbstories.org", to="haimavni@gmail.com", subject = "A task failed", message=('', message))
+    host = request.env.http_host
+    mail.send(sender=f"admin@{host}", to="haimavni@gmail.com", subject = "A task failed", message=('', message))
     for tsk in db(q).select():
         comment('Task {t} failed', t=tsk.function_name)
     db(q).update(status='QUEUED')

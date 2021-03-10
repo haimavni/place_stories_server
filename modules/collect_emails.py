@@ -136,7 +136,8 @@ def get_user_id_of_sender(sender_email, sender_name):
 
 def collect_mail():
     try:
-        db, comment, logger, mail, MAIL_WATCHER, log_exception = inject('db', 'comment', 'logger', 'mail', 'MAIL_WATCHER', 'log_exception')
+        db, request, comment, logger, mail, MAIL_WATCHER, log_exception = inject('db', 'request', 'comment', 'logger', 'mail', 'MAIL_WATCHER', 'log_exception')
+        host = request.env.http_host
         email_photos_collector = EmailCollector()
         results = []
         lst = db((db.auth_membership.group_id==MAIL_WATCHER)&(db.auth_user.id==db.auth_membership.user_id)&(db.auth_user.id>1)).select(db.auth_user.email)
@@ -146,7 +147,7 @@ def collect_mail():
             user_id = get_user_id_of_sender(msg.sender_email, msg.sender_name)
             if not user_id:
                 emsg = 'mail sent by {} {}'.format(msg.sender_email, msg.sender_name)
-                mail.send(sender="admin@gbstories.org", to=receivers, subject="incoming email to gbstories from unknown sender", message=emsg)
+                mail.send(sender=f"admin@{host}", to=receivers, subject="incoming email to gbstories from unknown sender", message=emsg)
                 continue
             ###user_id = user_id or 1 #todo: if we decide not to create new user
             text = msg.html_content or msg.plain_content
@@ -165,7 +166,7 @@ def collect_mail():
                     m = msg[fld]
                     s = m
                     emsg += fld + ': ' + s + '\n'
-            result = mail.send(sender="admin@gbstories.org", to=receivers, subject="incoming email to gbstories", message=emsg)
+            result = mail.send(sender=f"admin@{host}", to=receivers, subject="incoming email to gbstories", message=emsg)
             if result:
                 comment("mail was forwarded")
             else:

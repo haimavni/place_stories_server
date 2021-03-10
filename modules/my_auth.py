@@ -92,6 +92,7 @@ class MyAuth(Auth):
     
     def notify_registration(self, user_info):
         request, db, mail, ACCESS_MANAGER = inject('request', 'db', 'mail', 'ACCESS_MANAGER')
+        host = request.env.http_host
         app = request.application
         ui = user_info
         user_name = ui.first_name + ' ' + ui.last_name
@@ -103,8 +104,8 @@ class MyAuth(Auth):
         Email adddress is {uemail}.
     
     
-        Click <a href="https://gbstories.org/{app}/static/aurelia/index.html#/access-manager">here</a> for access manager.
-        '''.format(uname=user_name, uemail=email, app=app).replace('\n', '<br>'))
+        Click <a href="https://{host}/{app}/static/aurelia/index.html#/access-manager">here</a> for access manager.
+        '''.format(uname=user_name, uemail=email, app=app, host=host).replace('\n', '<br>'))
         mail.send(to=receivers, subject='New GB Stories registration', message=message)
         
     def user_has_privilege(self, privilege):

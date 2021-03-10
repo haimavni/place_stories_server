@@ -72,9 +72,10 @@ auth.settings.extra_fields['auth_user'] = [Field('skype'), Field('facebook')]
 auth.define_tables(username=False, signature=False)
 
 ## configure email
+_host = request.env.http_host
 mail = auth.settings.mailer
 mail.settings.server = 'localhost'
-mail.settings.sender = 'info@gbstories.org'
+mail.settings.sender = f'info@{_host}'
 mail.settings.login = ''
 
 ## configure auth policy

@@ -226,8 +226,9 @@ def mail_contacts(vars):
     grec = db(db.TblGroups.id==group_id).select().first()
     campaign_name = grec.description
     group_name = db(db.TblTopics.id==grec.topic_id).select().first().name
+    host = request.env.http_host
     #build recipient list and pass to send_mail
-    result = send_email(campaign_name=group_name, from_address="info@gbstories.org", from_name=from_name, subject=grec.description, body=vars.mail_body, recipient_list=recipients)
+    result = send_email(campaign_name=group_name, from_address=f"info@{host}", from_name=from_name, subject=grec.description, body=vars.mail_body, recipient_list=recipients)
     return dict(result = result)
 
 #-----------support functions----------------------------
