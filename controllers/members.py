@@ -1496,7 +1496,8 @@ def get_story_members(event):
     # -----------------members-------------------
     qm = (db.TblEventMembers.Event_id == event.id) & (db.TblMembers.id == db.TblEventMembers.Member_id) & (
                 db.TblMembers.deleted != True)
-    return _info_from_qm(qm, member_fields, photo_member_set, photo_article_set)
+    qa = (db.TblEventArticles.event_id == event.id) & (db.TblArticles.id == db.TblEventArticles.article_id)
+    return _info_from_qm(qm, qa, member_fields, photo_member_set, photo_article_set)
 
 
 def get_term_members(term):
@@ -1513,10 +1514,11 @@ def get_term_members(term):
         p['photo_path'] = photos_folder() + p['photo_path']
     # -----------------members-------------------
     qm = (db.TblTermMembers.term_id == term.id) & (db.TblMembers.id == db.TblTermMembers.Member_id)
-    return _info_from_qm(qm, member_fields, photo_member_set, photo_article_set)
+    qa = (db.TblTermArticles.term_id == term.id) & (db.TblArticles.id == db.TblTermArticles.article_id)
+    return _info_from_qm(qm, qa, member_fields, photo_member_set, photo_article_set)
 
 
-def _info_from_qm(qm, member_fields, photo_member_set, photo_article_set):
+def _info_from_qm(qm, qa, member_fields, photo_member_set, photo_article_set):
     members = db(qm).select(*member_fields)
     members = [m for m in members]
     member_set = set([m.id for m in members])
@@ -1526,7 +1528,6 @@ def _info_from_qm(qm, member_fields, photo_member_set, photo_article_set):
     candidates = [m.as_dict() for m in added_members]
     members = [m.as_dict() for m in members]
     # ------------------articles-----------------------
-    qa = (db.TblTermArticles.term_id == term.id) & (db.TblArticles.id == db.TblTermArticles.article_id)
     articles = db(qa).select()
     articles = [a.TblArticles for a in articles]
     article_set = set([a.id for a in articles])
