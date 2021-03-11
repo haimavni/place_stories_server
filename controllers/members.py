@@ -1497,7 +1497,7 @@ def get_story_members(event):
     qm = (db.TblEventMembers.Event_id == event.id) & (db.TblMembers.id == db.TblEventMembers.Member_id) & (
                 db.TblMembers.deleted != True)
     qa = (db.TblEventArticles.event_id == event.id) & (db.TblArticles.id == db.TblEventArticles.article_id)
-    return _info_from_qm(qm, qa, member_fields, photo_member_set, photo_article_set)
+    return _info_from_qm(qm, qa, member_fields, photo_member_set, photo_article_set, photos)
 
 
 def get_term_members(term):
@@ -1515,10 +1515,10 @@ def get_term_members(term):
     # -----------------members-------------------
     qm = (db.TblTermMembers.term_id == term.id) & (db.TblMembers.id == db.TblTermMembers.Member_id)
     qa = (db.TblTermArticles.term_id == term.id) & (db.TblArticles.id == db.TblTermArticles.article_id)
-    return _info_from_qm(qm, qa, member_fields, photo_member_set, photo_article_set)
+    return _info_from_qm(qm, qa, member_fields, photo_member_set, photo_article_set, photos)
 
 
-def _info_from_qm(qm, qa, member_fields, photo_member_set, photo_article_set):
+def _info_from_qm(qm, qa, member_fields, photo_member_set, photo_article_set, photos):
     members = db(qm).select(*member_fields)
     members = [m for m in members]
     member_set = set([m.id for m in members])
