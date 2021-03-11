@@ -1496,7 +1496,7 @@ def get_story_members(event):
     # -----------------members-------------------
     qm = (db.TblEventMembers.Event_id == event.id) & (db.TblMembers.id == db.TblEventMembers.Member_id) & (
                 db.TblMembers.deleted != True)
-    return _info_from_qm(qm)
+    return _info_from_qm(qm, member_fields)
 
 
 def get_term_members(term):
@@ -1513,10 +1513,10 @@ def get_term_members(term):
         p['photo_path'] = photos_folder() + p['photo_path']
     # -----------------members-------------------
     qm = (db.TblTermMembers.term_id == term.id) & (db.TblMembers.id == db.TblTermMembers.Member_id)
-    return _info_from_qm(qm)
+    return _info_from_qm(qm, member_fields)
 
 
-def _info_from_qm(qm):
+def _info_from_qm(qm, member_fields):
     members = db(qm).select(*member_fields)
     members = [m for m in members]
     member_set = set([m.id for m in members])
