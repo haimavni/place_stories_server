@@ -43,7 +43,7 @@ def member_display_name(rec=None, member_id=None, full=True):
         return ''
     if not rec.first_name:
         return older_display_name(rec, full)
-    s = (rec.title + ' ' if rec.title else '') + rec.first_name + ' ' + rec.last_name
+    s = (rec.title + ' ' if rec.title else '') + (rec.first_name or '') + ' ' + (rec.last_name or '')
     if full and (rec.former_first_name or rec.former_last_name):
         s += ' ('
         if rec.former_first_name:
