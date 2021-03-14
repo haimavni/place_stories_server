@@ -38,7 +38,7 @@ def serve_json(func):
             return json.dumps(dict(user_error=str(e)))
         except Exception as e:
             log_exception('Error serving ' + func.__name__)
-            return response.json(dict(error=str(e)))
+            return json.dumps(dict(error=repr(e)))
         try:
             result = response.json(result)
         except Exception as e:
