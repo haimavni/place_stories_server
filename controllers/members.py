@@ -1197,7 +1197,8 @@ def get_member_stories(member_id):
             used_for=story.used_for,
             author_id=story.author_id,
             creation_date=story.creation_date,
-            last_update_date=story.last_update_date
+            last_update_date=story.last_update_date,
+            language=story.language
         )
         result.append(dic)
     return result
