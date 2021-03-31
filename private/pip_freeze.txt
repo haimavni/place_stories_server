@@ -32,7 +32,7 @@ python-memcached==1.58
 python-twitter==3.1
 requests==2.20.0
 requests-oauthlib==0.6.1
-rsa==3.4.2
+rsa==4.1
 simplejson==3.8.2
 singledispatch==3.4.0.3
 six==1.10.0
