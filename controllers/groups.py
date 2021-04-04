@@ -3,10 +3,11 @@ import zlib
 from io import StringIO
 import csv
 from PIL import Image, ImageFile
-from photos_support import save_uploaded_photo, photos_folder, timestamped_photo_path, get_photo_topics
+from photos_support import save_uploaded_photo, photos_folder, timestamped_photo_path
+from members_support import get_photo_topics
 from topics_support import *
 import ws_messaging
-from admin_support.access_manager import register_new_user, AccessManager
+from admin_support import access_manager
 import stories_manager
 from gluon.storage import Storage
 from date_utils import update_record_dates, get_all_dates
@@ -183,8 +184,8 @@ def attempt_login(vars):
 
 @serve_json
 def register_user(vars):
-    user_id = register_new_user(vars.email, vars.password, vars.first_name, vars.last_name, registration_key='')
-    am = AccessManager()
+    user_id = access_manager.register_new_user(vars.email, vars.password, vars.first_name, vars.last_name, registration_key='')
+    am = access_manager.AccessManager()
     grp_ids = [RESTRICTED, PHOTO_UPLOADER, EDITOR]
     am.enable_roles(user_id, grp_ids)
     return dict(user_id=user_id)
@@ -244,7 +245,7 @@ def get_logo_url(group_id):
     group_id = int(group_id)
     rec = db(db.TblGroups.id==group_id).select().first()
     folder = url_folder('logos')
-    logo_name = rec.logo_name if rec.logo_name else 'dummy-logo.jpg'
+    logo_name = rec.logo_name if rec and rec.logo_name else 'dummy-logo.jpg'
     return folder + logo_name
 
 def save_uploaded_logo(file_name, blob, group_id):
