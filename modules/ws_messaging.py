@@ -28,7 +28,7 @@ def send_data(group, obj, key):
     # comment('send message: group={grp} key={key} text={txt}', grp=group, key=key, txt=txt[:40])
     if request.is_https:
         h = 'https'
-        port = '9443' if host == 'gbstories.org' else '8443'
+        port = '8443' if host == 'tol.site' else '9443'
         key = 'sslkey'
         server_name = host
     else:
