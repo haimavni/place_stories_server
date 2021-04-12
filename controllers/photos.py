@@ -763,7 +763,7 @@ def flip_photo_pair(front_id, back_id):
     rec = db((db.TblPhotoPairs.front_id == front_id) & (db.TblPhotos.deleted != True)).select().first()
     if not rec: #already flipped
         return
-    i = rec.id
+    i = rec.TblPhotoPairs.id
     db(db.TblPhotoPairs.id == i).update(front_id=back_id, back_id=front_id)
     db(db.TblPhotos.id == front_id).update(is_back_side=True)
     db(db.TblPhotos.id == back_id).update(is_back_side=False)
