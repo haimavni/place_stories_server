@@ -295,7 +295,6 @@ def get_story_list(vars):
     for i in range(0, len(result), CHUNK):
         chunk = result[i:i + CHUNK]
         chunk = set_story_list_data(chunk)
-        comment(f"get story list. just before send message i={i}")
         ws_messaging.send_message(key='STORY-LIST-CHUNK',
                                   group=vars.ptp_key,
                                   first=i,
@@ -304,7 +303,6 @@ def get_story_list(vars):
                                   chunk=chunk,
                                   active_result_types=active_result_types,
                                   result_type_counters=result_type_counters)
-        comment("after send message")
     return dict(no_results=len(result) == 0)
 
 
