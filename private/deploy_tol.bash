@@ -1,6 +1,6 @@
 #!/bin/bash
 
-HOST="haimavni.site"
+HOST="tol.com"
 echo host is ${HOST}
 if [ "$1" == "master3" ]
 then

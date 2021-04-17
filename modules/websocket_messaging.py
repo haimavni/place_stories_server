@@ -92,7 +92,6 @@ import hmac
 import optparse
 import time
 import sys
-from injections import inject
 if 'haim' in sys.path[0]:
     sys.path += ['/home/haim/PycharmProjects/web2PyProject/web2py']
 else:
