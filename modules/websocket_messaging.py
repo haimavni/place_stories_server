@@ -106,12 +106,8 @@ def websocket_send(url, message, hmac_key=None, group='default'):
     sig = hmac_key and hmac.new(to_bytes(hmac_key), to_bytes(message), digestmod='MD5').hexdigest() or ''
     params = urlencode(
         {'message': message, 'signature': sig, 'group': group})
-    comment = inject("comment")
-    comment(f"websocket send. url: {url}")
     f = urlopen(url, to_bytes(params))
-    comment("websocket send. after urlopen")
     data = f.read()
-    comment("websocket send. after read")
     f.close()
     return data
 
