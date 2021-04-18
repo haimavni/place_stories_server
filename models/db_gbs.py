@@ -337,7 +337,6 @@ db.define_table('TblPhotos',
                 Field('deleted', type='boolean', default=False),
                 Field('is_back_side', type='boolean', default=False),
                 Field('crc', type='bigint'),
-                Field('bigcrc', type='bigint'),
                 Field('dhash', type='string'),
                 Field('no_slide_show', type='boolean', default=False),
                 Field('curr_dhash', type='string'),  #after editing such as rotation and cropping. will be used to reload photo after using photoshop etc.
@@ -400,7 +399,6 @@ db.define_table('TblDocs',
                 Field('doc_path', type='string'),
                 Field('original_file_name', type='string'),
                 Field('crc', type='bigint'),
-                Field('bigcrc', type='bigint'),
                 Field('upload_date', type='datetime')
                 )
 
@@ -418,7 +416,6 @@ db.define_table('TblAudios',
                 Field('audio_path', type='string'),
                 Field('original_file_name', type='string'),
                 Field('crc', type='bigint'),
-                Field('bigcrc', type='bigint'),
                 Field('upload_date', type='datetime'),
                 Field('recorder_id', type=db.TblRecorders)
                 )
