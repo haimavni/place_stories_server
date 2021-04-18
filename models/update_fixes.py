@@ -73,6 +73,12 @@ def fix_photo_recognized():
 def fix_pdf_texts():
     db(db.TblDocs.text_extracted==None).update(text_extracted=False)
     db.commit()
+
+def fix_no_slide_show():
+    for prec in db(db.TblPhotos.no_slide_show==None).select():
+        prec.update_record(no_slide_show=False)
+    db.commit()
+
             
 _fixes = {
     1: init_photo_back_sides,
@@ -83,7 +89,8 @@ _fixes = {
     6: fix_visibility,
     7: fix_deleted_forever,
     8: fix_photo_recognized,
-    9: fix_pdf_texts
+    9: fix_pdf_texts,
+    10: fix_no_slide_show
 }
 
 _init_configuration_table()
