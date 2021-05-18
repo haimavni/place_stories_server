@@ -9,6 +9,7 @@ import re
 # use poppler utils instead of the 2 below
 ## import fitz causes problems
 from pdf2image import convert_from_path
+import pdfplumber
 import subprocess
 import os
 from .injections import inject
@@ -46,23 +47,11 @@ def detect_rtl(doc):
     return n2 > n1
 
 def pdf_to_text(pdfname):
-    #after porting to python 3 we can use poppler-utils library
-    log_path = inject('log_path')
-    logs_path = log_path()
-    log_file_name = logs_path + "pdf_to_text.log"
-    command = "pdftotext {fn} {fn}.txt".format(fn=pdfname)
-    with open(log_file_name, 'a') as log_file:
-        log_file.write('\n pdf to text {}\n'.format(pdfname))
-        code = subprocess.call(command, stdout=log_file, stderr=log_file, shell=True)
-    result = ''
-    txtname = pdfname + '.txt'
-    with open(txtname) as f:
-        for s in f:
-            s = s.strip()
-            #fix parentheses etc.
-            result += s + ' \n'
-    if os.path.isfile(txtname):
-        os.remove(txtname)
+    pdf = pdfplumber.open(pdfname)
+    result = ""
+    for page in pdf.pages:
+        text = page.extract_text()
+        result += text + '\n'
     return result
 
 def highlight_pdf(fname, outfname, keywords):
@@ -133,4 +122,25 @@ if __name__ == '__main__':
     test_pdf2text()
     test_highlight()
     print('done')
-    
+
+
+def fix_rtl(s):
+    def rep(m):
+        s = m.group(0)
+        return s[::-1]
+
+    rtl_chars = "[א-תךםןףץ]"
+    ltr_chars = "[a-zA-z0-9](\s|[a-zA-z0-9])*[a-zA-z0-9]"
+    m = re.search(rtl_chars, s)
+    if m:
+        s1 = s[::-1]
+        s2 = re.sub(ltr_chars, rep, s1)
+    else:
+        s2 = s
+    return s2
+
+def experiments():
+    s = 'ישראל נוסדה ב-8491. הפלישה החלה מיד.'
+    s = s[::-1]
+    s2 = fix_rtl(s)
+    return dict(s=s, s2=s2)

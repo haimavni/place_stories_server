@@ -97,7 +97,8 @@ def calc_doc_story(doc_id):
             txt = '- - - - -'
         if doc_rec.story_id:
             story_info = Storage(
-                story_text=txt
+                story_text=txt,
+                name=doc_rec.name
             )
             sm.update_story(doc_rec.story_id, story_info)
             doc_rec.update_record(text_extracted=True)
