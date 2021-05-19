@@ -288,6 +288,8 @@ def get_story_list(vars):
             story.editable_preview = True
         elif k == STORY4AUDIO:
             story.audio_path = audio_path(story.id)
+        elif k == STORY4MEMBER:
+            story.profile_photo_path = profile_photo_path(story.id)
         final_result.append(story)
     active_result_types = [k for k in active_result_types]
     active_result_types = sorted(active_result_types)
@@ -1091,6 +1093,7 @@ def set_story_list_data(story_list):
         doc_url=rec.doc_url,
         audio_path=rec.audio_path,
         doc_jpg_url=rec.doc_url.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', '.jpg') if rec.doc_url else '',
+        profile_photo_path=rec.profile_photo_path if rec.used_for==STORY4MEMBER else "",
         used_for=rec.used_for,
         editable_preview=rec.editable_preview,
         event_date=rec.creation_date,
