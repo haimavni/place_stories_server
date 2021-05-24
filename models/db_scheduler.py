@@ -274,7 +274,7 @@ if os.path.isdir(maildir):
 
 __tasks = dict(
     ###scan_all_unscanned_photos=scan_all_unscanned_photos,
-    collect_mail=collect_mail,
+    ### collect_mail=collect_mail,
     watchdog=watchdog,
     randomize_story_sampling=randomize_story_sampling,
     update_word_index_all=update_word_index_all,
