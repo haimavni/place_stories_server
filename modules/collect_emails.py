@@ -11,6 +11,7 @@ from shutil import move
 from .injections import inject
 from io import StringIO
 from mammoth import convert_to_html
+from send_email import email
 
 class EmailCollector:
 
@@ -147,7 +148,7 @@ def collect_mail():
             user_id = get_user_id_of_sender(msg.sender_email, msg.sender_name)
             if not user_id:
                 emsg = 'mail sent by {} {}'.format(msg.sender_email, msg.sender_name)
-                mail.send(sender=f"admin@{host}", to=receivers, subject="incoming email to gbstories from unknown sender", message=emsg)
+                email(sender=f"admin", to=receivers, subject="incoming email from unknown sender", message=emsg)
                 continue
             ###user_id = user_id or 1 #todo: if we decide not to create new user
             text = msg.html_content or msg.plain_content
@@ -166,7 +167,7 @@ def collect_mail():
                     m = msg[fld]
                     s = m
                     emsg += fld + ': ' + s + '\n'
-            result = mail.send(sender=f"admin@{host}", to=receivers, subject="incoming email to gbstories", message=emsg)
+            result = email(sender=f"admin", to=receivers, subject="incoming email to tol.life", message=emsg)
             if result:
                 comment("mail was forwarded")
             else:

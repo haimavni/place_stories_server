@@ -1,19 +1,26 @@
 import yagmail
 import keyring
+from injections import inject
 
-def send_email(to="", subject="", contents="", sender=""):
+def email(to="", subject="", message="", sender=None):
+    if (not sender) or ('@' not in sender):
+        request = inject('request')
+        host = request.env.http_host
+        app = request.application
+        dept = sender if sender else 'info'
+        sender = f"{dept}@{app}.{host}"
     password = keyring.get_password("gmail.com", "lifestone2508")
     yag = yagmail.SMTP({"lifestone2508@gmail.com": sender}, password)
-    result = yag.send(to=to, subject=subject, contents=contents)
+    result = yag.send(to=to, subject=subject, contents=message)
     return result
     
 def test():
     to=['haimavni@gmail.com', 'hanavni@gmail.com']
     subject="testing yagmail again and again"
-    contents= '''
+    message = '''
         Hello there,<br><br>
         Please click <a href="haha.tol.life">here</a>
         '''
     sender = "Info@tol.life"
-    result = send_email(to=to, subject=subject,contents=contents, sender=sender)
+    result = email(to=to, subject=subject,message=message, sender=sender)
     print(f"the result is {result}")

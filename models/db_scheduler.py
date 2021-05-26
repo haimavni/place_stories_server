@@ -10,6 +10,7 @@ from docs_support import calc_doc_stories
 import os
 from topics_support import fix_is_tagged
 from folders import safe_open
+from send_email import email
 
 def test_scheduler(msg):
     comment("test task {}", msg)
@@ -81,8 +82,7 @@ def watchdog():
     message = '''
     Task(s) {tsks} of {app} {status} in the scheduler. Check the log files.
     '''.format(tsks=tsks_str, app=request.application, status=tsk.status)
-    host = request.env.http_host
-    mail.send(sender=f"admin@{host}", to="haimavni@gmail.com", subject = "A task failed", message=('', message))
+    email(sender="admin", to="haimavni@gmail.com", subject = "A task failed", message=message)
     for tsk in db(q).select():
         comment('Task {t} failed', t=tsk.function_name)
     db(q).update(status='QUEUED')

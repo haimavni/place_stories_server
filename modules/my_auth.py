@@ -2,6 +2,7 @@ from gluon.tools import Auth
 from gluon.storage import Storage
 from .injections import inject
 from .admin_support.access_manager import AccessManager
+from send_email import email
 
 class MyAuth(Auth):
 
@@ -106,7 +107,7 @@ class MyAuth(Auth):
     
         Click <a href="https://{host}/{app}/static/aurelia/index.html#/access-manager">here</a> for access manager.
         '''.format(uname=user_name, uemail=email, app=app, host=host).replace('\n', '<br>'))
-        mail.send(to=receivers, subject='New GB Stories registration', message=message)
+        email(to=receivers, subject='New registration', message=message)
         
     def user_has_privilege(self, privilege):
         return self.has_membership(privilege, self.current_user())
