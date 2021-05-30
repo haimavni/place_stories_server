@@ -172,6 +172,7 @@ def get_faces(vars):
     candidates = [c for c in candidates if not c['member_id'] in face_ids]
     return dict(faces=faces, candidates=candidates)
 
+
 @serve_json
 def get_articles(vars):
     '''
@@ -819,3 +820,6 @@ def delete_photos(photo_list):
     story_ids = [rec.story_id for rec in a.select()]
     db(db.TblStories.id.belongs(story_ids)).update(deleted=True)
 
+@serve_json
+def upload_chunk(vars):
+    return dict()
