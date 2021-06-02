@@ -11,6 +11,7 @@ import os
 import re
 from gluon.storage import Storage
 from gluon.utils import web2py_uuid
+import array
 
 @serve_json
 def upload_photo(vars):
@@ -733,6 +734,7 @@ def make_photos_query(vars):
         q &= q1
     return q 
 
+
 def with_members_query(member_ids):
     result = None
     for mid in member_ids:
@@ -745,12 +747,14 @@ def with_members_query(member_ids):
             result = set(lst)
     return (db.TblPhotos.id.belongs(result))
 
+
 def unlocated_faces():
     q = (db.TblPhotos.id == db.TblMemberPhotos.Photo_id) & (db.TblMemberPhotos.x == None)
     lst = db(q).select(db.TblPhotos.id, db.TblMemberPhotos.id.count(), groupby=[db.TblPhotos.id], limitby=(0,5000))
     lst = [prec.TblPhotos.id for prec in lst]
     return lst
-    
+
+
 def pair_photos(front_id, back_id):
     rec = db((db.TblPhotoPairs.front_id == front_id) & (db.TblPhotos.deleted != True)).select().first()
     if rec:
@@ -759,6 +763,7 @@ def pair_photos(front_id, back_id):
     db(db.TblPhotoPairs.back_id == back_id).delete()
     db.TblPhotoPairs.insert(front_id=front_id, back_id=back_id)
     db(db.TblPhotos.id == back_id).update(is_back_side=True)
+
 
 def flip_photo_pair(front_id, back_id):
     #raise Exception("flip photo pair not ready")
@@ -769,6 +774,7 @@ def flip_photo_pair(front_id, back_id):
     db(db.TblPhotoPairs.id == i).update(front_id=back_id, back_id=front_id)
     db(db.TblPhotos.id == front_id).update(is_back_side=True)
     db(db.TblPhotos.id == back_id).update(is_back_side=False)
+
 
 def process_photo_list(lst, photo_pairs=dict(), webpSupported=False):
     for rec in lst:
@@ -814,12 +820,44 @@ def process_photo_list(lst, photo_pairs=dict(), webpSupported=False):
         result.append(dic)
     return result
 
+
 def delete_photos(photo_list):
     a = db(db.TblPhotos.id.belongs(photo_list))
     a.update(deleted=True)
     story_ids = [rec.story_id for rec in a.select()]
     db(db.TblStories.id.belongs(story_ids)).update(deleted=True)
 
+
 @serve_json
 def upload_chunk(vars):
-    return dict()
+    original_file_name, ext = os.path.splitext(vars.file_name)
+    file_name = '{crc:x}{ext}'.format(crc=vars.crc & 0xffffffff, ext=ext)
+    today = datetime.date.today()
+    month = str(today)[:-3]
+    sub_folder = 'uploads/' + month + '/'
+    path = local_photos_folder() + sub_folder
+    dir_util.mkpath(path)
+    if vars.what == 'start':
+        prec = db((db.TblPhotos.crc == vars.crc) & (db.TblPhotos.deleted != True)).select().first()
+        if prec:
+            return dict(upload_result=dict(duplicate=prec.id))
+        with open(path + file_name, 'wb') as f:
+            pass
+        file_id = db.TblPhotos.insert(
+            photo_path=sub_folder + file_name,
+            original_file_name=original_file_name,
+            Name=original_file_name
+        )
+        return dict(upload_result=dict(file_id=file_id))
+    elif vars.what == 'save':
+        with open(path + file_name, 'ab') as f:
+            n = f.seek(vars.start)
+            fil = vars.file
+            blob = bytearray(fil.BINvalue)
+            #### blob = array.array('B', [x for x in map(ord, s)]).tobytes()
+            loc = f.tell()
+            comment(f"file name: {vars.file_name}, start: {vars.start}, tell: {loc})")
+            f.write(blob)
+        return dict(upload_result=dict())
+
+    return dict(upload_result=dict())
