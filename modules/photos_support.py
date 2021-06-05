@@ -22,7 +22,6 @@ import zipfile
 from pybktree import BKTree, hamming_distance
 import time
 from . import ws_messaging
-from gluon._compat import to_bytes
 from misc_utils import multisort
 
 MAX_WIDTH = 1200
@@ -80,7 +79,7 @@ def save_uploaded_photo_collection(collection, user_id):
 def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
     auth, comment, log_exception, db, STORY4PHOTO, NO_DATE = inject('auth', 'comment', 'log_exception', 'db', 'STORY4PHOTO', 'NO_DATE')
     user_id = user_id or auth.current_user()
-    blob = to_bytes(s)
+    blob = bytearray(s)
     crc = zlib.crc32(blob)
     prec = db((db.TblPhotos.crc==crc) & (db.TblPhotos.deleted != True)).select().first()
     if prec:

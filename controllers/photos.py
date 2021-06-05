@@ -840,15 +840,17 @@ def upload_chunk(vars):
     if vars.what == 'start':
         prec = db((db.TblPhotos.crc == vars.crc) & (db.TblPhotos.deleted != True)).select().first()
         if prec:
-            return dict(upload_result=dict(duplicate=prec.id))
+            return dict(duplicate=prec.id)
         with open(path + file_name, 'wb') as f:
             pass
-        file_id = db.TblPhotos.insert(
+        record_id = db.TblPhotos.insert(
             photo_path=sub_folder + file_name,
             original_file_name=original_file_name,
-            Name=original_file_name
+            Name=original_file_name,
+            crc=vars.crc,
+            uploader=vars.user_id
         )
-        return dict(upload_result=dict(file_id=file_id))
+        return dict(record_id=record_id)
     elif vars.what == 'save':
         with open(path + file_name, 'ab') as f:
             n = f.seek(vars.start)
@@ -856,8 +858,15 @@ def upload_chunk(vars):
             blob = bytearray(fil.BINvalue)
             #### blob = array.array('B', [x for x in map(ord, s)]).tobytes()
             loc = f.tell()
-            comment(f"file name: {vars.file_name}, start: {vars.start}, tell: {loc})")
+            ##comment(f"file name: {vars.file_name}, start: {vars.start}, tell: {loc})")
             f.write(blob)
-        return dict(upload_result=dict())
+        if vars.is_last:
+            handle_loaded_photo(vars.record_id)
+        return dict()
 
-    return dict(upload_result=dict())
+    return dict()
+
+def handle_loaded_photo(photo_id):
+    comment("handle photo id = ", photo_id)
+    from complete_photo_record import add_photo_info
+    add_photo_info(photo_id)
