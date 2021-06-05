@@ -360,7 +360,7 @@ def get_shortcut(vars):
             raise Exception('Non unique key')
         db.TblShortcuts.insert(url=url, key=key)
     shortcut = '/' + request.application + '?key='  + key
-    comment("get shortcut: ", shortcut)
+    comment(f"get shortcut: {shortcut}")
     return dict(shortcut=shortcut)
 
 def create_key():
