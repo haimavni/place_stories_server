@@ -831,15 +831,24 @@ def delete_photos(photo_list):
 @serve_json
 def upload_chunk(vars):
     original_file_name, ext = os.path.splitext(vars.file_name)
-    file_name = '{crc:x}{ext}'.format(crc=vars.crc & 0xffffffff, ext=ext)
+    ## comment(f"vars crc unmasked: {vars.crc:x} xored {vars.crc ^ 0xffffffff:x}")
+    crc = vars.crc
+    crc1 = -1 - crc ^ 0xffffffff
+    comment(f"vars.crc is {crc:x}. crc1 is {crc1:x}")
+    file_name = f'{crc:x}{ext}'
     today = datetime.date.today()
     month = str(today)[:-3]
     sub_folder = 'uploads/' + month + '/'
     path = local_photos_folder() + sub_folder
     dir_util.mkpath(path)
     if vars.what == 'start':
-        prec = db((db.TblPhotos.crc == vars.crc) & (db.TblPhotos.deleted != True)).select().first()
+        ###comment(f"{vars.what}: vars crc: {crc :x}.")
+        prec = db((db.TblPhotos.crc == crc) & (db.TblPhotos.deleted != True)).select().first()
         if prec:
+            return dict(duplicate=prec.id)
+        prec = db((db.TblPhotos.crc == crc1) & (db.TblPhotos.deleted != True)).select().first()
+        if prec:
+            comment("with crc1 duplicate was found ")
             return dict(duplicate=prec.id)
         with open(path + file_name, 'wb') as f:
             pass
@@ -847,8 +856,9 @@ def upload_chunk(vars):
             photo_path=sub_folder + file_name,
             original_file_name=original_file_name,
             Name=original_file_name,
-            crc=vars.crc,
-            uploader=vars.user_id
+            crc=crc,
+            uploader=vars.user_id,
+            deleted=False
         )
         return dict(record_id=record_id)
     elif vars.what == 'save':
@@ -856,9 +866,7 @@ def upload_chunk(vars):
             n = f.seek(vars.start)
             fil = vars.file
             blob = bytearray(fil.BINvalue)
-            #### blob = array.array('B', [x for x in map(ord, s)]).tobytes()
             loc = f.tell()
-            ##comment(f"file name: {vars.file_name}, start: {vars.start}, tell: {loc})")
             f.write(blob)
         if vars.is_last:
             handle_loaded_photo(vars.record_id)
@@ -867,6 +875,6 @@ def upload_chunk(vars):
     return dict()
 
 def handle_loaded_photo(photo_id):
-    comment("handle photo id = ", photo_id)
+    ###  comment("handle photo id = ", photo_id)
     from complete_photo_record import add_photo_info
     add_photo_info(photo_id)

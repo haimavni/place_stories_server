@@ -1,6 +1,7 @@
 from gluon._compat import to_bytes
 from photos_support import *
 import binascii
+import crc_calc
 
 def add_photo_info(photo_id):
     auth, comment, log_exception, db, STORY4PHOTO, NO_DATE = inject('auth', 'comment', 'log_exception', 'db',
@@ -11,9 +12,11 @@ def add_photo_info(photo_id):
         blob = f.read()
     crc = zlib.crc32(blob)
     crc1 = binascii.crc32(blob)
-    comment(f"crc: {crc:x}, crc1: {crc1:x}")
+    crc2 = crc_calc.crc32(blob)
+    crc2 = -1 - crc2 ^ 0xffffffff
+    comment(f"crc: {crc:x}, crc1: {crc1:x}, crc2: {crc2:x}")
 
-    comment(f"file {file_name} prec.crc: {prec.crc:x} crc: {crc:x}, len(blob): {len(blob)}")
+    ###comment(f"file {file_name} prec.crc: {prec.crc:x} crc: {crc:x}, len(blob): {len(blob)}")
     today = datetime.date.today()
     month = str(today)[:-3]
     sub_folder = 'uploads/' + month + '/'
@@ -106,7 +109,6 @@ def add_photo_info(photo_id):
         photo_date_datespan = 1
     has_geo_info = longitude is not None
     prec.update_record(
-    ###photo_id = db.TblPhotos.insert(
         embedded_photo_date=embedded_photo_date,
         upload_date=datetime.datetime.now(),
         photo_date=photo_date,
@@ -119,7 +121,6 @@ def add_photo_info(photo_id):
         longitude=longitude,
         has_geo_info=has_geo_info,
         zoom=13,
-        crc=crc,
         dhash=dhash_value,
         oversize=oversize,
         photo_missing=False,
