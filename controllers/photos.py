@@ -834,8 +834,8 @@ def upload_chunk(vars):
     ## comment(f"vars crc unmasked: {vars.crc:x} xored {vars.crc ^ 0xffffffff:x}")
     crc = vars.crc
     crc1 = -1 - crc ^ 0xffffffff
-    comment(f"vars.crc is {crc:x}. crc1 is {crc1:x}")
-    file_name = f'{crc:x}{ext}'
+    comment(f"vars.crc is {crc & 0xffffffff:x}. crc1 is {crc1 & 0xffffffff:x}")
+    file_name = f'{crc & 0xffffffff:x}{ext}'
     today = datetime.date.today()
     month = str(today)[:-3]
     sub_folder = 'uploads/' + month + '/'
@@ -852,11 +852,16 @@ def upload_chunk(vars):
             return dict(duplicate=prec.id)
         with open(path + file_name, 'wb') as f:
             pass
+        sm = stories_manager.Stories()
+        story_info = sm.get_empty_story(used_for=STORY4PHOTO, story_text="", name=original_file_name)
+        result = sm.add_story(story_info)
+        story_id = result.story_id
         record_id = db.TblPhotos.insert(
             photo_path=sub_folder + file_name,
             original_file_name=original_file_name,
             Name=original_file_name,
             crc=crc,
+            story_id=story_id,
             uploader=vars.user_id,
             deleted=False
         )
