@@ -14,7 +14,8 @@ def add_photo_info(photo_id):
     crc1 = binascii.crc32(blob)
     crc2 = crc_calc.crc32(blob)
     crc2 = -1 - crc2 ^ 0xffffffff
-    comment(f"crc: {crc:x}, crc1: {crc1:x}, crc2: {crc2:x}")
+    crc3 = prec.crc if prec and prec.crc else 0xffffffff
+    comment(f"crc: {crc:x}, crc1: {crc1:x}, crc2: {crc2:x}, crc3: {crc3:x}")
 
     ###comment(f"file {file_name} prec.crc: {prec.crc:x} crc: {crc:x}, len(blob): {len(blob)}")
     today = datetime.date.today()

@@ -202,6 +202,14 @@ def set_promoted_story_expiration(vars):
     config_rec.update_record(promoted_story_expiration=int(vars.promoted_story_expiration))
     return dict()
 
+@serve_json
+def cover_photo(vars):
+    config_rec = get_config_rec()
+    if vars.cover_photo:
+        config_rec.update_record(cover_photo=vars.cover_photo)
+    return dict(cover_photo=config_rec.cover_photo)
+
+
 def get_config_rec():
     config_rec = db(db.TblConfiguration).select().first()
     if not config_rec:
