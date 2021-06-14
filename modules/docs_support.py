@@ -13,6 +13,75 @@ from time import sleep
 from . import ws_messaging
 import array
 
+def create_uploading_doc(file_name, crc, user_id):
+    auth, log_exception, db, STORY4DOC = inject('auth', 'log_exception', 'db', 'STORY4DOC')
+    user_id = user_id or auth.current_user()
+    record_id = db((db.TblDocs.crc == crc) & (db.TblDocs.deleted != True)).select().first()
+    if record_id:
+        return Storage(duplicate=record_id)
+    original_file_name, ext = os.path.splitext(file_name)
+    file_name = '{crc:x}{ext}'.format(crc=crc & 0xffffffff, ext=ext)
+    today = datetime.date.today()
+    month = str(today)[:-3]
+    sub_folder = 'uploads/' + month + '/'
+    path = local_docs_folder() + sub_folder
+    doc_date = None
+    dir_util.mkpath(path)
+    doc_file_name = path + file_name
+    with open(path + file_name, 'wb') as f:
+        pass
+    sm = Stories()
+    story_info = sm.get_empty_story(used_for=STORY4DOC, story_text="", name=original_file_name)
+    result = sm.add_story(story_info)
+    story_id = result.story_id
+    record_id = db.TblDocs.insert(
+        doc_path=sub_folder + file_name,
+        original_file_name=original_file_name,
+        name=original_file_name,
+        crc=crc,
+        story_id=story_id,
+        uploader=user_id,
+        deleted=False,
+        upload_date=datetime.datetime.now()
+    )
+    return Storage(record_id=record_id)
+
+
+def save_uploading_chunk(record_id, start, blob):
+    db = inject('db')
+    drec = db(db.TblDocs.id==record_id).select().first()
+    file_name = local_docs_folder() + drec.doc_path
+    with open(file_name, 'ab') as f:
+        f.seek(start, 0)
+        f.tell()
+        f.write(blob)
+        f.flush()
+
+
+def handle_loaded_doc(record_id):
+    db = inject('db')
+    drec = db(db.TblDocs.id==record_id).select().first()
+    path, file_name = os.path.split(drec.doc_path)
+    today = datetime.date.today()
+    month = str(today)[:-3]
+    sub_folder = 'uploads/' + month + '/'
+    doc_file_name = local_docs_folder() + drec.doc_path
+
+    pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/' + sub_folder
+    dir_util.mkpath(pdf_jpg_folder)
+    pdf_jpg_path = pdf_jpg_folder + file_name.replace('.pdf', '.jpg')
+    save_pdf_jpg(doc_file_name, pdf_jpg_path)
+
+
+    pdf_jpg_folder = 'pdf-jpgs/' + path
+    ###pdf_jpg_folder = local_docs_folder() + sub_folder +
+    ###dir_util.mkpath(pdf_jpg_folder)
+    ###pdf_jpg_path = pdf_jpg_folder + fname.replace('.pdf', '.jpg')
+    ###doc_file_name = local_docs_folder() + drec.doc_path
+    save_pdf_jpg(doc_file_name, pdf_jpg_path)
+    db.commit()
+
+
 def save_uploaded_doc(file_name, s, user_id, sub_folder=None):
     auth, log_exception, db, STORY4DOC = inject('auth', 'log_exception', 'db', 'STORY4DOC')
     user_id = user_id or auth.current_user()
@@ -26,7 +95,7 @@ def save_uploaded_doc(file_name, s, user_id, sub_folder=None):
     today = datetime.date.today()
     month = str(today)[:-3]
     if not sub_folder:
-        sub_folder = sub_folder or 'uploads/' + month + '/'
+        sub_folder = 'uploads/' + month + '/'
     path = local_docs_folder() + sub_folder
     doc_date = None
     dir_util.mkpath(path)

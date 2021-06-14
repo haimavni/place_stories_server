@@ -1,5 +1,5 @@
 import datetime
-from docs_support import save_uploaded_doc, doc_url, calc_doc_story
+from docs_support import save_uploaded_doc, doc_url, calc_doc_story, create_uploading_doc, save_uploading_chunk, handle_loaded_doc
 from members_support import calc_grouped_selected_options, calc_all_tags, get_tag_ids, init_query, get_topics_query
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
 import stories_manager
@@ -14,6 +14,35 @@ def upload_doc(vars):
     if result != 'duplicate':
         calc_doc_story(result)
     return dict(upload_result=result)
+
+
+@serve_json
+def upload_chunk(vars):
+
+    # original_file_name, ext = os.path.splitext(vars.file_name)
+    # ## comment(f"vars crc unmasked: {vars.crc:x} xored {vars.crc ^ 0xffffffff:x}")
+    # crc = vars.crc
+    # file_name = f'{crc & 0xffffffff:x}{ext}'
+    # today = datetime.date.today()
+    # month = str(today)[:-3]
+    # sub_folder = 'uploads/' + month + '/'
+    # path = local_docs_folder() + sub_folder
+    # dir_util.mkpath(path)
+    if vars.what == 'start':
+        result = create_uploading_doc(vars.file_name, vars.crc, vars.user_id)
+        if result.duplicate:
+            return dict(duplicat=result.duplicate)
+        return dict(record_id=result.record_id)
+    elif vars.what == 'save':
+        fil = vars.file
+        blob = bytearray(fil.BINvalue)
+        save_uploading_chunk(vars.record_id, vars.start, blob)
+        if vars.is_last:
+            handle_loaded_doc(vars.record_id)
+        return dict()
+
+    return dict()
+
 
 @serve_json
 def get_doc_list(vars):
