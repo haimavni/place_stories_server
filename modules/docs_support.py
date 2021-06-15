@@ -62,26 +62,15 @@ def handle_loaded_doc(record_id):
     db = inject('db')
     drec = db(db.TblDocs.id==record_id).select().first()
     path, file_name = os.path.split(drec.doc_path)
-    today = datetime.date.today()
-    month = str(today)[:-3]
-    sub_folder = 'uploads/' + month + '/'
     doc_file_name = local_docs_folder() + drec.doc_path
-
-    pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/' + sub_folder
+    pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/' + path + '/'
     dir_util.mkpath(pdf_jpg_folder)
     pdf_jpg_path = pdf_jpg_folder + file_name.replace('.pdf', '.jpg')
     save_pdf_jpg(doc_file_name, pdf_jpg_path)
-
-
-    pdf_jpg_folder = 'pdf-jpgs/' + path
-    ###pdf_jpg_folder = local_docs_folder() + sub_folder +
-    ###dir_util.mkpath(pdf_jpg_folder)
-    ###pdf_jpg_path = pdf_jpg_folder + fname.replace('.pdf', '.jpg')
-    ###doc_file_name = local_docs_folder() + drec.doc_path
-    save_pdf_jpg(doc_file_name, pdf_jpg_path)
+    calc_doc_story(record_id)
     db.commit()
 
-
+# code below is obsolete
 def save_uploaded_doc(file_name, s, user_id, sub_folder=None):
     auth, log_exception, db, STORY4DOC = inject('auth', 'log_exception', 'db', 'STORY4DOC')
     user_id = user_id or auth.current_user()
@@ -223,6 +212,7 @@ def calc_doc_stories(time_budget=None):
         log_exception('Error calculating doc stories')
         raise
     return dict(good=ns, bad=nf)
+
 
 def docs_folder(): 
     return url_folder('docs')

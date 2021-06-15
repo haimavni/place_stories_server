@@ -18,16 +18,6 @@ def upload_doc(vars):
 
 @serve_json
 def upload_chunk(vars):
-
-    # original_file_name, ext = os.path.splitext(vars.file_name)
-    # ## comment(f"vars crc unmasked: {vars.crc:x} xored {vars.crc ^ 0xffffffff:x}")
-    # crc = vars.crc
-    # file_name = f'{crc & 0xffffffff:x}{ext}'
-    # today = datetime.date.today()
-    # month = str(today)[:-3]
-    # sub_folder = 'uploads/' + month + '/'
-    # path = local_docs_folder() + sub_folder
-    # dir_util.mkpath(path)
     if vars.what == 'start':
         result = create_uploading_doc(vars.file_name, vars.crc, vars.user_id)
         if result.duplicate:
