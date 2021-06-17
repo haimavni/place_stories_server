@@ -381,7 +381,13 @@ db.define_table('TblVideos',
                 Field('video_date_datespan', type='integer', default=1), # how many months or years in the range
                 Field('video_date_dateend', type='date', default=NO_DATE),
                 Field('touch_time', type='date', default=NO_DATE), #used to promote videos
-                Field('upload_date', type='datetime')
+                Field('upload_date', type='datetime'),
+                # Youtube info
+                Field('author', type='string'),
+                Field('title', type='string'),
+                Field('description', type='text'),
+                Field('publish_date', type='datetime'),
+                Field('thumbnail_url', type='string')
                 )
 
 db.define_table('TblDocs',
