@@ -1,4 +1,4 @@
-def card_data(url, img_src, title, description):
+def card_data(url, img_src, width, height, title, description):
     return f"""
     <html>
         <head>
@@ -7,6 +7,9 @@ def card_data(url, img_src, title, description):
             <meta property="og:title"              content="{title}" />
             <meta property="og:description"        content="{description}" />
             <meta property="og:image"              content="{img_src}" />
+            <meta property="og:image:width"        content="{width}" />
+            <meta property="og:image:height"       content="{height}" />
+            <meta property="og:locale"             content="he_IL" />
         </head>
         <body>
             <script>
