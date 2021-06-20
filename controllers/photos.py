@@ -834,7 +834,6 @@ def upload_chunk(vars):
     ## comment(f"vars crc unmasked: {vars.crc:x} xored {vars.crc ^ 0xffffffff:x}")
     crc = vars.crc
     crc1 = -1 - crc ^ 0xffffffff
-    comment(f"vars.crc is {crc & 0xffffffff:x}. crc1 is {crc1 & 0xffffffff:x}")
     file_name = f'{crc & 0xffffffff:x}{ext}'
     today = datetime.date.today()
     month = str(today)[:-3]
@@ -842,7 +841,6 @@ def upload_chunk(vars):
     path = local_photos_folder() + sub_folder
     dir_util.mkpath(path)
     if vars.what == 'start':
-        ###comment(f"{vars.what}: vars crc: {crc :x}.")
         prec = db((db.TblPhotos.crc == crc) & (db.TblPhotos.deleted != True)).select().first()
         if prec:
             return dict(duplicate=prec.id)
@@ -880,6 +878,5 @@ def upload_chunk(vars):
     return dict()
 
 def handle_loaded_photo(photo_id):
-    ###  comment("handle photo id = ", photo_id)
     from complete_photo_record import add_photo_info
     add_photo_info(photo_id)
