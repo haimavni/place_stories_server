@@ -90,10 +90,11 @@ def add_photo_info(photo_id):
         #     img = img.resize((width, height), Image.LANCZOS)
         # elif height < MAX_HEIGHT and width < MAX_WIDTH:
         width, height = resized(width, height)
+        img = img.resize((width, height), Image.LANCZOS)
             #### TEMPORARY???!!!img = img.resize((width, height), Image.LANCZOS)
         path = local_photos_folder() + sub_folder
         ###exif = img.info['exif'] if img.info and 'exif' in img.info e
-        img.save(file_name, quality=100)  ###, exif=img.info['exif'])
+        img.save(file_name, quality=95)  ###, exif=img.info['exif'])
         fix_owner(path)
         fix_owner(file_name)
         dhash_value = dhash_photo(img=img)
