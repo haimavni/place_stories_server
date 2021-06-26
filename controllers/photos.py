@@ -70,7 +70,8 @@ def update_photo_caption(vars):
     photo_id = int(vars.photo_id)
     caption = vars.caption
     photo_rec = db((db.TblPhotos.id==photo_id) & (db.TblPhotos.deleted != True)).select().first()
-    photo_rec.update(Name=caption, Recognized=True)
+    ##photo_rec.update(Name=caption, Recognized=True)
+    photo_rec.update(Name=caption, handled=True)
     sm = stories_manager.Stories()
     sm.update_story_name(photo_rec.story_id, caption)
     return dict(bla='bla')
@@ -137,7 +138,7 @@ def save_photo_info(vars):
     del pinf.photographer
     pinf.Name = pinf.name
     del pinf.name
-    pinf.Recognized = True
+    ###pinf.Recognized = True
     photo_rec.update_record(**pinf)
     if photo_date_str:
         dates_info = dict(
@@ -410,7 +411,7 @@ def apply_to_selected_photos(vars):
         if story_id:
             db(db.TblStories.id == story_id).update(keywords=keywords, is_tagged=bool(keywords))
         if rec:
-            rec.update_record(Recognized=True)
+            rec.update_record(handled=True)
         if photographer_id:
             rec.update_record(photographer_id=photographer_id)
             rec1 = db(db.TblPhotographers.id == photographer_id).select().first()
@@ -463,7 +464,8 @@ def apply_topics_to_photo(vars):
     is_tagged = len(curr_tags) > 0
     srec = db(db.TblStories.id==rec.story_id).select().first()
     srec.update_record(keywords=keywords, is_tagged=is_tagged)
-    rec.update_record(Recognized=True)
+    # rec.update_record(Recognized=True)
+    rec.update_record(handled=True)
     
 @serve_json
 def assign_photo_photographer(vars):
@@ -491,7 +493,8 @@ def rotate_selected_photos(vars):
 
 @serve_json
 def mark_as_recogized(vars):
-    db(db.TblPhotos.id==int(vars.photo_id)).update(Recognized = True)
+    recognized = False if vars.unrecognize else True
+    db(db.TblPhotos.id==int(vars.photo_id)).update(Recognized=recognized)
 
 @serve_json
 def download_files(vars):

@@ -403,7 +403,7 @@ def create_fb_card(vars):
     fname = create_key()
     with open("/apps_data/social_cards/" + fname + ".html", "w", encoding="utf-8") as f:
         f.write(content)
-    return dict(card_url=f"cards.tol.life/{fname}.html")
+    return dict(card_url=f"html://cards.tol.life/{fname}.html")
 
 
 

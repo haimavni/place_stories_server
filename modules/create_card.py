@@ -13,5 +13,6 @@ def card_data(url, img_src, title, description):
             <script>
                 window.location="https://{url}";
             </script>
+            <a href="https://{url}">{title}</a>
         </body>
     </html>"""

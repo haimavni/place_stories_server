@@ -323,6 +323,7 @@ db.define_table('TblPhotos',
                 Field('Photographer', type='string'), #obsolete
                 Field('photographer_id', type='integer'),
                 Field('Recognized', type='boolean'),
+                Field('handled', type='boolean'), #show photo where recognition is still pending
                 Field('StatusID', type='integer'),
                 Field('Status_id', type='integer'),
                 Field('width', type='integer', default=0),
