@@ -492,7 +492,8 @@ db.define_table('TblConfiguration',
                 Field('enable_member_of_the_day', type='boolean', default=True),
                 Field('enable_books', type='boolean', default=True),
                 Field('promoted_story_expiration', type='integer', default=7),
-                Field('cover_photo', type='string')
+                Field('cover_photo', type='string'),
+                Field('exclusive', type='boolean')
                 )
 
 db.define_table('TblLocaleCustomizations',

@@ -140,6 +140,16 @@ def set_feedback_option(vars):
     return dict()
 
 @serve_json
+def set_exclusive_option(vars):
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    exclusive_on = vars.option == 'user.exclusive-on'
+    config_rec.update_record(exclusive=exclusive_on)
+    return dict()
+
+@serve_json
 def set_version_time_option(vars):
     config_rec = db(db.TblConfiguration).select().first()
     if not config_rec:
