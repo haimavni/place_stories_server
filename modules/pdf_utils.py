@@ -50,7 +50,7 @@ def pdf_to_text(pdfname):
     pdf = pdfplumber.open(pdfname)
     result = ""
     for page in pdf.pages:
-        text = page.extract_text()
+        text = page.extract_text() or ''
         result += text + '\n'
     return result
 

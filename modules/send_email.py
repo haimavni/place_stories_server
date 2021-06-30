@@ -8,6 +8,8 @@ def email(to="", subject="", message="", sender=None):
     if (not sender) or ('@' not in sender):
         request = inject('request')
         host = request.env.http_host
+        if host.startswith('127'):
+            host = "tol.life"
         app = request.application
         dept = sender if sender else 'info'
         sender = f"{dept}@{app}.{host}"
