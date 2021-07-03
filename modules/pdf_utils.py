@@ -59,11 +59,11 @@ def pdf_to_text(pdfname):
             text = ""
             mem = psutil.virtual_memory();
             comment(f"about to handle page {n}. memory percent: {mem.percent}")
-            if mem.percent > 98:
+            if mem.percent > 75:
                 time.sleep(5);
                 mem = psutil.virtual_memory();
                 comment(f"mem after 5 seconds: {mem.percent}")
-                if mem.percent > 98:
+                if mem.percent > 75:
                     break;
             n += 1
             try:
