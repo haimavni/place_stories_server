@@ -54,8 +54,12 @@ def pdf_to_text(pdfname):
         for page in pdf.pages:
             text = ""
             comment("about to handle page")
-            text = page.extract_text() or ''
-            comment(f"text extracted: {text}")
+            try:
+                text = page.extract_text() or ''
+            except Exception as e:
+                log_exception("error pdf to text")
+                text = 'Page text could not be exctracted'
+            ##comment(f"text extracted: {text}")
             result += text + '\n'
         comment(f"done with {pdfname}")
     except Exception as e:
