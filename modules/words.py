@@ -30,7 +30,7 @@ def remove_all_tags(html):
     text = soup.get_text()
     comment = inject('comment')
     if html and not text:
-        comment("get text failed")
+        comment(f"get text failed in remove_all_tags. html: {html}")
     return text
 
 def extract_tokens(s):
