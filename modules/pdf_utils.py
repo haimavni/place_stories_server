@@ -57,7 +57,10 @@ def pdf_to_text(pdfname):
             comment(f"about to handle page {n}")
             n += 1
             try:
-                text = page.extract_text() or ''
+                if n > 150: #does it fail for something specific in page 188?
+                    text = page.extract_text() or ''
+                else:
+                    text = f"skipped page {n}"
                 comment("page text was extracted")
             except Exception as e:
                 comment(f"Exception! {e}")
