@@ -51,12 +51,16 @@ def pdf_to_text(pdfname):
     try:
         pdf = pdfplumber.open(pdfname)
         comment("pdf was opened")
+        n = 0
         for page in pdf.pages:
             text = ""
-            comment("about to handle page")
+            comment(f"about to handle page {n}")
+            n += 1
             try:
                 text = page.extract_text() or ''
+                comment("page text was extracted")
             except Exception as e:
+                comment(f"Exception! {e}")
                 log_exception("error pdf to text")
                 text = 'Page text could not be exctracted'
             ##comment(f"text extracted: {text}")
