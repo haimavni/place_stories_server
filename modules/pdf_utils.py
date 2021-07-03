@@ -11,6 +11,7 @@ import re
 from pdf2image import convert_from_path
 import pdfplumber
 from .injections import inject
+import psutil
 
 PAT = '[א-תךםןףץ]'
 PAT_HEB = PAT.replace(']', ']{2,100}')
@@ -54,13 +55,11 @@ def pdf_to_text(pdfname):
         n = 0
         for page in pdf.pages:
             text = ""
-            comment(f"about to handle page {n}")
+            mem = psutil.virtual_memory();
+            comment(f"about to handle page {n}. memory info: {mem}")
             n += 1
             try:
-                if n > 150: #does it fail for something specific in page 188?
-                    text = page.extract_text() or ''
-                else:
-                    text = f"skipped page {n}"
+                text = page.extract_text() or ''
                 comment("page text was extracted")
             except Exception as e:
                 comment(f"Exception! {e}")
