@@ -148,7 +148,7 @@ def calc_doc_story(doc_id):
         try:
             txt = pdf_to_text(doc_file_name)
         except Exception as e:
-            log_exception('PDF to text error in {}. Name: {}'.format(doc_rec.doc_path, doc_rec.original_file_name))
+            log_exception(f'PDF to text error in {doc_rec.doc_path}. Name: {doc_rec.original_file_name}')
             txt = ''
             good = False
             raise
