@@ -45,14 +45,17 @@ def detect_rtl(doc):
     return n2 > n1
 
 def pdf_to_text(pdfname):
-    comment = inject('comment')
+    comment, log_exception = inject('comment', 'log_exception')
     comment(f"about to open {pdfname}")
-    pdf = pdfplumber.open(pdfname)
     result = ""
-    for page in pdf.pages:
-        text = page.extract_text() or ''
-        result += text + '\n'
-    comment(f"done with {pdfname}")
+    try:
+        pdf = pdfplumber.open(pdfname)
+        for page in pdf.pages:
+            text = page.extract_text() or ''
+            result += text + '\n'
+        comment(f"done with {pdfname}")
+    except Exception as e:
+        log_exception(f"error pdf to text {result}")
     return result
 
 def highlight_pdf(fname, outfname, keywords):
