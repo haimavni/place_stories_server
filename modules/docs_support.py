@@ -142,6 +142,7 @@ def calc_doc_story(doc_id):
         db, STORY4DOC, log_exception, comment = inject('db', 'STORY4DOC', 'log_exception', 'comment')
         doc_rec = db(db.TblDocs.id==doc_id).select().first()
         doc_file_name = local_docs_folder() + doc_rec.doc_path
+        comment(f"enter calc_doc_story of {doc_file_name}")
         sm = Stories()
         good = True
         try:
