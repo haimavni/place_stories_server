@@ -8,6 +8,8 @@ pdf utils:
 import re
 # use poppler utils instead of the 2 below
 ## import fitz causes problems
+import time
+
 from pdf2image import convert_from_path
 import pdfplumber
 from .injections import inject
@@ -56,7 +58,13 @@ def pdf_to_text(pdfname):
         for page in pdf.pages:
             text = ""
             mem = psutil.virtual_memory();
-            comment(f"about to handle page {n}. memory info: {mem}")
+            comment(f"about to handle page {n}. memory percent: {mem.percent}")
+            if mem.percent > 98:
+                time.sleep(5);
+                mem = psutil.virtual_memory();
+                comment(f"mem after 5 seconds: {mem.percent}")
+                if mem.percent > 98:
+                    break;
             n += 1
             try:
                 text = page.extract_text() or ''
