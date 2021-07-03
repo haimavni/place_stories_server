@@ -277,7 +277,10 @@ def get_hit_statistics(vars):
             #select(db.TblPageHits.count, db.TblPageHits.new_count, tbl[name], tbl.id, limitby=(0,2000), orderby=~fld)
         k = str(tbl)
         if what == 'MEMBER': #the virtual field trick does not work...
-            lst = [dict(count=r.TblPageHits.count, new_count=r.TblPageHits.new_count or 0, name=r[k]['first_name'] + ' ' + r[k]['last_name'], item_id=r[k].id) for r in lst]
+            lst = [dict(count=r.TblPageHits.count,
+                        new_count=r.TblPageHits.new_count or 0,
+                        name=(r[k]['first_name'] or "") + ' ' + (r[k]['last_name'] or ""),
+                        item_id=r[k].id) for r in lst]
         else:
             lst = [dict(count=r.TblPageHits.count, new_count=r.TblPageHits.new_count or 0, name=r[k][name], item_id=r[k].id) for r in lst]
         result[what] = lst
