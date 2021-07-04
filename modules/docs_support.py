@@ -141,31 +141,44 @@ def calc_doc_story(doc_id):
     try:
         db, STORY4DOC, log_exception, comment = inject('db', 'STORY4DOC', 'log_exception', 'comment')
         doc_rec = db(db.TblDocs.id==doc_id).select().first()
+        if doc_rec.text_extracted:
+            return True
         doc_file_name = local_docs_folder() + doc_rec.doc_path
         comment(f"enter calc_doc_story of {doc_file_name}")
         sm = Stories()
         good = True
+        pdf_result = None
         try:
-            txt = pdf_to_text(doc_file_name)
+            pdf_result = pdf_to_text(doc_file_name, doc_rec.num_pages_extracted)
         except Exception as e:
             log_exception(f'PDF to text error in {doc_rec.doc_path}. Name: {doc_rec.original_file_name}')
             txt = ''
             good = False
             raise
-        if not txt:
+        if not pdf_result:
             txt = '- - - - -'
         if doc_rec.story_id:
+            txt = ''
+            if doc_rec.num_pages_extracted:
+                story_info = sm.get_story(doc_rec.story_id)
+                txt = story_info.story_text
+            txt = txt + pdf_result.text
             story_info = Storage(
                 story_text=txt,
                 name=doc_rec.name
             )
             sm.update_story(doc_rec.story_id, story_info)
-            doc_rec.update_record(text_extracted=True)
+            doc_rec.update_record(text_extracted=pdf_result.num_pages==pdf_result.num_pages_extracted,
+                                  num_pages=pdf_result.num_pages,
+                                  num_pages_extracted=pdf_result.num_pages_extracted)
         else:
-            story_info = sm.get_empty_story(used_for=STORY4DOC, story_text=txt, name=doc_rec.original_file_name)
+            story_info = sm.get_empty_story(used_for=STORY4DOC, story_text=pdf_result.text, name=doc_rec.original_file_name)
             result = sm.add_story(story_info)
             story_id = result.story_id
-            doc_rec.update_record(story_id=story_id, text_extracted=True)
+            doc_rec.update_record(story_id=story_id,
+                                  text_extracted=pdf_result.num_pages==pdf_result.num_pages_extracted,
+                                  num_pages=pdf_result.num_pages,
+                                  num_pages_extracted=pdf_result.num_pages_extracted)
     except Exception as e:
         log_exception('Error calculating {}'.format(doc_rec.doc_path))
         return False

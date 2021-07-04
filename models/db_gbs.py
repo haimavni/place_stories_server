@@ -397,6 +397,8 @@ db.define_table('TblDocs',
                 Field('deleted', type='boolean', default=False),
                 Field('story_id', type=db.TblStories),
                 Field('text_extracted', type='boolean', default=False),
+                Field('num_pages_extracted', type='integer'),
+                Field('num_pages', type='integer'),
                 Field('uploader', type=db.auth_user),
                 Field('doc_date', type='date', default=NO_DATE),
                 Field('doc_date_dateunit', type='string', default='Y'), # D, M or Y for day, month, year

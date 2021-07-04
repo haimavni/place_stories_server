@@ -9,6 +9,7 @@ import re
 # use poppler utils instead of the 2 below
 ## import fitz causes problems
 import time
+from gluon.storage import Storage
 
 from pdf2image import convert_from_path
 import pdfplumber
@@ -47,27 +48,33 @@ def detect_rtl(doc):
                 return True
     return n2 > n1
 
-def pdf_to_text(pdfname):
+def pdf_to_text(pdfname, num_pages_extracted):
     comment, log_exception = inject('comment', 'log_exception')
     comment(f"about to open {pdfname}")
+    num_pages_extracted = num_pages_extracted or 0
     result = ""
+    num_pages = None
     try:
         pdf = pdfplumber.open(pdfname)
         comment("pdf was opened")
         n = 0
+        m = 0
+        num_pages = len(pdf.pages)
         for page in pdf.pages:
+            if n < num_pages_extracted:
+                n += 1
+                continue
             text = ""
             mem = psutil.virtual_memory();
             comment(f"about to handle page {n}. memory percent: {mem.percent}")
-            if mem.percent > 75:
-                time.sleep(5);
-                mem = psutil.virtual_memory();
-                comment(f"mem after 5 seconds: {mem.percent}")
-                if mem.percent > 75:
-                    break;
-            n += 1
+            if mem.percent > 95:
+                break;
+            if m > 50:  # for development only. remove soon
+                break
             try:
                 text = page.extract_text() or ''
+                n += 1
+                m += 1
                 comment("page text was extracted")
             except Exception as e:
                 comment(f"Exception! {e}")
@@ -77,8 +84,8 @@ def pdf_to_text(pdfname):
             result += text + '\n'
         comment(f"done with {pdfname}")
     except Exception as e:
-        log_exception(f"error pdf to text {result}")
-    return result
+        log_exception(f"error in pdf to text {result}")
+    return Storage(text=result, num_pages_extracted=n, num_pages=num_pages)
 
 def highlight_pdf(fname, outfname, keywords):
     """
