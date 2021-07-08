@@ -7,7 +7,7 @@ if platform == 'linux':
 
 
 def url_folder(kind):
-    request = inject('request')
+    request, comment = inject('request', 'comment')
     app = request.application
     app1 = app.split('__')[0]  # we want dev, test and www apps share the same photos
     h = 'https' if request.is_https else 'http'
@@ -82,14 +82,15 @@ def safe_open(filename, mode):
 def url_video_folder():
     request = inject('request')
     app = request.application
-    app1 = app.split('__')[0]  # we want dev, test and www apps share the same photos
+    app1 = app.split('__')[0]  # we want dev, test and www apps share the same photos/videos
     h = 'https' if request.is_https else 'http'
-    return '{h}://{host}/{app}/static/apps_data/videos/{app1}/'.format(h=h, host=request.env.http_host, app=app, app1=app1)
+    host = request.env.http_host
+    return f'{h}://{host}/{app}/static/apps_data/{app1}/videos/'
 
 def local_video_folder():
     request = inject('request')
     app = request.application.split('__')[0]  ## we want gbs__dev, gbs__test etc. all to use the same data
-    path = '/apps_data/videos/{app}/'.format(app=app)
+    path = '/apps_data/{app}/videos/'.format(app=app)
     if platform != 'linux':
         return path
     curr_uid = os.geteuid()

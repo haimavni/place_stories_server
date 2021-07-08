@@ -227,7 +227,8 @@ def get_video_sample(vars):
 @serve_json
 def get_video_info(vars):
     video_id = int(vars.video_id)
-    video_source = url_video_folder() + 'vid001.mp4'  ##for development
+    vid_name = f"vid00{video_id}.mp4"
+    video_source = url_video_folder() + vid_name  ##for development
     cue_points = calc_cue_points(video_id)
     ##sm = stories_manager.Stories()
     ###if not rec:
