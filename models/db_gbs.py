@@ -67,7 +67,10 @@ db.define_table('TblStories',
                 Field('last_chat_time', type='datetime', default=NO_DATE),
                 Field('sorting_key', type='string', default=''), # sequence of zero-padded integers
                 Field('book_id', type='integer'),
-                Field('imported_from', type='string')
+                Field('imported_from', type='string'),
+                Field('first_story', type='integer'),
+                Field('chapter_num', type='integer'),
+                Field('num_chapters', type='integer')
 )                
 
 db.define_table('TblStoryVersions',
