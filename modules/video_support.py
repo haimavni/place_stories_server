@@ -14,7 +14,7 @@ def youtube_info(src):
         comment("got exception")
         return None
     x = dir(yt)
-    comment("dir of yt: {x}")
+    comment(f"dir of yt: {x}")
     comment(f"thumbnail: {yt.thumbnail_url}")
     comment(f"description: {yt.description}")
     try:
