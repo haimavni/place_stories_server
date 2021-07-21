@@ -200,6 +200,17 @@ def set_member_of_the_day_option(vars):
     return dict()
 
 @serve_json
+def set_cuepoints_option(vars):
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    cuepoints_on = vars.option == 'user.enable-cuepoints-on'
+    config_rec.update_record(enable_cuepoints=cuepoints_on)
+    return dict()
+
+
+@serve_json
 def set_quick_upload_option(vars):
     config_rec = get_config_rec()
     quick_upload_on = vars.option == 'user.quick-upload-on'

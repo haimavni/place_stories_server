@@ -37,7 +37,7 @@ def get_photo_detail(vars):
     if not story:
         story = sm.get_empty_story(used_for=STORY4PHOTO)
     all_dates = get_all_dates(rec)
-    photographer = db(db.TblPhotographers.id==rec.photographer_id).select().first()
+    photographer = db(db.TblPhotographers.id==rec.photographer_id).select().first() if rec.photographer_id else None
     photographer_name = photographer.name if photographer else ''
     photographer_id = photographer.id if photographer else None
     photo_topics = get_photo_topics(rec.story_id)

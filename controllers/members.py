@@ -552,6 +552,7 @@ def get_constants(vars):
             STORY4HELP=STORY4HELP,
             STORY4FEEDBACK=STORY4FEEDBACK,
             STORY4DOC=STORY4DOC,
+            STORY4VIDEO=STORY4VIDEO,
             STORY4AUDIO=STORY4AUDIO,
             STORY4ARTICLE=STORY4ARTICLE
         ),
@@ -729,9 +730,6 @@ def apply_topics_to_story(vars):
     current_ids = [topic.id for topic in story_topics]
     current_ids = set(current_ids)
     new_topic_was_added = False
-    tbl = db.TblEvents if usage_char == 'E' else db.TblTerms if usage_char == 'T' else None
-    if not tbl:
-        raise Exception("Not a story or term")
     curr_tag_ids = set(get_tag_ids(story_id, usage_char))
     for topic_id in current_ids:
         if topic_id not in curr_tag_ids:
