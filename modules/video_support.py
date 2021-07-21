@@ -13,6 +13,10 @@ def youtube_info(src):
     except:
         comment("got exception")
         return None
+    x = dir(yt)
+    comment("dir of yt: {x}")
+    comment(f"thumbnail: {yt.thumbnail_url}")
+    comment(f"description: {yt.description}")
     try:
         result = Storage(title=yt.title,
                        thumbnail_url=yt.thumbnail_url,
