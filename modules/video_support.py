@@ -37,12 +37,13 @@ def calc_youtube_info(video_id):
     return False
 
 
-def calc_missing_youtube_info():
+def calc_missing_youtube_info(count=10):
     db = inject('db')
     lst = db((db.TblVideos.video_type == 'youtube') & (db.TblVideos.deleted != True) & (
                 db.TblVideos.thumbnail_url == None)).select(db.TblVideos.id)
     cnt = 0
-    for vrec in lst[:50]:
+    for vrec in lst[:count]:
         if calc_youtube_info(vrec.id):
             cnt += 1
+        db.commit()
     return dict(summray = f"{cnt} out of {len(lst)} videos calculated")
