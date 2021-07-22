@@ -30,10 +30,11 @@ def youtube_info(src):
 
 
 def calc_youtube_info(video_id):
-    db = inject('db')
+    db, comment = inject('db', 'comment')
     vrec = db(db.TblVideos.id == video_id).select().first()
     if (not vrec) or (vrec.video_type != 'youtube'):
         return
+    comment(f"---video_id: {video_id}---vrec.src is {vrec.src}")
     info = youtube_info(vrec.src)
     if info:
         vrec.update_record(**info)
