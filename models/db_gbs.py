@@ -387,11 +387,10 @@ db.define_table('TblVideos',
                 Field('touch_time', type='date', default=NO_DATE), #used to promote videos
                 Field('upload_date', type='datetime'),
                 # Youtube info
-                Field('author', type='string'),
+                Field('uploader', type='string'),
                 Field('title', type='string'),
                 Field('description', type='text'),
-                Field('publish_date', type='datetime'),
-                Field('thumbnail_url', type='string')
+                Field('upload_date', type='datetime')
                 )
 
 db.define_table('TblDocs',

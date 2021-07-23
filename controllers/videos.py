@@ -311,6 +311,11 @@ def update_cue_members(vars):
             db.TblMembersVideoCuePoints.insert(member_id=mem_id, cue_point_id=cue_id)
     return dict()
 
+@serve_json
+def video_cue_points(vars):
+    cue_points = calc_cue_points(vars.video_id)
+    return dict(cue_points=cue_points)
+
 def calc_cue_members(video_id, time):
     q = (db.TblMembersVideoCuePoints.cue_point_id == db.TblVideoCuePoints.id) & \
         (db.TblVideoCuePoints.video_id == video_id) & \
