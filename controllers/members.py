@@ -1123,7 +1123,7 @@ def assign_photos(story_list):
     video_story_ids = list(video_story_list.keys())
     lst = db(db.TblVideos.story_id.belongs(video_story_ids)).select(db.TblVideos.story_id, db.TblVideos.src)
     for video in lst:
-        video_story_list[video.story_id].video_src = "//www.youtube.com/embed/" + video.src + "?wmode=opaque"
+        video_story_list[video.story_id].video_src = video.src
 
 
 def photo_member_ids(photo_id):

@@ -243,21 +243,15 @@ def update_video_date(vars):
 @serve_json
 def get_video_info(vars):
     video_id = int(vars.video_id)
-    vrec = db(db.TblVideos.id==video_id).select().first()
+    if vars.by_story_id:
+        vrec = db(db.TblVideos.story_id==video_id).select().first()
+        video_id = vrec.id
+    else:
+        vrec = db(db.TblVideos.id==video_id).select().first()
     video_source = vrec.src
     cue_points = calc_cue_points(video_id)
     sm = stories_manager.Stories()
     video_story=sm.get_story(vrec.story_id)
-    if not video_story:
-        video_story = sm.get_empty_story(used_for=STORY4VIDEO)
-    if not video_story.story_text:
-        story_info = Storage(story_text=vrec.description,
-                          preview=vrec.description
-                          )
-        if not video_story.name:
-            story_info.name=vrec.title
-        sm.update_story(vrec.story_id, story_info)
-        video_story = sm.get_story(vrec.story_id)
     photographer = db(db.TblPhotographers.id==vrec.photographer_id).select().first() if vrec.photographer_id else None
     photographer_name = photographer.name if photographer else ''
     photographer_id = photographer.id if photographer else None
@@ -265,6 +259,7 @@ def get_video_info(vars):
     all_dates = get_all_dates(vrec)
     return dict(video_source=video_source,
                 video_story=video_story,
+                video_id=video_id,
                 photographer_name=photographer_name,
                 photographer_id=photographer_id,
                 video_date_str = all_dates.video_date.date,

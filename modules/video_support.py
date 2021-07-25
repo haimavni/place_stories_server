@@ -1,5 +1,5 @@
 from youtube_dl import YoutubeDL
-
+import stories_manager
 from gluon.storage import Storage
 from injections import inject
 
@@ -25,13 +25,26 @@ def youtube_info(src):
 
 
 def calc_youtube_info(video_id):
-    db, comment = inject('db', 'comment')
+    db, comment, STORY4VIDEO = inject('db', 'comment', 'STORY4VIDEO')
     vrec = db(db.TblVideos.id == video_id).select().first()
     if (not vrec) or (vrec.video_type != 'youtube'):
         return
     info = youtube_info(vrec.src)
     if info:
         vrec.update_record(**info)
+        sm = stories_manager.Stories()
+        video_story = sm.get_story(vrec.story_id)
+        if not video_story:
+            video_story = sm.get_empty_story(used_for=STORY4VIDEO)
+        story_info = None
+        if not video_story.story_text:
+            story_info = Storage(story_text=vrec.description,
+                                 preview=vrec.description)
+        if not video_story.name:
+            story_info = story_info or Storage()
+            story_info.name = vrec.name or vrec.title
+        if story_info:
+            sm.update_story(vrec.story_id, story_info)
         return True
     return False
 
@@ -45,4 +58,4 @@ def calc_missing_youtube_info(count=10):
         if calc_youtube_info(vrec.id):
             cnt += 1
         db.commit()
-    return dict(summray=f"{cnt} out of {len(lst)} videos calculated")
+    return dict(summary=f"{cnt} out of {len(lst)} videos calculated")
