@@ -22,8 +22,8 @@ import zipfile
 from pybktree import BKTree, hamming_distance
 import time
 from . import ws_messaging
-from gluon._compat import to_bytes
 from misc_utils import multisort
+from gluon._compat import to_bytes
 
 MAX_WIDTH = 1200
 MAX_HEIGHT = 800
@@ -80,6 +80,7 @@ def save_uploaded_photo_collection(collection, user_id):
 def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
     auth, comment, log_exception, db, STORY4PHOTO, NO_DATE = inject('auth', 'comment', 'log_exception', 'db', 'STORY4PHOTO', 'NO_DATE')
     user_id = user_id or auth.current_user()
+    ###blob = bytearray(s)
     blob = to_bytes(s)
     crc = zlib.crc32(blob)
     prec = db((db.TblPhotos.crc==crc) & (db.TblPhotos.deleted != True)).select().first()
@@ -540,7 +541,7 @@ def save_member_face(params):
         if params.old_member_id and params.old_member_id > 0 and params.old_member_id != face.member_id:
             db(q).delete()
     member_name = member_display_name(member_id=face.member_id)
-    db(db.TblPhotos.id==face.photo_id).update(Recognized=True)
+    db(db.TblPhotos.id==face.photo_id).update(Recognized=True, handled=True)
     ws_messaging.send_message(key='MEMBER_PHOTO_LIST_CHANGED', group='ALL', article_id=face.article_id, photo_id=face.photo_id)
     return Storage(member_name=member_name, face_photo_url=face_photo_url)
 
@@ -576,7 +577,7 @@ def save_article_face(params):
             db(q).delete()
     rec = db(db.TblArticles.id==face.article_id).select().first()
     article_name = rec.name
-    db(db.TblPhotos.id==face.photo_id).update(Recognized=True)
+    db(db.TblPhotos.id==face.photo_id).update(Recognized=True, handled=True)
     ws_messaging.send_message(key='ARTICLE_PHOTO_LIST_CHANGED', group='ALL', article_id=face.article_id, photo_id=face.photo_id)
     return Storage(article_name=article_name, face_photo_url=face_photo_url)
 
@@ -816,7 +817,7 @@ def convert_to_webp(photo_id):
 
 def get_photo_url(what, photo_rec, webp_supported):
     path = photos_folder(what)
-    photo_path = photo_rec.photo_path_webp if photo_path_webp and webp_supported else photo_rec.photo_path
+    photo_path = photo_rec.photo_path_webp if photo_rec.photo_path_webp and webp_supported else photo_rec.photo_path
     return path + photo_path
 
 def degrees_to_float(tup):
@@ -868,9 +869,9 @@ def recalculate_recognized():
     db = inject('db')
     db(db.TblPhotos.Recognized==None).update(Recognized=False)
     for pm in db(db.TblMemberPhotos).select(db.TblMemberPhotos.Photo_id, db.TblMemberPhotos.Photo_id.count(),groupby=db.TblMemberPhotos.Photo_id):
-        db(db.TblPhotos.id==pm.TblMemberPhotos.Photo_id).update(Recognized=True)
+        db(db.TblPhotos.id==pm.TblMemberPhotos.Photo_id).update(Recognized=True, handled=True)
     for pm in db(db.TblArticlePhotos).select(db.TblArticlePhotos.photo_id, db.TblArticlePhotos.photo_id.count(), groupby=db.TblArticlePhotos.photo_id):
-        db(db.TblPhotos.id==pm.TblArticlePhotos.photo_id).update(Recognized=True)
+        db(db.TblPhotos.id==pm.TblArticlePhotos.photo_id).update(Recognized=True, handled=True)
     return "done"
 
 def fix_date_ends():

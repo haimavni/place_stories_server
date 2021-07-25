@@ -19,6 +19,7 @@ def save_video(vars):
     if not params.id:  # creation, not modification
         pats = dict(
             youtube=r'https://(?:www.youtube.com/watch\?v=|youtu\.be/)(?P<code>[^&]+)',
+            html5=r'(?P<code>.+\.mp4)',
             vimeo=r'https://vimeo.com/(?P<code>\d+)',
             google_drive=r'https://drive.google.com/file/d/(?P<code>[^/]+?)/.*',
             google_photos=r'https://photos.app.goo.gl/(?P<code>[^&]+)'
@@ -208,6 +209,12 @@ def promote_videos(vars):
     db(q).update(touch_time=today)
     return dict()
 
+@serve_json
+def assign_video_photographer(vars):
+    video_id = int(vars.video_id)
+    photographer_id = int(vars.photographer_id) if vars.photographer_id else None
+    db(db.TblVideos.id==video_id).update(photographer_id=photographer_id)
+    return dict()
 
 @serve_json
 def get_video_sample(vars):
@@ -223,17 +230,42 @@ def get_video_sample(vars):
     lst = lst1 + lst2
     return dict(video_list=lst)
 
+@serve_json
+def update_video_date(vars):
+    video_dates_info = dict(
+        video_date = (vars.video_date_str, int(vars.video_date_datespan))
+    )
+    vrec = db((db.TblVideos.id==int(vars.video_id)) & (db.TblVideos.deleted != True)).select().first()
+    update_record_dates(vrec, video_dates_info)
+    return dict()
+
 
 @serve_json
 def get_video_info(vars):
     video_id = int(vars.video_id)
-    video_source = url_video_folder() + 'vid001.mp4'  ##for development
+    if vars.by_story_id:
+        vrec = db(db.TblVideos.story_id==video_id).select().first()
+        video_id = vrec.id
+    else:
+        vrec = db(db.TblVideos.id==video_id).select().first()
+    video_source = vrec.src
     cue_points = calc_cue_points(video_id)
-    ##sm = stories_manager.Stories()
-    ###if not rec:
-    ##return dict(photo_name='???')
-    video_story = dict(name='machzor 1953')
-    return dict(video_source=video_source, video_story=video_story, cue_points=cue_points)
+    sm = stories_manager.Stories()
+    video_story=sm.get_story(vrec.story_id)
+    photographer = db(db.TblPhotographers.id==vrec.photographer_id).select().first() if vrec.photographer_id else None
+    photographer_name = photographer.name if photographer else ''
+    photographer_id = photographer.id if photographer else None
+    video_topics = get_video_topics(vrec.story_id)
+    all_dates = get_all_dates(vrec)
+    return dict(video_source=video_source,
+                video_story=video_story,
+                video_id=video_id,
+                photographer_name=photographer_name,
+                photographer_id=photographer_id,
+                video_date_str = all_dates.video_date.date,
+                photo_date_datespan = all_dates.video_date.span,
+                video_topics=video_topics,
+                cue_points=cue_points)
 
 @serve_json
 def update_video_cue_points(vars):
@@ -273,6 +305,11 @@ def update_cue_members(vars):
         if mem_id not in old_member_ids:
             db.TblMembersVideoCuePoints.insert(member_id=mem_id, cue_point_id=cue_id)
     return dict()
+
+@serve_json
+def video_cue_points(vars):
+    cue_points = calc_cue_points(vars.video_id)
+    return dict(cue_points=cue_points)
 
 def calc_cue_members(video_id, time):
     q = (db.TblMembersVideoCuePoints.cue_point_id == db.TblVideoCuePoints.id) & \
@@ -317,3 +354,15 @@ def make_videos_query(vars):
         q1 = get_topics_query(vars.selected_topics)
         q &= q1
     return q
+
+def get_video_topics(story_id):
+    db = inject('db')
+    q = (db.TblItemTopics.story_id == story_id) & (db.TblItemTopics.item_type == 'V') & (
+                db.TblTopics.id == db.TblItemTopics.topic_id)
+    lst = db(q).select()
+    lst = [itm.TblTopics.as_dict() for itm in lst]
+    for itm in lst:
+        itm['sign'] = ""
+    lst = make_unique(lst, 'id')
+    return lst
+

@@ -200,3 +200,9 @@ def member_photos_by_updater(updater_id):
         select(db.TblMembers.id, db.TblMembers.first_name, db.TblMembers.last_name, db.TblMembers.updater_id,
                db.TblMemberPhotos.Photo_id, orderby=db.TblMembers.id)
     return lst
+
+
+def profile_photo_path(story_id):
+    db = inject('db')
+    member_rec = db(db.TblMembers.story_id == story_id).select().first()
+    return photos_folder('profile_photos') + (member_rec.facePhotoURL or "dummy_face.png")

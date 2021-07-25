@@ -3,6 +3,8 @@
 
 from ws_messaging import send_message, messaging_group
 from admin_support import AccessManager
+from send_email import email
+import create_card
 
 #########################################################################
 ## This is a sample controller
@@ -218,7 +220,7 @@ def get_interested_contact(vars):
     </div>
     </html>
     '''.format(rtltr=vars.rtltr, name=vars.contact_name, email=vars.contact_email, mobile=vars.contact_mobile, message=vars.contact_message)
-    result = mail.send(sender=f"admin@{host}", to="haimavni@gmail.com", subject = "New Tol.Life prospect", message=('', message))
+    result = email(sender="admin", to="haimavni@gmail.com", subject = "New Tol.Life prospect", message=message)
     error = "" if result else mail.error
     return dict(result=result, error=error)
 
@@ -275,7 +277,10 @@ def get_hit_statistics(vars):
             #select(db.TblPageHits.count, db.TblPageHits.new_count, tbl[name], tbl.id, limitby=(0,2000), orderby=~fld)
         k = str(tbl)
         if what == 'MEMBER': #the virtual field trick does not work...
-            lst = [dict(count=r.TblPageHits.count, new_count=r.TblPageHits.new_count or 0, name=r[k]['first_name'] + ' ' + r[k]['last_name'], item_id=r[k].id) for r in lst]
+            lst = [dict(count=r.TblPageHits.count,
+                        new_count=r.TblPageHits.new_count or 0,
+                        name=(r[k]['first_name'] or "") + ' ' + (r[k]['last_name'] or ""),
+                        item_id=r[k].id) for r in lst]
         else:
             lst = [dict(count=r.TblPageHits.count, new_count=r.TblPageHits.new_count or 0, name=r[k][name], item_id=r[k].id) for r in lst]
         result[what] = lst
@@ -319,7 +324,7 @@ def get_locale_overrides(vars):
 @serve_json
 def notify_new_files(vars):
     uploaded_file_ids = vars.uploaded_file_ids
-    ws_messaging.send_message(key=vars.what +'_WERE_UPLOADED', group='ALL', uploaded_file_ids=uploaded_file_ids)
+    send_message(key=vars.what +'_WERE_UPLOADED', group='ALL', uploaded_file_ids=uploaded_file_ids)
     return dict()
 
 @serve_json
@@ -339,7 +344,7 @@ def reset_password(vars):
 
     '''
     mail_message = ('', mail_message_fmt.format(first_name=user_rec.first_name, last_name=user_rec.last_name, link=confirmation_link))
-    result = mail.send(to=vars.email, subject='New password', message=mail_message)
+    result = email(to=vars.email, subject='New password', message=mail_message)
     if not result:
         error_message = mail.error.strerror
         raise Exception("Email could not be sent - {em}".format(em=error_message))
@@ -359,7 +364,7 @@ def get_shortcut(vars):
             raise Exception('Non unique key')
         db.TblShortcuts.insert(url=url, key=key)
     shortcut = '/' + request.application + '?key='  + key
-    comment("get shortcut: ", shortcut)
+    comment(f"get shortcut: {shortcut}")
     return dict(shortcut=shortcut)
 
 def create_key():
@@ -393,7 +398,15 @@ def notify_new_feedback():
 
     Click <a href="{host}/{app}/static/aurelia/index.html#/feedbacks">here</a> to view.
     '''.format(host=host,app=app).replace('\n', '<br>'))
-    mail.send(to=receivers, subject='New GB Stories Feedback', message=message)
+    email(to=receivers, subject='New Stories Feedback', message=message)
+
+@serve_json
+def create_fb_card(vars):
+    content = create_card.card_data(vars.url, vars.img_src, vars.title, vars.description)
+    fname = create_key()
+    with open("/apps_data/social_cards/" + fname + ".html", "w", encoding="utf-8") as f:
+        f.write(content)
+    return dict(card_url=f"cards.tol.life/{fname}.html")
 
 
 

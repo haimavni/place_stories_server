@@ -11,6 +11,7 @@ import os
 import re
 from gluon.storage import Storage
 from gluon.utils import web2py_uuid
+import array
 
 @serve_json
 def upload_photo(vars):
@@ -36,7 +37,7 @@ def get_photo_detail(vars):
     if not story:
         story = sm.get_empty_story(used_for=STORY4PHOTO)
     all_dates = get_all_dates(rec)
-    photographer = db(db.TblPhotographers.id==rec.photographer_id).select().first()
+    photographer = db(db.TblPhotographers.id==rec.photographer_id).select().first() if rec.photographer_id else None
     photographer_name = photographer.name if photographer else ''
     photographer_id = photographer.id if photographer else None
     photo_topics = get_photo_topics(rec.story_id)
@@ -69,7 +70,8 @@ def update_photo_caption(vars):
     photo_id = int(vars.photo_id)
     caption = vars.caption
     photo_rec = db((db.TblPhotos.id==photo_id) & (db.TblPhotos.deleted != True)).select().first()
-    photo_rec.update(Name=caption, Recognized=True)
+    ##photo_rec.update(Name=caption, Recognized=True)
+    photo_rec.update(Name=caption, handled=True)
     sm = stories_manager.Stories()
     sm.update_story_name(photo_rec.story_id, caption)
     return dict(bla='bla')
@@ -136,7 +138,7 @@ def save_photo_info(vars):
     del pinf.photographer
     pinf.Name = pinf.name
     del pinf.name
-    pinf.Recognized = True
+    ###pinf.Recognized = True
     photo_rec.update_record(**pinf)
     if photo_date_str:
         dates_info = dict(
@@ -171,6 +173,7 @@ def get_faces(vars):
     face_ids = set([face.member_id for face in faces])
     candidates = [c for c in candidates if not c['member_id'] in face_ids]
     return dict(faces=faces, candidates=candidates)
+
 
 @serve_json
 def get_articles(vars):
@@ -408,7 +411,7 @@ def apply_to_selected_photos(vars):
         if story_id:
             db(db.TblStories.id == story_id).update(keywords=keywords, is_tagged=bool(keywords))
         if rec:
-            rec.update_record(Recognized=True)
+            rec.update_record(handled=True)
         if photographer_id:
             rec.update_record(photographer_id=photographer_id)
             rec1 = db(db.TblPhotographers.id == photographer_id).select().first()
@@ -461,7 +464,8 @@ def apply_topics_to_photo(vars):
     is_tagged = len(curr_tags) > 0
     srec = db(db.TblStories.id==rec.story_id).select().first()
     srec.update_record(keywords=keywords, is_tagged=is_tagged)
-    rec.update_record(Recognized=True)
+    # rec.update_record(Recognized=True)
+    rec.update_record(handled=True)
     
 @serve_json
 def assign_photo_photographer(vars):
@@ -489,7 +493,8 @@ def rotate_selected_photos(vars):
 
 @serve_json
 def mark_as_recogized(vars):
-    db(db.TblPhotos.id==int(vars.photo_id)).update(Recognized = True)
+    recognized = False if vars.unrecognize else True
+    db(db.TblPhotos.id==int(vars.photo_id)).update(Recognized=recognized)
 
 @serve_json
 def download_files(vars):
@@ -732,6 +737,7 @@ def make_photos_query(vars):
         q &= q1
     return q 
 
+
 def with_members_query(member_ids):
     result = None
     for mid in member_ids:
@@ -744,12 +750,14 @@ def with_members_query(member_ids):
             result = set(lst)
     return (db.TblPhotos.id.belongs(result))
 
+
 def unlocated_faces():
     q = (db.TblPhotos.id == db.TblMemberPhotos.Photo_id) & (db.TblMemberPhotos.x == None)
     lst = db(q).select(db.TblPhotos.id, db.TblMemberPhotos.id.count(), groupby=[db.TblPhotos.id], limitby=(0,5000))
     lst = [prec.TblPhotos.id for prec in lst]
     return lst
-    
+
+
 def pair_photos(front_id, back_id):
     rec = db((db.TblPhotoPairs.front_id == front_id) & (db.TblPhotos.deleted != True)).select().first()
     if rec:
@@ -758,6 +766,7 @@ def pair_photos(front_id, back_id):
     db(db.TblPhotoPairs.back_id == back_id).delete()
     db.TblPhotoPairs.insert(front_id=front_id, back_id=back_id)
     db(db.TblPhotos.id == back_id).update(is_back_side=True)
+
 
 def flip_photo_pair(front_id, back_id):
     #raise Exception("flip photo pair not ready")
@@ -768,6 +777,7 @@ def flip_photo_pair(front_id, back_id):
     db(db.TblPhotoPairs.id == i).update(front_id=back_id, back_id=front_id)
     db(db.TblPhotos.id == front_id).update(is_back_side=True)
     db(db.TblPhotos.id == back_id).update(is_back_side=False)
+
 
 def process_photo_list(lst, photo_pairs=dict(), webpSupported=False):
     for rec in lst:
@@ -813,9 +823,63 @@ def process_photo_list(lst, photo_pairs=dict(), webpSupported=False):
         result.append(dic)
     return result
 
+
 def delete_photos(photo_list):
     a = db(db.TblPhotos.id.belongs(photo_list))
     a.update(deleted=True)
     story_ids = [rec.story_id for rec in a.select()]
     db(db.TblStories.id.belongs(story_ids)).update(deleted=True)
 
+
+@serve_json
+def upload_chunk(vars):
+    original_file_name, ext = os.path.splitext(vars.file_name)
+    ## comment(f"vars crc unmasked: {vars.crc:x} xored {vars.crc ^ 0xffffffff:x}")
+    crc = vars.crc
+    crc1 = -1 - crc ^ 0xffffffff
+    file_name = f'{crc & 0xffffffff:x}{ext}'
+    today = datetime.date.today()
+    month = str(today)[:-3]
+    sub_folder = 'uploads/' + month + '/'
+    path = local_photos_folder() + sub_folder
+    dir_util.mkpath(path)
+    if vars.what == 'start':
+        prec = db((db.TblPhotos.crc == crc) & (db.TblPhotos.deleted != True)).select().first()
+        if prec:
+            return dict(duplicate=prec.id)
+        prec = db((db.TblPhotos.crc == crc1) & (db.TblPhotos.deleted != True)).select().first()
+        if prec:
+            comment("with crc1 duplicate was found ")
+            return dict(duplicate=prec.id)
+        with open(path + file_name, 'wb') as f:
+            pass
+        sm = stories_manager.Stories()
+        story_info = sm.get_empty_story(used_for=STORY4PHOTO, story_text="", name=original_file_name)
+        result = sm.add_story(story_info)
+        story_id = result.story_id
+        record_id = db.TblPhotos.insert(
+            photo_path=sub_folder + file_name,
+            original_file_name=original_file_name,
+            Name=original_file_name,
+            crc=crc,
+            story_id=story_id,
+            uploader=vars.user_id,
+            deleted=False
+        )
+        return dict(record_id=record_id)
+    elif vars.what == 'save':
+        with open(path + file_name, 'ab') as f:
+            n = f.seek(vars.start)
+            fil = vars.file
+            blob = bytearray(fil.BINvalue)
+            loc = f.tell()
+            f.write(blob)
+        if vars.is_last:
+            handle_loaded_photo(vars.record_id)
+        return dict()
+
+    return dict()
+
+def handle_loaded_photo(photo_id):
+    from complete_photo_record import add_photo_info
+    add_photo_info(photo_id)

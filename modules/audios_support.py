@@ -5,15 +5,8 @@ from distutils import dir_util
 import zlib
 from gluon._compat import to_bytes
 import array
-from .date_utils import datetime_from_str
-from gluon.storage import Storage
-import random
-import pwd
 from .stories_manager import Stories
 from .folders import url_folder, local_folder
-from .pdf_utils import pdf_to_text, save_pdf_jpg
-from time import sleep
-from . import ws_messaging
 
 def save_uploaded_audio(file_name, s, user_id, sub_folder=None):
     auth, log_exception, db, STORY4AUDIO = inject('auth', 'log_exception', 'db', 'STORY4AUDIO')

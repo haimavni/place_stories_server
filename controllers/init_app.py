@@ -2,6 +2,7 @@
 
 import os
 import re
+from send_email import email
 
 from admin_support.access_manager import register_new_user, AccessManager
 
@@ -66,7 +67,7 @@ def request_new_app(vars):
             
             '''
         mail_message = ('', mail_message_fmt.format(first_name=vars.first_name, last_name=vars.last_name, link=confirmation_link))
-        result = mail.send(to=vars.email, subject='Your new site', message=mail_message)
+        result = email(to=vars.email, subject='Your new site', message=mail_message)
         if not result:
             error_message = mail.error.strerror
         comment(f'confirmation mail was sent to {vars.email} with result {result}. message: {mail_message}')
@@ -103,7 +104,7 @@ def notify_developer(rec):
     message = ('', '''
     New site {site_name} was requested by {name} {email}.
     '''.format(site_name=rec.app_name, name=name, email=rec.email))
-    result = mail.send(to='haimavni@gmail.com', message=message, subject='New app requested')
+    result = email(to='haimavni@gmail.com', message=message, subject='New app requested')
     comment('mail sent to developer? {}', result)
 
 #-------------------support functions----------------------

@@ -160,7 +160,7 @@ class Stories:
         db, auth, STORY4EVENT, STORY4TERM, STORY4PHOTO, STORY4DOC, STORY4AUDIO, TEXT_AUDITOR = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO', 'STORY4DOC', 'STORY4AUDIO', 'TEXT_AUDITOR')
         if story_id == 'new':
             return self.add_story(story_info)
-        updated_story_text = story_info.story_text
+        updated_story_text = story_info.story_text or ""
         rec = db(db.TblStories.id==story_id).select().first()
         if language:
             rec = self.find_translation(rec, language)

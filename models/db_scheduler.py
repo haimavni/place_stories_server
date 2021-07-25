@@ -10,6 +10,8 @@ from docs_support import calc_doc_stories
 import os
 from topics_support import fix_is_tagged
 from folders import safe_open
+from send_email import email
+from video_support import calc_missing_youtube_info
 
 def test_scheduler(msg):
     comment("test task {}", msg)
@@ -81,8 +83,7 @@ def watchdog():
     message = '''
     Task(s) {tsks} of {app} {status} in the scheduler. Check the log files.
     '''.format(tsks=tsks_str, app=request.application, status=tsk.status)
-    host = request.env.http_host
-    mail.send(sender=f"admin@{host}", to="haimavni@gmail.com", subject = "A task failed", message=('', message))
+    email(sender="admin", to="haimavni@gmail.com", subject = "A task failed", message=message)
     for tsk in db(q).select():
         comment('Task {t} failed', t=tsk.function_name)
     db(q).update(status='QUEUED')
@@ -171,6 +172,21 @@ def schedule_update_help_messages():
         period=3600,   # every hour
         timeout=5 * 60 , # will time out if running for 5 minutes
     )
+
+def schedule_calc_missing_youtube_info():
+    now = datetime.datetime.now()
+    return db.scheduler_task.insert(
+        status='QUEUED',
+        application_name=request.application,
+        task_name = 'calc missing youtube info',
+        function_name='calc_missing_youtube_info',
+        start_time=now,
+        stop_time=now + datetime.timedelta(days=1461),
+        repeats=0,
+        period=360,   # every three minutes
+        timeout=5 * 60 , # will time out if running for 5 minutes
+    )
+
 
 def schedule_update_letter_templates():
     now = datetime.datetime.now()
@@ -263,6 +279,7 @@ permanent_tasks = dict(
     watch_dog=schedule_watchdog,
     randomize_story_sampling=schedule_randomize_story_sampling,
     update_word_index_all=schedule_update_word_index_all,
+    calc_missing_youtube_info=schedule_calc_missing_youtube_info,
     calc_doc_stories=schedule_calc_doc_stories,
     create_pending_apps=schedule_create_pending_apps,
     update_help_messages=schedule_update_help_messages,
@@ -274,10 +291,11 @@ if os.path.isdir(maildir):
 
 __tasks = dict(
     ###scan_all_unscanned_photos=scan_all_unscanned_photos,
-    collect_mail=collect_mail,
+    ### collect_mail=collect_mail,
     watchdog=watchdog,
     randomize_story_sampling=randomize_story_sampling,
     update_word_index_all=update_word_index_all,
+    calc_missing_youtube_info=calc_missing_youtube_info,
     calc_doc_stories=calc_doc_stories,
     create_pending_apps=create_pending_apps,
     execute_task=execute_task,

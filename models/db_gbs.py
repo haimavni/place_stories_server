@@ -67,7 +67,10 @@ db.define_table('TblStories',
                 Field('last_chat_time', type='datetime', default=NO_DATE),
                 Field('sorting_key', type='string', default=''), # sequence of zero-padded integers
                 Field('book_id', type='integer'),
-                Field('imported_from', type='string')
+                Field('imported_from', type='string'),
+                Field('first_story', type='integer'),
+                Field('chapter_num', type='integer'),
+                Field('num_chapters', type='integer')
 )                
 
 db.define_table('TblStoryVersions',
@@ -323,6 +326,7 @@ db.define_table('TblPhotos',
                 Field('Photographer', type='string'), #obsolete
                 Field('photographer_id', type='integer'),
                 Field('Recognized', type='boolean'),
+                Field('handled', type='boolean'), #show photo where recognition is still pending
                 Field('StatusID', type='integer'),
                 Field('Status_id', type='integer'),
                 Field('width', type='integer', default=0),
@@ -381,6 +385,11 @@ db.define_table('TblVideos',
                 Field('video_date_datespan', type='integer', default=1), # how many months or years in the range
                 Field('video_date_dateend', type='date', default=NO_DATE),
                 Field('touch_time', type='date', default=NO_DATE), #used to promote videos
+                Field('upload_date', type='datetime'),
+                # Youtube info
+                Field('uploader', type='string'),
+                Field('title', type='string'),
+                Field('description', type='text'),
                 Field('upload_date', type='datetime')
                 )
 
@@ -390,6 +399,8 @@ db.define_table('TblDocs',
                 Field('deleted', type='boolean', default=False),
                 Field('story_id', type=db.TblStories),
                 Field('text_extracted', type='boolean', default=False),
+                Field('num_pages_extracted', type='integer'),
+                Field('num_pages', type='integer'),
                 Field('uploader', type=db.auth_user),
                 Field('doc_date', type='date', default=NO_DATE),
                 Field('doc_date_dateunit', type='string', default='Y'), # D, M or Y for day, month, year
@@ -484,7 +495,10 @@ db.define_table('TblConfiguration',
                 Field('enable_articles', type='boolean', default=False),
                 Field('enable_member_of_the_day', type='boolean', default=True),
                 Field('enable_books', type='boolean', default=True),
-                Field('promoted_story_expiration', type='integer', default=7)
+                Field('promoted_story_expiration', type='integer', default=7),
+                Field('cover_photo', type='string'),
+                Field('exclusive', type='boolean'),
+                Field('enable_cuepoints', type='boolean', default=False)
                 )
 
 db.define_table('TblLocaleCustomizations',

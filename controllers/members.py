@@ -288,6 +288,8 @@ def get_story_list(vars):
             story.editable_preview = True
         elif k == STORY4AUDIO:
             story.audio_path = audio_path(story.id)
+        elif k == STORY4MEMBER:
+            story.profile_photo_path = profile_photo_path(story.id)
         final_result.append(story)
     active_result_types = [k for k in active_result_types]
     active_result_types = sorted(active_result_types)
@@ -550,6 +552,7 @@ def get_constants(vars):
             STORY4HELP=STORY4HELP,
             STORY4FEEDBACK=STORY4FEEDBACK,
             STORY4DOC=STORY4DOC,
+            STORY4VIDEO=STORY4VIDEO,
             STORY4AUDIO=STORY4AUDIO,
             STORY4ARTICLE=STORY4ARTICLE
         ),
@@ -727,9 +730,6 @@ def apply_topics_to_story(vars):
     current_ids = [topic.id for topic in story_topics]
     current_ids = set(current_ids)
     new_topic_was_added = False
-    tbl = db.TblEvents if usage_char == 'E' else db.TblTerms if usage_char == 'T' else None
-    if not tbl:
-        raise Exception("Not a story or term")
     curr_tag_ids = set(get_tag_ids(story_id, usage_char))
     for topic_id in current_ids:
         if topic_id not in curr_tag_ids:
@@ -1091,6 +1091,7 @@ def set_story_list_data(story_list):
         doc_url=rec.doc_url,
         audio_path=rec.audio_path,
         doc_jpg_url=rec.doc_url.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', '.jpg') if rec.doc_url else '',
+        profile_photo_path=rec.profile_photo_path if rec.used_for==STORY4MEMBER else "",
         used_for=rec.used_for,
         editable_preview=rec.editable_preview,
         event_date=rec.creation_date,
@@ -1122,7 +1123,7 @@ def assign_photos(story_list):
     video_story_ids = list(video_story_list.keys())
     lst = db(db.TblVideos.story_id.belongs(video_story_ids)).select(db.TblVideos.story_id, db.TblVideos.src)
     for video in lst:
-        video_story_list[video.story_id].video_src = "//www.youtube.com/embed/" + video.src + "?wmode=opaque"
+        video_story_list[video.story_id].video_src = video.src
 
 
 def photo_member_ids(photo_id):

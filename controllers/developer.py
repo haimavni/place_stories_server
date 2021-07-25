@@ -24,7 +24,7 @@ def log_file_list(vars):
 def log_file_data(vars):
     # noinspection SpellCheckingInspection
     fname = logs_path() + '/' + vars.file_name
-    with open(fname, 'r') as f:
+    with open(fname, 'r', encoding="utf-8") as f:
         text = f.read()
     data = fix_utf8(text)
     if not fname.endswith('html'):

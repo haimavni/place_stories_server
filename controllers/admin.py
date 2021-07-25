@@ -140,6 +140,16 @@ def set_feedback_option(vars):
     return dict()
 
 @serve_json
+def set_exclusive_option(vars):
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    exclusive_on = vars.option == 'user.exclusive-on'
+    config_rec.update_record(exclusive=exclusive_on)
+    return dict()
+
+@serve_json
 def set_version_time_option(vars):
     config_rec = db(db.TblConfiguration).select().first()
     if not config_rec:
@@ -190,6 +200,17 @@ def set_member_of_the_day_option(vars):
     return dict()
 
 @serve_json
+def set_cuepoints_option(vars):
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    cuepoints_on = vars.option == 'user.enable-cuepoints-on'
+    config_rec.update_record(enable_cuepoints=cuepoints_on)
+    return dict()
+
+
+@serve_json
 def set_quick_upload_option(vars):
     config_rec = get_config_rec()
     quick_upload_on = vars.option == 'user.quick-upload-on'
@@ -201,6 +222,14 @@ def set_promoted_story_expiration(vars):
     config_rec = get_config_rec()
     config_rec.update_record(promoted_story_expiration=int(vars.promoted_story_expiration))
     return dict()
+
+@serve_json
+def cover_photo(vars):
+    config_rec = get_config_rec()
+    if vars.cover_photo is not None:
+        config_rec.update_record(cover_photo=vars.cover_photo)
+    return dict(cover_photo=config_rec.cover_photo)
+
 
 def get_config_rec():
     config_rec = db(db.TblConfiguration).select().first()

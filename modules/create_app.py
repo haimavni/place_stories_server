@@ -3,6 +3,7 @@
 from .injections import inject
 import os
 import subprocess
+from send_email import email
 
 def create_an_app(rec):
     request, comment, log_path = inject('request', 'comment', 'log_path')
@@ -60,7 +61,7 @@ def notify_customer(rec):
     {ml}
     '''
     message = ('', message_fmt.format(ml=manual_link, link=link))
-    result = mail.send(to=rec.email, message=message, subject='Starting your new site')
+    result = email(to=rec.email, message=message, subject='Starting your new site')
     comment('mail sent to customer? {}', result)
 
 def notify_developer(rec, success):
@@ -70,7 +71,7 @@ def notify_developer(rec, success):
     message = ('', '''
     New site {site_name} {status}.
     '''.format(site_name=rec.app_name, status=status))
-    result = mail.send(to='haimavni@gmail.com', message=message, subject='New app')
+    result = email(to='haimavni@gmail.com', message=message, subject='New app')
     comment('mail sent to developer? {}', result)
 
 def create_pending_apps():
