@@ -36,15 +36,9 @@ def calc_youtube_info(video_id):
         video_story = sm.get_story(vrec.story_id)
         if not video_story:
             video_story = sm.get_empty_story(used_for=STORY4VIDEO)
-        story_info = None
-        if not video_story.story_text:
-            story_info = Storage(story_text=vrec.description,
-                                 preview=vrec.description)
-        if not video_story.name:
-            story_info = story_info or Storage()
-            story_info.name = vrec.name or vrec.title
-        if story_info:
-            sm.update_story(vrec.story_id, story_info)
+        story_info = Storage(story_text=video_story.story_text or vrec.description,
+                             name=video_story.name or vrec.name or vrec.title)
+        sm.update_story(vrec.story_id, story_info)
         return True
     return False
 
