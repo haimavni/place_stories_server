@@ -221,10 +221,10 @@ def get_video_sample(vars):
     q = (db.TblVideos.deleted == False)
     q1 = q & (db.TblVideos.touch_time != NO_DATE)
     lst1 = db(q1).select(limitby=(0, 10), orderby=~db.TblVideos.touch_time)
-    lst1 = [rec.src for rec in lst1]
+    lst1 = [dict(src=rec.src,video_id=rec.id, name=rec.name) for rec in lst1]
     q2 = q & (db.TblVideos.touch_time == NO_DATE)
     lst2 = db(q2).select(limitby=(0, 200))
-    lst2 = [rec.src for rec in lst2]
+    lst2 = [dict(src=rec.src,video_id=rec.id, name=rec.name) for rec in lst2]
     if len(lst2) > 10:
         lst2 = random.sample(lst2, 10)
     lst = lst1 + lst2
@@ -249,7 +249,10 @@ def get_video_info(vars):
     else:
         vrec = db(db.TblVideos.id==video_id).select().first()
     video_source = vrec.src
-    cue_points = calc_cue_points(video_id)
+    if vars.cuepoints_enabled:
+        cue_points = calc_cue_points(video_id)
+    else:
+        cue_points = []
     sm = stories_manager.Stories()
     video_story=sm.get_story(vrec.story_id)
     photographer = db(db.TblPhotographers.id==vrec.photographer_id).select().first() if vrec.photographer_id else None
