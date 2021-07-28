@@ -249,7 +249,10 @@ def get_video_info(vars):
     else:
         vrec = db(db.TblVideos.id==video_id).select().first()
     video_source = vrec.src
-    cue_points = calc_cue_points(video_id)
+    if vars.cuepoints_enabled:
+        cue_points = calc_cue_points(video_id)
+    else:
+        cue_points = []
     sm = stories_manager.Stories()
     video_story=sm.get_story(vrec.story_id)
     photographer = db(db.TblPhotographers.id==vrec.photographer_id).select().first() if vrec.photographer_id else None
