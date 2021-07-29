@@ -588,13 +588,18 @@ db.define_table('TblSearches',
                 Field('count', type='integer')
                 )
 
+db.define_table('TblMembersVideos',
+                Field('video_id', type=db.TblVideos),
+                Field('member_id', type=db.TblMembers)
+                )
+
 db.define_table('TblVideoCuePoints',
                 Field('video_id', type=db.TblVideos),
                 Field('time', type='integer'),
                 Field('description', type='string')
                 )
 
-db.define_table('TblMembersVideoCuePoints',
+db.define_table('TblMembersVideoCuePoints',  #sync with
                 Field('cue_point_id', db.TblVideoCuePoints),
                 Field('member_id', db.TblMembers)
                 )
@@ -622,11 +627,12 @@ def write_indexing_sql_scripts():
     with safe_open(path + 'create_indexes[{a}].sql'.format(a=request.application), mode='w') as f:
         with safe_open(path + 'delete_indexes[{a}].sql'.format(a=request.application), mode='w') as g:
             for tcc in indexes:
-                table = tcc[0]
-                fields = ', '.join(tcc[1:])
-                index_name = '_'.join(tcc) + '_idx'
+                tccq = ['"' + t + '"' for t in tcc]
+                table = tccq[0]
+                fields = ', '.join(tccq[1:])
+                index_name = '"' + '_'.join(tcc) + '_idx' + '"'
                 create_cmd = 'CREATE INDEX CONCURRENTLY {i} ON {t} ({f});'.format(i=index_name, t=table, f=fields)
-                drop_cmd = 'DROP INDEX {};'.format(tcc[0])
+                drop_cmd = 'DROP INDEX {};'.format(index_name)
                 f.write(create_cmd + '\n')
                 g.write(drop_cmd + '\n')
 
