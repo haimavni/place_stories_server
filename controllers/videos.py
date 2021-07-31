@@ -93,11 +93,15 @@ def save_video(vars):
 
 
 @serve_json
-def delete_video(vars):
-    story_id = db(db.TblVideos.id == vars.video_id).select().first().story_id
+def delete_videos(vars):
+    selected_videos = vars.selected_videos
     sm = stories_manager.Stories()
-    sm.delete_story(story_id)
-    n = db(db.TblVideos.id == vars.video_id).update(deleted=True)
+    selected_videos=selected_videos.split(',')
+    selected_videos = [int(vid) for vid in selected_videos]
+    for vid in selected_videos:
+        story_id = db(db.TblVideos.id == vid).select().first().story_id
+        sm.delete_story(story_id)
+    db(db.TblVideos.id.belongs(selected_videos)).update(deleted=True)
     return dict()
 
 
