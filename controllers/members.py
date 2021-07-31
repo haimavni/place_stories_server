@@ -12,7 +12,7 @@ from gluon.utils import web2py_uuid
 from html_utils import clean_html
 from http_utils import json_to_storage
 from members_support import *
-from photos_support import get_slides_from_photo_list, save_member_face
+from photos_support import get_slides_from_photo_list, get_video_thumbnails, save_member_face
 from quiz_support import use_quiz
 from words import calc_used_languages, read_words_index, get_all_story_previews, get_reisha
 
@@ -1154,13 +1154,25 @@ def photo_lst_article_ids(photo_id_lst):
     return result
 
 
-def get_member_slides(member_id):
+def get_member_photos(member_id):
     q = (db.TblMemberPhotos.Member_id == member_id) & \
         (db.TblPhotos.id == db.TblMemberPhotos.Photo_id) & \
         (db.TblPhotos.deleted != True) & \
         (db.TblPhotos.is_back_side != True)
     return get_slides_from_photo_list(q)
 
+def get_member_videos(member_id):
+    q = (db.TblMembersVideos.member_id==member_id) & \
+        (db.TblVideos.id==db.TblMembersVideos.video_id) & \
+        (db.TblVideos.deleted != True)
+    return get_video_thumbnails(q)
+
+def get_member_slides(member_id):
+    lst1 = get_member_videos(member_id)
+    lst2 = get_member_photos(member_id)
+    lst = lst1 + lst2
+    # lst.reverse()
+    return lst
 
 def save_story_data(story_info, user_id):
     story_info.sorting_key = encode_sorting_key(story_info.sorting_key)

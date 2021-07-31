@@ -325,6 +325,25 @@ def calc_missing_dhash_values(max_to_hash=20000):
     to_scan = db(q).count()
     return  '{} photo records dhashed. {} need to be dhashed.'.format(done, to_scan)
 
+def get_video_thumbnails(q):
+    db = inject('db')
+    lst = db(q).select()
+    if not lst:
+        return []
+    if 'TblVideos' in lst[0]:
+        lst = [rec.TblVideos for rec in lst]
+    slides = []
+    for rec in lst:
+        dic = dict(
+            video_id=rec.id,
+            src=thumbnail_url(rec.src)
+        )
+        slides.append(dic)
+    return slides
+
+def thumbnail_url(src):
+    return f"https://i.ytimg.com/vi/{src}/mq2.jpg"
+
 def get_slides_from_photo_list(q):
     db = inject('db')
     q &= (db.TblPhotos.width > 0)
