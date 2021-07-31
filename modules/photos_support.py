@@ -336,7 +336,8 @@ def get_video_thumbnails(q):
     for rec in lst:
         dic = dict(
             video_id=rec.id,
-            src=thumbnail_url(rec.src)
+            src=thumbnail_url(rec.src),
+            title=rec.name
         )
         slides.append(dic)
     return slides
