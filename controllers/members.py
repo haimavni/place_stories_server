@@ -1170,8 +1170,15 @@ def get_member_videos(member_id):
 def get_member_slides(member_id):
     lst1 = get_member_videos(member_id)
     lst2 = get_member_photos(member_id)
-    lst = lst1 + lst2
-    # lst.reverse()
+    #interlace videos and photos
+    n = min(len(lst1), len(lst2))
+    lst1_head, lst1_tail = lst1[:n],lst1[n:]
+    lst2_head, lst2_tail = lst2[:n],lst2[n:]
+    lst = []
+    for i, x in enumerate(lst1_head):
+        lst.append(x)
+        lst.append(lst2[i])
+    lst += lst1_tail + lst2_tail
     return lst
 
 def save_story_data(story_info, user_id):
