@@ -48,10 +48,9 @@ def request_new_app(vars):
             locale=vars.locale
         )
         error_message = ""
-        host=request.env.http_host.split(':')[0]  
-        confirmation_url = '/{app}/init_app/confirm_new_app?app_name={app_name}&confirmation_key={confirmation_key}'. \
-            format(app=request.application, app_name=app_name, confirmation_key=confirmation_key)
-        confirmation_link = '{host}{confirmation_url}'.format(host=host, confirmation_url=confirmation_url)
+        host=request.env.http_host.split(':')[0]
+        app = request.application
+        confirmation_link = f'https://{host}/{app}/init_app/confirm_new_app?app_name={app_name}&confirmation_key={confirmation_key}'
         if vars.locale == 'he':
             mail_message_fmt = '''
 <div dir="rtl">
