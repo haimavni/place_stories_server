@@ -31,6 +31,7 @@ def test():
     # sender = "Info@tol.life"
     result = email(to=to, subject=subject, message=message)  # , sender=sender)
     print(f"the result is {result}")
+    return result
 
 
 if __name__ == "__main__":
