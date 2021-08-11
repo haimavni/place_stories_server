@@ -611,6 +611,12 @@ def replace_duplicate_photos(vars):
     delete_photos(vars.photos_to_keep) #the image data was copied to the old photo which has more extra info
     return dict(photo_patches=photo_patches)
 
+@serve_json
+def exclude_from_main_slideshow(vars):
+    for photo in db(db.TblPhotos.id.belongs(vars.selected_photos)):
+        photo.update_record(no_slide_show=vars.exclude)
+    return dict()
+
 ####---------------support functions--------------------------------------
 
 def handle_dup_group(group, photos_to_keep_set):
@@ -674,7 +680,8 @@ def make_photos_query(vars):
         (db.TblPhotos.is_back_side != True)
     if vars.photo_ids:
         q &= (db.TblPhotos.id.belongs(vars.photo_ids))
-    q &= (db.TblPhotos.no_slide_show != True)
+    if vars.no_slide_show:
+        q &= (db.TblPhotos.no_slide_show != True)
     first_year = vars.first_year
     last_year = vars.last_year
     if vars.base_year: #time range may be defined
