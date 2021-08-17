@@ -794,6 +794,22 @@ def add_story_member(vars):
 
 
 @serve_json
+def add_story_article(vars):
+    article_id = vars.candidate_id
+    story_id = vars.story_id
+    story = db(db.TblStories.id == story_id).select().first()
+    if story.used_for == STORY4EVENT:
+        event = db(db.TblEvents.story_id == story_id).select().first()
+        db.TblEventArticles.insert(article_id=article_id, Event_id=event.id)
+    elif story.used_for == STORY4TERM:
+        term = db(db.TblTerms.story_id == story_id).select().first()
+        db.TblTermArticles.insert(article_id=article_id, term_id=term.id)
+    else:
+        raise Exception("Incompatible story usage")
+    return dict()
+
+
+@serve_json
 def save_photo_group(vars):
     story_id = vars.caller_id
     tbl = db.TblEvents if vars.caller_type == "story" else db.TblTerms if vars.caller_type == "term" else help if vars.caller_type == 'help' else None
@@ -1570,8 +1586,10 @@ def _info_from_qm(qm, qa, member_fields, photo_member_set, photo_article_set, ph
             if not m['facePhotoURL']:
                 m['facePhotoURL'] = "dummy_face.png"
             m['facePhotoURL'] = photos_folder("profile_photos") + m['facePhotoURL']
-    for a in articles:
-        a['facePhotoURL'] = photos_folder("profile_photos") + a['facePhotoURL']
+    lst = [articles, article_candidates]
+    for arr in lst:
+        for a in arr:
+            a['facePhotoURL'] = photos_folder("profile_photos") + a['facePhotoURL']
     return photos, members, candidates, articles, article_candidates
 
 
