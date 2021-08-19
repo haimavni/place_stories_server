@@ -838,7 +838,11 @@ def save_photo_group(vars):
                 db.TblEventPhotos.insert(Photo_id=p, Event_id=item_id)
             elif vars.caller_type == "term":
                 db.TblTermPhotos.insert(Photo_id=p, term_id=item_id)
-    return dict()
+    photos = db(db.TblPhotos.id.belongs(photo_ids)).select(db.TblPhotos.id, db.TblPhotos.photo_path)
+    photos = [p.as_dict() for p in photos]
+    for p in photos:
+        p['photo_path'] = photos_folder() + p['photo_path']
+    return dict(photos=photos)
 
 
 @serve_json
