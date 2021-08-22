@@ -1,9 +1,7 @@
 from gluon.scheduler import Scheduler
 import datetime
-import random
 import ws_messaging
 from help_support import update_help_messages, update_letter_templates
-from collect_emails import collect_mail
 from create_app import create_pending_apps
 from words import update_word_index_all
 from docs_support import calc_doc_stories
@@ -89,11 +87,6 @@ def watchdog():
     db(q).update(status='QUEUED')
     db.commit()
     
-def randomize_story_sampling():
-    for story_rec in db(db.TblStories.deleted!= True).select():
-        story_rec.update_record(sampling_id=random.randint(1, SAMPLING_SIZE))
-    db.commit()
-
 def dict_to_json_str(dic):
     return response.json(dic)
 
@@ -128,35 +121,6 @@ def schedule_background_task(name, command, period=None, timeout=None):
         repeats=1,
         period=period or (6 * 60 * 60), #6 hours
         timeout=timeout or (60 * 60),   #at most one hour
-    )
-
-def schedule_scan_all_unscanned_photos():
-    path = 'applications/' + request.application + '/logs/'
-    now = datetime.datetime.now()
-    return db.scheduler_task.insert(
-        status='QUEUED',
-        application_name=request.application,
-        task_name = 'scan_all_unscanned_photos',
-        function_name='scan_all_unscanned_photos',
-        start_time=now,
-        stop_time=now + datetime.timedelta(days=1461),
-        repeats=0,
-        period=1 * 60 * 60,   # every hour
-        timeout = 2 * 60*60, # will time out if running for a two hours
-    )
-
-def schedule_collect_mail():
-    now = datetime.datetime.now()
-    return db.scheduler_task.insert(
-        status='QUEUED',
-        application_name=request.application,
-        task_name = 'collect mail',
-        function_name='collect_mail',
-        start_time=now,
-        stop_time=now + datetime.timedelta(days=1461),
-        repeats=0,
-        period=3 * 60,   # every 3 minutes
-        timeout=5 * 60 , # will time out if running for 5 minutes
     )
 
 def schedule_update_help_messages():
@@ -216,20 +180,6 @@ def schedule_watchdog():
         timeout=2 * 60 , # will time out if running for 2 minutes
     )
 
-def schedule_randomize_story_sampling():
-    now = datetime.datetime.now()
-    return db.scheduler_task.insert(
-        status='QUEUED',
-        application_name=request.application,
-        task_name = 'tasks randomize story sampling',
-        function_name='randomize_story_sampling',
-        start_time=now,
-        stop_time=now + datetime.timedelta(days=1461),
-        repeats=0,
-        period=3600,   # every hour
-        timeout=5 * 60 , # will time out if running for 5 minutes
-    )
-
 def schedule_update_word_index_all():
     now = datetime.datetime.now()
     return db.scheduler_task.insert(
@@ -273,11 +223,8 @@ def schedule_create_pending_apps():
     )
 
 permanent_tasks = dict(
-    ##scan_all_unscanned_photos=schedule_scan_all_unscanned_photos
-    #look for emailed photos and other mail
     #note that the key must also be function_name set by the keyed item
     watch_dog=schedule_watchdog,
-    randomize_story_sampling=schedule_randomize_story_sampling,
     update_word_index_all=schedule_update_word_index_all,
     calc_missing_youtube_info=schedule_calc_missing_youtube_info,
     calc_doc_stories=schedule_calc_doc_stories,
@@ -285,15 +232,9 @@ permanent_tasks = dict(
     update_help_messages=schedule_update_help_messages,
     update_letter_templates=schedule_update_letter_templates
 )
-maildir = '/home/{}_mailbox/Maildir'.format(request.application)
-if os.path.isdir(maildir):
-    permanent_tasks['collect_mail'] = schedule_collect_mail
 
 __tasks = dict(
-    ###scan_all_unscanned_photos=scan_all_unscanned_photos,
-    ### collect_mail=collect_mail,
     watchdog=watchdog,
-    randomize_story_sampling=randomize_story_sampling,
     update_word_index_all=update_word_index_all,
     calc_missing_youtube_info=calc_missing_youtube_info,
     calc_doc_stories=calc_doc_stories,
