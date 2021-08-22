@@ -1069,9 +1069,10 @@ def _get_story_list(params, exact):  # exact means looking only for the passed k
             n = db(q).count()
             if not n:
                 continue
-            sample_size = n if n < 100 else 100
-            threshold = SAMPLING_SIZE * sample_size / n
-            q &= (db.TblStories.sampling_id < threshold)
+            sample_size = 100
+            if n > sample_size:
+                q1 = stories_random_sample(sample_size, used_for)
+                q = q & q1
             lst0 = db(q).select()
             lst1 += lst0
     else:
@@ -1084,6 +1085,12 @@ def _get_story_list(params, exact):  # exact means looking only for the passed k
             lst1 += lst0
     return lst1
 
+def stories_random_sample(size, used_for):
+    q = (db.TblStories.deleted != True) & (db.TblStories.used_for == used_for)
+    lst = db(q).select(db.TblStories.id)
+    lst = [rec.id for rec in lst]
+    lst1 = random.sample(lst, size)
+    return db.TblStories.id.belongs(lst1)
 
 def process_story_list(lst1, checked=False, exact=False):
     user_list = calc_user_list()
