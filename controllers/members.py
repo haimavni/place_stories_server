@@ -397,7 +397,11 @@ def get_story_photo_list(vars):
         return dict(photo_list=[])
     else:
         raise Exception('Unknown call type in get story photo list')
-    item_id = db(tbl.story_id == story_id).select().first().id
+    item = db(tbl.story_id == story_id).select().first()
+    if item:
+        item_id = item.id
+    else:
+        return dict(photo_list=[])
     if vars.story_type == "story":
         qp = (db.TblEventPhotos.Event_id == item_id) & (db.TblPhotos.id == db.TblEventPhotos.Photo_id)
     else:
