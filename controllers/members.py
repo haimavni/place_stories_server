@@ -1074,10 +1074,16 @@ def _get_story_list(params, exact):  # exact means looking only for the passed k
             if not n:
                 continue
             sample_size = 100
+            dic = None
             if n > sample_size:
-                q1 = stories_random_sample(sample_size, used_for)
+                q1, dic = stories_random_sample(sample_size, used_for)
                 q = q & q1
             lst0 = db(q).select()
+            if dic:
+                lst0 = [Storage(rec) for rec in lst0]
+                for rec in lst0:
+                    rec.idx = dic[rec.id]
+                lst0.sort(key=lambda rec: rec.idx)
             lst1 += lst0
     else:
         if not q:
@@ -1094,7 +1100,10 @@ def stories_random_sample(size, used_for):
     lst = db(q).select(db.TblStories.id)
     lst = [rec.id for rec in lst]
     lst1 = random.sample(lst, size)
-    return db.TblStories.id.belongs(lst1)
+    dic = dict()
+    for i, j in enumerate(lst1):
+        dic[j] = i
+    return db.TblStories.id.belongs(lst1), dic
 
 def process_story_list(lst1, checked=False, exact=False):
     user_list = calc_user_list()
