@@ -64,6 +64,15 @@ def update_apps_table():
     return dict(apps_count=n)
 
 
+@serve_json
+def modify_app_state(vars):
+    app = vars.app
+    active = vars.active
+    app_rec = db(db.TblApps.app_name==app).select().first()
+    app_rec.update(active=active)
+    return dict()
+
+
 def app_list():
     path = './applications'
     my_app = request.application
