@@ -498,7 +498,8 @@ db.define_table('TblConfiguration',
                 Field('promoted_story_expiration', type='integer', default=7),
                 Field('cover_photo', type='string'),
                 Field('exclusive', type='boolean'),
-                Field('enable_cuepoints', type='boolean', default=False)
+                Field('enable_cuepoints', type='boolean', default=False),
+                Field('allow_publishing', type='boolean', default=False)
                 )
 
 db.define_table('TblLocaleCustomizations',
@@ -518,6 +519,11 @@ db.define_table('TblCustomers',
                 Field('created', type='boolean', default=False),
                 Field('locale', type='string'),
                 Field('creation_time', type='datetime', default=request.now)
+                )
+
+db.define_table('TblApps',
+                Field('app_name', type='string'),
+                Field('active', type='boolean', default=False)
                 )
 
 db.define_table('TblMenus',
