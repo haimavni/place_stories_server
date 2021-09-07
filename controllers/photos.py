@@ -285,6 +285,9 @@ def get_photo_list(vars):
             field2 = ~field2
         lst = db(q).select(orderby=field1 | field2, limitby=(0, n))
         lst = list(lst)
+    elif selected_order_option == 'alphabetical-order':
+        lst = db(q).select(orderby=db.TblStories.name, limitby=(0,MAX_PHOTOS_COUNT))
+        lst = list(lst)
     else:
         n = db(q).count()
         if n > MAX_PHOTOS_COUNT:
