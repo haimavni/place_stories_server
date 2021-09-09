@@ -44,7 +44,12 @@ def apps_for_gallery(vars):
     app_list = []
     for app in apps:
         url = f'{host}/{app}/gallery/app_info'
-        response = urlopen(url)
+        comment(f"URL of {app} is {url}")
+        try:
+            response = urlopen(url)
+        except Exception as e:
+            comment("got exception")
+            continue
         info = json.loads(response.read())
         info = json_to_storage(info)
         if not info.allow_publishing and not vars.developer:
