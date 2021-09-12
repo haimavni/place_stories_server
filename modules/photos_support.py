@@ -902,3 +902,25 @@ def fix_date_ends():
         rec.update_record(photo_date_dateend=rec.photo_date + next_day)
         n += 1
     return f'{n} photos end-date fixed'
+
+
+def resize_with_pad(im, target_width, target_height):
+    '''
+    Resize PIL image keeping ratio and using white background.
+    '''
+    target_ratio = target_height / target_width
+    im_ratio = im.height / im.width
+    if target_ratio > im_ratio:
+        # It must be fixed by width
+        resize_width = target_width
+        resize_height = round(resize_width * im_ratio)
+    else:
+        # Fixed by height
+        resize_height = target_height
+        resize_width = round(resize_height / im_ratio)
+
+    image_resize = im.resize((resize_width, resize_height), Image.ANTIALIAS)
+    background = Image.new('RGBA', (target_width, target_height), (255, 255, 255, 255))
+    offset = (round((target_width - resize_width) / 2), round((target_height - resize_height) / 2))
+    background.paste(image_resize, offset)
+    return background.convert('RGB')
