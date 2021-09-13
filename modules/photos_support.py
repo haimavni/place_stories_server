@@ -391,7 +391,10 @@ def crop(input_path, output_path, face, size=100):
     area = (face.x - face.r, face.y - face.r, face.x + face.r, face.y + face.r)
     cropped_img = img.crop(area)
     resized_img = cropped_img.resize((size, size), Image.LANCZOS)
-    resized_img.save(output_path)
+    if input_path.lower().endswith(".png"):
+        resized_img.save(output_path, format="png")
+    else:
+        resized_img.save(output_path)
 
 def crop_a_photo(input_path, output_path, crop_left, crop_top, crop_width, crop_height):
     img = Image.open(input_path)
@@ -904,7 +907,7 @@ def fix_date_ends():
     return f'{n} photos end-date fixed'
 
 
-def resize_with_pad(im, target_width, target_height):
+def resize_with_pad(im, target_width, target_height, color=(255,255,255,255)):
     '''
     Resize PIL image keeping ratio and using white background.
     '''
@@ -920,7 +923,20 @@ def resize_with_pad(im, target_width, target_height):
         resize_width = round(resize_height / im_ratio)
 
     image_resize = im.resize((resize_width, resize_height), Image.ANTIALIAS)
-    background = Image.new('RGBA', (target_width, target_height), (255, 255, 255, 255))
+    background = Image.new('RGBA', (target_width, target_height), color)
     offset = (round((target_width - resize_width) / 2), round((target_height - resize_height) / 2))
     background.paste(image_resize, offset)
     return background.convert('RGB')
+
+
+def save_padded_photo(photo_path, target_width=800, target_height=420, color=(128,128,128,255), name=None):
+    im = Image.open(photo_path)
+    padded = resize_with_pad(im, target_width, target_height, color)
+    request = inject('request')
+    if not name:
+        r = photo_path.rfind('/')
+        name = photo_path[r+1:]
+    folder_path = local_folder('padded_photos')
+    path = folder_path + name
+    padded.save(path, quality=100)
+    url_folder = folder('padded_photos')

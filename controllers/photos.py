@@ -1,6 +1,6 @@
 from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, \
      save_uploaded_photo, rotate_photo, save_member_face, save_article_face, create_zip_file, get_photo_pairs, find_similar_photos, \
-     timestamped_photo_path, crop_a_photo
+     timestamped_photo_path, crop_a_photo, save_padded_photo
 import ws_messaging
 import stories_manager
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
@@ -893,3 +893,15 @@ def upload_chunk(vars):
 def handle_loaded_photo(photo_id):
     from complete_photo_record import add_photo_info
     add_photo_info(photo_id)
+
+
+@serve_json
+def set_cover_photo(vars):
+    cover_photo = vars.cover_photo
+    r = cover_photo.find('/apps_data')
+    cover_photo_path = cover_photo[r:]
+    r = cover_photo_path.rfind('?')
+    if r > 0:
+        cover_photo_path = cover_photo_path[:r]
+    photo_url = save_padded_photo(cover_photo_path, name='cover.jpg')
+    return dict(photo_url=photo_url)

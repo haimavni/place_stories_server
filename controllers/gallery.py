@@ -75,7 +75,7 @@ def modify_app_state(vars):
     app = vars.app
     active = vars.active
     app_rec = db(db.TblApps.app_name==app).select().first()
-    app_rec.update(active=active)
+    app_rec.update_record(active=active)
     return dict()
 
 
