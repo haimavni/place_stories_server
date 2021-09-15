@@ -929,7 +929,7 @@ def resize_with_pad(im, target_width, target_height, color=(255,255,255,255)):
     return background.convert('RGB')
 
 
-def save_padded_photo(photo_path, target_width=800, target_height=420, color=(128,128,128,255), name=None):
+def save_padded_photo(photo_path, target_width=800, target_height=420, color=(224,224,224,255), name=None):
     im = Image.open(photo_path)
     padded = resize_with_pad(im, target_width, target_height, color)
     request = inject('request')
