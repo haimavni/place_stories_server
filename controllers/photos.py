@@ -905,3 +905,14 @@ def set_cover_photo(vars):
         cover_photo_path = cover_photo_path[:r]
     photo_url = save_padded_photo(cover_photo_path, name='cover.jpg')
     return dict(photo_url=photo_url)
+
+@serve_json
+def get_padded_photo_url(vars):
+    photo_url = vars.photo_url
+    r = photo_url.find('/apps_data')
+    photo_path = photo_url[r:]
+    r = photo_path.rfind("?")
+    if r > 0:
+        photo_path = photo_path[:r]
+    padded_photo_url = save_padded_photo(photo_path)
+    return dict(padded_photo_url=padded_photo_url)

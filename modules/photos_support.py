@@ -939,4 +939,4 @@ def save_padded_photo(photo_path, target_width=800, target_height=420, color=(12
     folder_path = local_folder('padded_photos')
     path = folder_path + name
     padded.save(path, quality=100)
-    return url_folder('padded_photos')
+    return url_folder('padded_photos') + name
