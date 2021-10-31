@@ -44,11 +44,10 @@ def apps_for_gallery(vars):
     app_list = []
     for app in apps:
         url = f'{host}/{app}/gallery/app_info'
-        comment(f"URL of {app} is {url}")
         try:
             response = urlopen(url)
         except Exception as e:
-            comment("got exception")
+            comment(f"got exception trying to calculate {app} info")
             continue
         info = json.loads(response.read())
         info = json_to_storage(info)

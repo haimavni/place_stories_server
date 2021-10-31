@@ -1230,10 +1230,7 @@ def save_story_data(story_info, user_id):
     story_info.sorting_key = encode_sorting_key(story_info.sorting_key)
     story_id = story_info.story_id
     sm = stories_manager.Stories(user_id)
-    if story_id:
-        result = sm.update_story(story_id, story_info)
-    else:
-        result = sm.add_story(story_info)
+    result = sm.update_story(story_id, story_info)
     if story_info.used_for == STORY4PHOTO:
         photo_rec = db(
             (db.TblPhotos.story_id == story_info.story_id) & (db.TblPhotos.deleted != True)).select().first()
