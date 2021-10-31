@@ -65,9 +65,9 @@ def request_new_app(vars):
             Click {link} to activate your new site.<br><br>
             
             '''
-        mail_message = ('', mail_message_fmt.format(first_name=vars.first_name, last_name=vars.last_name, link=confirmation_link))
+        mail_message = mail_message_fmt.format(first_name=vars.first_name, last_name=vars.last_name, link=confirmation_link)
         result = email(to=vars.email, subject='Your new site', message=mail_message)
-        comment(f'confirmation mail was sent to {vars.email} with result {result}. message: {mail_message}')
+        comment(f"confirmation mail was sent to {vars.email} with result {result}. message: {mail_message}")
         customer_rec = db(db.TblCustomers.id==id).select().first()
         notify_developer(customer_rec)
     return dict(error_message=error_message)
