@@ -275,8 +275,9 @@ def _calc_used_languages(used_for):
 
 def calc_used_languages(vars, refresh=False):
     used_for = int(vars.used_for) if vars.used_for else 2 #STORY4EVENT
-    c = Cache('used_languages' + str(used_for))
-    return c(lambda: _calc_used_languages(used_for), refresh)
+    return _calc_used_languages(used_for)
+    ##c = Cache('used_languages' + str(used_for))
+    ##return c(lambda: _calc_used_languages(used_for), refresh)
 
 def _get_all_story_previews():
     db = inject('db')

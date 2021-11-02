@@ -23,6 +23,7 @@ def serve_json(func):
             if isinstance(s, str) and (s.startswith('{') or s.startswith('[')):
                 vars[k] = json.loads(s)
         vars = json_to_storage(vars)
+        comment(f"about to call {func.__name__}")
         try:
             result = func(vars)
             if result is None:
@@ -44,6 +45,7 @@ def serve_json(func):
         except Exception as e:
             result = dict(warning=str(e), result=str(result))
             result = json.dumps(result)
+        comment(f"finished calling {func.__name__}")
         return result
 
     return f
