@@ -178,7 +178,6 @@ def update_word_index_all():
         q = db.TblStories.last_update_date > db.TblStories.indexing_date
         if db(q).isempty():
             comment("Nothing to do")
-            db.commit() #attempt to get rid of "unexpected EOF..."
             return dict(good=True)
         time_budget = 600 - 15 #will exit the loop 15 seconds before the a new cycle starts
         t0 = datetime.datetime.now()
