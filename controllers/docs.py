@@ -21,7 +21,7 @@ def upload_chunk(vars):
     if vars.what == 'start':
         result = create_uploading_doc(vars.file_name, vars.crc, vars.user_id)
         if result.duplicate:
-            return dict(duplicat=result.duplicate)
+            return dict(duplicate=result.duplicate)
         return dict(record_id=result.record_id)
     elif vars.what == 'save':
         fil = vars.file
