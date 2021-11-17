@@ -397,7 +397,8 @@ db.define_table('TblDocs',
                 Field('name', type='string'),
                 Field('doc_type', type='string'),
                 Field('deleted', type='boolean', default=False),
-                Field('story_id', type=db.TblStories),
+                Field('story_id', type=db.TblStories),         # text extracted from the document
+                Field('story_about_id', type=db.TblStories),   # text added by user
                 Field('text_extracted', type='boolean', default=False),
                 Field('num_pages_extracted', type='integer'),
                 Field('num_pages', type='integer'),

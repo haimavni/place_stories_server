@@ -119,6 +119,12 @@ def apply_to_checked_docs(vars):
     ###ws_messaging.send_message('DOC-TAGS-CHANGED', group='ALL', changes=changes)
     return dict(new_topic_was_added=new_topic_was_added)
 
+@serve_json
+def get_doc_info(vars):
+    doc_id = int(vars.doc_id)
+    doc = db(db.TblDocs.id==doc_id).select().first()
+    return dict(doc=doc)
+
 #----------------support functions-----------------
 
 def make_docs_query(params):
