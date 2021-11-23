@@ -136,8 +136,12 @@ def init_query(tbl, editing=False, is_deleted=False, user_id=None):
 
 
 def get_photo_topics(story_id):
+    return get_object_topics(story_id, 'P')
+
+
+def get_object_topics(story_id, typ):
     db = inject('db')
-    q = (db.TblItemTopics.story_id == story_id) & (db.TblItemTopics.item_type == 'P') & (
+    q = (db.TblItemTopics.story_id == story_id) & (db.TblItemTopics.item_type == typ) & (
                 db.TblTopics.id == db.TblItemTopics.topic_id)
     lst = db(q).select()
     lst = [itm.TblTopics.as_dict() for itm in lst]
