@@ -5,6 +5,7 @@ from members_support import calc_grouped_selected_options, calc_all_tags, get_ta
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, \
     fix_record_dates_out
 import stories_manager
+from gluon.storage import Storage
 
 
 @serve_json
@@ -177,9 +178,17 @@ def get_doc_info(vars):
     doc_src = doc_url(doc_rec.story_id)
     doc_name = db(db.TblStories.id==doc_rec.story_id).select(db.TblStories.name).first().name
     doc_topics = get_object_topics(doc_rec.story_id, 'D')
+    sm = stories_manager.Stories()
+    story_about=sm.get_story(doc_rec.story_about_id)
+    if not story_about:
+        story_info = Storage(story_text="Story about doc", name=doc_name, used_for=STORY4DOCAB)
+        story_about = sm.add_story(story_info)
+        doc_rec.update_record(story_about_id=story_about.story_id)
+
     return dict(doc=doc_rec,
                 doc_src=doc_src,
                 doc_name=doc_name,
+                story_about=story_about,
                 doc_topics=doc_topics,
                 doc_date_str=all_dates.doc_date.date,
                 doc_date_datespan=all_dates.doc_date.span,
