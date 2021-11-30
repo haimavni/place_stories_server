@@ -179,9 +179,12 @@ def get_doc_info(vars):
     doc_name = db(db.TblStories.id==doc_rec.story_id).select(db.TblStories.name).first().name
     doc_topics = get_object_topics(doc_rec.story_id, 'D')
     sm = stories_manager.Stories()
-    story_about=sm.get_story(doc_rec.story_about_id)
+    story_about= sm.get_story(doc_rec.story_about_id)
+    doc_story = sm.get_story(doc_rec.story_id)
+    story_id = doc_story.story_id
+    chatroom_id = doc_story.chatroom_id
     if not story_about:
-        story_info = Storage(story_text="Story about doc", name=doc_name, used_for=STORY4DOCAB)
+        story_info = Storage(story_text="", name=doc_name, used_for=STORY4DOCAB)
         story_about = sm.add_story(story_info)
         doc_rec.update_record(story_about_id=story_about.story_id)
 
@@ -192,7 +195,9 @@ def get_doc_info(vars):
                 doc_topics=doc_topics,
                 doc_date_str=all_dates.doc_date.date,
                 doc_date_datespan=all_dates.doc_date.span,
-                doc_date_dateunit=all_dates.doc_date.unit
+                doc_date_dateunit=all_dates.doc_date.unit,
+                story_id=story_id,
+                chatroom_id=chatroom_id
                 )
 
 
