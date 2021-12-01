@@ -1,7 +1,7 @@
 import datetime
 from docs_support import save_uploaded_doc, doc_url, calc_doc_story, create_uploading_doc, save_uploading_chunk, \
     handle_loaded_doc
-from members_support import calc_grouped_selected_options, calc_all_tags, get_tag_ids, init_query, get_topics_query, get_object_topics
+from members_support import calc_grouped_selected_options, calc_all_tags, get_tag_ids, init_query, get_topics_query, get_object_topics, photos_folder
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, \
     fix_record_dates_out
 import stories_manager
@@ -187,6 +187,11 @@ def get_doc_info(vars):
         story_info = Storage(story_text="", name=doc_name, used_for=STORY4DOCAB)
         story_about = sm.add_story(story_info)
         doc_rec.update_record(story_about_id=story_about.story_id)
+    member_ids = db(db.TblMembersDocs.doc_id==doc_id).select()
+    member_ids = [m.member_id for m in member_ids]
+    members = db(db.TblMembers.id.belongs(member_ids)).select()
+    members = [Storage(id=member.id, facePhotoURL=photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png")) \
+               for member in members]
 
     return dict(doc=doc_rec,
                 doc_src=doc_src,
@@ -197,7 +202,8 @@ def get_doc_info(vars):
                 doc_date_datespan=all_dates.doc_date.span,
                 doc_date_dateunit=all_dates.doc_date.unit,
                 story_id=story_id,
-                chatroom_id=chatroom_id
+                chatroom_id=chatroom_id,
+                members=members
                 )
 
 
@@ -210,6 +216,25 @@ def update_doc_date(vars):
     rec = db((db.TblDocs.id == int(vars.doc_id)) & (db.TblDocs.deleted != True)).select().first()
     update_record_dates(rec, doc_dates_info)
     return dict()
+
+@serve_json
+def update_doc_members(vars):
+    doc_id = int(vars.doc_id)
+    old_members = db(db.TblMembersDocs.doc_id==doc_id).select()
+    old_members = [m.member_id for m in old_members]
+    old_members_set = set(old_members)
+    new_members = vars.member_ids
+    new_members_set = set(new_members)
+    deleted_members = [mid for mid in old_members if mid not in new_members_set]
+    q = (db.TblMembersDocs.doc_id==doc_id) & (db.TblMembersDocs.member_id.belongs(deleted_members))
+    db(q).delete()
+    for mid in new_members:
+        if mid not in old_members_set:
+            db.TblMembersDocs.insert(doc_id=doc_id, member_id=mid)
+    members = db(db.TblMembers.id.belongs(new_members)).select(db.TblMembers.id, db.TblMembers.facePhotoURL)
+    for member in members:
+        member.facePhotoURL = photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png")
+    return dict(members=members)
 
 
 # ----------------support functions-----------------

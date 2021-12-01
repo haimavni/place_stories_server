@@ -602,6 +602,11 @@ db.define_table('TblMembersVideos',
                 Field('member_id', type=db.TblMembers)
                 )
 
+db.define_table('TblMembersDocs',
+                Field('doc_id', type=db.TblDocs),
+                Field('member_id', type=db.TblMembers)
+                )
+
 db.define_table('TblVideoCuePoints',
                 Field('video_id', type=db.TblVideos),
                 Field('time', type='integer'),
