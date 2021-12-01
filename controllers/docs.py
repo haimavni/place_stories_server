@@ -190,7 +190,9 @@ def get_doc_info(vars):
     member_ids = db(db.TblMembersDocs.doc_id==doc_id).select()
     member_ids = [m.member_id for m in member_ids]
     members = db(db.TblMembers.id.belongs(member_ids)).select()
-    members = [Storage(id=member.id, facePhotoURL=photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png")) \
+    members = [Storage(id=member.id,
+                       facePhotoURL=photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png"),
+                       full_name=member.first_name + ' ' + member.last_name)
                for member in members]
 
     return dict(doc=doc_rec,

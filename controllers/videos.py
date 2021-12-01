@@ -267,7 +267,9 @@ def get_video_info(vars):
     member_ids = db(db.TblMembersVideos.video_id==video_id).select()
     member_ids = [m.member_id for m in member_ids]
     members = db(db.TblMembers.id.belongs(member_ids)).select()
-    members = [Storage(id=member.id, facePhotoURL=photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png")) for member in members]
+    members = [Storage(id=member.id,
+                       facePhotoURL=photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png"),
+                       full_name=member.first_name + ' ' + member.last_name) for member in members]
     return dict(video_source=video_source,
                 video_story=video_story,
                 video_id=video_id,
