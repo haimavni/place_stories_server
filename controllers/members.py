@@ -277,8 +277,6 @@ def get_story_list(vars):
         active_result_types |= {k}
         if k not in result_type_counters:
             result_type_counters[k] = 0
-        if result_type_counters[k] >= 100:
-            continue
         result_type_counters[k] += 1
         story.doc_url = None
         story.audio_path = None
@@ -290,6 +288,8 @@ def get_story_list(vars):
             story.audio_path = audio_path(story.id)
         elif k == STORY4MEMBER:
             story.profile_photo_path = profile_photo_path(story.id)
+        if result_type_counters[k] >= 100:
+            continue
         final_result.append(story)
     active_result_types = [k for k in active_result_types]
     active_result_types = sorted(active_result_types)

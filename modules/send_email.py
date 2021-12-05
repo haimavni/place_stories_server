@@ -1,4 +1,5 @@
 import yagmail
+import os
 
 # import keyring
 from injections import inject
@@ -15,7 +16,7 @@ def email(to="", subject="", message="", sender=None):
         sender = f"{dept}@{app}.{host}"
     # password = keyring.get_password("gmail.com", "lifestone2508")
     # the above fails because it asks for the protecting password but there is no user to answer
-    password = "931632#Ha2104"
+    password = os.environ.get('MAILPASS')
     yag = yagmail.SMTP({"lifestone2508@gmail.com": sender}, password)
     result = yag.send(to=to, subject=subject, contents=message)
     return result
