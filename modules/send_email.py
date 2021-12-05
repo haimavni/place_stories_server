@@ -6,6 +6,7 @@ from injections import inject
 
 
 def email(to="", subject="", message="", sender=None):
+    comment, log_exception = inject('comment', 'log_exception')
     if (not sender) or ('@' not in sender):
         request = inject('request')
         host = request.env.http_host
@@ -17,8 +18,17 @@ def email(to="", subject="", message="", sender=None):
     # password = keyring.get_password("gmail.com", "lifestone2508")
     # the above fails because it asks for the protecting password but there is no user to answer
     password = os.environ.get('MAILPASS')
-    yag = yagmail.SMTP({"lifestone2508@gmail.com": sender}, password)
-    result = yag.send(to=to, subject=subject, contents=message)
+    comment(f"about to send email. pass: {password}")
+    try:
+        yag = yagmail.SMTP({"lifestone2508@gmail.com": sender}, password)
+    except:
+        log_exception(f'failed to create yag')
+        raise Exception('failed to create email sender')
+    try:
+        result = yag.send(to=to, subject=subject, contents=message)
+    except:
+        log_exception(f'failed to send')
+        raise Exception('failed to send email')
     return result
 
 
