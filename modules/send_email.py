@@ -18,6 +18,7 @@ def email(to="", subject="", message="", sender=None):
     # password = keyring.get_password("gmail.com", "lifestone2508")
     # the above fails because it asks for the protecting password but there is no user to answer
     password = os.environ.get('MAILPASS')
+    password = '931632@Ha2112'
     comment(f"about to send email. pass: {password}")
     try:
         yag = yagmail.SMTP({"lifestone2508@gmail.com": sender}, password)
