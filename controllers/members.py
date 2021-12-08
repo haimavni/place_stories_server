@@ -273,7 +273,14 @@ def get_story_list(vars):
     active_result_types = set()
     final_result = []
     for story in result:
+        story_id = story.id
         k = story.used_for
+        if k == STORY4DOC and doc_has_story_about(story_id):
+            continue
+        if k == STORY4DOCAB:
+            story.used_for = STORY4DOC
+            k = STORY4DOC
+            story_id = story_id_of_story_about_id(story_id)
         active_result_types |= {k}
         if k not in result_type_counters:
             result_type_counters[k] = 0
@@ -282,12 +289,12 @@ def get_story_list(vars):
         story.audio_path = None
         story.editable_preview = False
         if k == STORY4DOC:
-            story.doc_url = doc_url(story.id)
+            story.doc_url = doc_url(story_id)
             story.editable_preview = True
         elif k == STORY4AUDIO:
-            story.audio_path = audio_path(story.id)
+            story.audio_path = audio_path(story_id)
         elif k == STORY4MEMBER:
-            story.profile_photo_path = profile_photo_path(story.id)
+            story.profile_photo_path = profile_photo_path(story_id)
         if result_type_counters[k] >= 100:
             continue
         final_result.append(story)
@@ -1234,11 +1241,23 @@ def save_story_data(story_info, user_id):
         result = sm.update_story(story_id, story_info)
     else:
         result = sm.add_story(story_info)
-    ### result = sm.update_story(story_id, story_info)
     if story_info.used_for == STORY4PHOTO:
         photo_rec = db(
             (db.TblPhotos.story_id == story_info.story_id) & (db.TblPhotos.deleted != True)).select().first()
         photo_rec.update_record(Name=story_info.name)
+    if story_info.used_for == STORY4DOC:  # ugly...
+        doc_rec = db(db.TblDocs.story_id==story_id).select().first()
+        if doc_rec.story_about_id:
+            story_about_rec = db(db.TblStories.id==doc_rec.story_about_id).select().first()
+            story_about_rec.update_record(name=story_info.name)
+            doc_rec.update_record(name=story_info.name)
+    if story_info.used_for == STORY4DOCAB:  # uglier...
+        doc_rec = db(db.TblDocs.story_about_id == story_id).select().first()
+        if doc_rec:
+            story_rec = db(db.TblStories.id == doc_rec.story_id).select().first()
+            story_rec.update_record(name=story_info.name)
+            doc_rec.update_record(name=story_info.name)
+
     ws_messaging.send_message(key='STORY_WAS_SAVED', group='ALL', story_data=result)
     return result
 
@@ -1631,3 +1650,11 @@ def decode_sorting_key(sk):
         return []
     lst = sk.split('-')
     return [int(s) for s in lst]
+
+def story_id_of_story_about_id(story_about_id):
+    doc_rec = db(db.TblDocs.story_about_id==story_about_id).select().first()
+    return doc_rec.story_id
+
+def doc_has_story_about(story_id):
+    doc_rec = db(db.TblDocs.story_id == story_id).select().first()
+    return doc_rec and doc_rec.story_about_id
