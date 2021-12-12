@@ -137,7 +137,7 @@ class Stories:
                                         approved_version=0 if auth.user_has_privilege(TEXT_AUDITOR) else -1,
                                         last_update_date=now,
                                         imported_from=imported_from)
-        preview = get_reisha(story_text)
+        preview = story_info.preview or get_reisha(story_text)
         db(db.TblStories.id==story_id).update(preview=preview)
         if story_info.used_for == STORY4EVENT:
             db.TblEvents.insert(

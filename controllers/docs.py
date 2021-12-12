@@ -188,7 +188,7 @@ def get_doc_info(vars):
     story_id = doc_story.story_id
     chatroom_id = doc_story.chatroom_id
     if not story_about:
-        story_info = Storage(story_text="", name=doc_name, used_for=STORY4DOCAB)
+        story_info = Storage(story_text=doc_story.preview, name=doc_name, used_for=STORY4DOCAB, preview=doc_story.preview)
         story_about = sm.add_story(story_info)
         doc_rec.update_record(story_about_id=story_about.story_id)
     member_ids = db(db.TblMembersDocs.doc_id==doc_id).select()

@@ -1256,6 +1256,9 @@ def save_story_data(story_info, user_id):
         if doc_rec:
             story_rec = db(db.TblStories.id == doc_rec.story_id).select().first()
             story_rec.update_record(name=story_info.name)
+            if not story_rec.story:
+                main_story_rec = db(db.TblStories.id==story_rec.story_id).select().first()
+                story_rec.update_record(story=main_story_rec.preview, preview=main_story_rec.preview)
             doc_rec.update_record(name=story_info.name)
 
     ws_messaging.send_message(key='STORY_WAS_SAVED', group='ALL', story_data=result)
@@ -1653,7 +1656,9 @@ def decode_sorting_key(sk):
 
 def story_id_of_story_about_id(story_about_id):
     doc_rec = db(db.TblDocs.story_about_id==story_about_id).select().first()
-    return doc_rec.story_id
+    if doc_rec:
+        return doc_rec.story_id
+    return None
 
 def doc_has_story_about(story_id):
     doc_rec = db(db.TblDocs.story_id == story_id).select().first()
