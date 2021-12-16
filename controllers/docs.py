@@ -173,11 +173,11 @@ def apply_to_checked_docs(vars):
 @serve_json
 def get_doc_info(vars):
     doc_id = int(vars.doc_id)
-    if vars.caller == 'stories':
+    if vars.caller == 'docs':
+        doc_rec = db(db.TblDocs.id == doc_id).select().first()
+    else:
         doc_rec = db(db.TblDocs.story_id == doc_id).select().first()
         doc_id = doc_rec.id
-    else:
-        doc_rec = db(db.TblDocs.id == doc_id).select().first()
     all_dates = get_all_dates(doc_rec)
     doc_src = doc_url(doc_rec.story_id)
     doc_name = db(db.TblStories.id==doc_rec.story_id).select(db.TblStories.name).first().name
