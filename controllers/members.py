@@ -1344,7 +1344,7 @@ def get_member_docs(member_id):
 
 def get_member_video_stories(member_id):
     q = (db.TblMembersVideos.member_id == member_id) & \
-        (db.TblMembersVideos.video_id == db.TblDocs.id) & \
+        (db.TblMembersVideos.video_id == db.TblVideos.id) & \
         (db.TblVideos.story_id == db.TblStories.id) & \
         (db.TblStories.deleted == False)
     result = []
