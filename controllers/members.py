@@ -96,7 +96,7 @@ def get_member_details(vars):
         mem_id += 1
     elif vars.shift == 'prev':
         mem_id -= 1
-    member_stories = get_member_stories(mem_id) + get_member_terms(mem_id)
+    member_stories = get_member_stories(mem_id) + get_member_terms(mem_id) + get_member_docs(mem_id) + get_member_video_stories(mem_id)
     member_info = get_member_rec(mem_id)
     if not member_info:
         raise User_Error('No one there')
@@ -1254,11 +1254,11 @@ def save_story_data(story_info, user_id):
     if story_info.used_for == STORY4DOCAB:  # uglier...
         doc_rec = db(db.TblDocs.story_about_id == story_id).select().first()
         if doc_rec:
-            story_rec = db(db.TblStories.id == doc_rec.story_id).select().first()
-            story_rec.update_record(name=story_info.name)
-            if not story_rec.story:
-                main_story_rec = db(db.TblStories.id==story_rec.story_id).select().first()
-                story_rec.update_record(story=main_story_rec.preview, preview=main_story_rec.preview)
+            main_story_rec = db(db.TblStories.id == doc_rec.story_id).select().first()
+            main_story_rec.update_record(name=story_info.name)
+            main_story_rec.update_record(preview=main_story_rec.preview)
+            if not main_story_rec.story:
+                main_story_rec.update_record(story=main_story_rec.preview)
             doc_rec.update_record(name=story_info.name)
 
     ws_messaging.send_message(key='STORY_WAS_SAVED', group='ALL', story_data=result)
@@ -1317,6 +1317,55 @@ def get_member_terms(member_id):
         result.append(dic)
     return result
 
+def get_member_docs(member_id):
+    q = (db.TblMembersDocs.member_id == member_id) & \
+        (db.TblMembersDocs.doc_id == db.TblDocs.id) & \
+        (db.TblDocs.story_id == db.TblStories.id) & \
+        (db.TblStories.deleted == False)
+    result = []
+    lst = db(q).select()
+    for rec in lst:
+        doc = rec.TblDocs
+        story = rec.TblStories
+        dic = dict(
+            topic=doc.name,
+            name=story.name,
+            story_id=story.id,
+            story_text=story.story,
+            preview=get_reisha(story.preview, 30),
+            ###source = term.SSource,
+            used_for=story.used_for,
+            author_id=story.author_id,
+            creation_date=story.creation_date,
+            last_update_date=story.last_update_date
+        )
+        result.append(dic)
+    return result
+
+def get_member_video_stories(member_id):
+    q = (db.TblMembersVideos.member_id == member_id) & \
+        (db.TblMembersVideos.video_id == db.TblDocs.id) & \
+        (db.TblVideos.story_id == db.TblStories.id) & \
+        (db.TblStories.deleted == False)
+    result = []
+    lst = db(q).select()
+    for rec in lst:
+        video = rec.TblVideos
+        story = rec.TblStories
+        dic = dict(
+            topic=video.name,
+            name=story.name,
+            story_id=story.id,
+            story_text=story.story,
+            preview=get_reisha(story.preview, 30),
+            ###source = term.SSource,
+            used_for=story.used_for,
+            author_id=story.author_id,
+            creation_date=story.creation_date,
+            last_update_date=story.last_update_date
+        )
+        result.append(dic)
+    return result
 
 def query_has_data(params):
     first_year, last_year = calc_years_range(params)
