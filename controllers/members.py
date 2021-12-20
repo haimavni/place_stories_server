@@ -493,7 +493,10 @@ def get_member_names():
 @serve_json
 def remove_member(vars):
     member_id = int(vars.member_id)
-    deleted = db(db.TblMembers.id == member_id).update(deleted=True) == 1
+    mrec = db(db.TblMembers.id == member_id).select().first()
+    deleted = mrec.update_record(deleted=True) == 1
+    mstory = db(db.TblStories.id==mrec.story_id).select().first()
+    mstory.update_record(deleted=True)
     if deleted:
         ws_messaging.send_message(key='MEMBER_DELETED', group='ALL',
                                   member_id=member_id)  # currently not handled in the client
