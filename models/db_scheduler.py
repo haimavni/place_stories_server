@@ -10,6 +10,7 @@ from topics_support import fix_is_tagged
 from folders import safe_open
 from send_email import email
 from video_support import calc_missing_youtube_info
+from health import check_health
 
 def test_scheduler(msg):
     comment("test task {}", msg)
@@ -137,6 +138,20 @@ def schedule_update_help_messages():
         timeout=5 * 60 , # will time out if running for 5 minutes
     )
 
+def schedule_check_health():
+    now = datetime.datetime.now()
+    return db.scheduler_task.insert(
+        status='QUEUED',
+        application_name=request.application,
+        task_name='check database integrity',
+        function_name='check_health',
+        start_time=now,
+        stop_time=now + datetime.timedelta(days=1461),
+        repeats=0,
+        period=3600,   # every hour
+        timeout=5 * 60 , # will time out if running for 5 minutes
+    )
+
 def schedule_calc_missing_youtube_info():
     now = datetime.datetime.now()
     return db.scheduler_task.insert(
@@ -230,6 +245,7 @@ permanent_tasks = dict(
     calc_doc_stories=schedule_calc_doc_stories,
     create_pending_apps=schedule_create_pending_apps,
     update_help_messages=schedule_update_help_messages,
+    check_health=schedule_check_health,
     update_letter_templates=schedule_update_letter_templates
 )
 
@@ -241,6 +257,7 @@ __tasks = dict(
     create_pending_apps=create_pending_apps,
     execute_task=execute_task,
     update_help_messages=update_help_messages,
+    check_health=check_health,
     update_letter_templates=update_letter_templates
 )
 

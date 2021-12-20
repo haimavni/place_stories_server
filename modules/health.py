@@ -22,3 +22,28 @@ def verify_topic_types(typ):
         usage = trec.usage.replace(typ, '')
         trec.update_record(usage=usage)
     return dict(result=result, bad_topics=bad_topics)
+
+
+def verify_all_topic_types():
+    n = 0
+    for typ in 'EPTVDA':
+        result = verify_topic_types(typ)
+        if result['bad_topics']:
+            n += 1
+    return n
+
+
+def check_detached_member_stories():
+    db = inject('db')
+    n = 0
+    for srec in db((db.TblStories.used_for == 1) & (db.TblStories.deleted != True)).select(db.TblStories.id):
+        mrec = db(db.TblMembers.story_id == srec.id).select().first()
+        if (not mrec) or mrec.deleted:
+            srec.update_record(deleted=True)
+            n += 1
+    return n
+
+def check_health():
+    n1 = verify_all_topic_types()
+    n2 = check_detached_member_stories()
+    return dict(result=f"{n1} topic/type issues. {n2} detached member stories.")
