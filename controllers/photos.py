@@ -1,6 +1,6 @@
 from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, \
      save_uploaded_photo, rotate_photo, save_member_face, save_article_face, create_zip_file, get_photo_pairs, find_similar_photos, \
-     timestamped_photo_path, crop_a_photo
+     timestamped_photo_path, crop_a_photo, save_padded_photo
 import ws_messaging
 import stories_manager
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
@@ -284,6 +284,9 @@ def get_photo_list(vars):
             field1 = ~field1
             field2 = ~field2
         lst = db(q).select(orderby=field1 | field2, limitby=(0, n))
+        lst = list(lst)
+    elif selected_order_option == 'alphabetical-order':
+        lst = db(q).select(orderby=db.TblStories.name, limitby=(0,MAX_PHOTOS_COUNT))
         lst = list(lst)
     else:
         n = db(q).count()
@@ -611,6 +614,12 @@ def replace_duplicate_photos(vars):
     delete_photos(vars.photos_to_keep) #the image data was copied to the old photo which has more extra info
     return dict(photo_patches=photo_patches)
 
+@serve_json
+def exclude_from_main_slideshow(vars):
+    for photo in db(db.TblPhotos.id.belongs(vars.selected_photos)):
+        photo.update_record(no_slide_show=vars.exclude)
+    return dict()
+
 ####---------------support functions--------------------------------------
 
 def handle_dup_group(group, photos_to_keep_set):
@@ -674,7 +683,8 @@ def make_photos_query(vars):
         (db.TblPhotos.is_back_side != True)
     if vars.photo_ids:
         q &= (db.TblPhotos.id.belongs(vars.photo_ids))
-    q &= (db.TblPhotos.no_slide_show != True)
+    if vars.no_slide_show:
+        q &= (db.TblPhotos.no_slide_show != True)
     first_year = vars.first_year
     last_year = vars.last_year
     if vars.base_year: #time range may be defined
@@ -883,3 +893,26 @@ def upload_chunk(vars):
 def handle_loaded_photo(photo_id):
     from complete_photo_record import add_photo_info
     add_photo_info(photo_id)
+
+
+@serve_json
+def set_cover_photo(vars):
+    cover_photo = vars.cover_photo
+    r = cover_photo.find('/apps_data')
+    cover_photo_path = cover_photo[r:]
+    r = cover_photo_path.rfind('?')
+    if r > 0:
+        cover_photo_path = cover_photo_path[:r]
+    photo_url = save_padded_photo(cover_photo_path, name='cover.jpg')
+    return dict(photo_url=photo_url)
+
+@serve_json
+def get_padded_photo_url(vars):
+    photo_url = vars.photo_url
+    r = photo_url.find('/apps_data')
+    photo_path = photo_url[r:]
+    r = photo_path.rfind("?")
+    if r > 0:
+        photo_path = photo_path[:r]
+    padded_photo_url = save_padded_photo(photo_path)
+    return dict(padded_photo_url=padded_photo_url)

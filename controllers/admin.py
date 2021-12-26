@@ -209,6 +209,25 @@ def set_cuepoints_option(vars):
     config_rec.update_record(enable_cuepoints=cuepoints_on)
     return dict()
 
+@serve_json
+def set_publishing_option(vars):
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    allow_publishing_on = vars.option == 'user.allow-publishing-on'
+    config_rec.update_record(allow_publishing=allow_publishing_on)
+    return dict()
+
+@serve_json
+def set_expose_gallery_option(vars):
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    expose_gallery_on = vars.option == 'user.expose-gallery-on'
+    config_rec.update_record(expose_gallery=expose_gallery_on)
+    return dict()
 
 @serve_json
 def set_quick_upload_option(vars):

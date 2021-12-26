@@ -285,5 +285,6 @@ def save_story_articles(caller_id, caller_type, article_ids):
                 tbl1.insert(article_id=a, event_id=item.id)
             else:
                 tbl1.insert(article_id=a, term_id=item.id)
-    return dict()
+    articles = db(db.TblArticles.id.belongs(article_ids)).select()
+    return dict(articles=articles)
 

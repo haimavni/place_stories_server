@@ -50,6 +50,8 @@ def create_uploading_doc(file_name, crc, user_id):
 def save_uploading_chunk(record_id, start, blob):
     db = inject('db')
     drec = db(db.TblDocs.id==record_id).select().first()
+    if not drec:
+        raise Exception(f'record_id {record_id} not found')
     file_name = local_docs_folder() + drec.doc_path
     with open(file_name, 'ab') as f:
         f.seek(start, 0)

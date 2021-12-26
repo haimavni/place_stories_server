@@ -12,7 +12,7 @@ from gluon.utils import web2py_uuid
 from html_utils import clean_html
 from http_utils import json_to_storage
 from members_support import *
-from photos_support import get_slides_from_photo_list, save_member_face
+from photos_support import get_slides_from_photo_list, get_video_thumbnails, save_member_face
 from quiz_support import use_quiz
 from words import calc_used_languages, read_words_index, get_all_story_previews, get_reisha
 
@@ -96,7 +96,7 @@ def get_member_details(vars):
         mem_id += 1
     elif vars.shift == 'prev':
         mem_id -= 1
-    member_stories = get_member_stories(mem_id) + get_member_terms(mem_id)
+    member_stories = get_member_stories(mem_id) + get_member_terms(mem_id) + get_member_docs(mem_id) + get_member_video_stories(mem_id)
     member_info = get_member_rec(mem_id)
     if not member_info:
         raise User_Error('No one there')
@@ -273,39 +273,51 @@ def get_story_list(vars):
     active_result_types = set()
     final_result = []
     for story in result:
+        story_id = story.id
         k = story.used_for
+        if k == STORY4DOC and doc_has_story_about(story_id):
+            continue
+        if k == STORY4DOCAB:
+            story.used_for = STORY4DOC
+            k = STORY4DOC
+            story_id = story_id_of_story_about_id(story_id)
         active_result_types |= {k}
         if k not in result_type_counters:
             result_type_counters[k] = 0
-        if result_type_counters[k] >= 100:
-            continue
         result_type_counters[k] += 1
         story.doc_url = None
         story.audio_path = None
         story.editable_preview = False
         if k == STORY4DOC:
-            story.doc_url = doc_url(story.id)
+            story.doc_url = doc_url(story_id)
             story.editable_preview = True
         elif k == STORY4AUDIO:
-            story.audio_path = audio_path(story.id)
+            story.audio_path = audio_path(story_id)
         elif k == STORY4MEMBER:
-            story.profile_photo_path = profile_photo_path(story.id)
+            story.profile_photo_path = profile_photo_path(story_id)
+        if result_type_counters[k] >= 100:
+            continue
         final_result.append(story)
     active_result_types = [k for k in active_result_types]
     active_result_types = sorted(active_result_types)
     result = final_result
-    for i in range(0, len(result), CHUNK):
-        chunk = result[i:i + CHUNK]
-        chunk = set_story_list_data(chunk)
-        ws_messaging.send_message(key='STORY-LIST-CHUNK',
-                                  group=vars.ptp_key,
-                                  first=i,
-                                  num_stories=len(result),
-                                  chunk_size=CHUNK,
-                                  chunk=chunk,
-                                  active_result_types=active_result_types,
-                                  result_type_counters=result_type_counters)
-    return dict(no_results=len(result) == 0)
+    result = set_story_list_data(result)
+    return dict(no_results=len(result)==0,
+                result=result,
+                active_result_types=active_result_types,
+                result_type_counters=result_type_counters)
+    # for i in range(0, len(result), CHUNK):
+    #     chunk = result[i:i + CHUNK]
+    #     chunk = set_story_list_data(chunk)
+    #     ws_messaging.send_message(key='STORY-LIST-CHUNK',
+    #                               group=vars.ptp_key,
+    #                               first=i,
+    #                               num_stories=len(result),
+    #                               chunk_size=CHUNK,
+    #                               chunk=chunk,
+    #                               active_result_types=active_result_types,
+    #                               result_type_counters=result_type_counters)
+    # return dict(no_results=len(result) == 0)
 
 
 @serve_json
@@ -392,7 +404,11 @@ def get_story_photo_list(vars):
         return dict(photo_list=[])
     else:
         raise Exception('Unknown call type in get story photo list')
-    item_id = db(tbl.story_id == story_id).select().first().id
+    item = db(tbl.story_id == story_id).select().first()
+    if item:
+        item_id = item.id
+    else:
+        return dict(photo_list=[])
     if vars.story_type == "story":
         qp = (db.TblEventPhotos.Event_id == item_id) & (db.TblPhotos.id == db.TblEventPhotos.Photo_id)
     else:
@@ -477,7 +493,10 @@ def get_member_names():
 @serve_json
 def remove_member(vars):
     member_id = int(vars.member_id)
-    deleted = db(db.TblMembers.id == member_id).update(deleted=True) == 1
+    mrec = db(db.TblMembers.id == member_id).select().first()
+    deleted = mrec.update_record(deleted=True) == 1
+    mstory = db(db.TblStories.id==mrec.story_id).select().first()
+    mstory.update_record(deleted=True)
     if deleted:
         ws_messaging.send_message(key='MEMBER_DELETED', group='ALL',
                                   member_id=member_id)  # currently not handled in the client
@@ -671,8 +690,8 @@ def apply_topics_to_selected_stories(vars):
     checked_story_list = params.checked_story_list
     selected_topics = params.selected_topics
     new_topic_was_added = False
-    if selected_book and checked_story_list:  # we remove all stories and then add the ones from the selected books
-        db(db.TblStories.book_id == selected_book.id).update(book_id=None)
+    # if selected_book and checked_story_list:  # we remove all stories and then add the ones from the selected books
+    #    db(db.TblStories.book_id == selected_book.id).update(book_id=None)
     for story_id in checked_story_list:
         curr_tag_ids = set(get_tag_ids(story_id, usage_char))
         item_rec = item_of_story_id(used_for, story_id)
@@ -789,6 +808,22 @@ def add_story_member(vars):
 
 
 @serve_json
+def add_story_article(vars):
+    article_id = vars.candidate_id
+    story_id = vars.story_id
+    story = db(db.TblStories.id == story_id).select().first()
+    if story.used_for == STORY4EVENT:
+        event = db(db.TblEvents.story_id == story_id).select().first()
+        db.TblEventArticles.insert(article_id=article_id, Event_id=event.id)
+    elif story.used_for == STORY4TERM:
+        term = db(db.TblTerms.story_id == story_id).select().first()
+        db.TblTermArticles.insert(article_id=article_id, term_id=term.id)
+    else:
+        raise Exception("Incompatible story usage")
+    return dict()
+
+
+@serve_json
 def save_photo_group(vars):
     story_id = vars.caller_id
     tbl = db.TblEvents if vars.caller_type == "story" else db.TblTerms if vars.caller_type == "term" else help if vars.caller_type == 'help' else None
@@ -817,7 +852,11 @@ def save_photo_group(vars):
                 db.TblEventPhotos.insert(Photo_id=p, Event_id=item_id)
             elif vars.caller_type == "term":
                 db.TblTermPhotos.insert(Photo_id=p, term_id=item_id)
-    return dict()
+    photos = db(db.TblPhotos.id.belongs(photo_ids)).select(db.TblPhotos.id, db.TblPhotos.photo_path)
+    photos = [p.as_dict() for p in photos]
+    for p in photos:
+        p['photo_path'] = photos_folder() + p['photo_path']
+    return dict(photos=photos)
 
 
 @serve_json
@@ -1044,10 +1083,17 @@ def _get_story_list(params, exact):  # exact means looking only for the passed k
             n = db(q).count()
             if not n:
                 continue
-            sample_size = n if n < 100 else 100
-            threshold = SAMPLING_SIZE * sample_size / n
-            q &= (db.TblStories.sampling_id < threshold)
+            sample_size = 100
+            dic = None
+            if n > sample_size:
+                q1, dic = stories_random_sample(sample_size, used_for)
+                q = q & q1
             lst0 = db(q).select()
+            if dic:
+                lst0 = [Storage(rec) for rec in lst0]
+                for rec in lst0:
+                    rec.idx = dic[rec.id]
+                lst0.sort(key=lambda rec: rec.idx)
             lst1 += lst0
     else:
         if not q:
@@ -1059,6 +1105,15 @@ def _get_story_list(params, exact):  # exact means looking only for the passed k
             lst1 += lst0
     return lst1
 
+def stories_random_sample(size, used_for):
+    q = (db.TblStories.deleted != True) & (db.TblStories.used_for == used_for)
+    lst = db(q).select(db.TblStories.id)
+    lst = [rec.id for rec in lst]
+    lst1 = random.sample(lst, size)
+    dic = dict()
+    for i, j in enumerate(lst1):
+        dic[j] = i
+    return db.TblStories.id.belongs(lst1), dic
 
 def process_story_list(lst1, checked=False, exact=False):
     user_list = calc_user_list()
@@ -1154,13 +1209,32 @@ def photo_lst_article_ids(photo_id_lst):
     return result
 
 
-def get_member_slides(member_id):
+def get_member_photos(member_id):
     q = (db.TblMemberPhotos.Member_id == member_id) & \
         (db.TblPhotos.id == db.TblMemberPhotos.Photo_id) & \
         (db.TblPhotos.deleted != True) & \
         (db.TblPhotos.is_back_side != True)
     return get_slides_from_photo_list(q)
 
+def get_member_videos(member_id):
+    q = (db.TblMembersVideos.member_id==member_id) & \
+        (db.TblVideos.id==db.TblMembersVideos.video_id) & \
+        (db.TblVideos.deleted != True)
+    return get_video_thumbnails(q)
+
+def get_member_slides(member_id):
+    lst1 = get_member_videos(member_id)
+    lst2 = get_member_photos(member_id)
+    #interlace videos and photos
+    n = min(len(lst1), len(lst2))
+    lst1_head, lst1_tail = lst1[:n],lst1[n:]
+    lst2_head, lst2_tail = lst2[:n],lst2[n:]
+    lst = []
+    for i, x in enumerate(lst1_head):
+        lst.append(x)
+        lst.append(lst2[i])
+    lst += lst1_tail + lst2_tail
+    return lst
 
 def save_story_data(story_info, user_id):
     story_info.sorting_key = encode_sorting_key(story_info.sorting_key)
@@ -1174,6 +1248,22 @@ def save_story_data(story_info, user_id):
         photo_rec = db(
             (db.TblPhotos.story_id == story_info.story_id) & (db.TblPhotos.deleted != True)).select().first()
         photo_rec.update_record(Name=story_info.name)
+    if story_info.used_for == STORY4DOC:  # ugly...
+        doc_rec = db(db.TblDocs.story_id==story_id).select().first()
+        if doc_rec.story_about_id:
+            story_about_rec = db(db.TblStories.id==doc_rec.story_about_id).select().first()
+            story_about_rec.update_record(name=story_info.name)
+            doc_rec.update_record(name=story_info.name)
+    if story_info.used_for == STORY4DOCAB:  # uglier...
+        doc_rec = db(db.TblDocs.story_about_id == story_id).select().first()
+        if doc_rec:
+            main_story_rec = db(db.TblStories.id == doc_rec.story_id).select().first()
+            main_story_rec.update_record(name=story_info.name)
+            main_story_rec.update_record(preview=main_story_rec.preview)
+            if not main_story_rec.story:
+                main_story_rec.update_record(story=main_story_rec.preview)
+            doc_rec.update_record(name=story_info.name)
+
     ws_messaging.send_message(key='STORY_WAS_SAVED', group='ALL', story_data=result)
     return result
 
@@ -1230,6 +1320,55 @@ def get_member_terms(member_id):
         result.append(dic)
     return result
 
+def get_member_docs(member_id):
+    q = (db.TblMembersDocs.member_id == member_id) & \
+        (db.TblMembersDocs.doc_id == db.TblDocs.id) & \
+        (db.TblDocs.story_id == db.TblStories.id) & \
+        (db.TblStories.deleted == False)
+    result = []
+    lst = db(q).select()
+    for rec in lst:
+        doc = rec.TblDocs
+        story = rec.TblStories
+        dic = dict(
+            topic=doc.name,
+            name=story.name,
+            story_id=story.id,
+            story_text=story.story,
+            preview=get_reisha(story.preview, 30),
+            ###source = term.SSource,
+            used_for=story.used_for,
+            author_id=story.author_id,
+            creation_date=story.creation_date,
+            last_update_date=story.last_update_date
+        )
+        result.append(dic)
+    return result
+
+def get_member_video_stories(member_id):
+    q = (db.TblMembersVideos.member_id == member_id) & \
+        (db.TblMembersVideos.video_id == db.TblVideos.id) & \
+        (db.TblVideos.story_id == db.TblStories.id) & \
+        (db.TblStories.deleted == False)
+    result = []
+    lst = db(q).select()
+    for rec in lst:
+        video = rec.TblVideos
+        story = rec.TblStories
+        dic = dict(
+            topic=video.name,
+            name=story.name,
+            story_id=story.id,
+            story_text=story.story,
+            preview=get_reisha(story.preview, 30),
+            ###source = term.SSource,
+            used_for=story.used_for,
+            author_id=story.author_id,
+            creation_date=story.creation_date,
+            last_update_date=story.last_update_date
+        )
+        result.append(dic)
+    return result
 
 def query_has_data(params):
     first_year, last_year = calc_years_range(params)
@@ -1546,8 +1685,10 @@ def _info_from_qm(qm, qa, member_fields, photo_member_set, photo_article_set, ph
             if not m['facePhotoURL']:
                 m['facePhotoURL'] = "dummy_face.png"
             m['facePhotoURL'] = photos_folder("profile_photos") + m['facePhotoURL']
-    for a in articles:
-        a['facePhotoURL'] = photos_folder("profile_photos") + a['facePhotoURL']
+    lst = [articles, article_candidates]
+    for arr in lst:
+        for a in arr:
+            a['facePhotoURL'] = photos_folder("profile_photos") + a['facePhotoURL']
     return photos, members, candidates, articles, article_candidates
 
 
@@ -1564,3 +1705,13 @@ def decode_sorting_key(sk):
         return []
     lst = sk.split('-')
     return [int(s) for s in lst]
+
+def story_id_of_story_about_id(story_about_id):
+    doc_rec = db(db.TblDocs.story_about_id==story_about_id).select().first()
+    if doc_rec:
+        return doc_rec.story_id
+    return None
+
+def doc_has_story_about(story_id):
+    doc_rec = db(db.TblDocs.story_id == story_id).select().first()
+    return doc_rec and doc_rec.story_about_id

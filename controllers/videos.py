@@ -93,11 +93,15 @@ def save_video(vars):
 
 
 @serve_json
-def delete_video(vars):
-    story_id = db(db.TblVideos.id == vars.video_id).select().first().story_id
+def delete_videos(vars):
+    selected_videos = vars.selected_videos
     sm = stories_manager.Stories()
-    sm.delete_story(story_id)
-    n = db(db.TblVideos.id == vars.video_id).update(deleted=True)
+    selected_videos=selected_videos.split(',')
+    selected_videos = [int(vid) for vid in selected_videos]
+    for vid in selected_videos:
+        story_id = db(db.TblVideos.id == vid).select().first().story_id
+        sm.delete_story(story_id)
+    db(db.TblVideos.id.belongs(selected_videos)).update(deleted=True)
     return dict()
 
 
@@ -260,6 +264,12 @@ def get_video_info(vars):
     photographer_id = photographer.id if photographer else None
     video_topics = get_video_topics(vrec.story_id)
     all_dates = get_all_dates(vrec)
+    member_ids = db(db.TblMembersVideos.video_id==video_id).select()
+    member_ids = [m.member_id for m in member_ids]
+    members = db(db.TblMembers.id.belongs(member_ids)).select()
+    members = [Storage(id=member.id,
+                       facePhotoURL=photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png"),
+                       full_name=member.first_name + ' ' + member.last_name) for member in members]
     return dict(video_source=video_source,
                 video_story=video_story,
                 video_id=video_id,
@@ -268,6 +278,7 @@ def get_video_info(vars):
                 video_date_str = all_dates.video_date.date,
                 photo_date_datespan = all_dates.video_date.span,
                 video_topics=video_topics,
+                members=members,
                 cue_points=cue_points)
 
 @serve_json
@@ -290,6 +301,25 @@ def update_video_cue_points(vars):
     return dict()
 
 @serve_json
+def update_video_members(vars):
+    video_id = int(vars.video_id)
+    old_members = db(db.TblMembersVideos.video_id==video_id).select()
+    old_members = [m.member_id for m in old_members]
+    old_members_set = set(old_members)
+    new_members = vars.member_ids
+    new_members_set = set(new_members)
+    deleted_members = [mid for mid in old_members if mid not in new_members_set]
+    q = (db.TblMembersVideos.video_id==video_id) & (db.TblMembersVideos.member_id.belongs(deleted_members))
+    db(q).delete()
+    for mid in new_members:
+        if mid not in old_members_set:
+            db.TblMembersVideos.insert(video_id=video_id, member_id=mid)
+    members = db(db.TblMembers.id.belongs(new_members)).select(db.TblMembers.id, db.TblMembers.facePhotoURL)
+    for member in members:
+        member.facePhotoURL = photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png")
+    return dict(members=members)
+
+@serve_json
 def update_cue_members(vars):
     video_id = int(vars.video_id)
     time = int(vars.time)
@@ -307,7 +337,8 @@ def update_cue_members(vars):
     for mem_id in member_ids:
         if mem_id not in old_member_ids:
             db.TblMembersVideoCuePoints.insert(member_id=mem_id, cue_point_id=cue_id)
-    return dict()
+    members = db(db.TblMembersVideos.video_id==video_id).select(db.TblMembers.id, db.TblMembers.facePhotoURL)
+    return dict(members=members)
 
 @serve_json
 def video_cue_points(vars):

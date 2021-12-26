@@ -325,6 +325,26 @@ def calc_missing_dhash_values(max_to_hash=20000):
     to_scan = db(q).count()
     return  '{} photo records dhashed. {} need to be dhashed.'.format(done, to_scan)
 
+def get_video_thumbnails(q):
+    db = inject('db')
+    lst = db(q).select()
+    if not lst:
+        return []
+    if 'TblVideos' in lst[0]:
+        lst = [rec.TblVideos for rec in lst]
+    slides = []
+    for rec in lst:
+        dic = dict(
+            video_id=rec.id,
+            src=thumbnail_url(rec.src),
+            title=rec.name
+        )
+        slides.append(dic)
+    return slides
+
+def thumbnail_url(src):
+    return f"https://i.ytimg.com/vi/{src}/mq2.jpg"
+
 def get_slides_from_photo_list(q):
     db = inject('db')
     q &= (db.TblPhotos.width > 0)
@@ -371,7 +391,10 @@ def crop(input_path, output_path, face, size=100):
     area = (face.x - face.r, face.y - face.r, face.x + face.r, face.y + face.r)
     cropped_img = img.crop(area)
     resized_img = cropped_img.resize((size, size), Image.LANCZOS)
-    resized_img.save(output_path)
+    if input_path.lower().endswith(".png"):
+        resized_img.save(output_path, format="png")
+    else:
+        resized_img.save(output_path)
 
 def crop_a_photo(input_path, output_path, crop_left, crop_top, crop_width, crop_height):
     img = Image.open(input_path)
@@ -882,3 +905,38 @@ def fix_date_ends():
         rec.update_record(photo_date_dateend=rec.photo_date + next_day)
         n += 1
     return f'{n} photos end-date fixed'
+
+
+def resize_with_pad(im, target_width, target_height, color=(255,255,255,255)):
+    '''
+    Resize PIL image keeping ratio and using white background.
+    '''
+    target_ratio = target_height / target_width
+    im_ratio = im.height / im.width
+    if target_ratio > im_ratio:
+        # It must be fixed by width
+        resize_width = target_width
+        resize_height = round(resize_width * im_ratio)
+    else:
+        # Fixed by height
+        resize_height = target_height
+        resize_width = round(resize_height / im_ratio)
+
+    image_resize = im.resize((resize_width, resize_height), Image.ANTIALIAS)
+    background = Image.new('RGBA', (target_width, target_height), color)
+    offset = (round((target_width - resize_width) / 2), round((target_height - resize_height) / 2))
+    background.paste(image_resize, offset)
+    return background.convert('RGB')
+
+
+def save_padded_photo(photo_path, target_width=800, target_height=420, color=(224,224,224,255), name=None):
+    im = Image.open(photo_path)
+    padded = resize_with_pad(im, target_width, target_height, color)
+    request = inject('request')
+    if not name:
+        r = photo_path.rfind('/')
+        name = photo_path[r+1:]
+    folder_path = local_folder('padded_photos')
+    path = folder_path + name
+    padded.save(path, quality=100)
+    return url_folder('padded_photos') + name

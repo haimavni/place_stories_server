@@ -54,11 +54,11 @@ def pdf_to_text(pdfname, num_pages_extracted):
     num_pages_extracted = num_pages_extracted or 0
     result = ""
     num_pages = None
+    n = 0
+    m = 0
     try:
         pdf = pdfplumber.open(pdfname)
         comment("pdf was opened")
-        n = 0
-        m = 0
         num_pages = len(pdf.pages)
         for page in pdf.pages:
             if n < num_pages_extracted:

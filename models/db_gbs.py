@@ -18,7 +18,8 @@ STORY4DOC = 9
 STORY4AUDIO = 10
 STORY4LETTER = 11
 STORY4ARTICLE = 12
-STORY4USER = [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4AUDIO, STORY4ARTICLE] 
+STORY4DOCAB = 13
+STORY4USER = [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4AUDIO, STORY4ARTICLE, STORY4DOCAB]
 
 VIS_NEVER = 0           #for non existing members such as the child of a childless couple (it just connects them)
 VIS_NOT_READY = 1
@@ -397,7 +398,8 @@ db.define_table('TblDocs',
                 Field('name', type='string'),
                 Field('doc_type', type='string'),
                 Field('deleted', type='boolean', default=False),
-                Field('story_id', type=db.TblStories),
+                Field('story_id', type=db.TblStories),         # text extracted from the document
+                Field('story_about_id', type=db.TblStories),   # text added by user
                 Field('text_extracted', type='boolean', default=False),
                 Field('num_pages_extracted', type='integer'),
                 Field('num_pages', type='integer'),
@@ -498,7 +500,9 @@ db.define_table('TblConfiguration',
                 Field('promoted_story_expiration', type='integer', default=7),
                 Field('cover_photo', type='string'),
                 Field('exclusive', type='boolean'),
-                Field('enable_cuepoints', type='boolean', default=False)
+                Field('enable_cuepoints', type='boolean', default=False),
+                Field('allow_publishing', type='boolean', default=False),
+                Field('expose_gallery', type='boolean', default=False)
                 )
 
 db.define_table('TblLocaleCustomizations',
@@ -518,6 +522,11 @@ db.define_table('TblCustomers',
                 Field('created', type='boolean', default=False),
                 Field('locale', type='string'),
                 Field('creation_time', type='datetime', default=request.now)
+                )
+
+db.define_table('TblApps',
+                Field('app_name', type='string'),
+                Field('active', type='boolean', default=False)
                 )
 
 db.define_table('TblMenus',
@@ -588,13 +597,23 @@ db.define_table('TblSearches',
                 Field('count', type='integer')
                 )
 
+db.define_table('TblMembersVideos',
+                Field('video_id', type=db.TblVideos),
+                Field('member_id', type=db.TblMembers)
+                )
+
+db.define_table('TblMembersDocs',
+                Field('doc_id', type=db.TblDocs),
+                Field('member_id', type=db.TblMembers)
+                )
+
 db.define_table('TblVideoCuePoints',
                 Field('video_id', type=db.TblVideos),
                 Field('time', type='integer'),
                 Field('description', type='string')
                 )
 
-db.define_table('TblMembersVideoCuePoints',
+db.define_table('TblMembersVideoCuePoints',  #sync with
                 Field('cue_point_id', db.TblVideoCuePoints),
                 Field('member_id', db.TblMembers)
                 )
@@ -622,11 +641,12 @@ def write_indexing_sql_scripts():
     with safe_open(path + 'create_indexes[{a}].sql'.format(a=request.application), mode='w') as f:
         with safe_open(path + 'delete_indexes[{a}].sql'.format(a=request.application), mode='w') as g:
             for tcc in indexes:
-                table = tcc[0]
-                fields = ', '.join(tcc[1:])
-                index_name = '_'.join(tcc) + '_idx'
+                tccq = ['"' + t + '"' for t in tcc]
+                table = tccq[0]
+                fields = ', '.join(tccq[1:])
+                index_name = '"' + '_'.join(tcc) + '_idx' + '"'
                 create_cmd = 'CREATE INDEX CONCURRENTLY {i} ON {t} ({f});'.format(i=index_name, t=table, f=fields)
-                drop_cmd = 'DROP INDEX {};'.format(tcc[0])
+                drop_cmd = 'DROP INDEX {};'.format(index_name)
                 f.write(create_cmd + '\n')
                 g.write(drop_cmd + '\n')
 
