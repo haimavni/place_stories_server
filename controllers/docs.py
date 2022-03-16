@@ -178,6 +178,8 @@ def get_doc_info(vars):
     else:
         doc_rec = db(db.TblDocs.story_about_id == doc_id).select().first()
         if not doc_rec:
+            doc_rec = db(db.TblDocs.story_id == doc_id).select().first()
+        if not doc_rec:
             comment(f'BUG!!! caller: {vars.caller}, doc_id: {doc_id}')
         doc_id = doc_rec.id
     all_dates = get_all_dates(doc_rec)
