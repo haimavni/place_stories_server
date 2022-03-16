@@ -1681,7 +1681,7 @@ def _info_from_qm(qm, qa, member_fields, photo_member_set, photo_article_set, ph
     lst = [members, candidates]
     for arr in lst:
         for m in arr:
-            m['full_name'] = m['first_name'] + ' ' + m['last_name']
+            m['full_name'] = (m['first_name'] or '') + ' ' + m['last_name'] or ''
             if not m['facePhotoURL']:
                 m['facePhotoURL'] = "dummy_face.png"
             m['facePhotoURL'] = photos_folder("profile_photos") + m['facePhotoURL']
