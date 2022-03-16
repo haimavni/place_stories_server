@@ -177,6 +177,8 @@ def get_doc_info(vars):
         doc_rec = db(db.TblDocs.id == doc_id).select().first()
     else:
         doc_rec = db(db.TblDocs.story_id == doc_id).select().first()
+        if not doc_rec:
+            comment(f'BUG!!! caller: {vars.caller}, doc_id: {doc_id}')
         doc_id = doc_rec.id
     all_dates = get_all_dates(doc_rec)
     doc_src = doc_url(doc_rec.story_id)
