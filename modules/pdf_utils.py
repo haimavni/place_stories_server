@@ -69,8 +69,6 @@ def pdf_to_text(pdfname, num_pages_extracted):
             comment(f"about to handle page {n}. memory percent: {mem.percent}")
             if mem.percent > 95:
                 break;
-            if m > 50:  # for development only. remove soon
-                break
             try:
                 text = page.extract_text() or ''
                 n += 1

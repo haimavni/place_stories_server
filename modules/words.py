@@ -31,6 +31,7 @@ def remove_all_tags(html):
     comment = inject('comment')
     if html and not text:
         comment(f"get text failed in remove_all_tags. html: {html}")
+        text = html
     return text
 
 def extract_tokens(s):
