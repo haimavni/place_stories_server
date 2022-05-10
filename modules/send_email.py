@@ -3,6 +3,7 @@ import os
 
 # import keyring
 from injections import inject
+from folders import system_folder
 
 
 def email(to="", subject="", message="", sender=None):
@@ -21,7 +22,8 @@ def email(to="", subject="", message="", sender=None):
     password = '931632@Ha211224'
     comment(f"about to send email. pass: {password}")
     try:
-        yag = yagmail.SMTP({"lifestone2508@gmail.com": sender}, password)
+        ###yag = yagmail.SMTP({"lifestone2508@gmail.com": sender}, password)
+        yag = yagmail.SMTP({"lifestone2508@gmail.com": sender}, oauth2_file=system_folder() + 'tolife-auth.json')
     except:
         log_exception(f'failed to create yag')
         raise Exception('failed to create email sender')
