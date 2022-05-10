@@ -23,6 +23,8 @@ def email(to="", subject="", message="", sender=None):
     comment(f"about to send email. pass: {password}")
     try:
         ###yag = yagmail.SMTP({"lifestone2508@gmail.com": sender}, password)
+        ofile = system_folder() + 'tolife-auth.json'
+        comment(f'yagmail. ofile is {ofile}')
         yag = yagmail.SMTP({"lifestone2508@gmail.com": sender}, oauth2_file=system_folder() + 'tolife-auth.json')
     except:
         log_exception(f'failed to create yag')
