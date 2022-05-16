@@ -25,7 +25,10 @@ def email(to="", subject="", message="", sender=None):
         ###yag = yagmail.SMTP({"lifestone2508@gmail.com": sender}, password)
         ofile = system_folder() + 'tolife-auth.json'
         comment(f'yagmail. ofile is {ofile}')
-        yag = yagmail.SMTP({"lifestone2508@gmail.com": sender}, oauth2_file=system_folder() + 'tolife-auth.json')
+        try:
+            yag = yagmail.SMTP({"lifestone2508@gmail.com": sender}, oauth2_file=system_folder() + 'tolife-auth.json')
+        except:
+            yag = yagmail.SMTP({"lifestone2508@gmail.com": sender}, password)
     except:
         log_exception(f'failed to create yag')
         raise Exception('failed to create email sender')
