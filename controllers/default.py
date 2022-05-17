@@ -5,6 +5,7 @@ from ws_messaging import send_message, messaging_group
 from admin_support import AccessManager
 from send_email import email
 import create_card
+from gluon.storage import Storage
 
 #########################################################################
 ## This is a sample controller
@@ -88,21 +89,25 @@ def get_tornado_host(vars):
 
 @serve_json
 def read_privileges(vars):
-    user_id = auth.current_user()
+    user_id = auth.current_user() or 2
     if not user_id:
         return dict(user_id=0, privileges={}, user_name="")
     ###emails_suspended = rec.emails_suspended if rec else False
     user_name = auth.user_name(user_id)
-    privileges = dict()
-    for const_name in membership_consts:
-        const_id = auth.id_group(const_name)
-        privileges[const_name] = auth.has_membership(const_id, user_id=user_id)
+    privileges = get_the_privileges(user_id)
     result = dict(
         privileges = privileges,
         user_id=user_id,
         user_name=user_name,
     )
     return result
+
+def get_the_privileges(user_id):
+    privileges = Storage()
+    for const_name in membership_consts:
+        const_id = auth.id_group(const_name)
+        privileges[const_name] = auth.has_membership(const_id, user_id=user_id)
+    return privileges
 
 @serve_json
 def read_configuration(vars):
@@ -157,7 +162,7 @@ def login(vars):
         if v:
             user[k] = v
 
-    user.privileges = auth.get_privileges()
+    user.privileges = get_the_privileges(user.id)
     return dict(user=user)
 
 @serve_json
