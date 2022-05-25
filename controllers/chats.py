@@ -142,7 +142,7 @@ def notify_chatters(user_id, chatroom_id):
     <br>
     Click <a href="{host}{url}">here</a> to view the messages.
     '''.format(host=request.env.http_host.split(':')[0], app=request.application, url=url))
-    email(to=receivers, subject='New activity in chatroom', message=message)
+    email(receivers=receivers, subject='New activity in chatroom', message=message)
     #todo: collect relevant chatters. email them that a message was added. include link to the relevant page.
     
 def calc_url(story):

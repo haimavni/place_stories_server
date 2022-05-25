@@ -230,7 +230,7 @@ def get_interested_contact(vars):
     </div>
     </html>
     '''.format(rtltr=vars.rtltr, name=vars.contact_name, email=vars.contact_email, mobile=vars.contact_mobile, message=vars.contact_message)
-    result = email(sender="admin", to="haimavni@gmail.com", subject = "New Tol.Life prospect", message=message)
+    result = email(sender="admin", receivers="haimavni@gmail.com", subject = "New Tol.Life prospect", message=message)
     error = "" if result else mail.error
     return dict(result=result, error=error)
 
@@ -354,7 +354,7 @@ def reset_password(vars):
 
     '''
     mail_message = ('', mail_message_fmt.format(first_name=user_rec.first_name, last_name=user_rec.last_name, link=confirmation_link))
-    result = email(to=vars.email, subject='New password', message=mail_message)
+    result = email(receivers=vars.email, subject='New password', message=mail_message)
     if not result:
         error_message = mail.error.strerror
         raise Exception("Email could not be sent - {em}".format(em=error_message))
@@ -408,7 +408,7 @@ def notify_new_feedback():
 
     Click <a href="{host}/{app}/static/aurelia/index.html#/feedbacks">here</a> to view.
     '''.format(host=host,app=app).replace('\n', '<br>'))
-    email(to=receivers, subject='New Stories Feedback', message=message)
+    email(receivers=receivers, subject='New Stories Feedback', message=message)
 
 @serve_json
 def create_fb_card(vars):

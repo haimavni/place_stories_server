@@ -107,7 +107,7 @@ class MyAuth(Auth):
     
         Click <a href="https://{host}/{app}/static/aurelia/index.html#/access-manager">here</a> for access manager.
         '''.format(uname=user_name, uemail=email, app=app, host=host).replace('\n', '<br>'))
-        email(to=receivers, subject='New registration', message=message)
+        email(receivers=receivers, subject='New registration', message=message)
         
     def user_has_privilege(self, privilege):
         return self.has_membership(privilege, self.current_user())
