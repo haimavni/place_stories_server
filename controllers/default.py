@@ -6,6 +6,7 @@ from admin_support import AccessManager
 from send_email import email
 import create_card
 from gluon.storage import Storage
+from misc_utils import make_qr_code
 
 #########################################################################
 ## This is a sample controller
@@ -112,6 +113,10 @@ def get_the_privileges(user_id):
 @serve_json
 def read_configuration(vars):
     config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec.app_title:
+        rec = db((db.TblLocaleCustomizations.key=='app-title') & (db.TblLocaleCustomizations.lang=='he')).select().first()
+        if rec:
+            config_rec.update_record(app_title=rec.value)
     config = config_rec.as_dict()
     return dict(config=config)
 
@@ -413,5 +418,15 @@ def create_fb_card(vars):
         f.write(content)
     return dict(card_url=f"cards.tol.life/{fname}.html")
 
+@serve_json
+def create_qrcode(vars):
+    url = vars.url
+    name = vars.name
+    return make_qr_code(url, name=name)
 
+@serve_json
+def save_app_title(vars):
+    app_title = vars.app_title
+    rec = db(db.TblConfiguration).select().first()
+    rec.update_record(app_title=app_title)
 

@@ -481,6 +481,7 @@ db.define_table('TblFeedback',
 
 db.define_table('TblConfiguration',
                 Field('languages', type='string', default='he,en'),
+                Field('app_title', type='string'),
                 Field('description', type='string'),
                 Field('fix_level', type='integer', default=0),
                 Field('enable_auto_registration', type='boolean', default=False),

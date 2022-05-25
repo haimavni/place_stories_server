@@ -6,6 +6,8 @@ import os, stat
 import getpass
 from .injections import inject
 from operator import attrgetter
+import qrcode
+from folders import local_folder, url_folder
 
 def find_owner(filename):
     return getpwuid(os.stat(filename).st_uid).pw_name
@@ -41,7 +43,15 @@ def multisort(xs, specs):
     for key, reverse in reversed(specs):
         xs.sort(key=attrgetter(key), reverse=reverse)
     return xs
-            
+
+def make_qr_code(txt, name='qrcode'):
+    img = qrcode.make(txt)
+    path = local_folder('temp')
+    filename = path + name + ".png"
+    img.save(filename)
+    download_url = url_folder("temp") + name + '.png'
+    return dict(download_url=download_url)
+
 if __name__ == '__main__':
     fname = '/home/haim/aurelia-gbs/server/tol_server/logs/log_all.log'
     fix_log_owner(fname)

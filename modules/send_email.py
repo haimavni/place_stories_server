@@ -42,16 +42,24 @@ from folders import system_folder
 #     return result
 
 
-def email(receivers=["haimavni@gmail.com"], subject="message from tol.life", message="", sender="info@tol.life")    :
+def email(receivers=["haimavni@gmail.com"], subject="message from tol.life", message="", sender=None)    :
     gmail.username = 'lifestone2508@gmail.com' # Your Gmail address
     gmail.password = 'wdxrovalrscyksty'
-
+    if not sender:
+        sender = get_app_title()
+    if not sender:
+        sender = 'info@tol.life'
     result = gmail.send(
-        sender=sender,
+        sender=sender + f'<lifestone2508@gmail.com>',
         subject=subject,
         receivers=receivers,
         html=message
-    )    
+    )
+
+def get_app_title():
+    db = inject('db')
+    rec = db(db.TblConfiguration.id==1).select(db.TblConfiguration.app_title).first()
+    return rec.app_title or 'Our Stories'
 
 
 def test():
