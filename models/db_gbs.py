@@ -625,12 +625,12 @@ def write_indexing_sql_scripts():
        psql -f create_indexes.sql <database-name>
     '''
     indexes = [
-        ('TblMemberPhotos', 'Member_id'),
-        ('TblMemberPhotos', 'Photo_id', 'x', 'y'),
-        ('TblEventMembers', 'Member_id'),
-        ('TblEventMembers', 'Event_id'),
-        ('TblWordStories',  'word_id'),
-        ('TblPhotos',       'crc')
+        ('"TblMemberPhotos"', '"Member_id"'),
+        ('"TblMemberPhotos"', '"Photo_id"', 'x', 'y'),
+        ('"TblEventMembers"', '"Member_id"'),
+        ('"TblEventMembers"', '"Event_id"'),
+        ('"TblWordStories"',  'word_id'),
+        ('"TblPhotos"',       'crc')
     ]
 
     path = local_folder('logs')

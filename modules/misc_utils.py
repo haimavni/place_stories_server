@@ -56,3 +56,19 @@ if __name__ == '__main__':
     fname = '/home/haim/aurelia-gbs/server/tol_server/logs/log_all.log'
     fix_log_owner(fname)
 
+def make_qr_code1(txt, name='qrcode'):
+    qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4
+    )
+    qr.add_data(txt)
+    img = qr.make(fit=True)
+    path = local_folder('temp')
+    filename = path + name + ".png"
+    img.save(filename)
+    download_url = url_folder("temp") + name + '.png'
+    return dict(download_url=download_url)
+
+    ##img = qr.make_image(fill_color="black", back_color="white")
