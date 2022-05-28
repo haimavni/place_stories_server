@@ -15,6 +15,7 @@ from members_support import *
 from photos_support import get_slides_from_photo_list, get_video_thumbnails, save_member_face
 from quiz_support import use_quiz
 from words import calc_used_languages, read_words_index, get_all_story_previews, get_reisha
+import psutil
 
 
 @serve_json
@@ -1106,8 +1107,13 @@ def _get_story_list(params, exact):  # exact means looking only for the passed k
     return lst1
 
 def stories_random_sample(size, used_for):
+    stat = psutil.virtual_memory()
+    comment(f"enter stories random sample, {stat.available} available")
     q = (db.TblStories.deleted != True) & (db.TblStories.used_for == used_for)
     lst = db(q).select(db.TblStories.id)
+    comment(f'length of lst is {len(lst)}')
+    stat = psutil.virtual_memory()
+    comment(f"enter stories random sample, {stat.available} available")
     lst = [rec.id for rec in lst]
     lst1 = random.sample(lst, size)
     dic = dict()
