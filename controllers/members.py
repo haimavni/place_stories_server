@@ -184,6 +184,9 @@ def approve_story_info(vars):
 @serve_json
 def get_stories_index(vars):
     words_index = read_words_index()
+    comment(f'length of word index: {len(words_index)}')
+    length = min(len(words_index), 80000)
+    words_index = words_index[:length]
     return dict(stories_index=words_index)
 
 
