@@ -11,6 +11,7 @@ from math import log
 import datetime
 from time import sleep
 from . import ws_messaging
+import psutil
 
 alef = "א"
 tav = "ת"
@@ -239,6 +240,13 @@ def create_word_index():
     db.commit()
     print(elapsed)
 
+def log_available_memory(txt):
+    comment = inject('comment')
+    stat = psutil.virtual_memory()
+    avail = stat.available / 1000000
+    txt += f'. available memory: {avail:.2f}'
+    comment(txt)
+
 def read_words_index():
     db = inject('db')
     lst = None
@@ -248,12 +256,16 @@ def read_words_index():
             WHERE ("TblWords"."id" = "TblWordStories"."word_id")
             GROUP BY "TblWords"."word", "TblWords"."id";
         """
+    log_available_memory('before words index query')
     lst = db.executesql(cmd)
+    log_available_memory('after words index query')
     lst = sorted(lst, key=lambda item: item[1], reverse=False)
+
     ##lst = sorted(lst, key=lambda item: item[2], reverse=True)
     ##lst = sorted(lst)  #todo: collect number of clicks and sort first by num of clicks then alfabetically
 
     result = [dict(word_id=item[0], name=item[1], story_ids=item[2], word_count=item[3], topic_kind=2) for item in lst]
+    log_available_memory('after calculating result in words index')
     return result
 
 def _calc_used_languages(used_for):

@@ -15,7 +15,6 @@ from members_support import *
 from photos_support import get_slides_from_photo_list, get_video_thumbnails, save_member_face
 from quiz_support import use_quiz
 from words import calc_used_languages, read_words_index, get_all_story_previews, get_reisha
-import psutil
 
 
 @serve_json
@@ -1089,9 +1088,7 @@ def _get_story_list(params, exact):  # exact means looking only for the passed k
             if n > sample_size:
                 q1, dic = stories_random_sample(sample_size, used_for)
                 q = q & q1
-            log_available_memory('before select')
             lst0 = db(q).select()
-            log_available_memory('after select')
             if dic:
                 lst0 = [Storage(rec) for rec in lst0]
                 for rec in lst0:
@@ -1109,23 +1106,14 @@ def _get_story_list(params, exact):  # exact means looking only for the passed k
     return lst1
 
 def stories_random_sample(size, used_for):
-    log_available_memory('enter stories random sample')
     q = (db.TblStories.deleted != True) & (db.TblStories.used_for == used_for)
     lst = db(q).select(db.TblStories.id)
-    comment(f'length of lst is {len(lst)}')
-    log_available_memory('after random sample')
     lst = [rec.id for rec in lst]
     lst1 = random.sample(lst, size)
     dic = dict()
     for i, j in enumerate(lst1):
         dic[j] = i
     return db.TblStories.id.belongs(lst1), dic
-
-def log_available_memory(txt):
-    stat = psutil.virtual_memory()
-    avail = stat.available / 1000000
-    txt += f'. available memory: {avail:.2f}'
-    comment(txt)
 
 def process_story_list(lst1, checked=False, exact=False):
     user_list = calc_user_list()
