@@ -90,7 +90,9 @@ def get_tornado_host(vars):
 
 @serve_json
 def read_privileges(vars):
-    user_id = auth.current_user() or 2
+    user_id = auth.current_user()  #if local : or 2
+    if request.env.http_host.startswith('127'):
+        user_id = user_id or 2
     if not user_id:
         return dict(user_id=0, privileges={}, user_name="")
     ###emails_suspended = rec.emails_suspended if rec else False
