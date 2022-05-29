@@ -248,7 +248,6 @@ def log_available_memory(txt):
     comment(txt)
 
 def read_words_index():
-    ##return [] # temporary until memory error is settled
     db = inject('db')
     lst = None
     cmd = """
