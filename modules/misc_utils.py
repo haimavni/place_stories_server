@@ -2,15 +2,19 @@ from sys import platform
 if platform == 'linux':
     from pwd import getpwnam, getpwuid
 
-import os, stat
+import os
+import stat
 import getpass
 from .injections import inject
 from operator import attrgetter
 import qrcode
 from folders import local_folder, url_folder
+import ws_messaging
+
 
 def find_owner(filename):
     return getpwuid(os.stat(filename).st_uid).pw_name
+
 
 def fix_log_owner(log_file_name):
     if platform != 'linux':
@@ -51,6 +55,15 @@ def make_qr_code(txt, name='qrcode'):
     img.save(filename)
     download_url = url_folder("temp") + name + '.png'
     return dict(download_url=download_url)
+
+
+def split_and_send(key, arr, target, chunk_size):
+    for offset in range(0, len(arr), chunk_size):
+        chunk = arr[offset:offset+chunk_size]
+        ws_messaging.send_message(key=key, group=target,data=dict(offset=offset, chunk=chunk))
+
+
+
 
 if __name__ == '__main__':
     fname = '/home/haim/aurelia-gbs/server/tol_server/logs/log_all.log'

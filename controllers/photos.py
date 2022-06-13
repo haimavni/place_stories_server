@@ -909,10 +909,17 @@ def set_cover_photo(vars):
 @serve_json
 def get_padded_photo_url(vars):
     photo_url = vars.photo_url
+    photo_id = vars.photo_id
+    r = photo_url.rfind('.')
+    ext = photo_url[r:]
+    crc = db(db.TblPhotos.id==photo_id).select().first().crc
+    ###crc1 = -1 - crc ^ 0xffffffff
+    file_name = f'{crc & 0xffffffff:x}{ext}'
+    target_photo_path = '/apps_data/social_cards/padded_images/' + file_name
     r = photo_url.find('/apps_data')
     photo_path = photo_url[r:]
     r = photo_path.rfind("?")
     if r > 0:
         photo_path = photo_path[:r]
-    padded_photo_url = save_padded_photo(photo_path)
+    padded_photo_url = save_padded_photo(photo_path, target_photo_path)
     return dict(padded_photo_url=padded_photo_url)
