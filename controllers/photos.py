@@ -915,11 +915,14 @@ def get_padded_photo_url(vars):
     crc = db(db.TblPhotos.id==photo_id).select().first().crc
     ###crc1 = -1 - crc ^ 0xffffffff
     file_name = f'{crc & 0xffffffff:x}{ext}'
+    comment(f"photo url: {photo_url}, ext: {ext}, file name: {file_name}")
     target_photo_path = '/apps_data/social_cards/padded_images/' + file_name
+    comment(f"target photo path: {target_photo_path}")
     r = photo_url.find('/apps_data')
     photo_path = photo_url[r:]
     r = photo_path.rfind("?")
     if r > 0:
         photo_path = photo_path[:r]
     padded_photo_url = save_padded_photo(photo_path, target_photo_path)
+    comment(f"padded_photo_url: {padded_photo_url}")
     return dict(padded_photo_url=padded_photo_url)
