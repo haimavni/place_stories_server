@@ -8,8 +8,8 @@ def card_data(url, img_src, title, description):
             <meta property="og:description"        content="{description}" />
             <meta property="og:image"              content="http://{img_src}" />
             <meta property="og:image:type"         content="image/jpeg" />
-            <meta property="og:image:height"       content="800" />
-            <meta property="og:image:width"        content="500" />
+            <meta property="og:image:width"        content="800" />
+            <meta property="og:image:height"       content="500" />
             <meta property="og:locale"             content="he_IL" />
         </head>
         <body>
