@@ -939,7 +939,7 @@ def save_padded_photo(photo_path, target_photo_path, target_width=800, target_he
     # path = folder_path + name
     # padded.save(path, quality=100)
     padded.save(target_photo_path, quality=90)
-    r = photo_path.rfind('/')
+    r = target_photo_path.rfind('/')
     file_name = photo_path[r:]
     url = f'cards.tol.life/padded_images{file_name}'
     #return url_folder('padded_photos') + name
