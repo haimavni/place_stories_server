@@ -898,22 +898,26 @@ def handle_loaded_photo(photo_id):
 @serve_json
 def set_cover_photo(vars):
     cover_photo = vars.cover_photo
+    cover_photo_id = vars.cover_photo_id
     r = cover_photo.find('/apps_data')
     cover_photo_path = cover_photo[r:]
     r = cover_photo_path.rfind('?')
     if r > 0:
         cover_photo_path = cover_photo_path[:r]
-    photo_url = save_padded_photo(cover_photo_path, name='cover.jpg')
+    photo_url = save_padded_photo(cover_photo_path, cover_photo_id)
     return dict(photo_url=photo_url)
 
 @serve_json
 def get_padded_photo_url(vars):
     photo_url = vars.photo_url
-    photo_id = vars.photo_id
+    photo_id = int(vars.photo_id)
     r = photo_url.rfind('.')
     ext = photo_url[r:]
-    crc = db(db.TblPhotos.id==photo_id).select().first().crc
-    ###crc1 = -1 - crc ^ 0xffffffff
+    photo_rec = db(db.TblPhotos.id==photo_id).select().first()
+    if photo_rec:
+        crc = photo_rec.crc
+    else:
+        raise Exception(f"url: {photo_url} / id: {photo_id} - photo not found!")
     file_name = f'{crc & 0xffffffff:x}{ext}'
     target_photo_path = '/apps_data/social_cards/padded_images/' + file_name
     r = photo_url.find('/apps_data')

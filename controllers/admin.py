@@ -246,7 +246,7 @@ def set_promoted_story_expiration(vars):
 def cover_photo(vars):
     config_rec = get_config_rec()
     if vars.cover_photo is not None:
-        config_rec.update_record(cover_photo=vars.cover_photo)
+        config_rec.update_record(cover_photo=vars.cover_photo, cover_photo_id=vars.cover_photo_id)
     return dict(cover_photo=config_rec.cover_photo)
 
 
