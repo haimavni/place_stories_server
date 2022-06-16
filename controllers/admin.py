@@ -3,6 +3,7 @@ from admin_support.task_monitor import TaskMonitor
 import ws_messaging
 import os
 import re
+from photos_support import get_padded_photo_url
 
 #---------------------------------------------------------------------------
 # Access Manager
@@ -244,10 +245,11 @@ def set_promoted_story_expiration(vars):
 
 @serve_json
 def cover_photo(vars):
+    cover_photo = get_padded_photo_url(vars.cover_photo_id)
     config_rec = get_config_rec()
-    if vars.cover_photo is not None:
-        config_rec.update_record(cover_photo=vars.cover_photo, cover_photo_id=vars.cover_photo_id)
-    return dict(cover_photo=config_rec.cover_photo)
+    if cover_photo is not None:
+        config_rec.update_record(cover_photo=cover_photo, cover_photo_id=vars.cover_photo_id)
+    return dict(cover_photo=cover_photo)
 
 
 def get_config_rec():

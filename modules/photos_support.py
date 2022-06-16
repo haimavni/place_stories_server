@@ -944,3 +944,25 @@ def save_padded_photo(photo_path, target_photo_path, target_width=800, target_he
     url = f'http://cards.tol.life/padded_images{file_name}'
     #return url_folder('padded_photos') + name
     return url
+
+def get_padded_photo_url(photo_id):
+    db = inject('db')
+    # r = photo_url.rfind('.')
+    # ext = photo_url[r:]
+    photo_rec = db(db.TblPhotos.id==photo_id).select().first()
+    if not photo_rec:
+        raise Exception(f"photo_id: {photo_id} - photo not found!")
+    photo_path = local_photos_folder() + photo_rec.photo_path
+    r = photo_path.rfind('.')
+    ext = photo_path[r:]
+    crc = photo_rec.crc
+    file_name = f'{crc & 0xffffffff:x}{ext}'
+    target_photo_path = '/apps_data/social_cards/padded_images/' + file_name
+    # r = photo_url.find('/apps_data')
+    # photo_path = photo_url[r:]
+    r = photo_path.rfind("?")
+    if r > 0:
+        photo_path = photo_path[:r]
+    padded_photo_url = save_padded_photo(photo_path, target_photo_path)
+    return padded_photo_url
+
