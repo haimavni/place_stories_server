@@ -14,6 +14,9 @@ def messaging_group(user=None, group=None):
     return group
 
 def send_message(key, user=None, group=None, **data):
+    comment = inject("comment")
+    comment(f"web socket disabled until problem solved!!! key: {key}")
+    return
     obj = dict(
         key=key,
         data=data
@@ -21,10 +24,20 @@ def send_message(key, user=None, group=None, **data):
     group = messaging_group(user, group)
     send_data(group, obj, key)
 
+def try_send_message(key, user=None, group=None, **data):
+    obj = dict(
+        key=key,
+        data=data
+    )
+    group = messaging_group(user, group)
+    try:
+        send_data(group, obj, key)
+    except Exception as e:
+        return f"send message failed {e}"
+    return "send message was successful"
+
+
 def send_data(group, obj, key):
-    comment = inject("comment")
-    comment(f"web socket diabled until problem solved!!! key: {key}")
-    return
     request = inject('request')
     host = request.env.http_host
     txt = jsondumps(obj)
@@ -40,3 +53,4 @@ def send_data(group, obj, key):
         key = 'mykey'
         server_name = '127.0.0.1'
     websocket_send('{h}://{sn}:{port}'.format(h=h, sn=server_name, port=port), txt, key, group)
+    

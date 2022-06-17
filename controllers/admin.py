@@ -286,3 +286,7 @@ def replace_title(m):
         return '<title>' + rec.value + '</title>'
     else:
         return m.group(0)
+
+def test_messaging():
+    result = ws_messaging.try_send_message(key='TEST', group='ALL', data='Try web socket messaging') 
+    return result      
