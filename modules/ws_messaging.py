@@ -22,6 +22,9 @@ def send_message(key, user=None, group=None, **data):
     send_data(group, obj, key)
 
 def send_data(group, obj, key):
+    comment = inject("comment")
+    comment(f"web socket diabled until problem solved!!! key: {key}")
+    return
     request = inject('request')
     host = request.env.http_host
     txt = jsondumps(obj)
