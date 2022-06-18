@@ -42,7 +42,7 @@ def send_data(group, obj, key):
     host = request.env.http_host
     txt = jsondumps(obj)
     # comment('send message: group={grp} key={key} text={txt}', grp=group, key=key, txt=txt[:40])
-    if False and request.is_https:
+    if request.is_https:
         h = 'https'
         port = '8443' if host == 'tol.life' else '9443'
         key = 'sslkey'
