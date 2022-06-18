@@ -80,7 +80,7 @@ def get_tornado_host(vars):
     if ':' in host:
         host = host.split(':')[0]
     group = messaging_group(group=vars.group)
-    if request.is_https:
+    if False and request.is_https:
         ws = 'wss'
         port = '8443' if host == 'tol.life' else '9443'
     else:
