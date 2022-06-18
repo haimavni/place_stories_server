@@ -184,9 +184,11 @@ def approve_story_info(vars):
 
 @serve_json
 def get_stories_index(vars):
+    t0 = datetime.datetime.now()
     words_index = read_words_index()
-    comment(f'length of word index: {len(words_index)}')
-    length = min(len(words_index), 60000)
+    t1 = datetime.datetime.now()
+    comment(f'length of word index: {len(words_index)}. read in {t1-t0}')
+    length = min(len(words_index), 40000)
     mem = psutil.virtual_memory();
     comment(f"getting stories idex. memory percent: {mem.percent}")
 
