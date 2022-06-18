@@ -1,5 +1,6 @@
 import datetime
 import random
+import psutil
 
 import stories_manager
 import ws_messaging
@@ -186,6 +187,9 @@ def get_stories_index(vars):
     words_index = read_words_index()
     comment(f'length of word index: {len(words_index)}')
     length = min(len(words_index), 60000)
+    mem = psutil.virtual_memory();
+    comment(f"getting stories idex. memory percent: {mem.percent}")
+
     words_index = words_index[:length]
     return dict(stories_index=words_index)
 
