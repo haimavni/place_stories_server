@@ -14,9 +14,11 @@ def messaging_group(user=None, group=None):
     return group
 
 def send_message(key, user=None, group=None, **data):
-    comment = inject("comment")
-    comment(f"web socket disabled until problem solved!!! key: {key}")
-    return
+    request = inject('request')
+    if request.is_https:
+        comment = inject("comment")
+        comment(f"web socket disabled until problem solved!!! key: {key}")
+        return
     obj = dict(
         key=key,
         data=data
@@ -43,12 +45,12 @@ def send_data(group, obj, key):
     txt = jsondumps(obj)
     # comment('send message: group={grp} key={key} text={txt}', grp=group, key=key, txt=txt[:40])
     if request.is_https:
-        h = 'https'
+        h = 'wss'
         port = '8443' if host == 'tol.life' else '9443'
         key = 'sslkey'
         server_name = host
     else:
-        h = 'http'
+        h = 'ws'
         port = '8888'
         key = 'mykey'
         server_name = '127.0.0.1'
