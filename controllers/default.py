@@ -86,7 +86,7 @@ def get_tornado_host(vars):
     else:
         ws = 'ws'
         port = '8888'
-    return dict(ws='{ws}://{host}:{port}/realtime/{group}'.format(ws=ws, port=port, host=host, group=group))
+    return dict(ws=f'{ws}://{host}:{port}/realtime/{group}')
 
 @serve_json
 def read_privileges(vars):

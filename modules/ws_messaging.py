@@ -54,5 +54,5 @@ def send_data(group, obj, key):
         port = '8888'
         key = 'mykey'
         server_name = '127.0.0.1'
-    websocket_send('{h}://{sn}:{port}'.format(h=h, sn=server_name, port=port), txt, key, group)
+    websocket_send(f'{h}://{server_name}:{port}/realtime/{group}', txt, key, group)
     
