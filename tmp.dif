@@ -1,0 +1,51 @@
+diff --git a/controllers/default.py b/controllers/default.py
+index b6f9a21..8c664c5 100644
+--- a/controllers/default.py
++++ b/controllers/default.py
+@@ -86,7 +86,7 @@ def get_tornado_host(vars):
+     else:
+         ws = 'ws'
+         port = '8888'
+-    return dict(ws='{ws}://{host}:{port}/realtime/{group}'.format(ws=ws, port=port, host=host, group=group))
++    return dict(ws=f'{ws}://{host}:{port}/realtime/{group}')
+ 
+ @serve_json
+ def read_privileges(vars):
+diff --git a/modules/ws_messaging.py b/modules/ws_messaging.py
+index c6eed21..1967fb2 100644
+--- a/modules/ws_messaging.py
++++ b/modules/ws_messaging.py
+@@ -14,9 +14,11 @@ def messaging_group(user=None, group=None):
+     return group
+ 
+ def send_message(key, user=None, group=None, **data):
+-    comment = inject("comment")
+-    comment(f"web socket disabled until problem solved!!! key: {key}")
+-    return
++    request = inject('request')
++    if request.is_https:
++        comment = inject("comment")
++        comment(f"web socket disabled until problem solved!!! key: {key}")
++        return
+     obj = dict(
+         key=key,
+         data=data
+@@ -43,14 +45,14 @@ def send_data(group, obj, key):
+     txt = jsondumps(obj)
+     # comment('send message: group={grp} key={key} text={txt}', grp=group, key=key, txt=txt[:40])
+     if request.is_https:
+-        h = 'https'
++        h = 'wss'
+         port = '8443' if host == 'tol.life' else '9443'
+         key = 'sslkey'
+         server_name = host
+     else:
+-        h = 'http'
++        h = 'ws'
+         port = '8888'
+         key = 'mykey'
+         server_name = '127.0.0.1'
+-    websocket_send('{h}://{sn}:{port}'.format(h=h, sn=server_name, port=port), txt, key, group)
++    websocket_send(f'{h}://{server_name}:{port}/realtime/{group}', txt, key, group)
+     
+\ No newline at end of file

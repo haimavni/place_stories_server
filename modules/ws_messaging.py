@@ -35,7 +35,7 @@ def try_send_message(key, user=None, group=None, **data):
     try:
         send_data(group, obj, key)
     except Exception as e:
-        return f"send message failed {e}"
+        return f"send message failed: {e.message}"
     return "send message was successful"
 
 
@@ -54,5 +54,5 @@ def send_data(group, obj, key):
         port = '8888'
         key = 'mykey'
         server_name = '127.0.0.1'
-    websocket_send(f'{h}://{server_name}:{port}/realtime/{group}', txt, key, group)
+    websocket_send(f'{h}://{server_name}:{port}', txt, key, group)
     
