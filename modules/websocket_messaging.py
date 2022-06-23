@@ -106,9 +106,9 @@ def websocket_send(url, message, hmac_key=None, group='default'):
     params = urlencode(
         {'message': message, 'signature': sig, 'group': group})
     f = urlopen(url, to_bytes(params))
-    data = f.read()
+    ##data = f.read()
     f.close()
-    return data
+    return #data
 
 
 class PostHandler(tornado.web.RequestHandler):
