@@ -100,12 +100,16 @@ from gluon.utils import compare as u_compare
 from gluon._compat import to_native, to_bytes, urlencode ##, urlopen
 from urllib.request import urlopen
 listeners, names, tokens = {}, {}, {}
+from injections import inject
 
 def websocket_send(url, message, hmac_key=None, group='default'):
     sig = hmac_key and hmac.new(to_bytes(hmac_key), to_bytes(message), digestmod='MD5').hexdigest() or ''
     params = urlencode(
         {'message': message, 'signature': sig, 'group': group})
+    comment = inject('comment')
+    comment(f"url: {url}, params: {params}")
     f = urlopen(url, to_bytes(params))
+    comment("after urlopen")
     ##data = f.read()
     f.close()
     return #data
