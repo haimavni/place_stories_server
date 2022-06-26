@@ -14,11 +14,11 @@ def messaging_group(user=None, group=None):
     return group
 
 def send_message(key, user=None, group=None, **data):
-    request = inject('request')
-    if request.is_https:
-        comment = inject("comment")
-        comment(f"web socket disabled until problem solved!!! key: {key}")
-        return
+    # request = inject('request')
+    # if request.is_https:
+    #     comment = inject("comment")
+    #     comment(f"web socket disabled until problem solved!!! key: {key}")
+    #     return
     obj = dict(
         key=key,
         data=data
