@@ -84,6 +84,7 @@ Tornado code inspired by http://thomas.pelletier.im/2010/08/websocket-tornado-re
 
 """
 from __future__ import print_function
+from urllib.error import HTTPError
 import tornado.httpserver
 import tornado.websocket
 import tornado.ioloop
@@ -108,11 +109,15 @@ def websocket_send(url, message, hmac_key=None, group='default'):
         {'message': message, 'signature': sig, 'group': group})
     comment = inject('comment')
     comment(f"url: {url}, params: {params}")
-    f = urlopen(url, to_bytes(params))
-    comment("after urlopen")
-    ##data = f.read()
-    f.close()
-    return #data
+    data = None
+    try:
+        with urlopen(url, to_bytes(params)) as f:
+            comment("after urlopen")
+            data = f.read()
+            f.close()
+    except HTTPError as e:
+        comment(f"send failed with error {e.code}")
+    return data
 
 
 class PostHandler(tornado.web.RequestHandler):
