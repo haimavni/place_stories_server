@@ -415,7 +415,7 @@ def notify_new_feedback():
 @serve_json
 def create_fb_card(vars):
     img_src = vars.img_src
-    img_src = img_src.replace('http:', 'https:')
+    # img_src = img_src.replace('http:', 'https:')
     content = create_card.card_data(vars.url, img_src, vars.title, vars.description)
     fname = create_key()
     with open("/apps_data/social_cards/" + fname + ".html", "w", encoding="utf-8") as f:
