@@ -1365,6 +1365,8 @@ def get_member_video_stories(member_id):
     for rec in lst:
         video = rec.TblVideos
         story = rec.TblStories
+        if not story.story:
+            continue
         dic = dict(
             topic=video.name,
             name=story.name,
