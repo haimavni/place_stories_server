@@ -415,7 +415,7 @@ def notify_new_feedback():
 @serve_json
 def create_fb_card(vars):
     img_src = vars.img_src
-    r - img_src.find('/padded_images')
+    r = img_src.find('/padded_images')
     src = img_src[r:]
     app = reqeust.application
     img_src = f'https://tol.life/{app}/static/apps_data/social_cards{src}'
