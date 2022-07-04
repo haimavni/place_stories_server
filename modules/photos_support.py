@@ -968,7 +968,7 @@ def get_padded_photo_url(photo_id):
     return padded_photo_url
 
 def save_qr_photo(data):
-    db = inject('db', 'comment')
+    db = inject('db')
     photo_id = int(data.photo_id)
     photo_rec = db(db.TblPhotos.id==photo_id).select().first()
     if not photo_rec:
