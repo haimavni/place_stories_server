@@ -1,6 +1,6 @@
 from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, \
      save_uploaded_photo, rotate_photo, save_member_face, save_article_face, create_zip_file, get_photo_pairs, find_similar_photos, \
-     timestamped_photo_path, crop_a_photo, save_padded_photo
+     timestamped_photo_path, crop_a_photo, save_padded_photo, save_qr_photo
 import ws_messaging
 import stories_manager
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
@@ -496,8 +496,11 @@ def rotate_selected_photos(vars):
 
 @serve_json
 def mark_as_recogized(vars):
-    recognized = False if vars.unrecognize else True
-    db(db.TblPhotos.id==int(vars.photo_id)).update(Recognized=recognized)
+    recognized = vars.unrecognize != 'true'
+    rec = db(db.TblPhotos.id==int(vars.photo_id)).select().first()
+    rec.update_record(Recognized=recognized)
+    db.commit()
+    return dict()
 
 @serve_json
 def download_files(vars):
@@ -736,7 +739,7 @@ def make_photos_query(vars):
         if date_opt != 'undated':
             q &= ((db.TblPhotos.Recognized == True) | (db.TblPhotos.Recognized == None))
     elif vars.selected_recognition == 'unrecognized':
-        q &= (db.TblPhotos.Recognized == False)
+        q &= ((db.TblPhotos.Recognized == False) | (db.TblPhotos.Recognized == None))
     elif vars.selected_recognition == 'recognized-not-located':
         lst = unlocated_faces()
         q &= (db.TblPhotos.id.belongs(lst))
@@ -927,3 +930,8 @@ def get_padded_photo_url(vars):
         photo_path = photo_path[:r]
     padded_photo_url = save_padded_photo(photo_path, target_photo_path)
     return dict(padded_photo_url=padded_photo_url)
+
+@serve_json
+def create_qr_photo(vars):
+    download_url = save_qr_photo(vars.data)
+    return dict(download_url=download_url)

@@ -24,6 +24,7 @@ import time
 from . import ws_messaging
 from misc_utils import multisort
 from gluon._compat import to_bytes
+import qrcode
 
 MAX_WIDTH = 1200
 MAX_HEIGHT = 800
@@ -965,4 +966,41 @@ def get_padded_photo_url(photo_id):
         photo_path = photo_path[:r]
     padded_photo_url = save_padded_photo(photo_path, target_photo_path)
     return padded_photo_url
+
+def save_qr_photo(data):
+    db = inject('db', 'comment')
+    photo_id = int(data.photo_id)
+    photo_rec = db(db.TblPhotos.id==photo_id).select().first()
+    if not photo_rec:
+        raise Exception(f"photo_id: {photo_id} - photo not found!")
+    photo_path = local_photos_folder('oversize') + photo_rec.photo_path
+    im = Image.open(photo_path)
+    if data.width:
+        ppcm = im.width / int(data.width)
+    else:
+        ppcm = im.height / int(data.height)
+    qrcode_size = 2.5
+    margin = 0.5
+    imq = qrcode.make(data.shortcut)
+    qrcode_pixel_size = round(qrcode_size * ppcm)
+    imq = imq.resize((qrcode_pixel_size, qrcode_pixel_size), Image.LANCZOS)
+    margin_pixel_size = round(margin * ppcm)
+    if data.position[0] == 'n':
+        offset_y = margin_pixel_size
+    else:
+        offset_y = im.height - margin_pixel_size - imq.height
+    if data.position[1] == 'w':
+        offset_x = margin_pixel_size
+    else:
+        offset_x = im.width - margin_pixel_size - imq.width
+    im.paste(imq, (offset_x, offset_y))
+    img = im.convert('RGB')
+    r = photo_path.rfind('.')
+    ext = photo_path[r:]
+    crc = photo_rec.crc
+    file_name = f'{crc & 0xffffffff:x}{ext}'
+    target_file_name = local_folder('temp') + file_name
+    img.save(target_file_name)
+    return url_folder('temp') + file_name
+
 
