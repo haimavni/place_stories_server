@@ -216,3 +216,20 @@ def profile_photo_path(story_id):
     else:
         fname = "dummy_face.png"
     return photos_folder('profile_photos') + fname
+
+def check_dups():
+    db = inject('db')
+    lst = db(db.TblMembers.last_name.like("% ")).select(db.TblMembers.id, db.TblMembers.last_name)
+    for mem in lst:
+        mem.update_record(last_name = mem.last_name.strip())
+    dic = dict()
+    for member in db(db.TblMembers.deleted==False).select(db.TblMembers.id, db.TblMembers.first_name, db.TblMembers.last_name):
+        name = (member.first_name or '') + ' ' + (member.last_name or '')
+        if name not in dic:
+            dic[name] = []
+        dic[name].append(member.id)
+    duplicates = []
+    for itm in dic:
+        if len(dic[itm]) > 1:
+            duplicates.append(dic[itm])
+    return duplicates

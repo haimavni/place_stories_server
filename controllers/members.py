@@ -53,6 +53,8 @@ def create_new_member(vars):
     name = (vars.name or vars.default_name).strip() + ' '
     lst = name.split(' ')
     first_name, last_name = lst[0], ' '.join(lst[1:])
+    first_name = first_name.strip()
+    last_name = last_name.strip()
     rec = new_member_rec(first_name=first_name, last_name=last_name)
     rec.member_info.updater_id = auth.current_user()
     rec.member_info.update_time = datetime.datetime.now()
@@ -1614,6 +1616,9 @@ def qualified_members(vars):
         qualified_members = [mem.id for mem in lst]
     return dict(qualified_members=qualified_members)
 
+@serve_json
+def check_duplicates(vars):
+    return dict(duplicates=check_dups())
 
 @serve_json
 def collect_search_stats(vars):
