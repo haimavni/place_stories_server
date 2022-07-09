@@ -230,6 +230,8 @@ def check_dups():
         dic[name].append(member.id)
     duplicates = []
     for itm in dic:
+        if len(itm) < 2:
+            continue
         if len(dic[itm]) > 1:
             duplicates.append(dic[itm])
     return duplicates
