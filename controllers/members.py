@@ -510,6 +510,7 @@ def remove_member(vars):
     mstory = db(db.TblStories.id==mrec.story_id).select().first()
     if mstory:
         mstory.update_record(deleted=True)
+    mrec.update_record(deleted=True)
     ws_messaging.send_message(key='MEMBER_DELETED', group='ALL', member_id=member_id)
     return dict(deleted=True)
 
