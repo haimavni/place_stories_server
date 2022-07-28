@@ -425,8 +425,8 @@ def create_fb_card(vars):
     fname = create_key()
     with open("/apps_data/social_cards/" + fname + ".html", "w", encoding="utf-8") as f:
         f.write(content)
-    return dict(card_url=f"{host}/{app}/static/apps_data/social_cards/{fname}.html")
-    ### return dict(card_url=f"cards.{host}/{fname}.html")
+    ### does not work return dict(card_url=f"{host}/{app}/static/apps_data/social_cards/{fname}.html")
+    return dict(card_url=f"cards.{host}/{fname}.html")
 
 @serve_json
 def create_qrcode(vars):
