@@ -7,7 +7,10 @@ import os
 from injections import inject
 from folders import system_folder
 
-def email(receivers=["haimavni@gmail.com"], subject="message from tol.life", message="", sender=None)    :
+def email(receivers=["haimavni@gmail.com"], subject=None, message="", sender=None):
+    request = inject('request')
+    host = request.env.http_host
+    subject = subject or f"message from {host}"
     gmail.username = 'lifestone2508@gmail.com' # Your Gmail address
     gmail.password = 'wdxrovalrscyksty'
     if isinstance(receivers, str):
@@ -15,7 +18,7 @@ def email(receivers=["haimavni@gmail.com"], subject="message from tol.life", mes
     if not sender:
         sender = get_app_title()
     if not sender:
-        sender = 'info@tol.life'
+        sender = f'info@{host}'
     result = gmail.send(
         sender=sender + f'<lifestone2508@gmail.com>',
         subject=subject,

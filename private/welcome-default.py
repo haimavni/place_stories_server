@@ -18,7 +18,7 @@ def calc_target(host):
     if len(lst) < 3:
         lst = ["gbs__www"] + lst
     sub_domain = lst[0]
-    return f"https://tol.life/{sub_domain}/static/aurelia/index-{sub_domain}.html#/home"    
+    return f"https://{host}/{sub_domain}/static/aurelia/index-{sub_domain}.html#/home"    
 
 # ---- API (example) -----
 @auth.requires_login()

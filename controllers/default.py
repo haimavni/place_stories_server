@@ -82,7 +82,7 @@ def get_tornado_host(vars):
     group = messaging_group(group=vars.group)
     if request.is_https:
         ws = 'wss'
-        port = '8443' if host == 'tol.life' else '9443'
+        port = '8443'
     else:
         ws = 'ws'
         port = '8888'
@@ -418,13 +418,15 @@ def create_fb_card(vars):
     r = img_src.find('/padded_images')
     src = img_src[r:]
     app = request.application
-    img_src = f'https://tol.life/{app}/static/apps_data/social_cards{src}'
+    host = request.env.http_host
+    img_src = f'https://{host}/{app}/static/apps_data/social_cards{src}'
     # img_src = img_src.replace('http:', 'https:')
     content = create_card.card_data(vars.url, img_src, vars.title, vars.description)
     fname = create_key()
     with open("/apps_data/social_cards/" + fname + ".html", "w", encoding="utf-8") as f:
         f.write(content)
-    return dict(card_url=f"cards.tol.life/{fname}.html")
+    return dict(card_url=f"https://{host}/{app}/apps_data/social_cards/{fname}.html")
+    # return dict(card_url=f"cards.{host}/{fname}.html")
 
 @serve_json
 def create_qrcode(vars):

@@ -167,7 +167,8 @@ def collect_mail():
                     m = msg[fld]
                     s = m
                     emsg += fld + ': ' + s + '\n'
-            result = email(sender=f"admin", to=receivers, subject="incoming email to tol.life", message=emsg)
+            host = request.env.http_host
+            result = email(sender=f"admin", to=receivers, subject=f"incoming email to {host}", message=emsg)
             if result:
                 comment("mail was forwarded")
             else:

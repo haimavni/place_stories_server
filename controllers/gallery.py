@@ -14,7 +14,8 @@ def app_info(vars):
         (db.TblLocaleCustomizations.lang == lang) & (db.TblLocaleCustomizations.key == 'app-title')).select().first()
     app_name = app_name_rec.value if app_name_rec else 'Noname'
     app_description = app_config.description
-    cover_photo = app_config.cover_photo if app_config.cover_photo else 'https://tol.life/gbs__www/static/apps_data/gbs/images/founders_group_photo.jpg'
+    host = request.env.http_host
+    cover_photo = app_config.cover_photo if app_config.cover_photo else 'https://{host}/gbs__www/static/apps_data/gbs/images/founders_group_photo.jpg'
     app0 = (request.application + '__').split("__")[0]
     host = calc_host()
     app = request.application
