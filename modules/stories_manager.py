@@ -157,7 +157,8 @@ class Stories:
         
         ###update_story_words_index(story_id)
         promote_word_indexing()
-        return Storage(story_id=story_id, creation_date=now, author=source, story_text=story_text, preview=preview, name=name, new_story=True, used_for=story_info.used_for or STORY4EVENT)
+        return Storage(story_id=story_id, creation_date=now, author=source, story_text=story_text, 
+            last_update_date=now, preview=preview, name=name, new_story=True, used_for=story_info.used_for or STORY4EVENT)
 
     def update_story(self, story_id, story_info, language=None, change_language=False, imported_from=''):
         db, auth, STORY4EVENT, STORY4TERM, STORY4PHOTO, STORY4DOC, STORY4AUDIO, TEXT_AUDITOR = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO', 'STORY4DOC', 'STORY4AUDIO', 'TEXT_AUDITOR')
