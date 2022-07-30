@@ -1215,8 +1215,10 @@ def save_story_data(story_info, user_id):
     story_id = story_info.story_id
     sm = stories_manager.Stories(user_id)
     if story_id:
+        old_story = True
         result = sm.update_story(story_id, story_info)
     else:
+        old_story = False
         result = sm.add_story(story_info)
     if story_info.used_for == STORY4PHOTO:
         photo_rec = db(
@@ -1238,7 +1240,9 @@ def save_story_data(story_info, user_id):
                 main_story_rec.update_record(story=main_story_rec.preview)
             doc_rec.update_record(name=story_info.name)
 
-    ws_messaging.send_message(key='STORY_WAS_SAVED', group='ALL', story_data=result)
+    key = 'STORY_WAS_SAVED' if old_story else 'NEW_STORY_ADDED'
+    comment("save story data ", key)
+    ws_messaging.send_message(key=key, group='ALL', story_data=result)
     return result
 
 
