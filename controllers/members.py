@@ -1214,7 +1214,7 @@ def save_story_data(story_info, user_id):
     story_info.sorting_key = encode_sorting_key(story_info.sorting_key)
     story_id = story_info.story_id
     sm = stories_manager.Stories(user_id)
-    if story_id:
+    if isinstance(story_id, int):
         old_story = True
         result = sm.update_story(story_id, story_info)
     else:
