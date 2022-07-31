@@ -309,7 +309,10 @@ def set_locale_override(vars):
     rec = db((db.TblLocaleCustomizations.lang==vars.lang) & (db.TblLocaleCustomizations.key==vars.key)).select().first()
     if rec:
         if vars.value == '---':
-            db((db.TblLocaleCustomizations.lang==vars.lang) & (db.TblLocaleCustomizations.key==vars.key)).delete()
+            comment('about to delete lang override')
+            n = db((db.TblLocaleCustomizations.lang==vars.lang) & (db.TblLocaleCustomizations.key==vars.key)).delete()
+            if n != 1:
+                raise Exception('Locale override was not deleted')
         else:
             rec.update_record(value=vars.value)
     else:
