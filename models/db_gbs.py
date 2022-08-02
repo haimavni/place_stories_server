@@ -538,7 +538,8 @@ db.define_table('TblMenus',
 db.define_table('TblQuestions',
                 Field('menu_id', type=db.TblMenus),
                 Field('prompt', type='string'),
-                Field('description', type='string')
+                Field('description', type='string'),
+                Field('nota_default', type='boolean') #nota - none of the above
                 )
 
 db.define_table('TblAnswers',

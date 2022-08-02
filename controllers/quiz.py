@@ -15,7 +15,7 @@ def read_menu(vars):
         question = rec
         answers = db(db.TblAnswers.question_id==rec.id).select(orderby=db.TblAnswers.id)
         answers = [dict(aid=ans.id, qid=rec.id, text=ans.text, description=ans.description) for ans in answers]
-        result.append(dict(prompt=question.prompt, description=question.description, qid=question.id, answers = answers or []))
+        result.append(dict(prompt=question.prompt, description=question.description, nota_default=question.nota_default, qid=question.id, answers = answers or []))
     return dict(questions=result)
 
 @serve_json
@@ -24,15 +24,16 @@ def save_question(vars):
     prompt = vars.prompt
     description = vars.description
     question_id = vars.question_id
+    nota_default = vars.nota_default
     menu = db(db.TblMenus.name == name).select().first()
     if menu:
         menu_id = menu.id
     else:
         menu_id = db.TblMenus.insert(name=name)
     if question_id:
-        db(db.TblQuestions.id == question_id).update(prompt=prompt, description=description)
+        db(db.TblQuestions.id == question_id).update(prompt=prompt, description=description, nota_default=nota_default)
     else:
-        question_id = db.TblQuestions.insert(menu_id=menu_id, prompt=prompt, description=description)
+        question_id = db.TblQuestions.insert(menu_id=menu_id, prompt=prompt, description=description, nota_default=nota_default)
     return dict(question_id=question_id)
 
 @serve_json

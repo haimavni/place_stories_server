@@ -32,11 +32,11 @@ def index():
                 request.requires_https()
             redirect(rec.url)
     app = request.application
-    fname = '/{app}/static/aurelia/index.html'.format(app=app)
-    fname1 = '{app}/static/aurelia/index-{app}.html'.format(app=app)
+    fname = f'/{app}/static/aurelia/index.html'
+    fname1 = f'{app}/static/aurelia/index-{app}.html'
     if os.path.isfile('./applications/' + fname1):
         fname = '/' + fname1
-    redirect("{}".format(fname))
+    redirect(f"{fname}")
 
 def user():
     """
