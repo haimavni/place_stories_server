@@ -131,6 +131,16 @@ def set_audio_option(vars):
     return dict()
 
 @serve_json
+def set_terms_option(vars):
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    terms_enabled = vars.option == 'user.terms-enabled'
+    config_rec.update_record(terms_enabled=terms_enabled)
+    return dict()
+
+@serve_json
 def set_feedback_option(vars):
     config_rec = db(db.TblConfiguration).select().first()
     if not config_rec:
