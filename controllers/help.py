@@ -1,5 +1,5 @@
 import stories_manager
-import csv, cStringIO
+import csv, io
 from folders import local_folder, system_folder
 import re
 import help_support
@@ -72,7 +72,7 @@ def break_string(s, max_len=80):
     result = ''
     line = ''
     for t in lst:
-        u = line.decode('utf8')
+        u = line
         if len(u) >= max_len:
             result += '\n' + line
             line = t

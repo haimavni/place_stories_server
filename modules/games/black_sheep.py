@@ -1,19 +1,19 @@
 raws = [
     #horizontal
-    [00, 01, 02],
+    [00, 1, 2],
     [10, 11, 12],
     [20, 21, 22],
     #vertical
-    [00, 10, 20],
-    [01, 11, 21],
-    [02, 12, 22],
+    [0, 10, 20],
+    [1, 11, 21],
+    [2, 12, 22],
     #diagonal nw-se
-    [00, 100, 11, 111, 22],
-    [01, 101, 12],
+    [0, 100, 11, 111, 22],
+    [1, 101, 12],
     [10, 110, 21],
     #diagonal sw-ne
-    [20, 110, 11, 101, 02],
-    [01, 100, 10],
+    [20, 110, 11, 101, 2],
+    [1, 100, 10],
     [12, 111, 21]
 ]
 
@@ -73,16 +73,16 @@ def apply_step(white_locs, black_loc, step):
 
 def main():
     black_loc = 12;
-    white_locs = set([00,01,02,100,101,11,110,111,12,21,22])
+    white_locs = set([0,1,2,100,101,11,110,111,12,21,22])
     i = 0
     for steps in solve(white_locs, black_loc):
-        print '\nSolution #{}'.format(i)
+        print(('\nSolution #{}'.format(i)))
         for step in steps:
-            print '{:3} --> {:3}'.format(step[2], step[3])
+            print(('{:3} --> {:3}'.format(step[2], step[3])))
         if i > 3:
             break;
         i += 1
-    print "finito"
+    print("finito")
 
 if __name__ == "__main__":
     main()

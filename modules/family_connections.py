@@ -1,7 +1,8 @@
-from injections import inject
-from members_support import get_member_rec
+from .injections import inject
+from .members_support import get_member_rec
 from gluon.storage import Storage
-from my_cache import Cache
+from .my_cache import Cache
+import datetime
 
 def get_parents(member_id):
     member_rec = get_member_rec(member_id)
@@ -78,7 +79,7 @@ def get_spouses(member_id):
     ###spouses = list(set(spouses))  ## nice but does no preserve order
     result = [get_member_rec(m_id, prepend_path=True) for m_id in spouses]
     result = [member for member in result if member]
-    return result 
+    return result
 
 def get_family_connections(member_id):
     auth, VIS_NEVER = inject('auth', 'VIS_NEVER')

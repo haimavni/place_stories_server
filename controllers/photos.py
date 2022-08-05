@@ -1,6 +1,6 @@
 from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, \
      save_uploaded_photo, rotate_photo, save_member_face, save_article_face, create_zip_file, get_photo_pairs, find_similar_photos, \
-     timestamped_photo_path, crop_a_photo
+     timestamped_photo_path, crop_a_photo, save_padded_photo, save_qr_photo
 import ws_messaging
 import stories_manager
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
@@ -8,8 +8,10 @@ from members_support import *
 import random
 import datetime
 import os
+import re
 from gluon.storage import Storage
 from gluon.utils import web2py_uuid
+import array
 
 @serve_json
 def upload_photo(vars):
@@ -17,6 +19,7 @@ def upload_photo(vars):
     comment("start handling uploaded files")
     user_id = int(vars.user_id) if vars.user_id else auth.current_user()
     fil = vars.file
+    #blob = to_bytes(fil.BINvalue)
     result = save_uploaded_photo(fil.name, fil.BINvalue, user_id)
     return dict(upload_result=result)
 
@@ -34,10 +37,15 @@ def get_photo_detail(vars):
     if not story:
         story = sm.get_empty_story(used_for=STORY4PHOTO)
     all_dates = get_all_dates(rec)
-    photographer = db(db.TblPhotographers.id==rec.photographer_id).select().first()
+    photographer = db(db.TblPhotographers.id==rec.photographer_id).select().first() if rec.photographer_id else None
     photographer_name = photographer.name if photographer else ''
     photographer_id = photographer.id if photographer else None
     photo_topics = get_photo_topics(rec.story_id)
+    photo_pairs = get_photo_pairs([rec.id])
+    if photo_pairs:
+        back = photo_pairs[rec.id]
+    else:
+        back = None
     return dict(photo_src=timestamped_photo_path(rec, webp_supported=vars.webpSupported),
                 photo_name=rec.Name,
                 original_file_name=rec.original_file_name,
@@ -45,6 +53,7 @@ def get_photo_detail(vars):
                 photo_topics=photo_topics,
                 height=rec.height,
                 width=rec.width,
+                back=back,
                 photo_story=story,
                 photo_date_str = all_dates.photo_date.date,
                 photo_date_datespan = all_dates.photo_date.span,
@@ -61,7 +70,8 @@ def update_photo_caption(vars):
     photo_id = int(vars.photo_id)
     caption = vars.caption
     photo_rec = db((db.TblPhotos.id==photo_id) & (db.TblPhotos.deleted != True)).select().first()
-    photo_rec.update(Name=caption, Recognized=True)
+    ##photo_rec.update(Name=caption, Recognized=True)
+    photo_rec.update(Name=caption, handled=True)
     sm = stories_manager.Stories()
     sm.update_story_name(photo_rec.story_id, caption)
     return dict(bla='bla')
@@ -79,10 +89,13 @@ def update_photo_date(vars):
 
 @serve_json
 def update_photo_location(vars):
-    longitude = float(vars.longitude)
-    latitude = float(vars.latitude)
+    longitude = float(vars.longitude) if vars.longitude else None
+    latitude = float(vars.latitude) if vars.latitude else None
     zoom = int(vars.zoom)
-    db(db.TblPhotos.id==int(vars.photo_id)).update(longitude=longitude, latitude=latitude, zoom=zoom)
+    if longitude:
+        db(db.TblPhotos.id==int(vars.photo_id)).update(longitude=longitude, latitude=latitude, zoom=zoom)
+    else:
+        db(db.TblPhotos.id == int(vars.photo_id)).update(zoom=zoom)
     return dict()
 
 @serve_json
@@ -125,7 +138,7 @@ def save_photo_info(vars):
     del pinf.photographer
     pinf.Name = pinf.name
     del pinf.name
-    pinf.Recognized = True
+    ###pinf.Recognized = True
     photo_rec.update_record(**pinf)
     if photo_date_str:
         dates_info = dict(
@@ -160,6 +173,7 @@ def get_faces(vars):
     face_ids = set([face.member_id for face in faces])
     candidates = [c for c in candidates if not c['member_id'] in face_ids]
     return dict(faces=faces, candidates=candidates)
+
 
 @serve_json
 def get_articles(vars):
@@ -228,11 +242,10 @@ def remove_duplicate_photo_members(): #todo: remove after all sites are fixed
 
 @serve_json
 def get_photo_list(vars):
-    selected_topics = vars.selected_topics or []
     mprl = vars.max_photos_per_line or 8
-    MAX_PHOTOS_COUNT = 100 + (mprl - 8) * 100
+    MAX_PHOTOS_COUNT = 250 + (mprl - 8) * 250
     selected_order_option = vars.selected_order_option or ""
-    last_photo_time = None
+    last_photo_id = None
     last_photo_date = None
     q = make_photos_query(vars)
     total_photos = db(q).count()
@@ -242,11 +255,14 @@ def get_photo_list(vars):
         else:
             n = 200
         MAX_PHOTOS_COUNT = n
-        last_photo_time = vars.last_photo_time
-        if last_photo_time: 
-            q &= (db.TblPhotos.upload_date < last_photo_time)
+        last_photo_id = vars.last_photo_id
+        if last_photo_id:
+            q &= (db.TblPhotos.id < last_photo_id)
             total_photos = db(q).count()
         lst = db(q).select(orderby=~db.TblPhotos.id, limitby=(0, n))
+        lst = list(lst)
+        if lst:
+            last_photo_id = lst[-1].TblPhotos.id
     elif selected_order_option.startswith('chronological-order'):
         if vars.count_limit:
             n = int(vars.count_limit)
@@ -254,25 +270,35 @@ def get_photo_list(vars):
             n = 200
         MAX_PHOTOS_COUNT = n
         last_photo_date = vars.last_photo_date
+        last_photo_id = vars.last_photo_id
         if last_photo_date:
             if selected_order_option.endswith('reverse'):
-                q &= (db.TblPhotos.photo_date < last_photo_date)
+                # since dates may be repeated, we need to sort by id too
+                q &= (db.TblPhotos.photo_date < last_photo_date) | (db.TblPhotos.photo_date == last_photo_date) & (db.TblPhotos.id < last_photo_id)
             else:
-                q &= (db.TblPhotos.photo_date > last_photo_date)
+                q &= (db.TblPhotos.photo_date > last_photo_date) | (db.TblPhotos.photo_date == last_photo_date) & (db.TblPhotos.id > last_photo_id)
             total_photos = db(q).count()
-        field = db.TblPhotos.photo_date
+        field1 = db.TblPhotos.photo_date
+        field2 = db.TblPhotos.id
         if selected_order_option.endswith('reverse'):
-            field = ~field
-        lst = db(q).select(orderby=field, limitby=(0, n))
+            field1 = ~field1
+            field2 = ~field2
+        lst = db(q).select(orderby=field1 | field2, limitby=(0, n))
+        lst = list(lst)
+    elif selected_order_option == 'alphabetical-order':
+        lst = db(q).select(orderby=db.TblStories.name, limitby=(0,MAX_PHOTOS_COUNT))
+        lst = list(lst)
     else:
         n = db(q).count()
         if n > MAX_PHOTOS_COUNT:
             frac = max(MAX_PHOTOS_COUNT * 100 / n, 1)
-            sample = random.sample(range(1, 101), frac)
+            frac = round(frac)
+            sample = random.sample(list(range(1, 101)), frac)
             ##q &= (db.TblPhotos.random_photo_key <= frac)
             q &= (db.TblPhotos.random_photo_key.belongs(sample)) #we don't want to bore our users 
         lst = db(q).select() ###, db.TblPhotographers.id) ##, db.TblPhotographers.id)
-        last_photo_time = None
+        lst = list(lst)
+        last_photo_id = None
     if len(lst) > MAX_PHOTOS_COUNT:
         lst1 = random.sample(lst, MAX_PHOTOS_COUNT)
         lst = lst1
@@ -291,13 +317,29 @@ def get_photo_list(vars):
     photo_pairs = get_photo_pairs(photo_ids)
     result = process_photo_list(lst, photo_pairs, webpSupported=vars.webpSupported)
     if selected_order_option == 'upload-time-order' and lst:
-        last_photo_time = lst[-1].upload_date
+        if lst:
+            last_photo_id = lst[-1].id
+            q1 = q & (db.TblPhotos.id < last_photo_id)
+            if db(q1).count() == 0:
+                last_photo_id = 'END'
+        else:
+            last_photo_id = 'END'
     elif selected_order_option.startswith('chronological') and lst:
-        last_photo_date = lst[-1].photo_date
+        if lst:
+            last_photo_date = lst[-1].photo_date
+            last_photo_id = lst[-1].id
+            if selected_order_option.endswith('reverse'):
+                q1 = (db.TblPhotos.photo_date < last_photo_date) | (db.TblPhotos.photo_date == last_photo_date) & (db.TblPhotos.id < last_photo_id)
+            else:
+                q1 = (db.TblPhotos.photo_date > last_photo_date) | (db.TblPhotos.photo_date == last_photo_date) & (db.TblPhotos.id > last_photo_id)
+            if db(q & q1).count() == 0:
+                last_photo_date = 'END'
+        else:
+            last_photo_date = 'END'
     else:
         #could keep here date + id for chronological order
-        last_photo_time = None
-    return dict(photo_list=result, last_photo_time=last_photo_time, last_photo_date=last_photo_date, total_photos=total_photos)
+        last_photo_id = None
+    return dict(photo_list=result, last_photo_id=last_photo_id, last_photo_date=last_photo_date, total_photos=total_photos)
 
 @serve_json
 def get_theme_data(vars):
@@ -372,7 +414,7 @@ def apply_to_selected_photos(vars):
         if story_id:
             db(db.TblStories.id == story_id).update(keywords=keywords, is_tagged=bool(keywords))
         if rec:
-            rec.update_record(Recognized=True)
+            rec.update_record(handled=True)
         if photographer_id:
             rec.update_record(photographer_id=photographer_id)
             rec1 = db(db.TblPhotographers.id == photographer_id).select().first()
@@ -425,7 +467,8 @@ def apply_topics_to_photo(vars):
     is_tagged = len(curr_tags) > 0
     srec = db(db.TblStories.id==rec.story_id).select().first()
     srec.update_record(keywords=keywords, is_tagged=is_tagged)
-    rec.update_record(Recognized=True)
+    # rec.update_record(Recognized=True)
+    rec.update_record(handled=True)
     
 @serve_json
 def assign_photo_photographer(vars):
@@ -435,192 +478,6 @@ def assign_photo_photographer(vars):
     return dict()
 
 @serve_json
-def save_video(vars):
-    #https://photos.app.goo.gl/TndZ4fgyih57pmzS6 - shared google photos
-    user_id = vars.user_id
-    params = vars.params
-    date_info = dict(video_date=(params.video_date_datestr, params.video_date_datespan))
-    if not params.id: #creation, not modification
-        pats = dict(
-            youtube=r'https://(?:www.youtube.com/watch\?v=|youtu\.be/)(?P<code>[^&]+)',
-            vimeo=r'https://vimeo.com/(?P<code>\d+)',
-            google_drive=r'https://drive.google.com/file/d/(?P<code>[^/]+?)/.*',
-            google_photos=r'https://photos.app.goo.gl/(?P<code>[^&]+)'
-        )
-        src = None
-        for t in pats:
-            pat = pats[t]
-            m = re.search(pat, params.src)
-            if m:
-                src = m.groupdict()['code']
-                typ = t
-                break
-        if not src:
-            raise User_Error('!videos.unknown-video-type')
-        q = (db.TblVideos.src == src) & \
-            (db.TblVideos.video_type == typ) & \
-            (db.TblVideos.deleted != True)
-        if db(q).count() > 0:
-            raise User_Error('!videos.duplicate')
-        sm = stories_manager.Stories()
-        story_info = sm.get_empty_story(used_for=STORY4VIDEO, story_text="", name=params.name)
-        result = sm.add_story(story_info)
-        story_id = result.story_id
-        data = dict(
-            video_type=typ,
-            name=params.name,
-            src=src,
-            story_id=story_id,
-            contributor=user_id,
-            upload_date=datetime.datetime.now()
-        )
-        vid = db.TblVideos.insert(**data)
-        data.update(id=vid)
-        if params.video_date_datestr:
-            rec = db(db.TblVideos.id == vid).select().first()
-            date_data = dict(
-                video_date_datestr=params.video_date_datestr,
-                video_date_datespan=params.video_date_span
-            )
-            date_data_in = fix_record_dates_in(rec, date_data)
-            rec.update_record(**date_data_in)
-            data.update(
-                video_date_datestr=params.video_date_datestr,
-                video_date_datespan=params.video_date_datespan)
-        else:
-            data.update(video_date_datestr='1', video_date_datespan=0)
-        ###update_record_dates(rec, date_info)
-        ws_messaging.send_message(key='NEW-VIDEO', group='ALL', new_video_rec=data)
-    else:
-        old_rec = db(db.TblVideos.id == params.id).select().first()
-        vid = old_rec.id
-        del params['src'] #
-        #data = dict()
-        #for fld in old_rec:
-            #if fld in ('src', 'update_record', 'delete_record'):
-                #continue
-            #if old_rec[fld] != params[fld]:
-                #data[fld] = params[fld]
-        data = params
-        if data:
-            data_in = fix_record_dates_in(old_rec, data)
-            old_rec.update_record(**data_in)
-            update_record_dates(old_rec, date_info)
-            if 'name' in data:
-                sm = stories_manager.Stories()
-                story_info = sm.get_story(old_rec.story_id)
-                story_info.name = params.name
-                sm.update_story(old_rec.story_id, story_info)
-                ws_messaging.send_message(key='VIDEO-INFO-CHANGED', group='ALL', changes=data)
-    return dict(video_id=vid)
-
-@serve_json
-def delete_video(vars):
-    story_id = db(db.TblVideos.id == vars.video_id).select().first().story_id
-    sm = stories_manager.Stories()
-    sm.delete_story(story_id)
-    n = db(db.TblVideos.id == vars.video_id).update(deleted=True)
-    return dict()
-
-@serve_json
-def get_video_list(vars):
-    selected_topics = vars.selected_topics or []
-    q = make_videos_query(vars)
-    lst = db(q).select()
-    selected_video_list = vars.selected_video_list
-    result = []
-    q = (db.TblVideos.id.belongs(selected_video_list)) & (db.TblStories.id==db.TblVideos.story_id)
-    if selected_video_list:
-        lst1 = db(q).select()
-        lst1 = [rec for rec in lst1]
-        for rec in lst1:
-            rec.TblVideos.selected = True
-    else:
-        lst1 = []
-    lst1_ids = [rec.TblVideos.id for rec in lst1]
-    lst = [rec for rec in lst if rec.TblVideos.id not in lst1_ids]
-    lst = lst1 + lst
-    ##lst = db(db.TblVideos.deleted != True).select()
-    video_list = []
-    for rec1 in lst:
-        rec = rec1.TblVideos
-        fix_record_dates_out(rec)
-        rec.keywords = rec1.TblStories.keywords
-        video_list.append(rec)
-    return dict(video_list=video_list)
-
-@serve_json
-def apply_to_selected_videos(vars):
-    all_tags = calc_all_tags()
-    svl = vars.selected_video_list
-    plist = vars.selected_photographers
-    if len(plist) == 1:
-        photographer_id = plist[0].option.id
-    else:
-        photographer_id = None
-    if vars.photos_date_str:
-        dates_info = dict(
-            photo_date=(vars.photos_date_str, vars.photos_date_span_size)
-        )
-    else:
-        dates_info = None
-
-    st = vars.selected_topics
-    added = []
-    deleted = []
-    changes = dict()
-    new_topic_was_added = False
-    for vid in svl:
-        vrec = db(db.TblVideos.id == vid).select().first()
-        story_id = vrec.story_id if vrec else None
-        curr_tag_ids = set(get_tag_ids(story_id, "V"))
-        for tpc in st:
-            topic = tpc.option
-            item = dict(story_id=story_id, topic_id=topic.id)
-            if topic.sign == "plus" and topic.id not in curr_tag_ids:
-                if not story_id:
-                    continue
-                new_id = db.TblItemTopics.insert(
-                    item_type="V",
-                    topic_id=topic.id,
-                    story_id=story_id)
-                curr_tag_ids |= set([topic.id])
-                added.append(item)
-                topic_rec = db(db.TblTopics.id == topic.id).select().first()
-                if topic_rec.topic_kind == 0: #never used
-                    new_topic_was_added = True
-                if 'V' not in topic_rec.usage:
-                    usage = topic_rec.usage + 'V'
-                    topic_rec.update_record(usage=usage, topic_kind=2) #simple topic
-            elif topic.sign == "minus" and topic.id in curr_tag_ids:
-                q = (db.TblItemTopics.item_type == "V") & \
-                    (db.TblItemTopics.story_id == story_id) & \
-                    (db.TblItemTopics.topic_id == topic.id)
-                curr_tag_ids -= set([topic.id])
-                deleted.append(item)
-                db(q).delete()
-        curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
-        keywords = "; ".join(curr_tags)
-        changes[vid] = dict(keywords=keywords, video_id=vid)
-        rec = db(db.TblVideos.id == vid).select().first()
-        rec1 = db(db.TblStories.id == rec.story_id).select().first()
-        rec1.update_record(keywords=keywords, is_tagged=bool(keywords))
-        if photographer_id:
-            rec.update_record(photographer_id=photographer_id)
-            rec1 = db(db.TblPhotographers.id == photographer_id).select().first()
-            kind = rec1.kind or ''
-            if not 'V' in kind:
-                kind += 'V'
-                rec1.update_record(kind=kind)
-            changes[vid]['photographer_name'] = rec1.name
-            changes[vid]['photographer_id'] = photographer_id
-        if dates_info:
-            update_record_dates(rec, dates_info)
-    changes = [changes[vid] for vid in svl]
-    ws_messaging.send_message('VIDEO-TAGS-CHANGED', group='ALL', changes=changes)
-    return dict(new_topic_was_added=new_topic_was_added)
-
-@serve_json
 def delete_selected_photos(vars):
     delete_photos(vars.selected_photo_list)
     return dict()
@@ -628,33 +485,22 @@ def delete_selected_photos(vars):
 @serve_json
 def rotate_selected_photos(vars):
     selected_photo_list = vars.selected_photo_list
+    rotate_clockwise = vars.rotate_clockwise
+    if isinstance(rotate_clockwise, str):
+        rotate_clockwise = rotate_clockwise == 'true';
     if not isinstance(selected_photo_list, list):
         selected_photo_list  = [int(selected_photo_list)];
     for photo_id in selected_photo_list:
-        rotate_photo(photo_id)
+        rotate_photo(photo_id, rotate_clockwise)
     return dict()
 
 @serve_json
-def promote_videos(vars):
-    selected_video_list = vars.params.selected_video_list
-    q = (db.TblVideos.id.belongs(selected_video_list))
-    today = datetime.date.today()
-    db(q).update(touch_time=today)
+def mark_as_recogized(vars):
+    recognized = vars.unrecognize != 'true'
+    rec = db(db.TblPhotos.id==int(vars.photo_id)).select().first()
+    rec.update_record(Recognized=recognized)
+    db.commit()
     return dict()
-
-@serve_json
-def get_video_sample(vars):
-    q = (db.TblVideos.deleted == False)
-    q1 = q & (db.TblVideos.touch_time != NO_DATE)
-    lst1 = db(q1).select(limitby=(0, 10), orderby=~db.TblVideos.touch_time)
-    lst1 = [rec.src for rec in lst1]
-    q2 = q & (db.TblVideos.touch_time == NO_DATE)
-    lst2 = db(q2).select(limitby=(0, 200))
-    lst2 = [rec.src for rec in lst2]
-    if len(lst2) > 10:
-        lst2 = random.sample(lst2, 10)
-    lst = lst1 + lst2
-    return dict(video_list=lst)
 
 @serve_json
 def download_files(vars):
@@ -771,6 +617,12 @@ def replace_duplicate_photos(vars):
     delete_photos(vars.photos_to_keep) #the image data was copied to the old photo which has more extra info
     return dict(photo_patches=photo_patches)
 
+@serve_json
+def exclude_from_main_slideshow(vars):
+    for photo in db(db.TblPhotos.id.belongs(vars.selected_photos)):
+        photo.update_record(no_slide_show=vars.exclude)
+    return dict()
+
 ####---------------support functions--------------------------------------
 
 def handle_dup_group(group, photos_to_keep_set):
@@ -834,6 +686,8 @@ def make_photos_query(vars):
         (db.TblPhotos.is_back_side != True)
     if vars.photo_ids:
         q &= (db.TblPhotos.id.belongs(vars.photo_ids))
+    if vars.no_slide_show:
+        q &= (db.TblPhotos.no_slide_show != True)
     first_year = vars.first_year
     last_year = vars.last_year
     if vars.base_year: #time range may be defined
@@ -850,7 +704,7 @@ def make_photos_query(vars):
         q &= db.TblPhotos.photographer_id.belongs(photographer_list)
     if first_year:
         from_date = datetime.date(year=first_year, month=1, day=1)
-        q &= (db.TblPhotos.photo_date_dateend > from_date)
+        q &= (db.TblPhotos.photo_date_dateend >= from_date)
     if last_year:
         to_date = datetime.date(year=last_year, month=1, day=1)
         q &= (db.TblPhotos.photo_date < to_date)
@@ -859,19 +713,19 @@ def make_photos_query(vars):
         if days:
             upload_date = datetime.datetime.today() - datetime.timedelta(days=days)
             q &= (db.TblPhotos.upload_date >= upload_date)
-    opt = vars.selected_uploader
-    if opt == 'mine':
+    date_opt = vars.selected_uploader
+    if date_opt == 'mine':
         user_id = auth.current_user() or vars.user_id
         q &= (db.TblPhotos.uploader == user_id)
-    elif opt == 'users':
+    elif date_opt == 'users':
         q &= (db.TblPhotos.uploader != None)
-    opt = vars.selected_dates_option
+    date_opt = vars.selected_dates_option
     selected_order_option = vars.selected_order_option or ""
-    if opt == 'selected_dates_option':
+    if date_opt == 'selected_dates_option':
         pass
-    elif opt == 'dated' or selected_order_option.startswith('chronological-order'):
+    elif date_opt == 'dated' or selected_order_option.startswith('chronological-order'):
         q &= (db.TblPhotos.photo_date != NO_DATE)
-    elif opt == 'undated':
+    elif date_opt == 'undated':
         q &= (db.TblPhotos.photo_date == NO_DATE)
     member_ids = None
     if vars.selected_member_id:
@@ -882,9 +736,10 @@ def make_photos_query(vars):
         q1 = with_members_query(member_ids)
         q &= q1
     if vars.selected_recognition == 'recognized':
-        q &= ((db.TblPhotos.Recognized == True) | (db.TblPhotos.Recognized == None))
+        if date_opt != 'undated':
+            q &= ((db.TblPhotos.Recognized == True) | (db.TblPhotos.Recognized == None))
     elif vars.selected_recognition == 'unrecognized':
-        q &= (db.TblPhotos.Recognized == False)
+        q &= ((db.TblPhotos.Recognized == False) | (db.TblPhotos.Recognized == None))
     elif vars.selected_recognition == 'recognized-not-located':
         lst = unlocated_faces()
         q &= (db.TblPhotos.id.belongs(lst))
@@ -894,6 +749,7 @@ def make_photos_query(vars):
         q1 = get_topics_query(vars.selected_topics)
         q &= q1
     return q 
+
 
 def with_members_query(member_ids):
     result = None
@@ -907,40 +763,13 @@ def with_members_query(member_ids):
             result = set(lst)
     return (db.TblPhotos.id.belongs(result))
 
+
 def unlocated_faces():
     q = (db.TblPhotos.id == db.TblMemberPhotos.Photo_id) & (db.TblMemberPhotos.x == None)
     lst = db(q).select(db.TblPhotos.id, db.TblMemberPhotos.id.count(), groupby=[db.TblPhotos.id], limitby=(0,5000))
     lst = [prec.TblPhotos.id for prec in lst]
     return lst
-    
-def make_videos_query(vars):
-    q = init_query(db.TblVideos, editing=vars.editing)
-    ###q = (db.TblVideos.deleted != True)
-    photographer_list = [p.option.id for p in vars.selected_photographers] \
-        if vars.selected_photographers else []
-    if len(photographer_list) > 0:
-        q &= db.TblVideos.photographer_id.belongs(photographer_list)
-    if vars.selected_days_since_upload:
-        days = vars.selected_days_since_upload.value
-        if days:
-            upload_date = datetime.datetime.today() - datetime.timedelta(days=days)
-            q &= (db.TblVideos.upload_date >= upload_date)
-    opt = vars.selected_uploader
-    if opt == 'mine':
-        q &= (db.TblVideos.uploader == vars.user_id)
-    elif opt == 'users':
-        q &= (db.TblVideos.uploader != None)
-    opt = vars.selected_dates_option
-    if opt == 'selected_dates_option':
-        pass
-    elif opt == 'dated':
-        q &= (db.TblVideos.video_date != NO_DATE)
-    elif opt == 'undated':
-        q &= (db.TblVideos.video_date == NO_DATE)
-    if vars.selected_topics:
-        q1 = get_topics_query(vars.selected_topics)
-        q &= q1
-    return q
+
 
 def pair_photos(front_id, back_id):
     rec = db((db.TblPhotoPairs.front_id == front_id) & (db.TblPhotos.deleted != True)).select().first()
@@ -951,15 +780,17 @@ def pair_photos(front_id, back_id):
     db.TblPhotoPairs.insert(front_id=front_id, back_id=back_id)
     db(db.TblPhotos.id == back_id).update(is_back_side=True)
 
+
 def flip_photo_pair(front_id, back_id):
     #raise Exception("flip photo pair not ready")
     rec = db((db.TblPhotoPairs.front_id == front_id) & (db.TblPhotos.deleted != True)).select().first()
     if not rec: #already flipped
         return
-    i = rec.id
+    i = rec.TblPhotoPairs.id
     db(db.TblPhotoPairs.id == i).update(front_id=back_id, back_id=front_id)
     db(db.TblPhotos.id == front_id).update(is_back_side=True)
     db(db.TblPhotos.id == back_id).update(is_back_side=False)
+
 
 def process_photo_list(lst, photo_pairs=dict(), webpSupported=False):
     for rec in lst:
@@ -1005,9 +836,102 @@ def process_photo_list(lst, photo_pairs=dict(), webpSupported=False):
         result.append(dic)
     return result
 
+
 def delete_photos(photo_list):
     a = db(db.TblPhotos.id.belongs(photo_list))
     a.update(deleted=True)
     story_ids = [rec.story_id for rec in a.select()]
     db(db.TblStories.id.belongs(story_ids)).update(deleted=True)
 
+
+@serve_json
+def upload_chunk(vars):
+    original_file_name, ext = os.path.splitext(vars.file_name)
+    ## comment(f"vars crc unmasked: {vars.crc:x} xored {vars.crc ^ 0xffffffff:x}")
+    crc = vars.crc
+    crc1 = -1 - crc ^ 0xffffffff
+    file_name = f'{crc & 0xffffffff:x}{ext}'
+    today = datetime.date.today()
+    month = str(today)[:-3]
+    sub_folder = 'uploads/' + month + '/'
+    path = local_photos_folder() + sub_folder
+    dir_util.mkpath(path)
+    if vars.what == 'start':
+        prec = db((db.TblPhotos.crc == crc) & (db.TblPhotos.deleted != True)).select().first()
+        if prec:
+            return dict(duplicate=prec.id)
+        prec = db((db.TblPhotos.crc == crc1) & (db.TblPhotos.deleted != True)).select().first()
+        if prec:
+            comment("with crc1 duplicate was found ")
+            return dict(duplicate=prec.id)
+        with open(path + file_name, 'wb') as f:
+            pass
+        sm = stories_manager.Stories()
+        story_info = sm.get_empty_story(used_for=STORY4PHOTO, story_text="", name=original_file_name)
+        result = sm.add_story(story_info)
+        story_id = result.story_id
+        record_id = db.TblPhotos.insert(
+            photo_path=sub_folder + file_name,
+            original_file_name=original_file_name,
+            Name=original_file_name,
+            crc=crc,
+            story_id=story_id,
+            uploader=vars.user_id,
+            deleted=False
+        )
+        return dict(record_id=record_id)
+    elif vars.what == 'save':
+        with open(path + file_name, 'ab') as f:
+            n = f.seek(vars.start)
+            fil = vars.file
+            blob = bytearray(fil.BINvalue)
+            loc = f.tell()
+            f.write(blob)
+        if vars.is_last:
+            handle_loaded_photo(vars.record_id)
+        return dict()
+
+    return dict()
+
+def handle_loaded_photo(photo_id):
+    from complete_photo_record import add_photo_info
+    add_photo_info(photo_id)
+
+
+@serve_json
+def set_cover_photo(vars):
+    cover_photo = vars.cover_photo
+    cover_photo_id = vars.cover_photo_id
+    r = cover_photo.find('/apps_data')
+    cover_photo_path = cover_photo[r:]
+    r = cover_photo_path.rfind('?')
+    if r > 0:
+        cover_photo_path = cover_photo_path[:r]
+    photo_url = save_padded_photo(cover_photo_path, cover_photo_id)
+    return dict(photo_url=photo_url)
+
+@serve_json
+def get_padded_photo_url(vars):
+    photo_url = vars.photo_url
+    photo_id = int(vars.photo_id)
+    r = photo_url.rfind('.')
+    ext = photo_url[r:]
+    photo_rec = db(db.TblPhotos.id==photo_id).select().first()
+    if photo_rec:
+        crc = photo_rec.crc
+    else:
+        raise Exception(f"url: {photo_url} / id: {photo_id} - photo not found!")
+    file_name = f'{crc & 0xffffffff:x}{ext}'
+    target_photo_path = '/apps_data/social_cards/padded_images/' + file_name
+    r = photo_url.find('/apps_data')
+    photo_path = photo_url[r:]
+    r = photo_path.rfind("?")
+    if r > 0:
+        photo_path = photo_path[:r]
+    padded_photo_url = save_padded_photo(photo_path, target_photo_path)
+    return dict(padded_photo_url=padded_photo_url)
+
+@serve_json
+def create_qr_photo(vars):
+    download_url = save_qr_photo(vars.data)
+    return dict(download_url=download_url)

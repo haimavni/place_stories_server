@@ -20,9 +20,9 @@ def main():
     message.attach(MIMEText(html, "html"))
 
     try:
-        print("send message to {to}".format(
+        print(("send message to {to}".format(
              to = message["To"]
-         ))
+         )))
         server = smtplib.SMTP("localhost")
         server.sendmail(
              message["From"],

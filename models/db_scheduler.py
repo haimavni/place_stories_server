@@ -1,20 +1,16 @@
-from scheduler import Scheduler
+from gluon.scheduler import Scheduler
 import datetime
-import time
-import random
-from gluon.storage import Storage
-import re
 import ws_messaging
-from injections import inject
-from photos_support import scan_all_unscanned_photos
 from help_support import update_help_messages, update_letter_templates
-from collect_emails import collect_mail
 from create_app import create_pending_apps
 from words import update_word_index_all
 from docs_support import calc_doc_stories
 import os
 from topics_support import fix_is_tagged
 from folders import safe_open
+from send_email import email
+from video_support import calc_missing_youtube_info
+from health import check_health
 
 def test_scheduler(msg):
     comment("test task {}", msg)
@@ -48,7 +44,7 @@ class MyScheduler(Scheduler):
         try:
             ###comment("task {task_id} status changed {data}", task_id=task_id, data=data)
             ws_messaging.send_message(key='task_status_changed', group='TASK_MONITOR', task_id=task_id, data=data)
-        except Exception, e:
+        except Exception as e:
             log_exception('failed broadcasting update task status')
 
 def secs_to_dhms(t):
@@ -86,17 +82,12 @@ def watchdog():
     message = '''
     Task(s) {tsks} of {app} {status} in the scheduler. Check the log files.
     '''.format(tsks=tsks_str, app=request.application, status=tsk.status)
-    mail.send(sender="admin@gbstories.org", to="haimavni@gmail.com", subject = "A task failed", message=('', message))
+    email(sender="admin", to="haimavni@gmail.com", subject = "A task failed", message=message)
     for tsk in db(q).select():
         comment('Task {t} failed', t=tsk.function_name)
     db(q).update(status='QUEUED')
     db.commit()
     
-def randomize_story_sampling():
-    for story_rec in db(db.TblStories.deleted!= True).select():
-        story_rec.update_record(sampling_id=random.randint(1, SAMPLING_SIZE))
-    db.commit()
-
 def dict_to_json_str(dic):
     return response.json(dic)
 
@@ -107,13 +98,13 @@ def execute_task(*args, **vars):
         command = vars['command']
         comment('Started task {}: {}'.format(name, command))
         function = scheduler.one_time_tasks[command]
-    except Exception, e:
+    except Exception as e:
         log_exception('error enter execute task ')
         raise
     try:
 
         result = function()
-    except Exception, e:
+    except Exception as e:
         log_exception('Error executing ' + name)
     else:
         comment('Finished task {}. Returned {}.'.format(name, result))
@@ -133,35 +124,6 @@ def schedule_background_task(name, command, period=None, timeout=None):
         timeout=timeout or (60 * 60),   #at most one hour
     )
 
-def schedule_scan_all_unscanned_photos():
-    path = 'applications/' + request.application + '/logs/'
-    now = datetime.datetime.now()
-    return db.scheduler_task.insert(
-        status='QUEUED',
-        application_name=request.application,
-        task_name = 'scan_all_unscanned_photos',
-        function_name='scan_all_unscanned_photos',
-        start_time=now,
-        stop_time=now + datetime.timedelta(days=1461),
-        repeats=0,
-        period=1 * 60 * 60,   # every hour
-        timeout = 2 * 60*60, # will time out if running for a two hours
-    )
-
-def schedule_collect_mail():
-    now = datetime.datetime.now()
-    return db.scheduler_task.insert(
-        status='QUEUED',
-        application_name=request.application,
-        task_name = 'collect mail',
-        function_name='collect_mail',
-        start_time=now,
-        stop_time=now + datetime.timedelta(days=1461),
-        repeats=0,
-        period=3 * 60,   # every 3 minutes
-        timeout=5 * 60 , # will time out if running for 5 minutes
-    )
-
 def schedule_update_help_messages():
     now = datetime.datetime.now()
     return db.scheduler_task.insert(
@@ -175,6 +137,35 @@ def schedule_update_help_messages():
         period=3600,   # every hour
         timeout=5 * 60 , # will time out if running for 5 minutes
     )
+
+def schedule_check_health():
+    now = datetime.datetime.now()
+    return db.scheduler_task.insert(
+        status='QUEUED',
+        application_name=request.application,
+        task_name='check database integrity',
+        function_name='check_health',
+        start_time=now,
+        stop_time=now + datetime.timedelta(days=1461),
+        repeats=0,
+        period=3600,   # every hour
+        timeout=5 * 60 , # will time out if running for 5 minutes
+    )
+
+def schedule_calc_missing_youtube_info():
+    now = datetime.datetime.now()
+    return db.scheduler_task.insert(
+        status='QUEUED',
+        application_name=request.application,
+        task_name = 'calc missing youtube info',
+        function_name='calc_missing_youtube_info',
+        start_time=now,
+        stop_time=now + datetime.timedelta(days=1461),
+        repeats=0,
+        period=360,   # every three minutes
+        timeout=5 * 60 , # will time out if running for 5 minutes
+    )
+
 
 def schedule_update_letter_templates():
     now = datetime.datetime.now()
@@ -202,20 +193,6 @@ def schedule_watchdog():
         repeats=0,
         period=3 * 60,   # every 3 minutes
         timeout=2 * 60 , # will time out if running for 2 minutes
-    )
-
-def schedule_randomize_story_sampling():
-    now = datetime.datetime.now()
-    return db.scheduler_task.insert(
-        status='QUEUED',
-        application_name=request.application,
-        task_name = 'tasks randomize story sampling',
-        function_name='randomize_story_sampling',
-        start_time=now,
-        stop_time=now + datetime.timedelta(days=1461),
-        repeats=0,
-        period=3600,   # every hour
-        timeout=5 * 60 , # will time out if running for 5 minutes
     )
 
 def schedule_update_word_index_all():
@@ -261,31 +238,26 @@ def schedule_create_pending_apps():
     )
 
 permanent_tasks = dict(
-    ##scan_all_unscanned_photos=schedule_scan_all_unscanned_photos
-    #look for emailed photos and other mail
     #note that the key must also be function_name set by the keyed item
     watch_dog=schedule_watchdog,
-    randomize_story_sampling=schedule_randomize_story_sampling,
     update_word_index_all=schedule_update_word_index_all,
+    calc_missing_youtube_info=schedule_calc_missing_youtube_info,
     calc_doc_stories=schedule_calc_doc_stories,
     create_pending_apps=schedule_create_pending_apps,
     update_help_messages=schedule_update_help_messages,
+    check_health=schedule_check_health,
     update_letter_templates=schedule_update_letter_templates
 )
-maildir = '/home/{}_mailbox/Maildir'.format(request.application)
-if os.path.isdir(maildir):
-    permanent_tasks['collect_mail'] = schedule_collect_mail
 
 __tasks = dict(
-    ###scan_all_unscanned_photos=scan_all_unscanned_photos,
-    collect_mail=collect_mail,
     watchdog=watchdog,
-    randomize_story_sampling=randomize_story_sampling,
     update_word_index_all=update_word_index_all,
+    calc_missing_youtube_info=calc_missing_youtube_info,
     calc_doc_stories=calc_doc_stories,
     create_pending_apps=create_pending_apps,
     execute_task=execute_task,
     update_help_messages=update_help_messages,
+    check_health=check_health,
     update_letter_templates=update_letter_templates
 )
 

@@ -2,6 +2,8 @@ from admin_support.access_manager import AccessManager
 from admin_support.task_monitor import TaskMonitor
 import ws_messaging
 import os
+import re
+from photos_support import get_padded_photo_url
 
 #---------------------------------------------------------------------------
 # Access Manager
@@ -129,6 +131,16 @@ def set_audio_option(vars):
     return dict()
 
 @serve_json
+def set_terms_option(vars):
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    terms_enabled = vars.option == 'user.terms-enabled'
+    config_rec.update_record(terms_enabled=terms_enabled)
+    return dict()
+
+@serve_json
 def set_feedback_option(vars):
     config_rec = db(db.TblConfiguration).select().first()
     if not config_rec:
@@ -136,6 +148,16 @@ def set_feedback_option(vars):
         config_rec = db(db.TblConfiguration).select().first()
     feedback_on = vars.option == 'user.feedback-on'
     config_rec.update_record(expose_feedback_button=feedback_on)
+    return dict()
+
+@serve_json
+def set_exclusive_option(vars):
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    exclusive_on = vars.option == 'user.exclusive-on'
+    config_rec.update_record(exclusive=exclusive_on)
     return dict()
 
 @serve_json
@@ -189,6 +211,36 @@ def set_member_of_the_day_option(vars):
     return dict()
 
 @serve_json
+def set_cuepoints_option(vars):
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    cuepoints_on = vars.option == 'user.enable-cuepoints-on'
+    config_rec.update_record(enable_cuepoints=cuepoints_on)
+    return dict()
+
+@serve_json
+def set_publishing_option(vars):
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    allow_publishing_on = vars.option == 'user.allow-publishing-on'
+    config_rec.update_record(allow_publishing=allow_publishing_on)
+    return dict()
+
+@serve_json
+def set_expose_gallery_option(vars):
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    expose_gallery_on = vars.option == 'user.expose-gallery-on'
+    config_rec.update_record(expose_gallery=expose_gallery_on)
+    return dict()
+
+@serve_json
 def set_quick_upload_option(vars):
     config_rec = get_config_rec()
     quick_upload_on = vars.option == 'user.quick-upload-on'
@@ -200,6 +252,15 @@ def set_promoted_story_expiration(vars):
     config_rec = get_config_rec()
     config_rec.update_record(promoted_story_expiration=int(vars.promoted_story_expiration))
     return dict()
+
+@serve_json
+def cover_photo(vars):
+    cover_photo = get_padded_photo_url(vars.cover_photo_id)
+    config_rec = get_config_rec()
+    if cover_photo is not None:
+        config_rec.update_record(cover_photo=cover_photo, cover_photo_id=vars.cover_photo_id)
+    return dict(cover_photo=cover_photo)
+
 
 def get_config_rec():
     config_rec = db(db.TblConfiguration).select().first()
@@ -216,16 +277,16 @@ def create_app_index():
     app = request.application
     path = 'applications/{app}/static/aurelia/'.format(app=app)
     src = path + 'index.html'
-    dst = path + 'index-{}.html'.format(request.application)
+    dst = path + f'index-{request.application}.html'
     if os.path.isfile(dst):
-        return '{dst} already exists'.format(dst=dst)
-    with open(src, 'r') as f:
+        return f'{dst} already exists'
+    with open(src, 'r', encoding='utf-8') as f:
         s = f.read()
     pat = r'<title>.*?</title>'
     s1 = re.sub(pat, replace_title, s)
     if not app.startswith("gbs__"):
         s1 = s1.replace('gbstories.org', 'tol.life')
-    with open(dst, 'w') as f:
+    with open(dst, 'w', encoding='utf-8') as f:
         f.write(s1)
     return '{} was created'.format(dst)
 
@@ -235,3 +296,7 @@ def replace_title(m):
         return '<title>' + rec.value + '</title>'
     else:
         return m.group(0)
+
+def test_messaging():
+    result = ws_messaging.try_send_message(key='TEST', group='ALL', data='Try web socket messaging') 
+    return result      

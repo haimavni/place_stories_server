@@ -9,12 +9,12 @@ def modification_date(filename):
 
 def add_photos_from_drive(root_folder):
     for root, dirs, files in os.walk(root_folder, topdown=True):
-        print("there are", len(files), "files in", root)
+        print(("there are", len(files), "files in", root))
         for f in files[:4]:
             d = modification_date(root + '/' + f)
 
 def main():
-    add_photos_from_drive('/gb_photos/gbs/photos/orig/uploads')
+    add_photos_from_drive('/apps_data/gbs/photos/orig/uploads')
     
 if __name__ == '__main__'    :
     main()

@@ -1,72 +1,49 @@
-import requests
-import re
-from collections import Iterable
-import xml.etree.ElementTree as ET
-from cStringIO import StringIO
+### import yagmail
+from redmail import gmail
+
+import os
+
+# import keyring
 from injections import inject
+from folders import system_folder
 
-api_token = "669gxifj8b1r5y71qcvcei0wu"
-username = "haimavni"
-from_address = "info@gbstories.org"
-service_address = 'https://capi.inforu.co.il/mail/api.php?xml'
+def email(receivers=["haimavni@gmail.com"], subject=None, message="", sender=None):
+    request = inject('request')
+    host = request.env.http_host
+    subject = subject or f"message from {host}"
+    gmail.username = 'lifestone2508@gmail.com' # Your Gmail address
+    gmail.password = 'wdxrovalrscyksty'
+    if isinstance(receivers, str):
+        receivers = [receivers]
+    if not sender:
+        sender = get_app_title()
+    if not sender:
+        sender = f'info@{host}'
+    result = gmail.send(
+        sender=sender + f'<lifestone2508@gmail.com>',
+        subject=subject,
+        receivers=receivers,
+        html=message
+    )
 
-def send_xml(xml):
-    url= service_address + '=' + xml
-    response = requests.post(url) 
-    return response
+def get_app_title():
+    db = inject('db')
+    rec = db(db.TblConfiguration.id==1).select(db.TblConfiguration.app_title).first()
+    return rec.app_title or 'Our Stories'
 
-def create_xml(campaign_name="", from_address=from_address, from_name="", subject="", body="", recipients=""):
-    body = re.sub(r'\&.+?;', '', body)
-    #body = body.replace('&nbsp;', '')
-    body = body.replace('#', '%23')
-    template = '''
-    <InfoMailClient>
-        <SendEmails>
-            <User>
-                <Username>{username}</Username>
-                <Token>{api_token}</Token>
-            </User>
-            <Message>
-                <CampaignName>{campaign_name}</CampaignName>
-                <FromAddress>{from_address}</FromAddress>
-                <FromName>{from_name}</FromName>
-                <Subject>{subject}</Subject>
-                <Body><![CDATA[{body}]]></Body>
-            </Message>
-            <Recipients>
-                {recipients}
-            </Recipients>
-            <Attachments>
-            </Attachments>
-        </SendEmails>
-    </InfoMailClient>    
-    '''
-    result = template.format(username=username, api_token=api_token,
-                           campaign_name=campaign_name, from_address=from_address, 
-                           from_name=from_name, subject=subject, body=body, recipients=recipients)
-    result = re.sub('\n\s*', '', result)
+
+def test():
+    receivers = ['haimavni@gmail.com', 'hanavni@gmail.com']
+    subject = "testing redmail"
+    message = '''
+        Hello there,<br><br>
+        Please click <a href="haha.tol.life">here</a>
+        '''
+    # sender = "Info@tol.life"
+    result = email(receivers=receivers, subject=subject, message=message)  # , sender=sender)
+    #print(f"the result is {result}")
     return result
 
-def create_recipients(recipient_list):
-    result = ''
-    if not isinstance(recipient_list, Iterable):
-        recipient_list = [recipient_list]
-    for r in recipient_list:
-        s = '<Email address="{email}" fname="{fname}" lname="{lname}" />\n'.format(email=r.email,fname=r.first_name or "",lname=r.last_name or "")
-        result += s
-    return result
 
-def send_email(campaign_name="", from_address=from_address, from_name="", subject="", body="", recipient_list=[]):
-    comment = inject('comment')
-    comment("about to send email")
-    recipients = create_recipients(recipient_list)
-    xml = create_xml(campaign_name=campaign_name,from_address=from_address, 
-                     from_name=from_name, subject=subject, body=body, recipients=recipients)
-    result = send_xml(xml)
-    comment("Send_email result: {}", result.text)
-    stream = StringIO(result.text)
-    tree = ET.parse(stream)
-    if len(tree.findall('Error')) > 0:
-        raise Exception('Mail delivery failed!')
-    return dict(response=result.text, reason=result.reason)
-    
+if __name__ == "__main__":
+    test()

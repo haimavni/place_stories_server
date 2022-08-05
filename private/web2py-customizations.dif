@@ -1,0 +1,97 @@
+diff -r --no-dereference /home/haim/web2py_src/web2py/gluon/compileapp.py /home/haim/PycharmProjects/web2PyProject/web2py/gluon/compileapp.py
+476c476,478
+< REGEX_EXPOSED = re.compile(r'^def\s+(_?[a-zA-Z0-9]\w*)\( *\)\s*:', re.MULTILINE)
+---
+> ### REGEX_EXPOSED = re.compile(r'^def\s+(_?[a-zA-Z0-9]\w*)\( *\)\s*:', re.MULTILINE)
+> ### haim'^def\s+(?P<name>_?[a-zA-Z0-9]\w*)\( *\)\s*:',
+> REGEX_EXPOSED = re.compile(r'^def\s+(?P<name>_?[a-zA-Z0-9]\w*)\( *(?:vars)?\)\s*:', re.MULTILINE)
+Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/contrib/markmin: __pycache__
+diff -r --no-dereference /home/haim/web2py_src/web2py/gluon/contrib/memcache/__init__.py /home/haim/PycharmProjects/web2PyProject/web2py/gluon/contrib/memcache/__init__.py
+11,12c11
+< import cPickle as pickle
+< import thread
+---
+> import pickle
+Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/contrib/memcache: __pycache__
+Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/contrib/minify: __pycache__
+Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/contrib/plural_rules: __pycache__
+Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/contrib/pyaes: __pycache__
+Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/contrib: __pycache__
+Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/contrib/pymysql/constants: __pycache__
+Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/contrib/pymysql: __pycache__
+diff -r --no-dereference /home/haim/web2py_src/web2py/gluon/contrib/websocket_messaging.py /home/haim/PycharmProjects/web2PyProject/web2py/gluon/contrib/websocket_messaging.py
+86c86,87
+< from __future__ import print_function
+---
+> import sys
+> sys.path += ['/home/haim/PycharmProjects/web2PyProject/web2py']
+92d92
+< import sys
+95,96c95,96
+< import sys
+< import gluon.utils
+---
+> print(sys.path)
+> from gluon.utils import compare as u_compare
+102c102
+<     sig = hmac_key and hmac.new(to_bytes(hmac_key), to_bytes(message)).hexdigest() or ''
+---
+>     sig = hmac_key and hmac.new(to_bytes(hmac_key), to_bytes(message), digestmod='MD5').hexdigest() or ''
+125c125
+<                 if not gluon.utils.compare(to_native(signature), actual_signature):
+---
+>                 if not u_compare(to_native(signature), actual_signature):
+145c145
+<                 if not gluon.utils.compare(to_native(signature), actual_signature):
+---
+>                 if not u_compare(to_native(signature), actual_signature):
+diff -r --no-dereference /home/haim/web2py_src/web2py/gluon/packages/dal/pydal/adapters/base.py /home/haim/PycharmProjects/web2PyProject/web2py/gluon/packages/dal/pydal/adapters/base.py
+222,223d221
+<         if PY2 and isinstance(value, unicode):
+<             value = value.encode("utf-8")
+535,536c533
+<         except:
+<             e = sys.exc_info()[1]
+---
+>         except Exception as e:
+Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/packages/dal/pydal/adapters: __pycache__
+Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/packages/dal/pydal/contrib: __pycache__
+Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/packages/dal/pydal/dialects: __pycache__
+Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/packages/dal/pydal/helpers: __pycache__
+Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/packages/dal/pydal/parsers: __pycache__
+Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/packages/dal/pydal: __pycache__
+Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/packages/dal/pydal/representers: __pycache__
+Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon/packages/yatl/yatl: __pycache__
+Only in /home/haim/PycharmProjects/web2PyProject/web2py/gluon: __pycache__
+diff -r --no-dereference /home/haim/web2py_src/web2py/gluon/serializers.py /home/haim/PycharmProjects/web2PyProject/web2py/gluon/serializers.py
+99c99,101
+<         raise TypeError(repr(o) + " is not JSON serializable")
+---
+>         s = str(o)
+>         return s
+>         #raise TypeError(repr(o) + " is not JSON serializable")
+157c159
+< def json(value, default=custom_json, indent=None, sort_keys=False, cls=JSONEncoderForHTML):
+---
+> def json(value, default=custom_json, indent=None, sort_keys=True, cls=JSONEncoderForHTML):
+diff -r --no-dereference /home/haim/web2py_src/web2py/gluon/widget.py /home/haim/PycharmProjects/web2PyProject/web2py/gluon/widget.py
+662a663,673
+> def get_ip():
+>     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+>     try:
+>         # doesn't even have to be reachable
+>         s.connect(('10.255.255.255', 1))
+>         IP = s.getsockname()[0]
+>     except Exception:
+>         IP = '127.0.0.1'
+>     finally:
+>         s.close()
+>     return IP
+669c680,684
+< 
+---
+>     ip_address = get_ip()
+>     options.interfaces = [("localhost",8000), (ip_address,8000)]
+>     options.password = '<ask>'
+>     options.password = '931632'
+>     options.no_gui = True

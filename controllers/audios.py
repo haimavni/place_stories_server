@@ -21,12 +21,16 @@ def get_audio_list(vars):
     lst = lst0 + lst
     audio_list = []
     for rec1 in lst:
-        rec = rec1.TblAudios
+        if 'TblAudios' in rec1:
+            rec = rec1.TblAudios
+        else:
+            rec = rec1
+        rec = Storage(rec.as_dict())
         fix_record_dates_out(rec)
         story = get_story_by_id(rec.story_id)
         rec.story = story
         rec.audio_path = audio_url(rec.story_id)
-        rec.keywords = rec1.keywords
+        # rec.keywords = rec1.keywords
         audio_list.append(rec)
     return dict(audio_list=audio_list, no_results=not audio_list)
 

@@ -2,7 +2,7 @@
 
 import datetime
 from gluon.storage import Storage
-from injections import inject
+from .injections import inject
 
 DATE_STR_SUFFIX = "_datestr" #todo: obsolete soon
 DATE_SPAN_SUFFIX = "_datespan"
@@ -117,7 +117,7 @@ def calc_date_end(date, unit, span):
         return datetime.date(year=date.year + span, month=1, day=1)
     elif unit == 'M':
         m = date.month + span - 1
-        year = date.year + m / 12
+        year = date.year + m // 12
         month = m % 12 + 1
         return datetime.date(year=year, month=month, day=1)
     elif unit == 'D':
@@ -188,11 +188,11 @@ def string_date_to_date(s):
 
 def test():
     s = '2016-04-15'
-    print date_of_date_str(s)
+    print((date_of_date_str(s)))
     s = '2017-??-??'
-    print date_of_date_str(s)
+    print((date_of_date_str(s)))
     for s in ['', '1945', '08/1945', '25/8/1945']:
-        print parse_date(s)
+        print((parse_date(s)))
         
 def datetime_from_str(s, date_only=False):
     date, time = s.split(' ')
@@ -225,8 +225,8 @@ def fix_all_date_ends():
                         data[fld_date + DATE_END_SUFFIX] = date_end
                 rec.update_record(**data)
             db.commit()
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
     return 'All date ends fixed'
 
 def init_story_dates():

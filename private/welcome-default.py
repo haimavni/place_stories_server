@@ -1,41 +1,46 @@
 # -*- coding: utf-8 -*-
-# this file is released under public domain and you can use without limitations
-
 # -------------------------------------------------------------------------
 # This is a sample controller
-# - index is the default action of any application
-# - user is required for authentication and authorization
-# - download is for downloading files uploaded in the db (does streaming)
+# this file is released under public domain and you can use without limitations
 # -------------------------------------------------------------------------
 
-
+# ---- example index page ----
 def index():
-    """
-    example action using the internationalization operator T and flash
-    rendered by views/default/index.html or views/generic.html
+    host = request.env.http_host
+    target = calc_target(host)
+    redirect(target)
+    #redirect("https://tol.life/gbs__www/static/aurelia/index-gbs__www.html#/home")
+    response.flash = T("Hello World")
+    return dict(message=T('Welcome to web2py!'))
+    
+def calc_target(host):
+    lst = host.split(".")
+    if len(lst) < 3:
+        lst = ["gbs__www"] + lst
+    sub_domain = lst[0]
+    return f"https://{host}/{sub_domain}/static/aurelia/index-{sub_domain}.html#/home"    
 
-    if you need a simple wiki simply replace the two lines below with:
-    return auth.wiki()
-    """
-    s = request.env.http_host
-    domain = 'gbs'  #for now, until more app are created
-    subdomain = ''
-    if '//' in s:
-        s = s.split('//')[-1]
-    lst = s.split('.')
-    domain = lst[0]
-    idx = 0 if domain in ('gbstories', 'tol') else 1
-    subdomain = ''.join(lst[idx:-2])
-    app = domain
-    if subdomain == 'dev':
-        app += '__dev'
-    elif subdomain == 'test':
-        app += '__test'
-    elif domain == 'gbs':
-        app += '__www'
-    url = URL(a=app, c='default', f='index')
-    redirect("/{app}/static/aurelia/index-{app}.html".format(app=app))
+# ---- API (example) -----
+@auth.requires_login()
+def api_get_user_email():
+    if not request.env.request_method == 'GET': raise HTTP(403)
+    return response.json({'status':'success', 'email':auth.user.email})
 
+# ---- Smart Grid (example) -----
+@auth.requires_membership('admin') # can only be accessed by members of admin groupd
+def grid():
+    response.view = 'generic.html' # use a generic view
+    tablename = request.args(0)
+    if not tablename in db.tables: raise HTTP(403)
+    grid = SQLFORM.smartgrid(db[tablename], args=[tablename], deletable=False, editable=False)
+    return dict(grid=grid)
+
+# ---- Embedded wiki (example) ----
+def wiki():
+    auth.wikimenu() # add the wiki to the menu
+    return auth.wiki() 
+
+# ---- Action for login/register/etc (required for auth) -----
 def user():
     """
     exposes:
@@ -54,7 +59,7 @@ def user():
     """
     return dict(form=auth())
 
-
+# ---- action to server uploaded static content (required) ---
 @cache.action()
 def download():
     """
@@ -62,15 +67,3 @@ def download():
     http://..../[app]/default/download/[filename]
     """
     return response.download(request, db)
-
-
-def call():
-    """
-    exposes services. for example:
-    http://..../[app]/default/call/jsonrpc
-    decorate with @services.jsonrpc the functions to expose
-    supports xml, json, xmlrpc, jsonrpc, amfrpc, rss, csv
-    """
-    return service()
-
-

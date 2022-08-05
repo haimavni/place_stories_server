@@ -2,23 +2,29 @@ import PIL
 from PIL import Image, ImageFile
 from PIL.ExifTags import TAGS, GPSTAGS
 import dhash
-from injections import inject
+from .injections import inject
 import os
+import array
 import datetime
 from distutils import dir_util
 import zlib
-from cStringIO import StringIO
-from date_utils import datetime_from_str
+from io import BytesIO
+from .date_utils import datetime_from_str
 from gluon.storage import Storage
 import random
-import pwd
-from stories_manager import Stories
-from folders import *
-from members_support import member_display_name, older_display_name, get_member_rec, init_query #init_query is used indirectly
+from sys import platform
+if platform == 'linux':
+    import pwd
+from .stories_manager import Stories
+from .folders import *
+from .members_support import member_display_name, older_display_name, get_member_rec, init_query #init_query is used indirectly
 import zipfile
 from pybktree import BKTree, hamming_distance
 import time
-import ws_messaging
+from . import ws_messaging
+from misc_utils import multisort
+from gluon._compat import to_bytes
+import qrcode
 
 MAX_WIDTH = 1200
 MAX_HEIGHT = 800
@@ -72,14 +78,16 @@ def save_uploaded_photo_collection(collection, user_id):
                    duplicates=duplicates,
                    photo_ids=photo_ids)
 
-def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
-    auth, log_exception, db, STORY4PHOTO = inject('auth', 'log_exception', 'db', 'STORY4PHOTO')
+def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
+    auth, comment, log_exception, db, STORY4PHOTO, NO_DATE = inject('auth', 'comment', 'log_exception', 'db', 'STORY4PHOTO', 'NO_DATE')
     user_id = user_id or auth.current_user()
+    ###blob = bytearray(s)
+    blob = to_bytes(s)
     crc = zlib.crc32(blob)
-    cnt = db(db.TblPhotos.crc==crc).count()
     prec = db((db.TblPhotos.crc==crc) & (db.TblPhotos.deleted != True)).select().first()
     if prec:
-        return Storage(duplicate=prec.id)
+        if prec.has_geo_info:
+            return Storage(duplicate=prec.id)
     original_file_name, ext = os.path.splitext(file_name)
     file_name = '{crc:x}{ext}'.format(crc=crc & 0xffffffff, ext=ext)
     today = datetime.date.today()
@@ -90,9 +98,11 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
     dir_util.mkpath(path)
     latitude = None
     longitude = None
+    zoom = None
     embedded_photo_date = None
     try:
-        stream = StringIO(blob)
+        blob = array.array('B', [x for x in map(ord, s)]).tobytes()
+        stream = BytesIO(blob)
         img = Image.open(stream)
         exif_data = get_exif_data(img)
         if 'GPSInfo' in exif_data:
@@ -102,14 +112,28 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
                 lat = gps_info['GPSLatitude']
                 longitude = degrees_to_float(lng)
                 latitude = degrees_to_float(lat)
-            except Exception, e:
+                if gps_info['GPSLatitudeRef'] == 'S':
+                    latitude = -latitude
+                if gps_info['GPSLongitudeRef'] == 'W':
+                    longitude = -longitude
+                zoom = 13
+            except Exception as e:
                 log_exception("getting photo geo data failed")
+            if prec:
+                has_geo_info = longitude != None
+                prec.update_record(has_geo_info=has_geo_info, longitude=longitude, latitude=latitude, zoom=zoom)
+                if prec.oversize:
+                    fname = local_photos_folder("oversize") + prec.photo_path
+                    img.save(fname, quality=95)  ###, exif=img.info['exif'])
+        if prec:
+            return Storage(duplicate=prec.id)
         if 'DateTimeDigitized' in exif_data:
             s = exif_data['DateTimeDigitized']
             try:
-                embedded_photo_date = datetime.datetime.strptime(s, '%Y/%m/%d %H:%M:%S')
+                comment(f"embedded date is {s}")
+                embedded_photo_date = datetime.datetime.strptime(s, '%Y:%m:%d %H:%M:%S')
             except Exception as e:
-                log_exception('getting photo embedded date failed', s)
+                log_exception('getting photo embedded date failed')
                 
         width, height = img.size
         square_img = crop_to_square(img, width, height, 256)
@@ -127,7 +151,7 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
             oversize = True
             path = local_photos_folder("oversize") + sub_folder
             dir_util.mkpath(path)
-            img.save(path + file_name)
+            img.save(path + file_name, quality=95) ###, exif=img.info['exif'])
             fix_owner(path)
             fix_owner(path + file_name)
             width, height = resized(width, height)
@@ -136,17 +160,30 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
             width, height = resized(width, height)
             img = img.resize((width, height), Image.LANCZOS)
         path = local_photos_folder() + sub_folder
-        img.save(path + file_name)
+        ###exif = img.info['exif'] if img.info and 'exif' in img.info e
+        img.save(path + file_name, quality=100) ###, exif=img.info['exif'])
         fix_owner(path)
         fix_owner(path + file_name)
         dhash_value = dhash_photo(img=img)
-    except Exception, e:
+    except Exception as e:
         log_exception("saving photo {} failed".format(original_file_name))
         return Storage(failed=1)
     sm = Stories()
     story_info = sm.get_empty_story(used_for=STORY4PHOTO, story_text="", name=original_file_name)
     result = sm.add_story(story_info)
     story_id = result.story_id
+
+    if embedded_photo_date:
+        photo_date = embedded_photo_date.date()
+        photo_date_dateend = photo_date + datetime.timedelta(days=1)
+        photo_date_dateunit = 'D'
+        photo_date_datespan = 1
+    else:
+        photo_date = NO_DATE
+        photo_date_dateend = NO_DATE
+        photo_date_dateunit = 'Y'
+        photo_date_datespan = 1
+    has_geo_info = longitude != None
     photo_id = db.TblPhotos.insert(
         photo_path=sub_folder + file_name,
         original_file_name=original_file_name,
@@ -154,12 +191,16 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
         embedded_photo_date=embedded_photo_date,
         uploader=user_id,
         upload_date=datetime.datetime.now(),
-        photo_date=None,
+        photo_date=photo_date,
+        photo_date_dateend=photo_date_dateend,
+        photo_date_dateunit=photo_date_dateunit,
+        photo_date_datespan=photo_date_datespan,
         width=width,
         height=height,
         latitude=latitude,
         longitude=longitude,
-        zoom=12,
+        has_geo_info=has_geo_info,
+        zoom=13,
         crc=crc,
         dhash=dhash_value,
         oversize=oversize,
@@ -169,14 +210,12 @@ def save_uploaded_photo(file_name, blob, user_id, sub_folder=None):
         random_photo_key=random.randint(1, 101)
     )
     db.commit()
-    n = db(db.TblPhotos).count()
     return Storage(photo_id=photo_id)
 
 def get_image_info(image_path):
     img = Image.open(image_path)
     width, height = img.size
     faces = []
-    exif_data = get_exif_data(img)
     return Storage(width=width, height=height, faces=faces)
 
 def fit_size(rec):
@@ -192,7 +231,7 @@ def fit_size(rec):
         img = img.resize((width, height), Image.LANCZOS)
         img.save(fname)
         rec.update_record(width=width, height=height)
-    except Exception, e:
+    except Exception as e:
         log_exception("resizing file {} failed.".format(rec.photo_path))
         rec.update_record(photo_missing=True)
         return False
@@ -287,6 +326,26 @@ def calc_missing_dhash_values(max_to_hash=20000):
     to_scan = db(q).count()
     return  '{} photo records dhashed. {} need to be dhashed.'.format(done, to_scan)
 
+def get_video_thumbnails(q):
+    db = inject('db')
+    lst = db(q).select()
+    if not lst:
+        return []
+    if 'TblVideos' in lst[0]:
+        lst = [rec.TblVideos for rec in lst]
+    slides = []
+    for rec in lst:
+        dic = dict(
+            video_id=rec.id,
+            src=thumbnail_url(rec.src),
+            title=rec.name
+        )
+        slides.append(dic)
+    return slides
+
+def thumbnail_url(src):
+    return f"https://i.ytimg.com/vi/{src}/mq2.jpg"
+
 def get_slides_from_photo_list(q):
     db = inject('db')
     q &= (db.TblPhotos.width > 0)
@@ -333,7 +392,10 @@ def crop(input_path, output_path, face, size=100):
     area = (face.x - face.r, face.y - face.r, face.x + face.r, face.y + face.r)
     cropped_img = img.crop(area)
     resized_img = cropped_img.resize((size, size), Image.LANCZOS)
-    resized_img.save(output_path)
+    if input_path.lower().endswith(".png"):
+        resized_img.save(output_path, format="png")
+    else:
+        resized_img.save(output_path)
 
 def crop_a_photo(input_path, output_path, crop_left, crop_top, crop_width, crop_height):
     img = Image.open(input_path)
@@ -370,7 +432,7 @@ def crop_square(img_src, width, height, side_size):
         return False
     return True
 
-def rotate_photo(photo_id):
+def rotate_photo(photo_id, rotate_clockwise=False):
     db = inject('db')
     photo_rec = db((db.TblPhotos.id == photo_id) & (db.TblPhotos.deleted != True)).select().first()
     lst = ['orig', 'squares']
@@ -380,10 +442,11 @@ def rotate_photo(photo_id):
         path = local_photos_folder(what)
         file_name = path + photo_rec.photo_path
         img = Image.open(file_name)
-        img = img.transpose(Image.ROTATE_90)
+        angle = Image.ROTATE_270 if rotate_clockwise else Image.ROTATE_90
+        img = img.transpose(angle)
         if what == 'orig':
             img.save(file_name)
-            with open(file_name) as f:
+            with open(file_name, 'rb') as f:
                 blob = f.read()
             crc = zlib.crc32(blob)
             pname, fname = os.path.split(photo_rec.photo_path)
@@ -456,6 +519,8 @@ def add_photos_from_drive(sub_folder):
             os.remove(path)
 
 def fix_owner(file_name):
+    if platform != 'linux':
+        return
     request = inject('request')
     host = request.env.http_host or ""
     if '8000' in host: #development
@@ -477,7 +542,7 @@ def save_member_face(params):
         face_photo_url = save_profile_photo(face, is_article=False)
     else:
         face_photo_url = None
-    if params.old_member_id >= 0:
+    if params.old_member_id and params.old_member_id > 0:
         q = (db.TblMemberPhotos.Photo_id == face.photo_id) & \
             (db.TblMemberPhotos.Member_id == params.old_member_id)
     else:
@@ -497,10 +562,10 @@ def save_member_face(params):
         rec.update_record(**data)
     else:
         db.TblMemberPhotos.insert(**data)
-        if params.old_member_id >= 0 and params.old_member_id != face.member_id:
+        if params.old_member_id and params.old_member_id > 0 and params.old_member_id != face.member_id:
             db(q).delete()
     member_name = member_display_name(member_id=face.member_id)
-    db(db.TblPhotos.id==face.photo_id).update(Recognized=True)
+    db(db.TblPhotos.id==face.photo_id).update(Recognized=True, handled=True)
     ws_messaging.send_message(key='MEMBER_PHOTO_LIST_CHANGED', group='ALL', article_id=face.article_id, photo_id=face.photo_id)
     return Storage(member_name=member_name, face_photo_url=face_photo_url)
 
@@ -536,7 +601,7 @@ def save_article_face(params):
             db(q).delete()
     rec = db(db.TblArticles.id==face.article_id).select().first()
     article_name = rec.name
-    db(db.TblPhotos.id==face.photo_id).update(Recognized=True)
+    db(db.TblPhotos.id==face.photo_id).update(Recognized=True, handled=True)
     ws_messaging.send_message(key='ARTICLE_PHOTO_LIST_CHANGED', group='ALL', article_id=face.article_id, photo_id=face.photo_id)
     return Storage(article_name=article_name, face_photo_url=face_photo_url)
 
@@ -672,9 +737,10 @@ def find_similar_photos(photo_list=None, time_budget=60):
     result = db((db.TblPhotos.id.belongs(all_dup_ids)) & (db.TblPhotos.deleted != True)).select()
     for photo_rec in result:
         photo_rec.dup_group = dic[photo_rec.id]
-    result = sorted(result, cmp=lambda prec1, prec2: +1 if prec1.dup_group > prec2.dup_group else -1 if prec1.dup_group < prec2.dup_group else +1 if prec1.id < prec2.id else -1)
-
-    return (result, candidates)
+    result = [Storage(rec) for rec in result]
+    ##result = sorted(result, cmp=lambda prec1, prec2: +1 if prec1.dup_group > prec2.dup_group else -1 if prec1.dup_group < prec2.dup_group else +1 if prec1.id < prec2.id else -1)
+    result = multisort(result, (('dup_group', False), ('id', True)))
+    return result, candidates
 
 def timestamped_photo_path(photo_rec, webp_supported=True, what='orig'):
     #todo: if file for type of webp support is missing, create it?
@@ -737,10 +803,10 @@ def get_exif_data(image):
     info = None
     try:
         info = image._getexif()
-    except Exception, e:
+    except Exception as e:
         pass #png, for example
     if info:
-        for tag, value in info.items():
+        for tag, value in list(info.items()):
             decoded = TAGS.get(tag, tag)
             if decoded == "GPSInfo":
                 gps_data = {}
@@ -775,11 +841,170 @@ def convert_to_webp(photo_id):
 
 def get_photo_url(what, photo_rec, webp_supported):
     path = photos_folder(what)
-    photo_path = photo_rec.photo_path_webp if photo_path_webp and webp_supported else photo_rec.photo_path
+    photo_path = photo_rec.photo_path_webp if photo_rec.photo_path_webp and webp_supported else photo_rec.photo_path
     return path + photo_path
 
 def degrees_to_float(tup):
-    degs, mins, secs = [t[0] for t in tup]
+    degs, mins, secs = tup
     result = degs * 1.0 + mins * 1.0 / 60 + secs * 1.0 / 3600
     return round(result, 8)
+
+def use_embedded_dates():
+    db, NO_DATE = inject('db', 'NO_DATE')
+    n = 0
+    db(db.TblPhotos.photo_date==None).update(photo_date=NO_DATE)
+    for prec in db((db.TblPhotos.photo_date==NO_DATE) & (db.TblPhotos.embedded_photo_date != None)).select():
+        photo_date = prec.embedded_photo_date.date()
+        prec.update_record(photo_date=photo_date, photo_date_dateunit='D', photo_date_datespan=1)
+        n += 1
+    return n
+
+def calculate_photo_geo_info(prec):
+    log_exception = inject('log_exception')
+    folder = local_photos_folder()
+    fname = folder + prec.photo_path
+    if not os.path.exists(fname):
+        return
+    img = Image.open(fname)
+    exif_data = get_exif_data(img)
+    if 'GPSInfo' in exif_data:
+        try:
+            gps_info = exif_data['GPSInfo']
+            lng = gps_info['GPSLongitude']
+            lat = gps_info['GPSLatitude']
+            longitude = degrees_to_float(lng)
+            latitude = degrees_to_float(lat)
+        except Exception as e:
+            log_exception("getting photo geo data failed")
+        else:
+            prec.update_record(has_geo_info=True, longitude=longitude, latitude=latitude)
+    else:
+        prec.update_record(has_geo_info=False)
+
+def calculate_geo_info():
+    db = inject('db')
+    db(db.TblPhotos.longitude!=None).update(has_geo_info=True)
+    for prec in db(db.TblPhotos.has_geo_info==None).select(limitby=(0, 100), orderby=~db.TblPhotos.id):
+        calculate_photo_geo_info(prec)
+    n = db(db.TblPhotos.has_geo_info==None).count()
+    return n
+
+def recalculate_recognized():
+    db = inject('db')
+    db(db.TblPhotos.Recognized==None).update(Recognized=False)
+    for pm in db(db.TblMemberPhotos).select(db.TblMemberPhotos.Photo_id, db.TblMemberPhotos.Photo_id.count(),groupby=db.TblMemberPhotos.Photo_id):
+        db(db.TblPhotos.id==pm.TblMemberPhotos.Photo_id).update(Recognized=True, handled=True)
+    for pm in db(db.TblArticlePhotos).select(db.TblArticlePhotos.photo_id, db.TblArticlePhotos.photo_id.count(), groupby=db.TblArticlePhotos.photo_id):
+        db(db.TblPhotos.id==pm.TblArticlePhotos.photo_id).update(Recognized=True, handled=True)
+    return "done"
+
+def fix_date_ends():
+    db, NO_DATE = inject('db', 'NO_DATE')
+    next_day = datetime.timedelta(days=1)
+    n = 0
+    for rec in db((db.TblPhotos.photo_date!=NO_DATE)&(db.TblPhotos.photo_date_dateend==NO_DATE)).select():
+        rec.update_record(photo_date_dateend=rec.photo_date + next_day)
+        n += 1
+    return f'{n} photos end-date fixed'
+
+
+def resize_with_pad(im, target_width, target_height, color=(255,255,255,255)):
+    '''
+    Resize PIL image keeping ratio and using white background.
+    '''
+    target_ratio = target_height / target_width
+    im_ratio = im.height / im.width
+    if target_ratio > im_ratio:
+        # It must be fixed by width
+        resize_width = target_width
+        resize_height = round(resize_width * im_ratio)
+    else:
+        # Fixed by height
+        resize_height = target_height
+        resize_width = round(resize_height / im_ratio)
+
+    image_resize = im.resize((resize_width, resize_height), Image.ANTIALIAS)
+    background = Image.new('RGBA', (target_width, target_height), color)
+    offset = (round((target_width - resize_width) / 2), round((target_height - resize_height) / 2))
+    background.paste(image_resize, offset)
+    return background.convert('RGB')
+
+
+def save_padded_photo(photo_path, target_photo_path, target_width=800, target_height=420, color=(224,224,224,255)):
+    request = inject('request')
+    app = request.application
+    host = request.env.http_host
+    im = Image.open(photo_path)
+    padded = resize_with_pad(im, target_width, target_height, color)
+    # if not name:
+    #     r = photo_path.rfind('/')
+    #     name = photo_path[r+1:]
+    # folder_path = local_folder('padded_photos')
+    # path = folder_path + name
+    # padded.save(path, quality=100)
+    padded.save(target_photo_path, quality=90)
+    r = target_photo_path.rfind('/')
+    file_name = target_photo_path[r:]
+    # url = f'http://cards.tol.life/padded_images{file_name}'
+    url = f'https://{host}/{app}/static/apps_data/social_cards/padded_images/{file_name}'
+    #return url_folder('padded_photos') + name
+    return url
+
+def get_padded_photo_url(photo_id):
+    db = inject('db')
+    # r = photo_url.rfind('.')
+    # ext = photo_url[r:]
+    photo_rec = db(db.TblPhotos.id==photo_id).select().first()
+    if not photo_rec:
+        raise Exception(f"photo_id: {photo_id} - photo not found!")
+    photo_path = local_photos_folder() + photo_rec.photo_path
+    r = photo_path.rfind('.')
+    ext = photo_path[r:]
+    crc = photo_rec.crc
+    file_name = f'{crc & 0xffffffff:x}{ext}'
+    target_photo_path = '/apps_data/social_cards/padded_images/' + file_name
+    # r = photo_url.find('/apps_data')
+    # photo_path = photo_url[r:]
+    r = photo_path.rfind("?")
+    if r > 0:
+        photo_path = photo_path[:r]
+    padded_photo_url = save_padded_photo(photo_path, target_photo_path)
+    return padded_photo_url
+
+def save_qr_photo(data):
+    db = inject('db')
+    photo_id = int(data.photo_id)
+    photo_rec = db(db.TblPhotos.id==photo_id).select().first()
+    if not photo_rec:
+        raise Exception(f"photo_id: {photo_id} - photo not found!")
+    photo_path = local_photos_folder('oversize') + photo_rec.photo_path
+    im = Image.open(photo_path)
+    if data.width:
+        ppcm = im.width / int(data.width)
+    else:
+        ppcm = im.height / int(data.height)
+    qrcode_size = 2.5
+    margin = 0.5
+    imq = qrcode.make(data.shortcut)
+    qrcode_pixel_size = round(qrcode_size * ppcm)
+    imq = imq.resize((qrcode_pixel_size, qrcode_pixel_size), Image.LANCZOS)
+    margin_pixel_size = round(margin * ppcm)
+    if data.position[0] == 'n':
+        offset_y = margin_pixel_size
+    else:
+        offset_y = im.height - margin_pixel_size - imq.height
+    if data.position[1] == 'w':
+        offset_x = margin_pixel_size
+    else:
+        offset_x = im.width - margin_pixel_size - imq.width
+    im.paste(imq, (offset_x, offset_y))
+    img = im.convert('RGB')
+    r = photo_path.rfind('.')
+    ext = photo_path[r:]
+    crc = photo_rec.crc
+    file_name = f'{crc & 0xffffffff:x}{ext}'
+    target_file_name = local_folder('temp') + file_name
+    img.save(target_file_name)
+    return url_folder('temp') + file_name
+
 

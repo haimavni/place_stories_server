@@ -79,8 +79,10 @@ import datetime
 ##import logging
 import optparse
 import types
-import Queue
-from injections import inject
+import queue
+from .injections import inject
+from functools import reduce
+    # (at top of module)
 
 path = os.getcwd()
 
@@ -224,17 +226,17 @@ class JobGraph(object):
                 nested_dict[k] = set((row.task_child,))
         try:
             rtn = []
-            for k, v in nested_dict.items():
+            for k, v in list(nested_dict.items()):
                 v.discard(k)  # Ignore self dependencies
-            extra_items_in_deps = reduce(set.union, nested_dict.values()) - set(nested_dict.keys())
+            extra_items_in_deps = reduce(set.union, list(nested_dict.values())) - set(nested_dict.keys())
             nested_dict.update(dict((item, set()) for item in extra_items_in_deps))
             while True:
-                ordered = set(item for item, dep in nested_dict.items() if not dep)
+                ordered = set(item for item, dep in list(nested_dict.items()) if not dep)
                 if not ordered:
                     break
                 rtn.append(ordered)
                 nested_dict = dict(
-                    (item, (dep - ordered)) for item, dep in nested_dict.items()
+                    (item, (dep - ordered)) for item, dep in list(nested_dict.items())
                     if item not in ordered
                     )
             assert not nested_dict, "A cyclic dependency exists amongst %r" % nested_dict
@@ -247,7 +249,7 @@ class JobGraph(object):
 def demo_function(*argv, **kwargs):
     """ test function """
     for i in range(argv[0]):
-        print 'click', i
+        print(('click', i))
         time.sleep(1)
     return 'done'
 
@@ -259,7 +261,7 @@ def demo_function(*argv, **kwargs):
 def _decode_list(lst):
     newlist = []
     for i in lst:
-        if isinstance(i, unicode):
+        if isinstance(i, str):
             i = i.encode('utf-8')
         elif isinstance(i, list):
             i = _decode_list(i)
@@ -268,10 +270,10 @@ def _decode_list(lst):
 
 def _decode_dict(dct):
     newdict = {}
-    for k, v in dct.iteritems():
-        if isinstance(k, unicode):
+    for k, v in list(dct.items()):
+        if isinstance(k, str):
             k = k.encode('utf-8')
-        if isinstance(v, unicode):
+        if isinstance(v, str):
             v = v.encode('utf-8')
         elif isinstance(v, list):
             v = _decode_list(v)
@@ -338,9 +340,12 @@ def executor(queue, task, out):
                 *loads(task.args, object_hook=_decode_dict),
                 **loads(task.vars, object_hook=_decode_dict))
         queue.put(TaskReport('COMPLETED', result=result))
-    except BaseException, e:
+    except NameError as e:
         tb = traceback.format_exc()
         queue.put(TaskReport('FAILED', tb=tb))
+    except Exception as e:
+        tb = traceback.format_exc()
+
     del stdout
 
 
@@ -407,7 +412,7 @@ class MetaScheduler(threading.Thread):
                             tout.rfind(CLEAROUT) + len(CLEAROUT):]
                     else:
                         task_output += tout
-        except Exception, e:
+        except Exception as e:
             p.terminate()
             p.join()
             self.have_heartbeat = False
@@ -422,7 +427,7 @@ class MetaScheduler(threading.Thread):
                     tr = queue.get(timeout=2)
                     tr.status = TIMEOUT
                     tr.output = task_output
-                except Queue.Empty:
+                except queue.Empty:
                     tr = TaskReport(TIMEOUT)
             elif queue.empty():
                 self.have_heartbeat = False
@@ -465,7 +470,7 @@ class MetaScheduler(threading.Thread):
         self.start()
 
     def send_heartbeat(self, counter):
-        print 'thum'
+        print('thum')
         time.sleep(1)
 
     def pop_task(self):
@@ -479,7 +484,7 @@ class MetaScheduler(threading.Thread):
 
     def report_task(self, task, task_report):
         """Creates a task report"""
-        print 'reporting task'
+        print('reporting task')
         pass
 
     def sleep(self):
@@ -605,7 +610,7 @@ class Scheduler(MetaScheduler):
         logger.debug("about to define tables")
         try:
             self.define_tables(db, migrate=migrate)
-        except Exception, e:
+        except Exception as e:
             logger.debug("exception in scheduler: " + e.message)
         else:
             logger.debug("scheduler tables defined")
@@ -783,7 +788,7 @@ class Scheduler(MetaScheduler):
                 db.commit()
                 logger.debug('Tasks assigned...')
                 break
-            except Exception, e:
+            except Exception as e:
                 self.w_stats.errors += 1
                 db.rollback()
                 logger.error('TICKER: error assigning tasks (%s): ', x, exc_info=1)
@@ -1073,11 +1078,11 @@ class Scheduler(MetaScheduler):
                     dead_workers.delete()
                     try:
                         self.is_a_ticker = self.being_a_ticker()
-                    except Exceptionm, e:
+                    except Exceptionm as e:
                         logger.error('Error coordinating TICKER', exc_info=1)
                     if self.w_stats.status == ACTIVE:
                         self.do_assign_tasks = True
-                except Exception, e:
+                except Exception as e:
                     logger.error('Error cleaning up', exc_info=1)
             db.commit()
         except:
@@ -1198,7 +1203,7 @@ class Scheduler(MetaScheduler):
         # let's freeze it up
         db.commit()
         x = 0
-        for group in wkgroups.keys():
+        for group in list(wkgroups.keys()):
             tasks = all_available(st.group_name == group).select(
                 limitby=(0, limit), orderby = st.next_run_time)
             # let's break up the queue evenly among workers
@@ -1377,7 +1382,7 @@ class Scheduler(MetaScheduler):
         """
         from pydal.objects import Query
         sr, st = self.db.scheduler_run, self.db.scheduler_task
-        if isinstance(ref, (int, long)):
+        if isinstance(ref, int):
             q = st.id == ref
         elif isinstance(ref, str):
             q = st.uuid == ref
@@ -1428,7 +1433,7 @@ class Scheduler(MetaScheduler):
             Experimental
         """
         st, sw = self.db.scheduler_task, self.db.scheduler_worker
-        if isinstance(ref, (int, long)):
+        if isinstance(ref, int):
             q = st.id == ref
         elif isinstance(ref, str):
             q = st.uuid == ref
@@ -1520,26 +1525,26 @@ def main():
     )
     (options, args) = parser.parse_args()
     if not options.tasks or not options.db_uri:
-        print USAGE
+        print(USAGE)
     if options.tasks:
         path, filename = os.path.split(options.tasks)
         if filename.endswith('.py'):
             filename = filename[:-3]
         sys.path.append(path)
-        print 'importing tasks...'
+        print('importing tasks...')
         tasks = __import__(filename, globals(), locals(), [], -1).tasks
-        print 'tasks found: ' + ', '.join(tasks.keys())
+        print(('tasks found: ' + ', '.join(list(tasks.keys()))))
     else:
         tasks = {}
     group_names = [x.strip() for x in options.group_names.split(',')]
 
     ###logging.getLogger().setLevel(options.logger_level)
 
-    print 'groups for this worker: ' + ', '.join(group_names)
-    print 'connecting to database in folder: ' + options.db_folder or './'
-    print 'using URI: ' + options.db_uri
+    print(('groups for this worker: ' + ', '.join(group_names)))
+    print(('connecting to database in folder: ' + options.db_folder or './'))
+    print(('using URI: ' + options.db_uri))
     db = DAL(options.db_uri, folder=options.db_folder)
-    print 'instantiating scheduler...'
+    print('instantiating scheduler...')
     scheduler = Scheduler(db=db,
                           worker_name=options.worker_name,
                           tasks=tasks,
@@ -1549,7 +1554,7 @@ def main():
                           max_empty_runs=options.max_empty_runs,
                           utc_time=options.utc_time)
     signal.signal(signal.SIGTERM, lambda signum, stack_frame: sys.exit(1))
-    print 'starting main worker loop...'
+    print('starting main worker loop...')
     scheduler.loop()
 
 if __name__ == '__main__':

@@ -1,5 +1,5 @@
 import stories_manager
-import csv, cStringIO
+import csv, io
 from folders import local_folder
 import help_support
 
@@ -57,7 +57,7 @@ def load_letter_templates_from_csv(vars):
 def get_records(csv_name):
     with open(csv_name, 'rb') as csvfile:
         reader = csv.reader(csvfile, delimiter=',', quotechar='"')
-        reader.next()     #skip header
+        next(reader)     #skip header
         for row in reader:
             yield row
 

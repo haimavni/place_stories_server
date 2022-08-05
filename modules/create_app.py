@@ -1,8 +1,9 @@
 # coding: utf-8
 
-from injections import inject
+from .injections import inject
 import os
 import subprocess
+from send_email import email
 
 def create_an_app(rec):
     request, comment, log_path = inject('request', 'comment', 'log_path')
@@ -13,7 +14,7 @@ def create_an_app(rec):
     comment('about to create {app}'.format(app=rec.app_name))
     orig_dir = os.getcwd()
     os.chdir(path)
-    command = 'bash create_app.bash {app_name} test {email} {password} {first_name} {last_name}'. \
+    command = 'bash create_app.bash {app_name} test3 {email} {password} {first_name} {last_name}'. \
         format(app_name=rec.app_name, email=rec.email, password=rec.password, first_name=rec.first_name, last_name=rec.last_name)
     log_file_name = logs_path + "app-creation-{}.log".format(rec.app_name)
     with open(log_file_name, 'w') as log_file:
@@ -26,7 +27,7 @@ def create_an_app(rec):
     else:
         notify_developer(rec, False)
     #command = 'systemctl restart web2py-scheduler'
-    with open('/home/www-data/tol_server_test/private/restart_now', 'w') as f:
+    with open('/home/www-data/tol_server_test3/private/restart_now', 'w') as f:
         f.write("restart now")
     #with open(log_file_name, 'a') as log_file:
         #log_file.write('before systemctl restart')
@@ -60,7 +61,7 @@ def notify_customer(rec):
     {ml}
     '''
     message = ('', message_fmt.format(ml=manual_link, link=link))
-    result = mail.send(to=rec.email, message=message, subject='Starting your new site')
+    result = email(receivers=rec.email, message=message, subject='Starting your new site')
     comment('mail sent to customer? {}', result)
 
 def notify_developer(rec, success):
@@ -70,7 +71,7 @@ def notify_developer(rec, success):
     message = ('', '''
     New site {site_name} {status}.
     '''.format(site_name=rec.app_name, status=status))
-    result = mail.send(to='haimavni@gmail.com', message=message, subject='New app')
+    result = email(receivers='haimavni@gmail.com', message=message, subject='New app')
     comment('mail sent to developer? {}', result)
 
 def create_pending_apps():
@@ -81,6 +82,6 @@ def create_pending_apps():
             rec.update_record(created=True)
             db.commit()
             code = create_an_app(rec)
-    except Exception, e:
+    except Exception as e:
         log_exception('Error creating apps')
         raise

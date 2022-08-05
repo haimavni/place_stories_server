@@ -40,20 +40,20 @@ def json_to_storage(data, key=None):
         for i, elem in enumerate(data):
             data[i] = json_to_storage(elem, i)
     elif isinstance(data, dict):
-        for k, v in data.items():
+        for k, v in list(data.items()):
             k1 = normalize(k)
             data[k1] = json_to_storage(v, k)
             if k != k1:
                 del data[k]
     if isinstance(data, dict):
         return Storage(data)
-    elif isinstance(data, unicode):
+    elif isinstance(data, str):
         if key and not isinstance(key, int) and key.startswith('BIN'):
             data1 = ''
             for c in data:
                 data1 += chr(ord(c))
             return data1
-        return data.encode('utf8')
+        return data
     elif callable(data):
         data1 = data()
         return json_to_storage(data1)

@@ -7,21 +7,25 @@ __pycache__/
 *.so
 errors/
 logs/
-databases/
-static/aurelia
+databases
+*/static/fontawesome/*
+#static/aurelia/*
 private/deployment_folder
 
 pip-log.txt
 pip-delete-this-directory.txt
+*/web2py/applications/*
 
 # virtualenv
 .venv
 venv/
 ENV/
-static/gb_photos
+static/apps_data
 static/aurelia
 static/aurelia_prev
 sessions/
 private/junk/
 host_address.txt
 gbs_haim.wpr
+.web2py/
+/tol3

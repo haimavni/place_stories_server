@@ -2,15 +2,16 @@
 
 import re
 from bs4 import BeautifulSoup
-from langs import extract_words, language_name
+from .langs import extract_words, language_name
 from langdetect import detect, detect_langs
-from my_cache import Cache
-from injections import inject
+from .my_cache import Cache
+from .injections import inject
 #from base64 import b64decode, b64encode
 from math import log
 import datetime
 from time import sleep
-import ws_messaging
+from . import ws_messaging
+import psutil
 
 alef = "א"
 tav = "ת"
@@ -30,7 +31,8 @@ def remove_all_tags(html):
     text = soup.get_text()
     comment = inject('comment')
     if html and not text:
-        comment("get text failed")
+        comment(f"get text failed in remove_all_tags. html: {html}")
+        text = html
     return text
 
 def extract_tokens(s):
@@ -86,7 +88,7 @@ def guess_language(html):
     return lang
 
 def tally_words(html, dic, story_id, story_name, preview=''):
-    s = story_name.decode('utf8') + ' '
+    s = story_name + ' '
     if preview:
         s += remove_all_tags(preview) + ' '
     s += remove_all_tags(html)
@@ -106,7 +108,7 @@ def tally_words(html, dic, story_id, story_name, preview=''):
     return True
 
 def extract_story_words(story_id):
-    from injections import inject
+    from .injections import inject
     db, STORY4DOC = inject('db', 'STORY4DOC')
     rec = db(db.TblStories.id==story_id).select().first()
     if (not rec) or rec.deleted:
@@ -114,7 +116,7 @@ def extract_story_words(story_id):
     story_name = rec.name or "Name missing"
     preview = rec.preview
     html = rec.story
-    s = story_name.decode('utf8') + ' '
+    s = story_name + ' '
     if preview and rec.used_for == STORY4DOC:
         s += remove_all_tags(preview) + ' '
     s += remove_all_tags(html)
@@ -129,7 +131,7 @@ def extract_story_words(story_id):
     return dic
 
 def retrieve_story_words(story_id):
-    from injections import inject
+    from .injections import inject
     db = inject('db')
     q = (db.TblWordStories.story_id==story_id) & (db.TblWords.id==db.TblWordStories.word_id)
     lst = db(q).select()
@@ -197,14 +199,14 @@ def update_word_index_all():
             for rec in lst:
                 update_story_words_index(rec.id)
                 db.commit()
-    except Exeption, e:
+    except Exception as e:
         log_exception('Error updating word index')
         raise
     else:
         return dict(good=True)
             
 def find_or_insert_word(wrd):            
-    from injections import inject
+    from .injections import inject
     db = inject('db')
     rec = db(db.TblWords.word==wrd).select().first()
     if rec:
@@ -213,7 +215,7 @@ def find_or_insert_word(wrd):
         return db.TblWords.insert(word=wrd), True
 
 def tally_all_stories():   
-    from injections import inject
+    from .injections import inject
     db, STORY4DOC = inject('db', 'STORY4DOC')
     dic = dict()
     N = 0
@@ -236,24 +238,34 @@ def create_word_index():
             db.TblWordStories.insert(word_id=word_id, story_id=story_id, word_count=dic[wrd][story_id])
     elapsed = datetime.datetime.now() - t0
     db.commit()
-    print elapsed
+    print(elapsed)
+
+def log_available_memory(txt):
+    comment = inject('comment')
+    stat = psutil.virtual_memory()
+    avail = stat.available / 1000000
+    txt += f'. available memory: {avail:.2f}'
+    comment(txt)
 
 def read_words_index():
     db = inject('db')
-
+    lst = None
     cmd = """
-        SELECT TblWords.id, TblWords.word, array_agg(TblWordStories.story_id), sum(TblWordStories.word_count)
-        FROM TblWords, TblWordStories
-        WHERE (TblWords.id = TblWordStories.word_id)
-        GROUP BY TblWords.word, TblWords.id;
-    """
-
+            SELECT "TblWords"."id", "TblWords"."word", array_agg("TblWordStories"."story_id"), sum("TblWordStories"."word_count")
+            FROM "TblWords", "TblWordStories"
+            WHERE ("TblWords"."id" = "TblWordStories"."word_id")
+            GROUP BY "TblWords"."word", "TblWords"."id";
+        """
+    log_available_memory('before words index query')
     lst = db.executesql(cmd)
+    log_available_memory('after words index query')
     lst = sorted(lst, key=lambda item: item[1], reverse=False)
+
     ##lst = sorted(lst, key=lambda item: item[2], reverse=True)
     ##lst = sorted(lst)  #todo: collect number of clicks and sort first by num of clicks then alfabetically
 
     result = [dict(word_id=item[0], name=item[1], story_ids=item[2], word_count=item[3], topic_kind=2) for item in lst]
+    log_available_memory('after calculating result in words index')
     return result
 
 def _calc_used_languages(used_for):
@@ -275,8 +287,9 @@ def _calc_used_languages(used_for):
 
 def calc_used_languages(vars, refresh=False):
     used_for = int(vars.used_for) if vars.used_for else 2 #STORY4EVENT
-    c = Cache('used_languages' + str(used_for))
-    return c(lambda: _calc_used_languages(used_for), refresh)
+    return _calc_used_languages(used_for)
+    ##c = Cache('used_languages' + str(used_for))
+    ##return c(lambda: _calc_used_languages(used_for), refresh)
 
 def _get_all_story_previews():
     db = inject('db')

@@ -1,9 +1,13 @@
 # coding: utf-8
 
-from admin_support.access_manager import register_new_user, AccessManager
-from gluon.utils import web2py_uuid
-import re
 import os
+import re
+from send_email import email
+
+from admin_support.access_manager import register_new_user, AccessManager
+
+from gluon.utils import web2py_uuid
+
 
 def init_database():
     comment("init database args: ", str(request.args))
@@ -22,7 +26,7 @@ def init_database():
 
 @serve_json
 def request_new_app(vars):
-    #check uniqueness first
+    # check uniqueness first
     app = request.application
     r = app.find('_')
     if r >= 0:
@@ -44,11 +48,9 @@ def request_new_app(vars):
             locale=vars.locale
         )
         error_message = ""
-        host=request.env.http_host.split(':')[0]  
-        host = 'gbstories.org' #for some reason, if host is tol.life the link does not show as such in the email message
-        confirmation_url = '/{app}/init_app/confirm_new_app?app_name={app_name}&confirmation_key={confirmation_key}'. \
-            format(app=request.application, app_name=app_name, confirmation_key=confirmation_key)
-        confirmation_link = '{host}{confirmation_url}'.format(host=host, confirmation_url=confirmation_url)
+        host=request.env.http_host.split(':')[0]
+        app = request.application
+        confirmation_link = f'https://{host}/{app}/init_app/confirm_new_app?app_name={app_name}&confirmation_key={confirmation_key}'
         if vars.locale == 'he':
             mail_message_fmt = '''
 <div dir="rtl">
@@ -63,11 +65,9 @@ def request_new_app(vars):
             Click {link} to activate your new site.<br><br>
             
             '''
-        mail_message = ('', mail_message_fmt.format(first_name=vars.first_name, last_name=vars.last_name, link=confirmation_link))
-        result = mail.send(to=vars.email, subject='Your new site', message=mail_message)
-        if not result:
-            error_message = mail.error.strerror
-        comment('confirmation mail was sent to {email} with result {result}. message: {msg}', email=vars.email, result=result, msg=mail_message)
+        mail_message = mail_message_fmt.format(first_name=vars.first_name, last_name=vars.last_name, link=confirmation_link)
+        result = email(receivers=vars.email, subject='Your new site', message=mail_message)
+        comment(f"confirmation mail was sent to {vars.email} with result {result}. message: {mail_message}")
         customer_rec = db(db.TblCustomers.id==id).select().first()
         notify_developer(customer_rec)
     return dict(error_message=error_message)
@@ -101,7 +101,7 @@ def notify_developer(rec):
     message = ('', '''
     New site {site_name} was requested by {name} {email}.
     '''.format(site_name=rec.app_name, name=name, email=rec.email))
-    result = mail.send(to='haimavni@gmail.com', message=message, subject='New app requested')
+    result = email(receivers='haimavni@gmail.com', message=message, subject='New app requested')
     comment('mail sent to developer? {}', result)
 
 #-------------------support functions----------------------

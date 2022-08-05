@@ -1,21 +1,82 @@
-from injections import inject
+from .injections import inject
 import os
 import datetime
 from distutils import dir_util
 import zlib
-from date_utils import datetime_from_str
+from .date_utils import datetime_from_str
 from gluon.storage import Storage
 import random
-import pwd
-from stories_manager import Stories
-from folders import url_folder, local_folder
-from pdf_utils import pdf_to_text, save_pdf_jpg
+from .stories_manager import Stories
+from .folders import url_folder, local_folder
+from .pdf_utils import pdf_to_text, save_pdf_jpg
 from time import sleep
-import ws_messaging
+from . import ws_messaging
+import array
 
-def save_uploaded_doc(file_name, blob, user_id, sub_folder=None):
+def create_uploading_doc(file_name, crc, user_id):
     auth, log_exception, db, STORY4DOC = inject('auth', 'log_exception', 'db', 'STORY4DOC')
     user_id = user_id or auth.current_user()
+    record_id = db((db.TblDocs.crc == crc) & (db.TblDocs.deleted != True)).select().first()
+    if record_id:
+        return Storage(duplicate=record_id)
+    original_file_name, ext = os.path.splitext(file_name)
+    file_name = '{crc:x}{ext}'.format(crc=crc & 0xffffffff, ext=ext)
+    today = datetime.date.today()
+    month = str(today)[:-3]
+    sub_folder = 'uploads/' + month + '/'
+    path = local_docs_folder() + sub_folder
+    doc_date = None
+    dir_util.mkpath(path)
+    doc_file_name = path + file_name
+    with open(path + file_name, 'wb') as f:
+        pass
+    sm = Stories()
+    story_info = sm.get_empty_story(used_for=STORY4DOC, story_text="", name=original_file_name)
+    result = sm.add_story(story_info)
+    story_id = result.story_id
+    record_id = db.TblDocs.insert(
+        doc_path=sub_folder + file_name,
+        original_file_name=original_file_name,
+        name=original_file_name,
+        crc=crc,
+        story_id=story_id,
+        uploader=user_id,
+        deleted=False,
+        upload_date=datetime.datetime.now()
+    )
+    return Storage(record_id=record_id)
+
+
+def save_uploading_chunk(record_id, start, blob):
+    db = inject('db')
+    drec = db(db.TblDocs.id==record_id).select().first()
+    if not drec:
+        raise Exception(f'record_id {record_id} not found')
+    file_name = local_docs_folder() + drec.doc_path
+    with open(file_name, 'ab') as f:
+        f.seek(start, 0)
+        f.tell()
+        f.write(blob)
+        f.flush()
+
+
+def handle_loaded_doc(record_id):
+    db = inject('db')
+    drec = db(db.TblDocs.id==record_id).select().first()
+    path, file_name = os.path.split(drec.doc_path)
+    doc_file_name = local_docs_folder() + drec.doc_path
+    pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/' + path + '/'
+    dir_util.mkpath(pdf_jpg_folder)
+    pdf_jpg_path = pdf_jpg_folder + file_name.replace('.pdf', '.jpg')
+    save_pdf_jpg(doc_file_name, pdf_jpg_path)
+    calc_doc_story(record_id)
+    db.commit()
+
+# code below is obsolete
+def save_uploaded_doc(file_name, s, user_id, sub_folder=None):
+    auth, log_exception, db, STORY4DOC = inject('auth', 'log_exception', 'db', 'STORY4DOC')
+    user_id = user_id or auth.current_user()
+    blob = array.array('B', [x for x in map(ord, s)]).tobytes()
     crc = zlib.crc32(blob)
     cnt = db((db.TblDocs.crc == crc) & (db.TblDocs.deleted != True)).count()
     if cnt > 0:
@@ -25,18 +86,23 @@ def save_uploaded_doc(file_name, blob, user_id, sub_folder=None):
     today = datetime.date.today()
     month = str(today)[:-3]
     if not sub_folder:
-        sub_folder = sub_folder or 'uploads/' + month + '/'
+        sub_folder = 'uploads/' + month + '/'
     path = local_docs_folder() + sub_folder
     doc_date = None
     dir_util.mkpath(path)
     doc_file_name = path + file_name
     try:
         path = local_docs_folder() + sub_folder
-        with open(doc_file_name, 'w') as f:
+        with open(doc_file_name, 'wb') as f:
             f.write(blob)
-    except Exception, e:
+    except Exception as e:
         log_exception("saving doc {} failed".format(original_file_name))
         return 'failed'
+    sm = Stories()
+    story_info = sm.get_empty_story(used_for=STORY4DOC, story_text="", name=original_file_name)
+    result = sm.add_story(story_info)
+    story_id = result.story_id
+
     doc_id = db.TblDocs.insert(
         doc_path=sub_folder + file_name,
         original_file_name=original_file_name,
@@ -45,6 +111,7 @@ def save_uploaded_doc(file_name, blob, user_id, sub_folder=None):
         upload_date=datetime.datetime.now(),
         doc_date=doc_date,
         crc=crc,
+        story_id=story_id,
         deleted=False
     )
     pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/' + sub_folder
@@ -76,30 +143,45 @@ def calc_doc_story(doc_id):
     try:
         db, STORY4DOC, log_exception, comment = inject('db', 'STORY4DOC', 'log_exception', 'comment')
         doc_rec = db(db.TblDocs.id==doc_id).select().first()
+        if doc_rec.text_extracted:
+            return True
         doc_file_name = local_docs_folder() + doc_rec.doc_path
+        comment(f"enter calc_doc_story of {doc_file_name}")
         sm = Stories()
         good = True
+        pdf_result = None
         try:
-            txt = pdf_to_text(doc_file_name)
-        except Exception, e:
-            log_exception('PDF to text error in {}. Name: {}'.format(doc_rec.doc_path, doc_rec.original_file_name))
+            pdf_result = pdf_to_text(doc_file_name, doc_rec.num_pages_extracted)
+        except Exception as e:
+            log_exception(f'PDF to text error in {doc_rec.doc_path}. Name: {doc_rec.original_file_name}')
             txt = ''
             good = False
             raise
-        if not txt:
+        if not pdf_result:
             txt = '- - - - -'
         if doc_rec.story_id:
+            txt = ''
+            if doc_rec.num_pages_extracted:
+                story_info = sm.get_story(doc_rec.story_id)
+                txt = story_info.story_text
+            txt = txt + pdf_result.text
             story_info = Storage(
-                story_text=txt
+                story_text=txt,
+                name=doc_rec.name
             )
             sm.update_story(doc_rec.story_id, story_info)
-            doc_rec.update_record(text_extracted=True)
+            doc_rec.update_record(text_extracted=pdf_result.num_pages==pdf_result.num_pages_extracted,
+                                  num_pages=pdf_result.num_pages,
+                                  num_pages_extracted=pdf_result.num_pages_extracted)
         else:
-            story_info = sm.get_empty_story(used_for=STORY4DOC, story_text=txt, name=doc_rec.original_file_name)
+            story_info = sm.get_empty_story(used_for=STORY4DOC, story_text=pdf_result.text, name=doc_rec.original_file_name)
             result = sm.add_story(story_info)
             story_id = result.story_id
-            doc_rec.update_record(story_id=story_id, text_extracted=True)
-    except Exception, e:
+            doc_rec.update_record(story_id=story_id,
+                                  text_extracted=pdf_result.num_pages==pdf_result.num_pages_extracted,
+                                  num_pages=pdf_result.num_pages,
+                                  num_pages_extracted=pdf_result.num_pages_extracted)
+    except Exception as e:
         log_exception('Error calculating {}'.format(doc_rec.doc_path))
         return False
     return good
@@ -142,10 +224,11 @@ def calc_doc_stories(time_budget=None):
             log_exception('Error while calculating doc stories')
         finally:
             comment("Finished cycle of calculating doc stories")
-    except Exception, e:
+    except Exception as e:
         log_exception('Error calculating doc stories')
         raise
     return dict(good=ns, bad=nf)
+
 
 def docs_folder(): 
     return url_folder('docs')

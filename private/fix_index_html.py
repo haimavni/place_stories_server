@@ -1,7 +1,7 @@
 import os
 import re
 
-os.chdir("/home/haim/aurelia-gbs/gbs")
+os.chdir("/home/haim/aurelia")
 
 
 with open('index.html') as f:
@@ -10,7 +10,7 @@ with open('index.html') as f:
     m = re.search(pat, s)
     version = m.group(1)
     s = s.replace('[VERSION]', version)
-    print "version {} copied".format(version)
+    print(f"version {version} copied")
     
 with open('index.html', 'w') as g:
     g.write(s)

@@ -1,8 +1,8 @@
-import merge_in_memory as mim
+from . import merge_in_memory as mim
 import datetime
-from injections import inject
+from .injections import inject
 from gluon.storage import Storage
-from words import *
+from .words import *
 import re
 
 def display_date(dt):
@@ -124,7 +124,9 @@ class Stories:
         db, auth, STORY4EVENT, STORY4TERM, STORY4PHOTO, STORY4DOC, STORY4AUDIO, TEXT_AUDITOR = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO', 'STORY4DOC', 'STORY4AUDIO', 'TEXT_AUDITOR')
         source = story_info.source
         ###todo: handle language issues here and in update_story
-        story_id = db.TblStories.insert(story=story_text, 
+        if story_info.preview and not story_info.story_text:
+            story_info.story_text = story_text = story_info.preview
+        story_id = db.TblStories.insert(story=story_text,
                                         author_id=self.author_id, 
                                         name=name,
                                         source=source,
@@ -136,8 +138,9 @@ class Stories:
                                         last_version=0,
                                         approved_version=0 if auth.user_has_privilege(TEXT_AUDITOR) else -1,
                                         last_update_date=now,
+                                        story_text=story_text,
                                         imported_from=imported_from)
-        preview = get_reisha(story_text)
+        preview = story_info.preview or get_reisha(story_text)
         db(db.TblStories.id==story_id).update(preview=preview)
         if story_info.used_for == STORY4EVENT:
             db.TblEvents.insert(
@@ -154,13 +157,14 @@ class Stories:
         
         ###update_story_words_index(story_id)
         promote_word_indexing()
-        return Storage(story_id=story_id, creation_date=now, author=source, preview=preview, name=name)
+        return Storage(story_id=story_id, creation_date=now, author=source, story_text=story_text, 
+            last_update_date=now, preview=preview, name=name, new_story=True, used_for=story_info.used_for or STORY4EVENT)
 
     def update_story(self, story_id, story_info, language=None, change_language=False, imported_from=''):
         db, auth, STORY4EVENT, STORY4TERM, STORY4PHOTO, STORY4DOC, STORY4AUDIO, TEXT_AUDITOR = inject('db', 'auth', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO', 'STORY4DOC', 'STORY4AUDIO', 'TEXT_AUDITOR')
         if story_id == 'new':
             return self.add_story(story_info)
-        updated_story_text = story_info.story_text
+        updated_story_text = story_info.story_text or ""
         rec = db(db.TblStories.id==story_id).select().first()
         if language:
             rec = self.find_translation(rec, language)

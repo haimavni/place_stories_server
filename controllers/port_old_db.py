@@ -178,7 +178,7 @@ def fix_photo_location_case():
     idx = dict()
     n_missing = 0
     n_fixed = 0
-    with open('applications/' + request.application + '/static/gb_photos/tmp.lst') as f:
+    with open('applications/' + request.application + '/static/apps_data/tmp.lst') as f:
         for s in f:
             s = s.strip()[2:]
             idx[s.lower()] = s
@@ -451,7 +451,7 @@ def port_from_old_db():
         comment("start calculating visibility")
         calc_members_visibility()
         comment('Porting done')
-    except Exception, e:
+    except Exception as e:
         log_exception('Porting old db failed')
         return 'Porting old db failed: ' + e.message
     db.commit()
@@ -513,7 +513,7 @@ class RefsFixer:
     base_url = request.env.http_orign or request.env.http_host
     app = request.application
     app_area = app.split('__')[0]
-    ###photo_ref_format = '<img src="' + base_url + '/{app_area}/static/gb_photos/{app_area}/photos/orig/'.format(app_area=app_area) + '{path}">'
+    ###photo_ref_format = '<img src="' + base_url + '/{app_area}/static/apps_data/{app_area}/photos/orig/'.format(app_area=app_area) + '{path}">'
     photo_ref_format = '<a href="/{app}/static/aurelia/index.html#/photos/'.format(app=app) + '{photo_id}/*">'
     member_ref_format = '<a href="/{app}/static/aurelia/index.html#/member-details/'.format(app=app) + '{mem_id}/*">'
     story_ref_format = '<a href="/{app}/static/aurelia/index.html#/story-detail/'.format(app=app) + '{sid}/*?what=story">'
@@ -577,7 +577,7 @@ class RefsFixer:
                 return RefsFixer.story_ref_format.format(sid=self.refs_map['term'][ref_id])
             if what == 'photo':
                 return RefsFixer.photo_ref_format.format(path=self.refs_map['photo'][ref_id])
-        except Exception, e:
+        except Exception as e:
             self.num_errors += 1
             pass
         #todo: implement the transformation

@@ -1,4 +1,4 @@
-from injections import inject
+from .injections import inject
 
 def make_item_topics_unique(topic_id):
     db, request = inject('db', 'request')

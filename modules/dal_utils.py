@@ -57,7 +57,7 @@ class IS_FUZZY_DATE(Validator):
             return (value, 'Illegal date')
         try:
             date = datetime(year=y, month=m, day=d)
-        except Exception, e:
+        except Exception as e:
             return (value, e.message)
         date = datetime.date(date)
         return (str(date), None)

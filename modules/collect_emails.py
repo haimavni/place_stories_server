@@ -4,13 +4,14 @@ import re
 import zlib
 from os import listdir
 from os.path import isfile, join, splitext
-from photos_support import save_uploaded_photo_collection
+from .photos_support import save_uploaded_photo_collection
 from gluon.storage import Storage
 from email.header import decode_header
 from shutil import move
-from injections import inject
-from cStringIO import StringIO
+from .injections import inject
+from io import StringIO
 from mammoth import convert_to_html
+from send_email import email
 
 class EmailCollector:
 
@@ -19,7 +20,7 @@ class EmailCollector:
         self.maildir = '/home/{}_mailbox/Maildir'.format(request.application)
         comment('init EmailCollector')
         logger.debug('init EmailCollector')
-
+        
 
     def collect(self):
         maildir_new = self.maildir + '/new'
@@ -42,7 +43,7 @@ class EmailCollector:
         dst = msg_file.replace('/new/', '/cur/')
         move(msg_file, dst)
         return result
-
+    
     def get_header_info(self, msg, result):
         comment = inject('comment')
         if result.sender:
@@ -77,7 +78,7 @@ class EmailCollector:
         if content_type == 'image':
             filename, blob = self.handle_image(msg)
             if blob:
-                result.images[filename] = blob
+            	result.images[filename] = blob
         elif content_type == 'text':
             if content_subtype == 'plain':
                 if not result.sender:  #some messages do not behave...
@@ -89,7 +90,7 @@ class EmailCollector:
             self.get_header_info(msg, result)
         elif content_type == 'application':
             self.get_application_info(msg, content_subtype, result)
-
+            
     def get_application_info(self, msg, content_subtype, result):
         disposition = msg.get('content-disposition')
         if not disposition:
@@ -100,7 +101,7 @@ class EmailCollector:
         blob = msg.get_payload(decode=True)
         if content_subtype == 'vnd.openxmlformats-officedocument.wordprocessingml.document':
             self.handle_docx(blob, result)
-
+    
     def handle_docx(self, blob, result):
         stream = StringIO(blob)
         temp = convert_to_html(stream)
@@ -110,7 +111,7 @@ class EmailCollector:
     def handle_image(self, msg):
         disposition = msg.get('content-disposition')
         if not disposition:
-            return None,None
+	        return None,None
         if disposition.endswith('"'):
             disposition = disposition[:-1]
         x = decode_header(disposition)
@@ -136,7 +137,8 @@ def get_user_id_of_sender(sender_email, sender_name):
 
 def collect_mail():
     try:
-        db, comment, logger, mail, MAIL_WATCHER, log_exception = inject('db', 'comment', 'logger', 'mail', 'MAIL_WATCHER', 'log_exception')
+        db, request, comment, logger, mail, MAIL_WATCHER, log_exception = inject('db', 'request', 'comment', 'logger', 'mail', 'MAIL_WATCHER', 'log_exception')
+        host = request.env.http_host
         email_photos_collector = EmailCollector()
         results = []
         lst = db((db.auth_membership.group_id==MAIL_WATCHER)&(db.auth_user.id==db.auth_membership.user_id)&(db.auth_user.id>1)).select(db.auth_user.email)
@@ -146,12 +148,12 @@ def collect_mail():
             user_id = get_user_id_of_sender(msg.sender_email, msg.sender_name)
             if not user_id:
                 emsg = 'mail sent by {} {}'.format(msg.sender_email, msg.sender_name)
-                mail.send(sender="admin@gbstories.org", to=receivers, subject="incoming email to gbstories from unknown sender", message=emsg)
+                email(sender=f"admin", to=receivers, subject="incoming email from unknown sender", message=emsg)
                 continue
             ###user_id = user_id or 1 #todo: if we decide not to create new user
             text = msg.html_content or msg.plain_content
             comment('New email: subject: {subject}, images: {image_names} sent by {sender}', 
-                    subject=msg.subject, image_names=msg.images.keys(), sender=msg.sender_email)
+                    subject=msg.subject, image_names=list(msg.images.keys()), sender=msg.sender_email)
             if msg.images:
                 result = save_uploaded_photo_collection(msg.images, user_id)
                 results.append(result)
@@ -163,22 +165,17 @@ def collect_mail():
                 else:
                     s = "strange text"
                     m = msg[fld]
-                    if isinstance(m, unicode):
-                        s = m
-                    else:
-                        try:
-                            s = m.decode('utf8')
-                        except:
-                            pass
+                    s = m
                     emsg += fld + ': ' + s + '\n'
-            result = mail.send(sender="admin@gbstories.org", to=receivers, subject="incoming email to gbstories", message=emsg)
+            host = request.env.http_host
+            result = email(sender=f"admin", to=receivers, subject=f"incoming email to {host}", message=emsg)
             if result:
                 comment("mail was forwarded")
             else:
                 comment("forwarding mail failed: {}", mail.error)
-    except Exception, e:
+    except Exception as e:
         log_exception('Error collecting mail')
         raise
-
-
+            
+        
     return results

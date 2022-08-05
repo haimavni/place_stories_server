@@ -2,7 +2,11 @@
 # this file is released under public domain and you can use without limitations
 
 from ws_messaging import send_message, messaging_group
-from admin_support.access_manager import AccessManager
+from admin_support import AccessManager
+from send_email import email
+import create_card
+from gluon.storage import Storage
+from misc_utils import make_qr_code
 
 #########################################################################
 ## This is a sample controller
@@ -24,15 +28,15 @@ def index():
     if key:
         rec = db(db.TblShortcuts.key==key).select().first()
         if rec:
-            if not ":8000" in request.env.http_host:
+            if request.is_https and not ":8000" in request.env.http_host:
                 request.requires_https()
             redirect(rec.url)
     app = request.application
-    fname = '/{app}/static/aurelia/index.html'.format(app=app)
-    fname1 = '{app}/static/aurelia/index-{app}.html'.format(app=app)
+    fname = f'/{app}/static/aurelia/index.html'
+    fname1 = f'{app}/static/aurelia/index-{app}.html'
     if os.path.isfile('./applications/' + fname1):
         fname = '/' + fname1
-    redirect("{}".format(fname))
+    redirect(f"{fname}")
 
 def user():
     """
@@ -78,23 +82,22 @@ def get_tornado_host(vars):
     group = messaging_group(group=vars.group)
     if request.is_https:
         ws = 'wss'
-        port = '9443' if host == 'tol.life' else '8443'
+        port = '8443'
     else:
         ws = 'ws'
         port = '8888'
-    return dict(ws='{ws}://{host}:{port}/realtime/{group}'.format(ws=ws, port=port, host=host, group=group))
+    return dict(ws=f'{ws}://{host}:{port}/realtime/{group}')
 
 @serve_json
 def read_privileges(vars):
-    user_id = auth.current_user()
+    user_id = auth.current_user()  #if local : or 2
+    if request.env.http_host.startswith('127'):
+        user_id = user_id or 2
     if not user_id:
         return dict(user_id=0, privileges={}, user_name="")
     ###emails_suspended = rec.emails_suspended if rec else False
     user_name = auth.user_name(user_id)
-    privileges = dict()
-    for const_name in membership_consts:
-        const_id = auth.id_group(const_name)
-        privileges[const_name] = auth.has_membership(const_id, user_id=user_id)
+    privileges = get_the_privileges(user_id)
     result = dict(
         privileges = privileges,
         user_id=user_id,
@@ -102,9 +105,20 @@ def read_privileges(vars):
     )
     return result
 
+def get_the_privileges(user_id):
+    privileges = Storage()
+    for const_name in membership_consts:
+        const_id = auth.id_group(const_name)
+        privileges[const_name] = auth.has_membership(const_id, user_id=user_id)
+    return privileges
+
 @serve_json
 def read_configuration(vars):
     config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec.app_title:
+        rec = db((db.TblLocaleCustomizations.key=='app-title') & (db.TblLocaleCustomizations.lang=='he')).select().first()
+        if rec:
+            config_rec.update_record(app_title=rec.value)
     config = config_rec.as_dict()
     return dict(config=config)
 
@@ -155,7 +169,7 @@ def login(vars):
         if v:
             user[k] = v
 
-    user.privileges = auth.get_privileges()
+    user.privileges = get_the_privileges(user.id)
     return dict(user=user)
 
 @serve_json
@@ -200,6 +214,7 @@ def get_curr_version(vars):
 @serve_json
 def get_interested_contact(vars):
     name = vars.contact_name
+    host = request.env.http_host
     message = '''
     <html>
     <div direction="{rtltr}">
@@ -217,7 +232,7 @@ def get_interested_contact(vars):
     </div>
     </html>
     '''.format(rtltr=vars.rtltr, name=vars.contact_name, email=vars.contact_email, mobile=vars.contact_mobile, message=vars.contact_message)
-    result = mail.send(sender="admin@gbstories.org", to="haimavni@gmail.com", subject = "New Tol.Life prospect", message=('', message))
+    result = email(sender="admin", receivers="haimavni@gmail.com", subject = "New Tol.Life prospect", message=message)
     error = "" if result else mail.error
     return dict(result=result, error=error)
 
@@ -274,7 +289,10 @@ def get_hit_statistics(vars):
             #select(db.TblPageHits.count, db.TblPageHits.new_count, tbl[name], tbl.id, limitby=(0,2000), orderby=~fld)
         k = str(tbl)
         if what == 'MEMBER': #the virtual field trick does not work...
-            lst = [dict(count=r.TblPageHits.count, new_count=r.TblPageHits.new_count or 0, name=r[k]['first_name'] + ' ' + r[k]['last_name'], item_id=r[k].id) for r in lst]
+            lst = [dict(count=r.TblPageHits.count,
+                        new_count=r.TblPageHits.new_count or 0,
+                        name=(r[k]['first_name'] or "") + ' ' + (r[k]['last_name'] or ""),
+                        item_id=r[k].id) for r in lst]
         else:
             lst = [dict(count=r.TblPageHits.count, new_count=r.TblPageHits.new_count or 0, name=r[k][name], item_id=r[k].id) for r in lst]
         result[what] = lst
@@ -283,14 +301,20 @@ def get_hit_statistics(vars):
 @serve_json
 def get_languages(vars):
     s = db(db.TblConfig.id==1).select().first().languages
-    langugages=s.split(',')
+    languages=s.split(',')
     return dict(languages=languages)
 
 @serve_json
 def set_locale_override(vars):
     rec = db((db.TblLocaleCustomizations.lang==vars.lang) & (db.TblLocaleCustomizations.key==vars.key)).select().first()
     if rec:
-        rec.update_record(value=vars.value)
+        if vars.value == '---':
+            comment('about to delete lang override')
+            n = db((db.TblLocaleCustomizations.lang==vars.lang) & (db.TblLocaleCustomizations.key==vars.key)).delete()
+            if n != 1:
+                raise Exception('Locale override was not deleted')
+        else:
+            rec.update_record(value=vars.value)
     else:
         db.TblLocaleCustomizations.insert(lang=vars.lang, key=vars.key, value=vars.value)
     return dict()
@@ -318,7 +342,7 @@ def get_locale_overrides(vars):
 @serve_json
 def notify_new_files(vars):
     uploaded_file_ids = vars.uploaded_file_ids
-    ws_messaging.send_message(key=vars.what +'_WERE_UPLOADED', group='ALL', uploaded_file_ids=uploaded_file_ids)
+    send_message(key=vars.what +'_WERE_UPLOADED', group='ALL', uploaded_file_ids=uploaded_file_ids)
     return dict()
 
 @serve_json
@@ -338,7 +362,7 @@ def reset_password(vars):
 
     '''
     mail_message = ('', mail_message_fmt.format(first_name=user_rec.first_name, last_name=user_rec.last_name, link=confirmation_link))
-    result = mail.send(to=vars.email, subject='New password', message=mail_message)
+    result = email(receivers=vars.email, subject='New password', message=mail_message)
     if not result:
         error_message = mail.error.strerror
         raise Exception("Email could not be sent - {em}".format(em=error_message))
@@ -358,14 +382,16 @@ def get_shortcut(vars):
             raise Exception('Non unique key')
         db.TblShortcuts.insert(url=url, key=key)
     shortcut = '/' + request.application + '?key='  + key
-    comment("get shortcut: ", shortcut)
+    comment(f"get shortcut: {shortcut}")
     return dict(shortcut=shortcut)
 
 def create_key():
     import random, base64
     r = random.randint(0, 0xffffffffffffffff)
     s = str(r)
-    s = base64.urlsafe_b64encode(s)
+    s_bytes = s.encode('ascii')
+    s_64 = base64.b64encode(s_bytes)
+    s = s_64.decode('ascii')
     while s[-1] == "=":
         s = s[:-1]
     return s
@@ -383,13 +409,40 @@ def notify_new_feedback():
     lst = db((db.auth_membership.group_id==ADMIN)&(db.auth_user.id==db.auth_membership.user_id)&(db.auth_user.id>1)).select(db.auth_user.email)
     receivers = [r.email for r in lst]
     app = request.application
+    host = request.env.http_origin
     message = ('', '''
     New feedback has been received.
 
 
-    Click <a href="https://gbstories.org/{app}/static/aurelia/index.html#/feedbacks">here</a> to view.
-    '''.format(app=app).replace('\n', '<br>'))
-    mail.send(to=receivers, subject='New GB Stories Feedback', message=message)
+    Click <a href="{host}/{app}/static/aurelia/index.html#/feedbacks">here</a> to view.
+    '''.format(host=host,app=app).replace('\n', '<br>'))
+    email(receivers=receivers, subject='New Stories Feedback', message=message)
 
+@serve_json
+def create_fb_card(vars):
+    img_src = vars.img_src
+    r = img_src.find('/padded_images')
+    src = img_src[r:]
+    app = request.application
+    host = request.env.http_host
+    img_src = f'https://{host}/{app}/static/apps_data/social_cards{src}'
+    # img_src = img_src.replace('http:', 'https:')
+    content = create_card.card_data(vars.url, img_src, vars.title, vars.description)
+    fname = create_key()
+    with open("/apps_data/social_cards/" + fname + ".html", "w", encoding="utf-8") as f:
+        f.write(content)
+    ### does not work return dict(card_url=f"{host}/{app}/static/apps_data/social_cards/{fname}.html")
+    return dict(card_url=f"cards.{host}/{fname}.html")
 
+@serve_json
+def create_qrcode(vars):
+    url = vars.url
+    name = vars.name
+    return make_qr_code(url, name=name)
+
+@serve_json
+def save_app_title(vars):
+    app_title = vars.app_title
+    rec = db(db.TblConfiguration).select().first()
+    rec.update_record(app_title=app_title)
 

@@ -1,15 +1,13 @@
 from gluon.tools import Auth
-from gluon.validators import *
-from gluon.utils import web2py_uuid
-from gluon.dal import Row
 from gluon.storage import Storage
-from injections import inject
-from admin_support.access_manager import AccessManager
+from .injections import inject
+from .admin_support.access_manager import AccessManager
+from send_email import email
 
 class MyAuth(Auth):
 
     def change_password(self, old_password, new_password, uid=None):
-        from admin_support.access_manager import encrypt_password
+        from .admin_support.access_manager import encrypt_password
         db = self.db
         curr_password = db(db.auth_user.id==uid).select(db.auth_user.password).first().password
         if curr_password != encrypt_password(old_password):
@@ -31,7 +29,7 @@ class MyAuth(Auth):
             self.add_membership(ACCESS_MANAGER, id)
 
     def current_user(self):
-        #use session.current_user to fake another user
+        # use session.current_user to fake another user
         session, request = inject('session', 'request')
         if self.user:
             return session.current_user or self.user.id
@@ -54,7 +52,7 @@ class MyAuth(Auth):
             to=user_rec.email,
             subject=self.messages.verify_email_subject,
             message=self.messages.verify_email % dict(key=user_rec.registration_key))):
-            raise Exception(T('Failed to resend verify email to {}').format(user_rec.email))
+                raise Exception('Failed to resend verify email to {}').format(user_rec.email)
         
     def verify_email(self, key):
         """
@@ -95,6 +93,7 @@ class MyAuth(Auth):
     
     def notify_registration(self, user_info):
         request, db, mail, ACCESS_MANAGER = inject('request', 'db', 'mail', 'ACCESS_MANAGER')
+        host = request.env.http_host
         app = request.application
         ui = user_info
         user_name = ui.first_name + ' ' + ui.last_name
@@ -106,9 +105,9 @@ class MyAuth(Auth):
         Email adddress is {uemail}.
     
     
-        Click <a href="https://gbstories.org/{app}/static/aurelia/index.html#/access-manager">here</a> for access manager.
-        '''.format(uname=user_name, uemail=email, app=app).replace('\n', '<br>'))
-        mail.send(to=receivers, subject='New GB Stories registration', message=message)
+        Click <a href="https://{host}/{app}/static/aurelia/index.html#/access-manager">here</a> for access manager.
+        '''.format(uname=user_name, uemail=email, app=app, host=host).replace('\n', '<br>'))
+        email(receivers=receivers, subject='New registration', message=message)
         
     def user_has_privilege(self, privilege):
         return self.has_membership(privilege, self.current_user())

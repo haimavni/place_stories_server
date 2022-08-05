@@ -169,3 +169,13 @@ def remove_book(vars):
     db(db.TblStories.book_id==book.id).update(book_id=None)
     db(db.TblBooks.id==book.id).delete()
     return dict()
+
+@serve_json
+def remove_story_from_book(vars):
+    book_id = vars.book_id
+    story_id = vars.story_id
+    story_rec = db(db.TblStories.id==story_id)
+    if (not story_rec) or story_rec.book_id != book_id:
+        raise Exception('Book / story mismatch!')
+    story_rec.update(book_id=None)
+    return dict()

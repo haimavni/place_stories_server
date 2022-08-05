@@ -9,28 +9,31 @@
 ## be redirected to HTTPS, uncomment the line below:
 # request.requires_https()
 
+import os
+
 ## app configuration made easy. Look inside private/appconfig.ini
 from gluon.contrib.appconfig import AppConfig
-import os
 
 ## once in production, remove reload=True to gain full speed
 myconf = AppConfig(reload=True)
 
+
 def __open_db():
     dbname = request.application
     adapter = 'psycopg2:'
-    _debugging = False ###request.function not in ('whats_up', 'log_file_data')
+    _debugging = False  # request.function not in ('whats_up', 'log_file_data')
     try:
-        db = DAL('postgres:{ad}//lifestone:V3geHanu@localhost/{dbn}'.format(ad=adapter, dbn=dbname), 
-                 pool_size=10,
+        db = DAL(f'postgres:{adapter}//lifestone:V3geHanu@localhost/{dbname}',
+                 pool_size=50,
                  debug=_debugging,
-                 lazy_tables=False) #it causes an exeption!
-    except Exception, e:
-        comment('Failed to open db {}. Error: {}.'.format(dbname, e))
+                 lazy_tables=True)  # it causes an exeption!
+    except Exception as e:
+        comment(f'Failed to open db {dbname}. Error: {e}.')
         raise
     return db
 
-db = __open_db()  
+
+db = __open_db()
 
 ## by default give a view/generic.extension to all actions from localhost
 ## none otherwise. a pattern can be 'controller/function.extension'
@@ -55,23 +58,24 @@ response.headers['Access-Control-Allow-Origin'] = '*'
 ## (more options discussed in gluon/tools.py)
 #########################################################################
 
-from gluon.tools import Auth, Service, PluginManager
+from gluon.tools import Service, PluginManager
 from my_auth import MyAuth
 
 auth = MyAuth(db)
-auth.expiration=31 * 24 * 3600
+auth.expiration = 31 * 24 * 3600
 service = Service()
 plugins = PluginManager()
 
 ## create all tables needed by auth if not custom tables
-#todo: the lines below cause "auth user table redefined" error on the server but not on the development system. do not use it for now
-auth.settings.extra_fields['auth_user']= [Field('skype'), Field('facebook')]
+# todo: the lines below cause "auth user table redefined" error on the server but not on the development system. do not use it for now
+auth.settings.extra_fields['auth_user'] = [Field('skype'), Field('facebook')]
 auth.define_tables(username=False, signature=False)
 
 ## configure email
+_host = request.env.http_host
 mail = auth.settings.mailer
 mail.settings.server = 'localhost'
-mail.settings.sender = 'info@gbstories.org'
+mail.settings.sender = f'info@{_host}'
 mail.settings.login = ''
 
 ## configure auth policy
@@ -99,8 +103,10 @@ auth.settings.reset_password_requires_verification = True
 ## after defining tables, uncomment below to enable auditing
 # auth.enable_record_versioning(db)
 
-membership_consts = ['ADMIN', 'DEVELOPER', 'EDITOR', 'COMMENTATOR', 'PHOTO_UPLOADER', 'ACCESS_MANAGER', 'CHATTER', 
-                     'CHAT_MODERATOR', 'TEXT_AUDITOR', 'DATA_AUDITOR', 'HELP_AUTHOR', 'ADVANCED', 'MAIL_WATCHER', 'ARCHIVER', 'TESTER', 'RESTRICTED']
+membership_consts = ['ADMIN', 'DEVELOPER', 'EDITOR', 'COMMENTATOR', 'PHOTO_UPLOADER', 'ACCESS_MANAGER', 'CHATTER',
+                     'CHAT_MODERATOR', 'TEXT_AUDITOR', 'DATA_AUDITOR', 'HELP_AUTHOR', 'ADVANCED', 'MAIL_WATCHER',
+                     'ARCHIVER', 'TESTER', 'RESTRICTED', 'VIDEO_EDITOR']
+
 
 def __calc_membership_const(const_name):
     display_name = ' '.join([z.capitalize() for z in const_name.split('_')])
@@ -114,24 +120,28 @@ def __calc_membership_const(const_name):
         try:
             const_id = auth.add_group(const_name, display_name)
             db.commit()
-        finally:  
+        finally:
             if os.path.isfile(lock_file_name):
                 os.remove(lock_file_name)
     globals()[const_name] = const_id
-    
+
+
 for membership_name in membership_consts:
     __calc_membership_const(membership_name)
 
+
 def no_admin():
-    return db(db.auth_user.email=='admin@gbs.com').isempty()
+    return db(db.auth_user.email == 'admin@gbs.com').isempty()
+
 
 from admin_support.access_manager import register_new_user
+
 try:
     if no_admin():
         admin_id = register_new_user('admin@gbs.com', '931632', 'admin', 'admin')
         auth.login_bare('admin@gbs.com', '931632')
         auth.set_access_manager(ACCESS_MANAGER, admin_id)
-except Exception, e:
+except Exception as e:
     pass
 
 base_app_dir = 'applications/' + request.application + '/'

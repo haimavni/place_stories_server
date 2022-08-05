@@ -18,14 +18,13 @@ STORY4DOC = 9
 STORY4AUDIO = 10
 STORY4LETTER = 11
 STORY4ARTICLE = 12
-STORY4USER = [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4AUDIO, STORY4ARTICLE] 
+STORY4DOCAB = 13
+STORY4USER = [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4AUDIO, STORY4ARTICLE, STORY4DOCAB]
 
 VIS_NEVER = 0           #for non existing members such as the child of a childless couple (it just connects them)
 VIS_NOT_READY = 1
 VIS_VISIBLE = 2
 VIS_HIGH = 3            #
-
-T.force('he')
 
 db.define_table('TblChatGroup',
                 Field('name', type='string'),
@@ -69,7 +68,10 @@ db.define_table('TblStories',
                 Field('last_chat_time', type='datetime', default=NO_DATE),
                 Field('sorting_key', type='string', default=''), # sequence of zero-padded integers
                 Field('book_id', type='integer'),
-                Field('imported_from', type='string')
+                Field('imported_from', type='string'),
+                Field('first_story', type='integer'),
+                Field('chapter_num', type='integer'),
+                Field('num_chapters', type='integer')
 )                
 
 db.define_table('TblStoryVersions',
@@ -319,11 +321,13 @@ db.define_table('TblPhotos',
                 Field('photo_date_dateend', type='date', default=NO_DATE),
                 Field('latitude', type='float'),
                 Field('longitude', type='float'),
+                Field('has_geo_info', type='boolean'),
                 Field('zoom', type='integer', default=12),
                 Field('PhotoRank', type='integer'),
                 Field('Photographer', type='string'), #obsolete
                 Field('photographer_id', type='integer'),
                 Field('Recognized', type='boolean'),
+                Field('handled', type='boolean'), #show photo where recognition is still pending
                 Field('StatusID', type='integer'),
                 Field('Status_id', type='integer'),
                 Field('width', type='integer', default=0),
@@ -337,8 +341,9 @@ db.define_table('TblPhotos',
                 Field('random_photo_key', type='integer'),
                 Field('deleted', type='boolean', default=False),
                 Field('is_back_side', type='boolean', default=False),
-                Field('crc', type='integer'),
+                Field('crc', type='bigint'),
                 Field('dhash', type='string'),
+                Field('no_slide_show', type='boolean', default=False),
                 Field('curr_dhash', type='string'),  #after editing such as rotation and cropping. will be used to reload photo after using photoshop etc.
                 Field('dup_checked', type='boolean'),  #to be used only once, to detect all old dups. 
                 Field('usage', type='integer', default=0) #1=has identified members 2=has assigned tags 3=both, #todo need to populate, then use
@@ -381,6 +386,11 @@ db.define_table('TblVideos',
                 Field('video_date_datespan', type='integer', default=1), # how many months or years in the range
                 Field('video_date_dateend', type='date', default=NO_DATE),
                 Field('touch_time', type='date', default=NO_DATE), #used to promote videos
+                Field('upload_date', type='datetime'),
+                # Youtube info
+                Field('uploader', type='string'),
+                Field('title', type='string'),
+                Field('description', type='text'),
                 Field('upload_date', type='datetime')
                 )
 
@@ -388,8 +398,11 @@ db.define_table('TblDocs',
                 Field('name', type='string'),
                 Field('doc_type', type='string'),
                 Field('deleted', type='boolean', default=False),
-                Field('story_id', type=db.TblStories),
+                Field('story_id', type=db.TblStories),         # text extracted from the document
+                Field('story_about_id', type=db.TblStories),   # text added by user
                 Field('text_extracted', type='boolean', default=False),
+                Field('num_pages_extracted', type='integer'),
+                Field('num_pages', type='integer'),
                 Field('uploader', type=db.auth_user),
                 Field('doc_date', type='date', default=NO_DATE),
                 Field('doc_date_dateunit', type='string', default='Y'), # D, M or Y for day, month, year
@@ -398,7 +411,7 @@ db.define_table('TblDocs',
                 Field('touch_time', type='date', default=NO_DATE), #used to promote docs
                 Field('doc_path', type='string'),
                 Field('original_file_name', type='string'),
-                Field('crc', type='integer'),
+                Field('crc', type='bigint'),
                 Field('upload_date', type='datetime')
                 )
 
@@ -415,7 +428,7 @@ db.define_table('TblAudios',
                 Field('touch_time', type='date', default=NO_DATE), #used to promote docs
                 Field('audio_path', type='string'),
                 Field('original_file_name', type='string'),
-                Field('crc', type='integer'),
+                Field('crc', type='bigint'),
                 Field('upload_date', type='datetime'),
                 Field('recorder_id', type=db.TblRecorders)
                 )
@@ -468,6 +481,7 @@ db.define_table('TblFeedback',
 
 db.define_table('TblConfiguration',
                 Field('languages', type='string', default='he,en'),
+                Field('app_title', type='string'),
                 Field('description', type='string'),
                 Field('fix_level', type='integer', default=0),
                 Field('enable_auto_registration', type='boolean', default=False),
@@ -479,12 +493,19 @@ db.define_table('TblConfiguration',
                 Field('expose_version_time', type='boolean', default=True),
                 Field('expose_developer', type='boolean', default=True),
                 Field('support_audio', type='boolean', default=False),
+                Field('terms_enabled', type='boolean', default=True),
                 Field('help_messages_upload_time', type='datetime', default=NO_DATE),
                 Field('letter_templates_upload_time', type='datetime', default=NO_DATE),
                 Field('enable_articles', type='boolean', default=False),
                 Field('enable_member_of_the_day', type='boolean', default=True),
                 Field('enable_books', type='boolean', default=True),
-                Field('promoted_story_expiration', type='integer', default=7)
+                Field('promoted_story_expiration', type='integer', default=7),
+                Field('cover_photo', type='string'),
+                Field('cover_photo_id', type=db.TblPhotos),
+                Field('exclusive', type='boolean'),
+                Field('enable_cuepoints', type='boolean', default=False),
+                Field('allow_publishing', type='boolean', default=False),
+                Field('expose_gallery', type='boolean', default=False)
                 )
 
 db.define_table('TblLocaleCustomizations',
@@ -506,6 +527,11 @@ db.define_table('TblCustomers',
                 Field('creation_time', type='datetime', default=request.now)
                 )
 
+db.define_table('TblApps',
+                Field('app_name', type='string'),
+                Field('active', type='boolean', default=False)
+                )
+
 db.define_table('TblMenus',
                 Field('name', type='string')
                 )
@@ -513,7 +539,8 @@ db.define_table('TblMenus',
 db.define_table('TblQuestions',
                 Field('menu_id', type=db.TblMenus),
                 Field('prompt', type='string'),
-                Field('description', type='string')
+                Field('description', type='string'),
+                Field('nota_default', type='boolean') #nota - none of the above
                 )
 
 db.define_table('TblAnswers',
@@ -574,18 +601,39 @@ db.define_table('TblSearches',
                 Field('count', type='integer')
                 )
 
+db.define_table('TblMembersVideos',
+                Field('video_id', type=db.TblVideos),
+                Field('member_id', type=db.TblMembers)
+                )
+
+db.define_table('TblMembersDocs',
+                Field('doc_id', type=db.TblDocs),
+                Field('member_id', type=db.TblMembers)
+                )
+
+db.define_table('TblVideoCuePoints',
+                Field('video_id', type=db.TblVideos),
+                Field('time', type='integer'),
+                Field('description', type='string')
+                )
+
+db.define_table('TblMembersVideoCuePoints',  #sync with
+                Field('cue_point_id', db.TblVideoCuePoints),
+                Field('member_id', db.TblMembers)
+                )
+
 def write_indexing_sql_scripts():
     '''Creates a set of indexes if they do not exist.
        In a terminal, su postgres and issue the command
        psql -f create_indexes.sql <database-name>
     '''
     indexes = [
-        ('TblMemberPhotos', 'Member_id'),
-        ('TblMemberPhotos', 'Photo_id', 'x', 'y'),
-        ('TblEventMembers', 'Member_id'),
-        ('TblEventMembers', 'Event_id'),
-        ('TblWordStories',  'word_id'),
-        ('TblPhotos',       'crc')
+        ('"TblMemberPhotos"', '"Member_id"'),
+        ('"TblMemberPhotos"', '"Photo_id"', 'x', 'y'),
+        ('"TblEventMembers"', '"Member_id"'),
+        ('"TblEventMembers"', '"Event_id"'),
+        ('"TblWordStories"',  'word_id'),
+        ('"TblPhotos"',       'crc')
     ]
 
     path = local_folder('logs')
@@ -597,11 +645,12 @@ def write_indexing_sql_scripts():
     with safe_open(path + 'create_indexes[{a}].sql'.format(a=request.application), mode='w') as f:
         with safe_open(path + 'delete_indexes[{a}].sql'.format(a=request.application), mode='w') as g:
             for tcc in indexes:
-                table = tcc[0]
-                fields = ', '.join(tcc[1:])
-                index_name = '_'.join(tcc) + '_idx'
+                tccq = ['"' + t + '"' for t in tcc]
+                table = tccq[0]
+                fields = ', '.join(tccq[1:])
+                index_name = '"' + '_'.join(tcc) + '_idx' + '"'
                 create_cmd = 'CREATE INDEX CONCURRENTLY {i} ON {t} ({f});'.format(i=index_name, t=table, f=fields)
-                drop_cmd = 'DROP INDEX {};'.format(tcc[0])
+                drop_cmd = 'DROP INDEX {};'.format(index_name)
                 f.write(create_cmd + '\n')
                 g.write(drop_cmd + '\n')
 

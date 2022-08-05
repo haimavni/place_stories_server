@@ -1,21 +1,17 @@
-from injections import inject
+from .injections import inject
 import os
 import datetime
 from distutils import dir_util
 import zlib
-from date_utils import datetime_from_str
-from gluon.storage import Storage
-import random
-import pwd
-from stories_manager import Stories
-from folders import url_folder, local_folder
-from pdf_utils import pdf_to_text, save_pdf_jpg
-from time import sleep
-import ws_messaging
+from gluon._compat import to_bytes
+import array
+from .stories_manager import Stories
+from .folders import url_folder, local_folder
 
-def save_uploaded_audio(file_name, blob, user_id, sub_folder=None):
+def save_uploaded_audio(file_name, s, user_id, sub_folder=None):
     auth, log_exception, db, STORY4AUDIO = inject('auth', 'log_exception', 'db', 'STORY4AUDIO')
     user_id = user_id or auth.current_user()
+    blob = to_bytes(s)
     crc = zlib.crc32(blob)
     cnt = db((db.TblAudios.crc == crc) & (db.TblAudios.deleted != True)).count()
     if cnt > 0:
@@ -30,11 +26,12 @@ def save_uploaded_audio(file_name, blob, user_id, sub_folder=None):
     audio_date = None
     dir_util.mkpath(path)
     audio_file_name = path + file_name
+    blob = array.array('B', [x for x in map(ord, s)]).tobytes()
     try:
         path = local_audios_folder() + sub_folder
-        with open(audio_file_name, 'w') as f:
+        with open(audio_file_name, 'wb') as f:
             f.write(blob)
-    except Exception, e:
+    except Exception as e:
         log_exception("saving audio {} failed".format(original_file_name))
         return 'failed'
     sm = Stories()
