@@ -21,9 +21,12 @@ myconf = AppConfig(reload=True)
 def __open_db():
     dbname = request.application
     adapter = 'psycopg2:'
+    db_user = os.getenv('POSTGRES_USER')
+    db_password = os.getenv('POSTGRES_PASSWORD')
+
     _debugging = False  # request.function not in ('whats_up', 'log_file_data')
     try:
-        db = DAL(f'postgres:{adapter}//lifestone:V3geHanu@localhost/{dbname}',
+        db = DAL(f'postgres:{adapter}//{db_user}:{db_password}@localhost/{dbname}',
                  pool_size=50,
                  debug=_debugging,
                  lazy_tables=True)  # it causes an exeption!
