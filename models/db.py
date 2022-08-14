@@ -29,7 +29,7 @@ def __open_db():
         db = DAL(f'postgres:{adapter}//{db_user}:{db_password}@localhost/{dbname}',
                  pool_size=50,
                  debug=_debugging,
-                 lazy_tables=True)  # it causes an exeption!
+                 lazy_tables=False)  # it causes an exeption!
     except Exception as e:
         comment(f'Failed to open db {dbname}. Error: {e}.')
         raise
