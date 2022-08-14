@@ -107,6 +107,6 @@ tox==3.20.1
 tox-travis==0.12
 typed-ast==1.4.1
 typing-extensions==3.7.4.3
-urllib3==1.25.10
+urllib3==1.26.5
 virtualenv==20.0.35
 wemake-python-styleguide==0.14.1
