@@ -19,6 +19,7 @@ myconf = AppConfig(reload=True)
 
 
 def __open_db():
+    db_host = os.getenv('POSTGRES_HOST')
     dbname = request.application
     adapter = 'psycopg2:'
     db_user = os.getenv('POSTGRES_USER')
@@ -26,7 +27,7 @@ def __open_db():
 
     _debugging = False  # request.function not in ('whats_up', 'log_file_data')
     try:
-        db = DAL(f'postgres:{adapter}//{db_user}:{db_password}@localhost/{dbname}',
+        db = DAL(f'postgres:{adapter}//{db_user}:{db_password}@{db_host}/{dbname}',
                  pool_size=50,
                  debug=_debugging,
                  lazy_tables=False)  # it causes an exeption!
