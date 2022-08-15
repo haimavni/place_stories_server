@@ -19,6 +19,7 @@ myconf = AppConfig(reload=True)
 
 
 def __open_db():
+    comment("enter openk db")
     db_host = os.getenv('POSTGRES_HOST') or 'localhost'
     dbname = request.application
     adapter = 'psycopg2:'
@@ -35,6 +36,7 @@ def __open_db():
     except Exception as e:
         comment(f'Failed to open db {db_spec}. Error: {e}.')
         raise
+    comment("exit openk db")
     return db
 
 
