@@ -19,7 +19,7 @@ myconf = AppConfig(reload=True)
 
 
 def __open_db():
-    db_host = os.getenv('POSTGRES_HOST') or '0.0.0.0'
+    db_host = os.getenv('POSTGRES_HOST') or 'localhost'
     dbname = request.application
     adapter = 'psycopg2:'
     db_user = os.getenv('POSTGRES_USER') or 'lifestone'
