@@ -26,13 +26,14 @@ def __open_db():
     db_password = os.getenv('POSTGRES_PASSWORD')
 
     _debugging = False  # request.function not in ('whats_up', 'log_file_data')
+    db_spec = f'postgres:{adapter}//{db_user}:{db_password}@{db_host}/{dbname}'
     try:
-        db = DAL(f'postgres:{adapter}//{db_user}:{db_password}@{db_host}/{dbname}',
+        db = DAL(db_spec,
                  pool_size=50,
                  debug=_debugging,
                  lazy_tables=False)  # it causes an exeption!
     except Exception as e:
-        comment(f'Failed to open db {dbname}. Error: {e}.')
+        comment(f'Failed to open db {db_spec}. Error: {e}.')
         raise
     return db
 
