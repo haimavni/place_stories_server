@@ -20,11 +20,11 @@ myconf = AppConfig(reload=True)
 
 def __open_db():
     comment("enter openk db")
-    db_host = os.getenv('POSTGRES_HOST') or 'localhost'
+    db_host = os.getenv('DB_HOST') 
     dbname = request.application
     adapter = 'psycopg2:'
-    db_user = os.getenv('POSTGRES_USER') or 'lifestone'
-    db_password = os.getenv('POSTGRES_PASSWORD') or 'V3geHanu'
+    db_user = os.getenv('DB_USER')
+    db_password = os.getenv('DB_PASSWORD')
 
     _debugging = False  # request.function not in ('whats_up', 'log_file_data')
     db_spec = f'postgres:{adapter}//{db_user}:{db_password}@{db_host}/{dbname}'
