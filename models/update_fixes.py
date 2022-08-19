@@ -28,7 +28,7 @@ def __apply_fixes():
         return
     for f in sorted(_fixes):
         if f > last_applied_fix:
-            comment("applying fix {}", f)
+            comment(f"applying fix {f}")
             try:
                 _fixes[f]()
             except Exception as e:
@@ -92,6 +92,8 @@ _fixes = {
     9: fix_pdf_texts,
     10: fix_no_slide_show
 }
+
+_fixes = {}  #for dev
 
 _init_configuration_table()
 _apply_fixes()
