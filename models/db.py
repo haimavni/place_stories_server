@@ -19,15 +19,18 @@ myconf = AppConfig(reload=True)
 
 
 def __open_db():
-    comment("enter openk db")
+    comment("enter open db")
     db_host = os.getenv('DB_HOST') 
     dbname = request.application
     adapter = 'psycopg2:'
     db_user = os.getenv('DB_USER')
     db_password = os.getenv('DB_PASSWORD')
+    comment(f"db_password is {db_password}")
+    if not db_password:
+        raise Exception("db_password is missing")
 
     _debugging = False  # request.function not in ('whats_up', 'log_file_data')
-    db_spec = f'postgres:{adapter}//{db_user}:{db_password}@{db_host}/{dbname}'
+    db_spec = f"postgres:{adapter}//{db_user}:{db_password}@{db_host}/{dbname}"
     try:
         db = DAL(db_spec,
                  pool_size=50,
@@ -36,7 +39,7 @@ def __open_db():
     except Exception as e:
         comment(f'Failed to open db {db_spec}. Error: {e}.')
         raise
-    comment("exit openk db")
+    comment("exit open db")
     return db
 
 
