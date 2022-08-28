@@ -63,7 +63,7 @@ apt update
 apt autoremove
 apt autoclean
 apt -y install nginx-full
-apt -y install build-essential python2.7 python2.7-dev unzip virtualenv
+apt -y install build-essential python3.8 python3.8-dev unzip virtualenv
 if [ "$WITH_DATABASE" != "0" ]
 then
     apt -y install postgresql libpq-dev
@@ -91,7 +91,7 @@ gzip_types text/plain text/css application/json application/x-javascript text/xm
 echo '
 ###to enable correct use of response.static_version
 location ~* ^/(\w+)/static(?:/_[\d]+\.[\d]+\.[\d]+)?/(.*)$ {
-    alias /home/www-data/py27env/web2py/applications/$1/static/$2;
+    alias /home/www-data/py38env/web2py/applications/$1/static/$2;
     expires max;
     ### if you want to use pre-gzipped static files (recommended)
     ### check scripts/zip_static_files.py and remove the comments
@@ -100,7 +100,7 @@ location ~* ^/(\w+)/static(?:/_[\d]+\.[\d]+\.[\d]+)?/(.*)$ {
 ###
 ###if you use something like myapp = dict(languages=['en', 'it', 'jp'], default_language='en') in your routes.py
 #location ~* ^/(\w+)/(en|it|jp)/static/(.*)$ {
-#    alias /home/www-data/py27env/web2py/applications/$1/;
+#    alias /home/www-data/py38env/web2py/applications/$1/;
 #    try_files static/$2/$3 static/$3 =404;
 #}
 ###
@@ -108,7 +108,7 @@ location ~* ^/(\w+)/static(?:/_[\d]+\.[\d]+\.[\d]+)?/(.*)$ {
 
 echo '
 location / {
-    uwsgi_pass      web2py27;
+    uwsgi_pass      web2py38;
     include         uwsgi_params;
     uwsgi_param     UWSGI_SCHEME $scheme;
     uwsgi_param     SERVER_SOFTWARE    nginx/$nginx_version;
@@ -119,12 +119,12 @@ location / {
     #client_max_body_size 10m;
     ###
     }
-'> /etc/nginx/conf.d/web2py/serve_web2py27.conf
+'> /etc/nginx/conf.d/web2py/serve_web2py38.conf
 
 # Create configuration file /etc/nginx/sites-available/web2py
 echo '
-upstream web2py27 {
-    server unix:///run/uwsgi/web2py27.socket;
+upstream web2py38 {
+    server unix:///run/uwsgi/web2py38.socket;
 }
 server {
         listen          80;
@@ -132,7 +132,7 @@ server {
         
         # static serving
         include /etc/nginx/conf.d/web2py/serve_static.conf;
-        include /etc/nginx/conf.d/web2py/serve_web2py27.conf;
+        include /etc/nginx/conf.d/web2py/serve_web2py38.conf;
 }
 server {
         listen 443 default_server ssl;
@@ -155,10 +155,10 @@ server {
         #add_header X-Frame-Options DENY;
         #add_header X-Content-Type-Options nosniff;
         include /etc/nginx/conf.d/web2py/serve_static.conf;
-        include /etc/nginx/conf.d/web2py/serve_web2py27.conf;
-}' >/etc/nginx/sites-available/web2py27
+        include /etc/nginx/conf.d/web2py/serve_web2py38.conf;
+}' >/etc/nginx/sites-available/web2py38
 
-ln -s /etc/nginx/sites-available/web2py27 /etc/nginx/sites-enabled/web2py27
+ln -s /etc/nginx/sites-available/web2py38 /etc/nginx/sites-enabled/web2py38
 rm /etc/nginx/sites-enabled/default
 cd /etc/ssl/certs
 openssl dhparam -out dhparam.pem 4096
@@ -181,7 +181,7 @@ echo '[Unit]
 Description = uWSGI Emperor
 After = syslog.target
 [Service]
-ExecStart = /home/www-data/py27env/bin/uwsgi --ini /etc/uwsgi/emperor.ini
+ExecStart = /home/www-data/py38env/bin/uwsgi --ini /etc/uwsgi/emperor.ini
 RuntimeDirectory = uwsgi
 Restart = always
 KillSignal = SIGQUIT
@@ -201,9 +201,9 @@ gid = www-data
 '>/etc/uwsgi/emperor.ini
 # Create configuration file /etc/uwsgi/web2py.ini
 echo '[uwsgi]
-home = /home/www-data/py27env
-socket = /run/uwsgi/web2py27.socket
-pythonpath = /home/www-data/py27env/web2py
+home = /home/www-data/py38env
+socket = /run/uwsgi/web2py38.socket
+pythonpath = /home/www-data/py38env/web2py
 mount = /=wsgihandler:application
 processes = 4
 vacuum = true
@@ -218,16 +218,16 @@ reload-on-as = 256
 reload-on-rss = 192
 uid = www-data
 gid = www-data
-touch-reload = /home/www-data/py27env/web2py/routes.py
-cron = 0 0 -1 -1 -1 python2.7 /home/www-data/py27env/web2py/web2py.py -Q -S welcome -M -R scripts/sessions2trash.py -A -o
+touch-reload = /home/www-data/py38env/web2py/routes.py
+cron = 0 0 -1 -1 -1 python /home/www-data/py38env/web2py/web2py.py -Q -S welcome -M -R scripts/sessions2trash.py -A -o
 no-orphans = true
 ' >/etc/uwsgi/vassals/web2py.ini
 
 # Install Web2py
 mkdir /home/www-data
 cd /home/www-data
-virtualenv --python=python2.7 py27env
-cd py27env/
+virtualenv --python=python3.8 py38env
+cd py38env/
 source bin/activate
 pip install --upgrade uwsgi
 if [ "$WITH_DATABASE" != "0" ]
@@ -242,12 +242,12 @@ unzip web2py_src.zip
 
 mv web2py/handlers/wsgihandler.py web2py/wsgihandler.py
 rm web2py_src.zip
-cd /home/www-data/py27env/web2py
+cd /home/www-data/py38env/web2py
 if [ "$NOPASSWORD" == "0" ]
 then
    python -c "from gluon.main import save_password; save_password('$WEB2PY_PASS',443)"
 fi
-chown -R www-data:www-data /home/www-data/py27env/web2py
+chown -R www-data:www-data /home/www-data/py38env/web2py
 deactivate
 
 systemctl enable emperor.uwsgi.service

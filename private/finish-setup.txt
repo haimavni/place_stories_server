@@ -1,0 +1,25 @@
+cd /home/www-data/py38env/web2py
+if [ "$NOPASSWORD" == "0" ]
+then
+   python -c "from gluon.main import save_password; save_password('$WEB2PY_PASS',443)"
+fi
+chown -R www-data:www-data /home/www-data/py27env/web2py
+deactivate
+
+systemctl enable emperor.uwsgi.service
+systemctl restart nginx
+systemctl restart emperor.uwsgi.service
+if [ "$WITH_DATABASE" != "0" ]
+then
+    systemctl restart postgresql
+fi
+
+echo <<EOF
+you can stop uwsgi and nginx with
+  sudo systemctl stop nginx
+  sudo systemctl stop emperor.uwsgi.service
+ 
+and start it with
+  sudo systemctl start nginx
+  sudo systemctl start emperor.uwsgi.service
+EOF

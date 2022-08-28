@@ -7,9 +7,12 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
+import os
    
-fromaddr = "lifestone2508@gmail.com"
-mail_passwd = "931632#Ha2104"
+email_account = os.getenv('EMAIL_ACCOUNT')
+email_password = os.getenv('EMAIL_PASSWORD')
+fromaddr = email_account
+mail_passwd = email_password
 #toaddr = "haimavni@gmail.com"
 
 def send_email_message(toaddr, subject, body, attachment=None, ):
