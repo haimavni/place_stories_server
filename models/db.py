@@ -20,11 +20,11 @@ myconf = AppConfig(reload=True)
 
 def __open_db():
     comment("enter open db")
-    db_host = os.getenv('DB_HOST') 
+    db_host = os.getenv('DB_HOST') or "localhost"
     dbname = request.application
     adapter = 'psycopg2:'
-    db_user = os.getenv('DB_USER')
-    db_password = os.getenv('DB_PASSWORD')
+    db_user = os.getenv('DB_USER') or "lifestone"
+    db_password = os.getenv('DB_PASSWORD') or "V3geHanu"
     comment(f"db_password is {db_password}")
     if not db_password:
         raise Exception("db_password is missing")
