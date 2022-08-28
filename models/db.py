@@ -27,7 +27,7 @@ def __open_db():
     db_password = os.getenv('DB_PASSWORD') or "V3geHanu"
     comment(f"db_password is {db_password}")
     if not db_password:
-        raise Exception("db_password is missing")
+        raise Exception("db_password is still missing")
 
     _debugging = False  # request.function not in ('whats_up', 'log_file_data')
     db_spec = f"postgres:{adapter}//{db_user}:{db_password}@{db_host}/{dbname}"
