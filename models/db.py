@@ -24,9 +24,8 @@ def __open_db():
     adapter = 'psycopg2:'
     db_user = os.getenv('DB_USER') or "lifestone"
     db_password = os.getenv('DB_PASSWORD')
-    comment(f"db_password is {db_password}")
-    db_password = os.environ.get('DB_PASSWORD')
-    comment(f"db_password from os.environ is {db_password}")
+    #comment(f"db_password is {db_password}")
+    #mystery - it is None!!!
     if not db_password:
         db_password = "V3geHanu"
     if not db_password:
