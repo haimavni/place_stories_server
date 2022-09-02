@@ -19,13 +19,16 @@ def send_message(key, user=None, group=None, **data):
     #     comment = inject("comment")
     #     comment(f"web socket disabled until problem solved!!! key: {key}")
     #     return
-    return
+    comment = inject('comment')
     obj = dict(
         key=key,
         data=data
     )
     group = messaging_group(user, group)
-    send_data(group, obj, key)
+    try:
+        send_data(group, obj, key)
+    except Exception as e:
+        comment(f"send_data failed with error {e} ")
 
 def try_send_message(key, user=None, group=None, **data):
     obj = dict(
