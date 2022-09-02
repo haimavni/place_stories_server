@@ -19,6 +19,7 @@ def send_message(key, user=None, group=None, **data):
     #     comment = inject("comment")
     #     comment(f"web socket disabled until problem solved!!! key: {key}")
     #     return
+    return
     obj = dict(
         key=key,
         data=data
