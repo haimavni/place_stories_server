@@ -125,7 +125,7 @@ def add_photo_info(photo_id):
         photo_date_dateunit = 'Y'
         photo_date_datespan = 1
     has_geo_info = longitude is not None
-    commment(f"just before update record. {width}x{height}")
+    comment(f"just before update record. {width}x{height}")
     prec.update_record(
         embedded_photo_date=embedded_photo_date,
         upload_date=datetime.datetime.now(),
