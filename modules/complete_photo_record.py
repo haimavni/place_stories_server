@@ -2,8 +2,10 @@ from photos_support import *
 import binascii
 import crc_calc
 import shutil
+from injections import inject
 
 def add_photo_info(photo_id):
+    comment = inject('comment')
     comment(f"enter add photo info {photo_id}")
     auth, comment, log_exception, db, STORY4PHOTO, NO_DATE = inject('auth', 'comment', 'log_exception', 'db',
                                                                     'STORY4PHOTO', 'NO_DATE')
