@@ -62,6 +62,7 @@ def add_photo_info(photo_id):
                 log_exception('getting photo embedded date failed')
 
         width, height = img.size
+        comment(f"-----------width is {width} and height is {height}-------")
         if not width:
             comment("==================img size is zero=========")
             width, height = (799, 601)
@@ -123,6 +124,7 @@ def add_photo_info(photo_id):
         photo_date_dateunit = 'Y'
         photo_date_datespan = 1
     has_geo_info = longitude is not None
+    commment(f"just before update record. {width}x{height}")
     prec.update_record(
         embedded_photo_date=embedded_photo_date,
         upload_date=datetime.datetime.now(),
