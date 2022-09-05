@@ -80,6 +80,7 @@ def save_uploaded_photo_collection(collection, user_id):
 
 def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
     auth, comment, log_exception, db, STORY4PHOTO, NO_DATE = inject('auth', 'comment', 'log_exception', 'db', 'STORY4PHOTO', 'NO_DATE')
+    comment("enter save uploaded photo")
     user_id = user_id or auth.current_user()
     ###blob = bytearray(s)
     blob = to_bytes(s)
