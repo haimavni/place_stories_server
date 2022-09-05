@@ -15,6 +15,7 @@ import array
 
 @serve_json
 def upload_photo(vars):
+    raise Exception("upload fhoto is broken")
     user_id = vars.user_id or auth.current_user()
     comment("start handling uploaded files")
     user_id = int(vars.user_id) if vars.user_id else auth.current_user()
