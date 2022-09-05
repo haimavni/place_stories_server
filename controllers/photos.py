@@ -858,6 +858,7 @@ def upload_chunk(vars):
     path = local_photos_folder() + sub_folder
     dir_util.mkpath(path)
     if vars.what == 'start':
+        comment("starting upload")
         prec = db((db.TblPhotos.crc == crc) & (db.TblPhotos.deleted != True)).select().first()
         if prec:
             return dict(duplicate=prec.id)
@@ -882,6 +883,7 @@ def upload_chunk(vars):
         )
         return dict(record_id=record_id)
     elif vars.what == 'save':
+        comment(f"save. last? {vars.is_last} ")
         with open(path + file_name, 'ab') as f:
             n = f.seek(vars.start)
             fil = vars.file
