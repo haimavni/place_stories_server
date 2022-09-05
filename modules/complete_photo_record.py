@@ -4,6 +4,7 @@ import crc_calc
 import shutil
 
 def add_photo_info(photo_id):
+    comment(f"enter add photo info {photo_id}")
     auth, comment, log_exception, db, STORY4PHOTO, NO_DATE = inject('auth', 'comment', 'log_exception', 'db',
                                                                     'STORY4PHOTO', 'NO_DATE')
     prec = db(db.TblPhotos.id==photo_id).select().first()
@@ -59,6 +60,9 @@ def add_photo_info(photo_id):
                 log_exception('getting photo embedded date failed')
 
         width, height = img.size
+        if not width:
+            comment("==================img size is zero=========")
+            width, height = (799, 601)
         square_img = crop_to_square(img, width, height, 256)
         if square_img:
             path = local_photos_folder("squares") + sub_folder
