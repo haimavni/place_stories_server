@@ -97,6 +97,7 @@ def add_photo_info(photo_id):
         #     img = img.resize((width, height), Image.LANCZOS)
         # elif height < MAX_HEIGHT and width < MAX_WIDTH:
         width, height = resized(width, height)
+        comment(f"after resized-----------width is {width} and height is {height}-------")
         img = img.resize((width, height), Image.LANCZOS)
             #### TEMPORARY???!!!img = img.resize((width, height), Image.LANCZOS)
         path = local_photos_folder() + sub_folder

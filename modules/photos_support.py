@@ -528,6 +528,8 @@ def add_photos_from_drive(sub_folder):
 def fix_owner(file_name):
     if platform != 'linux':
         return
+    if os.getuid() > 0:
+        return
     request = inject('request')
     host = request.env.http_host or ""
     if '8000' in host: #development
