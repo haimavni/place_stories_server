@@ -136,6 +136,12 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
                 log_exception('getting photo embedded date failed')
                 
         width, height = img.size
+        comment(f"got width={width}, height={height}")
+        if width == 0:
+            comment("!!!!!!!!!!!!!!!!!!!!!!! bad width/height !!!!!!!!!!!!!!!!!!")
+        #ugly temporary patch.
+        width = width or 600
+        height = height or 800
         square_img = crop_to_square(img, width, height, 256)
         if square_img:
             path = local_photos_folder("squares") + sub_folder
