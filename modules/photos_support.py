@@ -136,7 +136,7 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
                 log_exception('getting photo embedded date failed')
                 
         width, height = img.size
-        comment(f"got width={width}, height={height}")
+        comment(f"===========got width={width}, height={height}==========")
         if width == 0:
             comment("!!!!!!!!!!!!!!!!!!!!!!! bad width/height !!!!!!!!!!!!!!!!!!")
         #ugly temporary patch.
