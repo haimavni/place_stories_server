@@ -3,6 +3,9 @@ import zlib
 from distutils import dir_util
 from shutil import copyfile
 import datetime
+'''
+Create temporary environment file for Aurelia to ensure dictionaries are not cached
+'''
 
 def to_bytes(obj, charset="utf-8", errors="strict"):
     if obj is None:
@@ -13,7 +16,7 @@ def to_bytes(obj, charset="utf-8", errors="strict"):
         return obj.encode(charset, errors)
     raise TypeError("Expected bytes")
 
-os.chdir("/home/haim/aurelia")
+os.chdir("/home/haim/aurelia-prod")
 cwd = os.getcwd()
 print(("cwd: ", cwd))
 dic = dict()
