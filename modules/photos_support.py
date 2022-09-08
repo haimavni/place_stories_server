@@ -79,6 +79,7 @@ def save_uploaded_photo_collection(collection, user_id):
                    photo_ids=photo_ids)
 
 def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
+    # NOT used in normal photos upload!
     auth, comment, log_exception, db, STORY4PHOTO, NO_DATE = inject('auth', 'comment', 'log_exception', 'db', 'STORY4PHOTO', 'NO_DATE')
     comment("enter save uploaded photo")
     user_id = user_id or auth.current_user()
@@ -137,12 +138,8 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
                 log_exception('getting photo embedded date failed')
                 
         width, height = img.size
-        comment(f"===========got width={width}, height={height}==========")
         if width == 0:
             comment("!!!!!!!!!!!!!!!!!!!!!!! bad width/height !!!!!!!!!!!!!!!!!!")
-        #ugly temporary patch.
-        width = width or 600
-        height = height or 800
         square_img = crop_to_square(img, width, height, 256)
         if square_img:
             path = local_photos_folder("squares") + sub_folder
