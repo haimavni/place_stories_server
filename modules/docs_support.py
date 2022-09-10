@@ -11,6 +11,7 @@ from .folders import url_folder, local_folder
 from .pdf_utils import pdf_to_text, save_pdf_jpg
 from time import sleep
 from . import ws_messaging
+from misc_utils import chmod
 import array
 
 def create_uploading_doc(file_name, crc, user_id):
@@ -69,6 +70,7 @@ def handle_loaded_doc(record_id):
     dir_util.mkpath(pdf_jpg_folder)
     pdf_jpg_path = pdf_jpg_folder + file_name.replace('.pdf', '.jpg')
     save_pdf_jpg(doc_file_name, pdf_jpg_path)
+    chmod(pdf_jpg_path, 0777)
     calc_doc_story(record_id)
     db.commit()
 
