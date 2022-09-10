@@ -28,6 +28,7 @@ def upload_chunk(vars):
             return dict(duplicate=result.duplicate)
         return dict(record_id=result.record_id)
     elif vars.what == 'save':
+        comment(f"upload chunk. vars.record_id: {vars.record_id}, vars.start: {vars.start}")
         fil = vars.file
         blob = bytearray(fil.BINvalue)
         save_uploading_chunk(vars.record_id, vars.start, blob)

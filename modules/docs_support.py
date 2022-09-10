@@ -50,6 +50,7 @@ def create_uploading_doc(file_name, crc, user_id):
 
 def save_uploading_chunk(record_id, start, blob):
     db, comment = inject('db', 'comment')
+    comment(f"save_uploading_chunk. record id: {record_id}, start: {start}")
     drec = db(db.TblDocs.id==record_id).select().first()
     if not drec:
         raise Exception(f'record_id {record_id} not found')
