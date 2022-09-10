@@ -70,7 +70,7 @@ def handle_loaded_doc(record_id):
     dir_util.mkpath(pdf_jpg_folder)
     pdf_jpg_path = pdf_jpg_folder + file_name.replace('.pdf', '.jpg')
     save_pdf_jpg(doc_file_name, pdf_jpg_path)
-    chmod(pdf_jpg_path, 0777)
+    chmod(pdf_jpg_path, O0777)
     calc_doc_story(record_id)
     db.commit()
 
