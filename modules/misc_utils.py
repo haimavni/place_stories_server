@@ -62,7 +62,12 @@ def split_and_send(key, arr, target, chunk_size):
         chunk = arr[offset:offset+chunk_size]
         ws_messaging.send_message(key=key, group=target,data=dict(offset=offset, chunk=chunk))
 
-
+def chmod(path, mod):
+    for root, dirs, files in os.walk(path):
+        for d in dirs:
+            os.chmod(os.path.join(root, d), mod)
+        for f in files:
+            os.chmod(os.path.join(root, f), mod)
 
 
 if __name__ == '__main__':

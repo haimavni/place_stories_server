@@ -16,7 +16,7 @@ def to_bytes(obj, charset="utf-8", errors="strict"):
         return obj.encode(charset, errors)
     raise TypeError("Expected bytes")
 
-os.chdir("/home/haim/aurelia-prod")
+os.chdir("/home/haim/aurelia")
 cwd = os.getcwd()
 print(("cwd: ", cwd))
 dic = dict()
@@ -61,6 +61,3 @@ export default {{
 
 with open('/home/haim/aurelia/aurelia_project/environments/tmp_env.ts', mode='w') as f:
     f.write(env)
-        
-    
-        

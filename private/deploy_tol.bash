@@ -13,6 +13,7 @@ else
         if [ "$1" == "www" ]
         then
             BRANCH="www"
+        fi
     fi
 fi
 TARGET=$BRANCH
@@ -20,10 +21,11 @@ TARGET=$BRANCH
 echo -e "Deploy to branch " $BRANCH
 echo -e "Deploy to branch " $BRANCH >> ~/log/deploy_history.log
 
-pushd ~/aurelia-prod
+pushd ~/aurelia
 git pull
 git checkout $BRANCH
 git pull
+cp index.html index-orig.html
 
 rm -R -f scripts/*
 rm -R -f ~/deployment_folder/*
@@ -34,7 +36,6 @@ rm aurelia_project/environments/tmp_env.ts
 cp -a ./scripts ~/deployment_folder/
 ls -l ~/deployment_folder/scripts >> ~/log/deploy_history.log
 git br -v >> ~/log/deploy_history.log
-cp index.html index-orig.html
 python ~/server_src/private/fix_index_html.py
 cp ./index.html  ~/deployment_folder
 cp ./favicon.ico  ~/deployment_folder
@@ -42,6 +43,8 @@ cp ./favicon.ico  ~/deployment_folder
 cp index-orig.html index.html
 rm index-orig.html
 git checkout master
+
+echo DEBUG1
 
 echo "
 lcd /home/haim/deployment_folder
@@ -67,3 +70,4 @@ put curr_version.tmp
 #--------rm ~/server_src/private/deploy1.batch
 #-------rm ~/server_src/private/deploy.batch
 popd
+echo Done
