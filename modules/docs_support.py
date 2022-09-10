@@ -49,16 +49,21 @@ def create_uploading_doc(file_name, crc, user_id):
 
 
 def save_uploading_chunk(record_id, start, blob):
-    db = inject('db')
+    db, comment = inject('db', 'comment')
     drec = db(db.TblDocs.id==record_id).select().first()
     if not drec:
         raise Exception(f'record_id {record_id} not found')
     file_name = local_docs_folder() + drec.doc_path
+    comment(f"save_uploading_chunk. file_name: {file_name}, record id: {record_id}, start: {start}")
     with open(file_name, 'ab') as f:
         f.seek(start, 0)
+        comment('before tell')
         f.tell()
+        comment('before blob')
         f.write(blob)
+        comment('before flush')
         f.flush()
+        comment('after flush')
 
 
 def handle_loaded_doc(record_id):
