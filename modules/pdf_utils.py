@@ -15,6 +15,7 @@ from pdf2image import convert_from_path
 import pdfplumber
 from .injections import inject
 import psutil
+import fitz
 
 PAT = '[א-תךםןףץ]'
 PAT_HEB = PAT.replace(']', ']{2,100}')
@@ -84,6 +85,17 @@ def pdf_to_text(pdfname, num_pages_extracted):
     except Exception as e:
         log_exception(f"error in pdf to text {result}")
     return Storage(text=result, num_pages_extracted=n, num_pages=num_pages)
+
+def pdf_to_text(pdfname, num_pagesst_extracted):    
+    doc = fitz.open(pdfname)  # open document
+    result = ''
+    num_pages_extracted = 0
+    for page in doc:  # iterate the document pages
+        text = page.get_text().encode("utf8")  # get plain text (is in UTF-8)
+        result += text
+        result += chr(12)
+        num_pages_extracted += 1
+    return Storage(text=result, num_pages_extracted=num_pages_extracted, num_pages=num_pages_extracted)
 
 def highlight_pdf(fname, outfname, keywords):
     """
