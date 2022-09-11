@@ -93,7 +93,7 @@ def pdf_to_text(pdfname, num_pagesst_extracted):
     num_pages_extracted = 0
     for page in doc:  # iterate the document pages
         text = page.get_text() ##.encode("utf8")  # get plain text (is in UTF-8)
-        with open('/apps_data/gbs/logs/pdf-text.txt', 'w', encoding="utf8") as f:
+        with open('/apps_data/gbs/logs/pdf-text.txt', 'w', encoding="utf-8") as f:
             f.write(text)
         lines = text.split('\n')
         text = ''
