@@ -92,7 +92,7 @@ def pdf_to_text(pdfname, num_pagesst_extracted):
     result = ''
     num_pages_extracted = 0
     for page in doc:  # iterate the document pages
-        text = page.get_text().encode("utf8")  # get plain text (is in UTF-8)
+        text = page.get_text() ##.encode("utf8")  # get plain text (is in UTF-8)
         result += text
         result += chr(12)
         num_pages_extracted += 1
