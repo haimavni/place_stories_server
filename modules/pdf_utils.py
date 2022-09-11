@@ -86,7 +86,8 @@ def pdf_to_text(pdfname, num_pages_extracted):
         log_exception(f"error in pdf to text {result}")
     return Storage(text=result, num_pages_extracted=n, num_pages=num_pages)
 
-def pdf_to_text(pdfname, num_pagesst_extracted):    
+def pdf_to_text(pdfname, num_pagesst_extracted):   
+    comment = inject('comment') 
     doc = fitz.open(pdfname)  # open document
     result = ''
     num_pages_extracted = 0
@@ -95,6 +96,7 @@ def pdf_to_text(pdfname, num_pagesst_extracted):
         result += text
         result += chr(12)
         num_pages_extracted += 1
+    comment("extacted text: {result}")
     return Storage(text=result, num_pages_extracted=num_pages_extracted, num_pages=num_pages_extracted)
 
 def highlight_pdf(fname, outfname, keywords):
