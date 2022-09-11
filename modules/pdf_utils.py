@@ -88,6 +88,7 @@ def pdf_to_text(pdfname, num_pages_extracted):
 
 def pdf_to_text(pdfname, num_pagesst_extracted):   
     comment = inject('comment') 
+    comment('entered pdf to text')
     doc = fitz.open(pdfname)  # open document
     result = ''
     num_pages_extracted = 0
@@ -104,7 +105,7 @@ def pdf_to_text(pdfname, num_pagesst_extracted):
             result += text
             result += chr(12)
             num_pages_extracted += 1
-    comment(f"extacted text: {result}")
+    comment(f"extracted text: {result}")
     return Storage(text=result, num_pages_extracted=num_pages_extracted, num_pages=num_pages_extracted)
 
 def highlight_pdf(fname, outfname, keywords):
