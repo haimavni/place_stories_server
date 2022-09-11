@@ -97,7 +97,7 @@ def pdf_to_text(pdfname, num_pagesst_extracted):
         text = ''
         for s in lines:
             s = s[::-1]
-            text += s
+            text += s + ' '
         result += text
         result += chr(12)
         num_pages_extracted += 1
