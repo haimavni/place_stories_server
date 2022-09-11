@@ -95,14 +95,15 @@ def pdf_to_text(pdfname, num_pagesst_extracted):
         text = page.get_text() ##.encode("utf8")  # get plain text (is in UTF-8)
         with open('/apps_data/gbs/logs/pdf-text.txt', 'w', encoding="utf-8") as f:
             f.write(text)
-        lines = text.split('\n')
-        text = ''
-        for s in lines:
-            s = s[::-1]
-            text += s + ' '
-        result += text
-        result += chr(12)
-        num_pages_extracted += 1
+            lines = text.split('\n')
+            text = ''
+            for s in lines:
+                f.write(s + '\n')
+                s = s[::-1]
+                text += s + ' '
+            result += text
+            result += chr(12)
+            num_pages_extracted += 1
     comment(f"extacted text: {result}")
     return Storage(text=result, num_pages_extracted=num_pages_extracted, num_pages=num_pages_extracted)
 
