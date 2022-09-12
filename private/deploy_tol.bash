@@ -47,16 +47,15 @@ git checkout master
 echo "
 lcd /home/haim/deployment_folder
 cd /home/www-data/tol_${TARGET}/static
-rm -rf aurelia-prev
-mv aurelia aurelia-prev
+rename aurelia aurelia-prev
 mkdir aurelia
 cd aurelia
 ln -s ../fontawesome ./fontawesome
 put -R *
-" > ~/server_src/private/deploy.batch
+" > ~/deployment_folder/deploy.batch
 #ssh root@${HOST} rm -R -f /home/www-data/tol_${TARGET}/static/aurelia_prev/*
-echo sftp -b ~/server_src/private/deploy.batch root@${HOST}
-sftp -b ~/server_src/private/deploy.batch root@${HOST}
+echo sftp -b ~/deployment_folder/deploy.batch root@${HOST}
+sftp -b ~/deployment_folder/deploy.batch root@${HOST}
 #ssh root@${HOST} cp -r /apps_data/fontawesome /home/www-data/tol_${TARGET}/static/aurelia/
 
 #version file is uploaded last to prevent immature updates for users
@@ -64,12 +63,10 @@ echo "
 lcd /home/haim/
 cd /home/www-data/tol_${TARGET}/static/aurelia
 put curr_version.tmp
-" > ~/server_src/private/deploy1.batch
-echo sftp -b ~/server_src/private/deploy1.batch root@${HOST}
-sftp -b ~/server_src/private/deploy1.batch root@${HOST}
+" > ~/deployment_folder/deploy1.batch
+echo sftp -b ~/deployment_folder/deploy1.batch root@${HOST}
+sftp -b ~/deployment_folder/deploy1.batch root@${HOST}
 echo ssh root@${HOST} bash /home/www-data/tol_${TARGET}/private/update_target.bash $TARGET
 ssh root@${HOST} bash /home/www-data/tol_${TARGET}/private/update_target.bash $TARGET
-###rm ~/server_src/private/deploy1.batch
-###rm ~/server_src/private/deploy.batch
 popd
 echo Done
