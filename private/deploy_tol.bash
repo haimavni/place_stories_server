@@ -44,8 +44,6 @@ cp index-orig.html index.html
 rm index-orig.html
 git checkout master
 
-echo DEBUG1
-
 echo "
 lcd /home/haim/deployment_folder
 cd /home/www-data/tol_${TARGET}/static
@@ -55,6 +53,7 @@ ln -s ../fontawesome ./fontawesome
 put -R *
 " > ~/server_src/private/deploy.batch
 #ssh root@${HOST} rm -R -f /home/www-data/tol_${TARGET}/static/aurelia_prev/*
+echo sftp -b ~/server_src/private/deploy.batch root@${HOST}
 sftp -b ~/server_src/private/deploy.batch root@${HOST}
 #ssh root@${HOST} cp -r /apps_data/fontawesome /home/www-data/tol_${TARGET}/static/aurelia/
 
@@ -64,8 +63,9 @@ lcd /home/haim/
 cd /home/www-data/tol_${TARGET}/static/aurelia
 put curr_version.tmp
 " > ~/server_src/private/deploy1.batch
+echo sftp -b ~/server_src/private/deploy1.batch root@${HOST}
 sftp -b ~/server_src/private/deploy1.batch root@${HOST}
-
+echo ssh root@${HOST} bash /home/www-data/tol_${TARGET}/private/update_target.bash $TARGET
 ssh root@${HOST} bash /home/www-data/tol_${TARGET}/private/update_target.bash $TARGET
 rm ~/server_src/private/deploy1.batch
 rm ~/server_src/private/deploy.batch
