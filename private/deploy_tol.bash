@@ -1,6 +1,6 @@
 #!/bin/bash
 
-HOST="tol.com"
+HOST="lifestone.net"
 echo host is ${HOST}
 if [ "$1" == "master" ]
 then
