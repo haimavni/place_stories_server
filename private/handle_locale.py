@@ -48,16 +48,16 @@ s = str(datetime.datetime.now())[:16]
 with open('/home/haim/curr_version.tmp', 'w') as f:
     f.write(s)
     
-env = '''
+env = f'''
 export default {{
-    debug: false,
+    debug: true,
     testing: false,
     baseURL: '',
-    version: '{}',
+    version: '{s}',
     app: '',
-    i18n_ver: '{:0x}'
+    i18n_ver: '{combined_crc & 0xffffffff:0x}'
 }};
-'''.format(s, combined_crc & 0xffffffff) 
+''' 
 
 with open('/home/haim/aurelia/aurelia_project/environments/tmp_env.ts', mode='w') as f:
     f.write(env)
