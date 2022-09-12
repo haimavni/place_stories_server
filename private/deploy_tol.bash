@@ -55,7 +55,7 @@ ln -s ../fontawesome ./fontawesome
 put -R *
 " > ~/server_src/private/deploy.batch
 #ssh root@${HOST} rm -R -f /home/www-data/tol_${TARGET}/static/aurelia_prev/*
-#--------------sftp -b ~/server_src/private/deploy.batch root@${HOST}
+sftp -b ~/server_src/private/deploy.batch root@${HOST}
 #ssh root@${HOST} cp -r /apps_data/fontawesome /home/www-data/tol_${TARGET}/static/aurelia/
 
 #version file is uploaded last to prevent immature updates for users
@@ -64,10 +64,10 @@ lcd /home/haim/
 cd /home/www-data/tol_${TARGET}/static/aurelia
 put curr_version.tmp
 " > ~/server_src/private/deploy1.batch
-#---------sftp -b ~/server_src/private/deploy1.batch root@${HOST}
+sftp -b ~/server_src/private/deploy1.batch root@${HOST}
 
-#----------ssh root@${HOST} bash /home/www-data/tol_${TARGET}/private/update_target.bash $TARGET
-#--------rm ~/server_src/private/deploy1.batch
-#-------rm ~/server_src/private/deploy.batch
+ssh root@${HOST} bash /home/www-data/tol_${TARGET}/private/update_target.bash $TARGET
+rm ~/server_src/private/deploy1.batch
+rm ~/server_src/private/deploy.batch
 popd
 echo Done
