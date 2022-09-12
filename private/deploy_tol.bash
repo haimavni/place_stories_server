@@ -47,6 +47,8 @@ git checkout master
 echo "
 lcd /home/haim/deployment_folder
 cd /home/www-data/tol_${TARGET}/static
+rm -rf aurelia-prev
+mv aurelia aurelia-prev
 mkdir aurelia
 cd aurelia
 ln -s ../fontawesome ./fontawesome
@@ -67,7 +69,7 @@ echo sftp -b ~/server_src/private/deploy1.batch root@${HOST}
 sftp -b ~/server_src/private/deploy1.batch root@${HOST}
 echo ssh root@${HOST} bash /home/www-data/tol_${TARGET}/private/update_target.bash $TARGET
 ssh root@${HOST} bash /home/www-data/tol_${TARGET}/private/update_target.bash $TARGET
-rm ~/server_src/private/deploy1.batch
-rm ~/server_src/private/deploy.batch
+###rm ~/server_src/private/deploy1.batch
+###rm ~/server_src/private/deploy.batch
 popd
 echo Done
