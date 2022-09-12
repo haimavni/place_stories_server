@@ -32,7 +32,7 @@ rm -R -f ~/deployment_folder/*
 
 python ~/server_src/private/handle_locale.py
 au build --env tmp_env
-rm aurelia_project/environments/tmp_env.ts
+### rm aurelia_project/environments/tmp_env.ts
 cp -a ./scripts ~/deployment_folder/
 ls -l ~/deployment_folder/scripts >> ~/log/deploy_history.log
 git br -v >> ~/log/deploy_history.log
