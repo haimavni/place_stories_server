@@ -25,7 +25,7 @@ else
         last="Admin"
     fi
     args="/$email/$password/$first/$last"
-    server="tol_server_$ver"
+    server="tol_$ver"
 fi
 ###----------------------temporary. for local only!-------------------
 ###server="gbs__www"
