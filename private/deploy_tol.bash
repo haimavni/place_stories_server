@@ -53,7 +53,7 @@ cd aurelia
 ln -s ../fontawesome ./fontawesome
 put -R *
 " > ~/deployment_folder/deploy.batch
-#ssh root@${HOST} rm -R -f /home/www-data/tol_${TARGET}/static/aurelia_prev/*
+ssh root@${HOST} rm -R -f /home/www-data/tol_${TARGET}/static/aurelia-prev/*
 echo sftp -b ~/deployment_folder/deploy.batch root@${HOST}
 sftp -b ~/deployment_folder/deploy.batch root@${HOST}
 #ssh root@${HOST} cp -r /apps_data/fontawesome /home/www-data/tol_${TARGET}/static/aurelia/
