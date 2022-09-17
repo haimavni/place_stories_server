@@ -1,7 +1,7 @@
 import os
 import re
 
-os.chdir("/home/haim/aurelia")
+os.chdir("/home/haim/client_src")
 
 
 with open('index.html') as f:
