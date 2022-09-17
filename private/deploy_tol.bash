@@ -21,7 +21,7 @@ TARGET=$BRANCH
 echo -e "Deploy to branch " $BRANCH
 echo -e "Deploy to branch " $BRANCH >> ~/log/deploy_history.log
 
-pushd ~/aurelia
+pushd ~/client_src
 git pull
 git checkout $BRANCH
 git pull
