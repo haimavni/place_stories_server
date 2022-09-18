@@ -30,3 +30,5 @@ gbs_haim.wpr
 .web2py/
 *.batch
 *.tmp
+*.dif
+*.log
