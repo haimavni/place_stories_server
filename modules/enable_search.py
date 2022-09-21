@@ -10,7 +10,7 @@ def create_member_item(member_id):
     now = now.strftime('%Y-%m-%dT%H:%M:%S+00:00')
     item = f'''
 <url>
-  <loc>https://{host}/{app}/static/aurelia/index-{app}.html#/member-details/member_id/*</loc>
+  <loc>https://{host}/{app}/static/aurelia/index-{app}.html#/member-details/{member_id}/*</loc>
   <lastmod>{now}</lastmod>
   <priority>0.9</priority>
 </url>
@@ -22,7 +22,7 @@ def emit_bio_items():
     app = request.application
     lst = db((db.TblStories.used_for==STORY4MEMBER)&(db.TblStories.id==db.TblMembers.story_id)).select(db.TblMembers.id)
     member_list = [rec.id for rec in lst]
-    comment('inside emit bio items')
+    comment(f'inside emit bio items: {member_list}')
     header = '''
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset
