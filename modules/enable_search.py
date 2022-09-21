@@ -32,6 +32,8 @@ def emit_bio_items():
             http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 '''
     fname = f'/apps_data/{app}.xml'
+    comment(f'writing to {fname}')
+    comment(f'header: {header}')
     with open(fname, 'w', encoding='utf-8') as f:
         f.write(header)
         comment(f'header was written to {fname}')
