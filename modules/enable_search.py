@@ -29,9 +29,12 @@ def emit_bio_items():
       xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
-            http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">    '''
-    with open(f'/apps_data/{app}.xml', 'w', encoding='utf-8') as f:
+            http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+'''
+    fname = f'/apps_data/{app}.xml'
+    with open(fname, 'w', encoding='utf-8') as f:
         f.write(header)
+        comment(f'header was written to {fname}')
         for mid in member_list:
             item = create_member_item(mid)
             f.write(item)
