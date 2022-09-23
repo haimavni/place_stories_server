@@ -82,7 +82,7 @@ def get_tornado_host(vars):
     group = messaging_group(group=vars.group)
     if request.is_https:
         ws = 'wss'
-        port = '8443'
+        port = '8443' if host == 'lifestone.info' else '9443'
     else:
         ws = 'ws'
         port = '8888'
