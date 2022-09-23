@@ -2,21 +2,25 @@
 
 HOST="lifestone.net"
 echo host is ${HOST}
-if [ "$1" == "master" ]
-then
-    BRANCH="master"
-else 
-    if [ "$1" == "test" ]
-    then
+TARGET = $1
+case $1 in
+    test)
         BRANCH="test"
-    else 
-        if [ "$1" == "www" ]
-        then
-            BRANCH="www"
-        fi
-    fi
-fi
-TARGET=$BRANCH
+        ;;
+    
+    www)
+        BRANCH="www"
+        ;;
+
+    push_state)
+        BRANCH="push_state"
+        TARGET="master"
+        ;;
+
+    *)
+        BRANCH="master"
+        ;;
+esac
 
 echo -e "Deploy to branch " $BRANCH
 echo -e "Deploy to branch " $BRANCH >> ~/log/deploy_history.log
