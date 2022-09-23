@@ -50,7 +50,7 @@ with open('/home/haim/curr_version.tmp', 'w') as f:
     
 env = f'''
 export default {{
-    debug: true,
+    debug: false,
     testing: false,
     baseURL: '',
     version: '{s}',
