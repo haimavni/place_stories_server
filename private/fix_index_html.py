@@ -8,8 +8,12 @@ def write_index_html():
     p = '/home/haim/deployment_folder/scripts/vendor-bundle-'
     lst = glob.glob(p + '*.js')
     vname = lst[0]
-    version = vname[len(p):]
-    branch = sys.args[1]
+    version = vname[len(p):-3]
+    if len(sys.argv) > 1:
+        branch = sys.args[1]
+    else:
+        branch = 'master'
+
     base = f'https://tol.life/tol_{branch}/static/aurelia/'
     left_curl = '{'
     right_curl = '}'
