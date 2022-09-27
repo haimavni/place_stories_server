@@ -41,7 +41,7 @@ cp -a ./scripts ~/deployment_folder/
 ls -l ~/deployment_folder/scripts >> ~/log/deploy_history.log
 git br -v >> ~/log/deploy_history.log
 python ~/server_src/private/fix_index_html.py
-cp ./index.html  ~/deployment_folder
+#cp ./index.html  ~/deployment_folder
 cp ./favicon.ico  ~/deployment_folder
 #cp -a ./images ~/deployment_folder
 cp index-orig.html index.html
