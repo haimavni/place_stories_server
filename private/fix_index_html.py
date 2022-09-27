@@ -58,7 +58,7 @@ def write_index_html():
         f.write(index_html)
     with open(vname, 'r', encoding="utf-8") as f:
         txt = f.read()
-    txt = txt.replace('../scripts/app', base  + 'scripts/app')
+    txt = txt.replace('../scripts/app', base  + '/scripts/app')
     with open(vname, 'w', encoding="utf-8") as f:
         f.write(txt)
 
