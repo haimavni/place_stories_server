@@ -14,7 +14,7 @@ def write_index_html():
     else:
         branch = 'master'
 
-    base = f'"https://tol.life/gbs_{branch}/static/aurelia"'
+    base = f'"https://tol.life/gbs__{branch}/static/aurelia"'
     left_curl = '{'
     right_curl = '}'
     index_html = f'''
