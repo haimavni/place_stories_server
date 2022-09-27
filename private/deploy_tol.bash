@@ -2,7 +2,7 @@
 
 HOST="lifestone.net"
 echo host is ${HOST}
-TARGET = $1
+TARGET=$1
 case $1 in
     test)
         BRANCH="test"
