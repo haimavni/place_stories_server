@@ -14,7 +14,7 @@ def write_index_html():
     else:
         branch = 'master'
 
-    base = f'https://tol.life/tol_{branch}/static/aurelia/'
+    base = f'"https://tol.life/gbs_{branch}/static/aurelia"'
     left_curl = '{'
     right_curl = '}'
     index_html = f'''
@@ -23,6 +23,7 @@ def write_index_html():
 
 <head>
     <meta charset="utf-8">
+    <base href={base}>
     <meta http-equiv="expires" content="0">
     <meta name="google-site-verification" content="JnVD2e5l285fDPinK4jNDMeZ19eZs1Rx5WRLajzCxs8" />
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
@@ -31,7 +32,6 @@ def write_index_html():
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="google-site-verification" content="HWlQ64YZv4Qp97_JanEUUJl58eED5bcUjA3RPSL13Dk" />
     <link rel="stylesheet" href="/fontawesome/css/all.css" type="text/css" />
-    <base href={base}>
 </head>
 
 <body aurelia-app="main">
