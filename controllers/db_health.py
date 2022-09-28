@@ -6,6 +6,7 @@ def remove_detached_member_stories():
         if db(db.TblMembers.story_id==sid).count() == 0:
             comment(f'story #{sid} is detached')
             detached += 1
+            db(db.TblStories.id==sid).update(deleted=True)
     return f'{detached} detached stories found'
 
 def zevel():
