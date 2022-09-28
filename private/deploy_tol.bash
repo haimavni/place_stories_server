@@ -29,7 +29,6 @@ pushd ~/client_src
 git pull
 git checkout $BRANCH
 git pull
-cp index.html index-orig.html
 
 rm -R -f scripts/*
 rm -R -f ~/deployment_folder/*
@@ -41,11 +40,7 @@ cp -a ./scripts ~/deployment_folder/
 ls -l ~/deployment_folder/scripts >> ~/log/deploy_history.log
 git br -v >> ~/log/deploy_history.log
 python ~/server_src/private/fix_index_html.py
-#cp ./index.html  ~/deployment_folder
 cp ./favicon.ico  ~/deployment_folder
-#cp -a ./images ~/deployment_folder
-cp index-orig.html index.html
-rm index-orig.html
 git checkout master
 
 echo "
@@ -60,7 +55,6 @@ put -R *
 ssh root@${HOST} rm -R -f /home/www-data/tol_${TARGET}/static/aurelia-prev/*
 echo sftp -b ~/deployment_folder/deploy.batch root@${HOST}
 sftp -b ~/deployment_folder/deploy.batch root@${HOST}
-#ssh root@${HOST} cp -r /apps_data/fontawesome /home/www-data/tol_${TARGET}/static/aurelia/
 
 #version file is uploaded last to prevent immature updates for users
 echo "

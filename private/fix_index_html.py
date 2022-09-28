@@ -31,12 +31,12 @@ def write_index_html():
     <title>Stories</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="google-site-verification" content="HWlQ64YZv4Qp97_JanEUUJl58eED5bcUjA3RPSL13Dk" />
-    <link rel="stylesheet" href=f"https://tol.life/gbs__{branch}/static/aurelia/fontawesome/css/all.css" type="text/css" />
+    <link rel="stylesheet" href="https://tol.life/gbs__{branch}/static/aurelia/fontawesome/css/all.css" type="text/css" />
 </head>
 
 <body aurelia-app="main">
     <script>
-        CheckUrl(f"https://tol.life/gbs__{branch}/static/aurelia/scripts/vendor-bundle-{version}.js");
+        CheckUrl("https://tol.life/gbs__{branch}/static/aurelia/scripts/vendor-bundle-{version}.js");
         async function CheckUrl(url)
         {left_curl}
             const response = await fetch(url, {left_curl}
@@ -49,7 +49,7 @@ def write_index_html():
             {right_curl}
         {right_curl}
     </script>
-    <script src=f"https://tol.life/gbs__{branch}/static/aurelia/scripts/vendor-bundle-{version}.js" data-main="aurelia-bootstrapper" ></script>
+    <script src="https://tol.life/gbs__{branch}/static/aurelia/scripts/vendor-bundle-{version}.js" data-main="aurelia-bootstrapper" ></script>
 </body>
 
 </html>
@@ -58,7 +58,8 @@ def write_index_html():
         f.write(index_html)
     with open(vname, 'r', encoding="utf-8") as f:
         txt = f.read()
-    txt = txt.replace('../scripts/app', base  + '/scripts/app')
+    b = f"https://tol.life/gbs__{branch}/static/aurelia/scripts/app"
+    txt = txt.replace('../scripts/app', b)
     with open(vname, 'w', encoding="utf-8") as f:
         f.write(txt)
 
