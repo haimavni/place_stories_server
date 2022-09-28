@@ -7,3 +7,6 @@ def remove_detached_member_stories():
             comment(f'story #{sid} is detached')
             detached += 1
     return f'{detached} detached stories found'
+
+def zevel():
+    return 'stam'
