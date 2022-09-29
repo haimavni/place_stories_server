@@ -68,7 +68,7 @@ pluggy==0.13.1
 poppler-utils==0.1.0
 postgres==3.0.0
 psycopg2-binary==2.8.6
-py==1.9.0
+py==1.10.0
 pybktree==1.1
 pycodestyle==2.6.0
 pycountry==20.7.3
