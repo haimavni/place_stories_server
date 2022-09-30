@@ -10,7 +10,7 @@ def index():
         (db.TblLocaleCustomizations.lang == lang) & (db.TblLocaleCustomizations.key == 'app-title')).select().first()
     app_name = app_name_rec.value if app_name_rec else 'Noname' 
     folder = f'applications/{app}/static/aurelia/scripts'
-    return f'folder is {folder}. app_name is {app_name}'
+    #return f'folder is {folder}. app_name is {app_name}'
     lst = os.listdir(folder)
     vendor_bundle = None
     for fname in lst:
