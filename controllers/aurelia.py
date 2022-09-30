@@ -1,6 +1,8 @@
 import os
 
 def index():
+    curdir = os.getcwd()
+    return curdir
     host = request.env.http_host
     app = request.application
     lang = 'he'
