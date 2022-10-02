@@ -39,7 +39,6 @@ def evaluate_script(vars):
             rec.update_record(last_usage_time=now)
         else:
             db.scripts_table.insert(code=code, last_usage_time=now)
-        comment(f"eval result: ", {dic})
         return dict(results=dic)
 
 
