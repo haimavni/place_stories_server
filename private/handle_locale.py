@@ -55,7 +55,8 @@ export default {{
     baseURL: '',
     version: '{s}',
     app: '',
-    i18n_ver: '{combined_crc & 0xffffffff:0x}'
+    i18n_ver: '{combined_crc & 0xffffffff:0x}',
+    push_state: false
 }};
 ''' 
 
