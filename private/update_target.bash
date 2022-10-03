@@ -5,4 +5,3 @@ git pull
 bash ./private/restart_servers.bash
 cd /home/www-data/tol_$1/static/aurelia
 mv -f curr_version.tmp curr_version.txt
-echo finished
