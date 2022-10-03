@@ -39,7 +39,7 @@ def evaluate_script(vars):
             rec.update_record(last_usage_time=now)
         else:
             db.scripts_table.insert(code=code, last_usage_time=now)
-        return {'results': dic}
+        return dict(results=dic)
 
 
 @serve_json
