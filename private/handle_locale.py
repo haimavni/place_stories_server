@@ -48,7 +48,7 @@ s = str(datetime.datetime.now())[:16]
 
 with open('/home/haim/curr_version.tmp', 'w') as f:
     f.write(s)
-push_state = 'true' if sys.argc > 1 and sys.argv[1] == 'push' else 'false'
+push_state = 'true' if len(sys.argv) > 1 and sys.argv[1] == 'push' else 'false'
 env = f'''
 export default {{
     debug: false,
