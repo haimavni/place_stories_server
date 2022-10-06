@@ -313,7 +313,8 @@ def get_story_list(vars):
     active_result_types = sorted(active_result_types)
     result = final_result
     result = set_story_list_data(result)
-    comment(f'result_type_counters {result_type_counters}')
+    for k in result_type_counters:
+        comment(f'result_type_counters[{k}]: {result_type_counters[k]}')
     return dict(no_results=len(result)==0,
                 result=result,
                 active_result_types=active_result_types,
