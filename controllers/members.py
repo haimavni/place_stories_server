@@ -249,11 +249,11 @@ def get_stories_sample(vars):
 
 @serve_json
 def get_story_list(vars):
-    CHUNK = 100
     params = vars.params
     qhd = query_has_data(vars.params)
     result1 = []
     result2 = []
+    real_counters = None #will show true total numbers
     if params.selected_book:
         result0 = get_checked_stories(params)
         result0 = process_story_list(result0, checked=True)
@@ -266,15 +266,15 @@ def get_story_list(vars):
         result0 = process_story_list(result0, checked=True)
         checked_story_ids = set([r.id for r in result0])
         has_keywords = bool(params.keywords_str)  # and vars.params.search_type in ['menu', 'simple']
-        result1 = _get_story_list(params, has_keywords)
+        result1 = _get_story_list(params, has_keywords)[0]
         result1 = process_story_list(result1, exact=has_keywords)
         result1 = [r for r in result1 if r.id not in checked_story_ids]
 
         if has_keywords and len(params.keywords_str.split()) > 1:  # find all pages containing all words in this string
-            result2 = _get_story_list(params, False)
+            result2 = _get_story_list(params, False)[0]
             result2 = process_story_list(result2)
     else:
-        result0 = _get_story_list(params, False)
+        result0, real_counters = _get_story_list(params, False)
         result0 = process_story_list(result0)
     visited = set([r.id for r in result0])
     result1 = [r for r in result1 if r.id not in visited]
@@ -310,27 +310,18 @@ def get_story_list(vars):
         if result_type_counters[k] >= 100:
             continue
         final_result.append(story)
+    if real_counters:
+        result_type_counters = real_counters #if no query data, return total, not sample size
     active_result_types = [k for k in active_result_types]
     active_result_types = sorted(active_result_types)
     result = final_result
     result = set_story_list_data(result)
+    for k in result_type_counters:
+        comment(f'result_type_counters[{k}]: {result_type_counters[k]}')
     return dict(no_results=len(result)==0,
                 result=result,
                 active_result_types=active_result_types,
                 result_type_counters=result_type_counters)
-    # for i in range(0, len(result), CHUNK):
-    #     chunk = result[i:i + CHUNK]
-    #     chunk = set_story_list_data(chunk)
-    #     ws_messaging.send_message(key='STORY-LIST-CHUNK',
-    #                               group=vars.ptp_key,
-    #                               first=i,
-    #                               num_stories=len(result),
-    #                               chunk_size=CHUNK,
-    #                               chunk=chunk,
-    #                               active_result_types=active_result_types,
-    #                               result_type_counters=result_type_counters)
-    # return dict(no_results=len(result) == 0)
-
 
 @serve_json
 def get_story_previews(vars):
@@ -1029,6 +1020,7 @@ def get_checked_stories(params):
 def _get_story_list(params, exact):  # exact means looking only for the passed keywords string as a whole
     order_option = params.order_option.value if params.order_option else 'normal'
     q = make_stories_query(params, exact)
+    real_counters = dict()
     if order_option == 'by-chats':
         q &= (db.TblStories.chatroom_id != None)
         lst1 = db(q).select(orderby=~db.TblStories.last_chat_time)
@@ -1055,6 +1047,7 @@ def _get_story_list(params, exact):  # exact means looking only for the passed k
         for used_for in story_kinds():
             q = (db.TblStories.deleted != True) & (db.TblStories.used_for == used_for)
             n = db(q).count()
+            real_counters[used_for] = n
             if not n:
                 continue
             sample_size = 100
@@ -1077,7 +1070,7 @@ def _get_story_list(params, exact):  # exact means looking only for the passed k
             q1 = q & (db.TblStories.used_for == used_for)
             lst0 = db(q1).select(limitby=(0, 1000), orderby=~db.TblStories.story_len)
             lst1 += lst0
-    return lst1
+    return lst1, real_counters
 
 def stories_random_sample(size, used_for):
     q = (db.TblStories.deleted != True) & (db.TblStories.used_for == used_for)
