@@ -249,7 +249,6 @@ def get_stories_sample(vars):
 
 @serve_json
 def get_story_list(vars):
-    CHUNK = 100
     params = vars.params
     qhd = query_has_data(vars.params)
     result1 = []
@@ -314,23 +313,11 @@ def get_story_list(vars):
     active_result_types = sorted(active_result_types)
     result = final_result
     result = set_story_list_data(result)
+    comment(f'result_type_counters {result_type_counters}')
     return dict(no_results=len(result)==0,
                 result=result,
                 active_result_types=active_result_types,
                 result_type_counters=result_type_counters)
-    # for i in range(0, len(result), CHUNK):
-    #     chunk = result[i:i + CHUNK]
-    #     chunk = set_story_list_data(chunk)
-    #     ws_messaging.send_message(key='STORY-LIST-CHUNK',
-    #                               group=vars.ptp_key,
-    #                               first=i,
-    #                               num_stories=len(result),
-    #                               chunk_size=CHUNK,
-    #                               chunk=chunk,
-    #                               active_result_types=active_result_types,
-    #                               result_type_counters=result_type_counters)
-    # return dict(no_results=len(result) == 0)
-
 
 @serve_json
 def get_story_previews(vars):
