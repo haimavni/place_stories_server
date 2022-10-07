@@ -9,7 +9,7 @@ def write_index_html():
     lst = glob.glob(p + '*.js')
     vname = lst[0]
     version = vname[len(p):-3]
-    branch = sys.args[1]
+    branch = sys.argv[1]
     base = f'"https://tol.life/gbs__{branch}/static/aurelia"'
     left_curl = '{'
     right_curl = '}'
