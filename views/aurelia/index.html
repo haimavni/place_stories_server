@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="expires" content="0">
+    <meta name="google-site-verification" content="JnVD2e5l285fDPinK4jNDMeZ19eZs1Rx5WRLajzCxs8" />
+    <link rel="shortcut icon" href="static/aurelia/favicon.ico" type="image/x-icon">
+
+    <title>{!= app_name !}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="google-site-verification" content="HWlQ64YZv4Qp97_JanEUUJl58eED5bcUjA3RPSL13Dk" />
+    <link rel="stylesheet" href="static/fontawesome/css/all.css" type="text/css" />
+    <!-- <base ref="/"> -->
+</head>
+
+<body aurelia-app="main">
+    <script>
+        CheckUrl("{!=vendor_bundle!}");
+        async function CheckUrl(url)
+        {
+            const response = await fetch(url, {
+            method: "head",
+            mode: "no-cors"
+            });
+            if (response.status == 404) {
+                //alert("Please refresh");
+                location.reload(true);
+            }
+        }
+    </script>
+    <script src="{!= vendor_bundle!}" data-main="aurelia-bootstrapper" ></script>
+</body>
+
+</html>
