@@ -14,6 +14,7 @@ def index():
     #return f'folder is {folder}. app_name is {app_name}'
     lst = os.listdir(folder)
     path = f"https://{host}/{app}"
+    comment(f"path is ", {path})
     fname = app + '__'.split('__')[0]
     private_ico = f'/apps_data/images/{fname}'
     if os.path.exists(private_ico + '/favicn.ico'):
