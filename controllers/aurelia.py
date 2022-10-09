@@ -20,7 +20,7 @@ def index():
     for fname in lst:
         if fname.endswith('.js'):
             if fname.startswith('vendor-bundle'):
-                vendor_bundle = f'https://{host}/{app}/static/aurelia/scripts/{fname}'
+                vendor_bundle = f'/{app}/static/aurelia/scripts/{fname}'
     if not vendor_bundle:
         raise Exception("Vendor bundle not found")
     return dict(app=app, app_name=app_name, vendor_bundle=vendor_bundle, ico_path=ico_path)
