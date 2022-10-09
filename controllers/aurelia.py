@@ -5,6 +5,7 @@ def index():
     curdir = os.getcwd()
     host = request.env.http_host
     app = request.application
+    comment(f"app is {app}")
     lang = 'he'
     app_config = db(db.TblConfiguration).select().first()
     app_name_rec = db(
@@ -14,7 +15,7 @@ def index():
     #return f'folder is {folder}. app_name is {app_name}'
     lst = os.listdir(folder)
     path = f"https://{host}/{app}"
-    comment(f"path is ", {path})
+    comment(f"path is {path}")
     fname = app + '__'.split('__')[0]
     private_ico = f'/apps_data/images/{fname}'
     if os.path.exists(private_ico + '/favicn.ico'):
