@@ -16,7 +16,7 @@ def index():
     path = f"https://{host}/{app}"
     fname = app + '__'.split('__')[0]
     private_ico = f'/apps_data/images/{fname}'
-    if os.isfile(private_ico + '/favicn.ico'):
+    if os.path.exists(private_ico + '/favicn.ico'):
         ico_path = private_ico
     else:
         ico_path = path  + '/static/aurelia'
