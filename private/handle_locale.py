@@ -3,6 +3,7 @@ import zlib
 from distutils import dir_util
 from shutil import copyfile
 import datetime
+import sys
 '''
 Create temporary environment file for Aurelia to ensure dictionaries are not cached
 '''
@@ -47,7 +48,7 @@ s = str(datetime.datetime.now())[:16]
 
 with open('/home/haim/curr_version.tmp', 'w') as f:
     f.write(s)
-    
+push_state = 'true' if len(sys.argv) > 1 and sys.argv[1] == 'push' else 'false'
 env = f'''
 export default {{
     debug: false,
@@ -55,7 +56,8 @@ export default {{
     baseURL: '',
     version: '{s}',
     app: '',
-    i18n_ver: '{combined_crc & 0xffffffff:0x}'
+    i18n_ver: '{combined_crc & 0xffffffff:0x}',
+    push_state: {push_state}
 }};
 ''' 
 
