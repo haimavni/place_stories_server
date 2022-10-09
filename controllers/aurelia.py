@@ -3,6 +3,7 @@ import os
 
 def index():
     app = request.application
+    host = request.env.http_host
     lang = 'he'
     app_name_rec = db(
         (db.TblLocaleCustomizations.lang == lang) & (db.TblLocaleCustomizations.key == 'app-title')).select().first()
@@ -15,7 +16,7 @@ def index():
     if os.path.exists(private_ico_path + '/favicn.ico'):
         ico_path = f'{app}/static' + private_ico_path
     else:
-        ico_path = f'/{app}/static/aurelia'
+        ico_path = f'https://{host}/{app}/static/aurelia'
     vendor_bundle = None
     for fname in lst:
         if fname.endswith('.js'):
