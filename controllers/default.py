@@ -36,6 +36,7 @@ def index():
     fname1 = f'{app}/static/aurelia/index-{app}.html'
     if os.path.isfile('./applications/' + fname1):
         fname = '/' + fname1
+    fname = f'/{app}/aurelia'
     redirect(f"{fname}")
 
 def user():
