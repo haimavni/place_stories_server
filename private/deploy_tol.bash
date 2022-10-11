@@ -35,13 +35,13 @@ rm -R -f scripts/*
 rm -R -f ~/deployment_folder/*
 
 python ~/server_src/private/handle_locale.py $2
-cp ./index.html ./index-orig.html
+###cp ./index.html ./index-orig.html
 au build --env tmp_env
 ### rm aurelia_project/environments/tmp_env.ts
 cp ./index.html ~/deployment_folder/
 cp -a ./scripts ~/deployment_folder/
-cp ./index-orig.html ./index.html
-rm ./index-orig.html
+###cp ./index-orig.html ./index.html
+###rm ./index-orig.html
 ls -l ~/deployment_folder/scripts >> ~/log/deploy_history.log
 git br -v >> ~/log/deploy_history.log
 python ~/server_src/private/fix_index_html.py $1
