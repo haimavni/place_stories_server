@@ -26,6 +26,7 @@ echo -e "Deploy to branch " $BRANCH
 echo -e "Deploy to branch " $BRANCH >> ~/log/deploy_history.log
 
 pushd ~/client_src
+cp index-public.html index.html
 git pull
 git checkout $BRANCH
 git pull
