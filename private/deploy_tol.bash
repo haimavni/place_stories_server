@@ -43,7 +43,7 @@ cp ./index-orig.html ./index.html
 rm ./index-orig.html
 ls -l ~/deployment_folder/scripts >> ~/log/deploy_history.log
 git br -v >> ~/log/deploy_history.log
-python ~/server_src/private/fix_index_html.py $1
+###python ~/server_src/private/fix_index_html.py $1
 cp ./favicon.ico  ~/deployment_folder
 ### git checkout master until merge with master
 
