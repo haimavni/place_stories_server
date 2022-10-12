@@ -50,8 +50,8 @@ def write_index_html():
 
 </html>
 '''
-    with open('/home/haim/deployment_folder/index.html', 'w', encoding="utf-8") as f:
-        f.write(index_html)
+    # with open('/home/haim/deployment_folder/index.html', 'w', encoding="utf-8") as f:
+    #     f.write(index_html)
     with open(vname, 'r', encoding="utf-8") as f:
         txt = f.read()
     b = f"https://tol.life/gbs__{branch}/static/aurelia/scripts/app"
