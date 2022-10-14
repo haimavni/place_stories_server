@@ -1,3 +1,4 @@
+from distutils import dir_util
 from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, \
      save_uploaded_photo, rotate_photo, save_member_face, save_article_face, create_zip_file, get_photo_pairs, find_similar_photos, \
      timestamped_photo_path, crop_a_photo, save_padded_photo, save_qr_photo
@@ -927,7 +928,9 @@ def get_padded_photo_url(vars):
     else:
         raise Exception(f"url: {photo_url} / id: {photo_id} - photo not found!")
     file_name = f'{crc & 0xffffffff:x}{ext}'
-    target_photo_path = f'/apps_data/{app_area}/cards/padded_images/' + file_name
+    folder = f'/apps_data/{app_area}/cards/padded_images/'
+    dir_util.mkpath(folder)
+    target_photo_path = folder + file_name
     r = photo_url.find('/apps_data')
     photo_path = photo_url[r:]
     r = photo_path.rfind("?")
