@@ -2,6 +2,7 @@
 # this file is released under public domain and you can use without limitations
 
 from folders import local_folder
+from modules.folders import url_folder
 from ws_messaging import send_message, messaging_group
 from admin_support import AccessManager
 from send_email import email
@@ -428,8 +429,9 @@ def create_fb_card(vars):
     app = request.application
     app_area = app.split('__')[0]
     host = request.env.http_host
-    img_src = f'/{app}/static/apps_data/{app}/cards/photos{src}'
-    # img_src = img_src.replace('http:', 'https:')
+    path = url_folder('cards')
+    image_src = path + f'photos{src}'
+    ###img_src = f'https://{host}/{app}/static/apps_data/{app}/cards/photos{src}'
     content = create_card.card_data(vars.url, img_src, vars.title, vars.description)
     fname = create_key()
     folder = local_folder('cards')
