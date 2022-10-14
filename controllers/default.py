@@ -425,12 +425,8 @@ def create_fb_card(vars):
     img_src = vars.img_src
     r = img_src.find('/padded_images')
     src = img_src[r:]
-    # app = request.application
-    # app_area = app.split('__')[0]
-    # host = request.env.http_host
     path = url_folder('cards')
-    img_src = path + f'photos{src}'
-    ###img_src = f'https://{host}/{app}/static/apps_data/{app}/cards/photos{src}'
+    img_src = path + f'{src}'
     content = create_card.card_data(vars.url, img_src, vars.title, vars.description)
     fname = create_key()
     folder = local_folder('cards')
