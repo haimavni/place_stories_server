@@ -936,7 +936,7 @@ def get_padded_photo_url(vars):
     # if r > 0:
     #     photo_path = photo_path[:r]
     photo_path = photos_folder('orig') + photo_rec.photo_path
-    comment(f'photo path: ', photo_path, ' target photo path: ', target_photo_path)
+    comment(f'photo path: {photo_path}, target photo path: {target_photo_path}')
     padded_photo_url = save_padded_photo(photo_path, target_photo_path)
     return dict(padded_photo_url=padded_photo_url)
 
