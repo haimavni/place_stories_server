@@ -426,6 +426,7 @@ def create_fb_card(vars):
     r = img_src.find('/padded_images')
     src = img_src[r:]
     app = request.application
+    app_area = app.split('__')[0]
     host = request.env.http_host
     img_src = f'/{app}/static/apps_data/{app}/cards/photos{src}'
     # img_src = img_src.replace('http:', 'https:')
@@ -434,7 +435,7 @@ def create_fb_card(vars):
     folder = local_folder('cards')
     with open(f"{folder}" + fname + ".html", "w", encoding="utf-8") as f:
         f.write(content)
-    return dict(card_url=f"https://{host}/{app}/static/apps_data/{app}/cards/{fname}.html")
+    return dict(card_url=f"https://{host}/{app}/static/apps_data/{app_area}/cards/{fname}.html")
 
 @serve_json
 def create_qrcode(vars):
