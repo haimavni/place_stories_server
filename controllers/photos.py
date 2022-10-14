@@ -919,13 +919,15 @@ def get_padded_photo_url(vars):
     photo_id = int(vars.photo_id)
     r = photo_url.rfind('.')
     ext = photo_url[r:]
+    app = request.application
+    app_area = app.split('__')[0]
     photo_rec = db(db.TblPhotos.id==photo_id).select().first()
     if photo_rec:
         crc = photo_rec.crc
     else:
         raise Exception(f"url: {photo_url} / id: {photo_id} - photo not found!")
     file_name = f'{crc & 0xffffffff:x}{ext}'
-    target_photo_path = '/apps_data/social_cards/padded_images/' + file_name
+    target_photo_path = f'/apps_data/{app_area}/cards/padded_images/' + file_name
     r = photo_url.find('/apps_data')
     photo_path = photo_url[r:]
     r = photo_path.rfind("?")

@@ -434,7 +434,6 @@ def create_fb_card(vars):
     folder = local_folder('cards')
     with open(f"{folder}" + fname + ".html", "w", encoding="utf-8") as f:
         f.write(content)
-    ### does not work return dict(card_url=f"{host}/{app}/static/apps_data/social_cards/{fname}.html")
     return dict(card_url=f"https://{host}/{app}/static/apps_data/{app}/cards/{fname}.html")
 
 @serve_json
