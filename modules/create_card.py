@@ -2,6 +2,7 @@ def card_data(url, img_src, title, description):
     return f"""
     <html>
         <head>
+            <meta charset="utf-8">
             <meta property="og:url"                content="https://{url}" />
             <meta property="og:type"               content="website" />
             <meta property="og:title"              content="{title}" />
