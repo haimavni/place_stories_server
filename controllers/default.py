@@ -424,7 +424,7 @@ def notify_new_feedback():
 def create_fb_card(vars):
     img_src = vars.img_src
     r = img_src.find('/padded_images')
-    src = img_src[r:]
+    src = img_src[r+1:]
     path = url_folder('cards')
     img_src = path + f'{src}'
     content = create_card.card_data(vars.url, img_src, vars.title, vars.description)
