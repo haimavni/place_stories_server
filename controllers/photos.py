@@ -1,4 +1,5 @@
 from distutils import dir_util
+from folders import local_folder
 from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, \
      save_uploaded_photo, rotate_photo, save_member_face, save_article_face, create_zip_file, get_photo_pairs, find_similar_photos, \
      timestamped_photo_path, crop_a_photo, save_padded_photo, save_qr_photo
@@ -920,22 +921,22 @@ def get_padded_photo_url(vars):
     photo_id = int(vars.photo_id)
     r = photo_url.rfind('.')
     ext = photo_url[r:]
-    app = request.application
-    app_area = app.split('__')[0]
     photo_rec = db(db.TblPhotos.id==photo_id).select().first()
     if photo_rec:
         crc = photo_rec.crc
     else:
         raise Exception(f"url: {photo_url} / id: {photo_id} - photo not found!")
     file_name = f'{crc & 0xffffffff:x}{ext}'
-    folder = f'/apps_data/{app_area}/cards/padded_images/'
-    dir_util.mkpath(folder)
-    target_photo_path = folder + file_name
-    r = photo_url.find('/apps_data')
-    photo_path = photo_url[r:]
-    r = photo_path.rfind("?")
-    if r > 0:
-        photo_path = photo_path[:r]
+    cards_folder = local_folder('cards') + 'padded_images/'
+    dir_util.mkpath(cards_folder)
+    target_photo_path = cards_folder + file_name
+    # r = photo_url.find('/apps_data')
+    # photo_path = photo_url[r:]
+    # r = photo_path.rfind("?")
+    # if r > 0:
+    #     photo_path = photo_path[:r]
+    photo_path = local_folder('photos') + photo_rec.photo_path
+    comment(f'photo path: ', photo_path, ' target photo path: ', target_photo_path)
     padded_photo_url = save_padded_photo(photo_path, target_photo_path)
     return dict(padded_photo_url=padded_photo_url)
 
