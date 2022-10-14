@@ -17,7 +17,7 @@ def url_folder(kind):
 def local_folder(kind):
     request = inject('request')
     app = request.application.split('__')[0]  ## we want gbs__dev, gbs__test etc. all to use the same data
-    path = '/apps_data/{app}/{kind}/'.format(app=app, kind=kind)
+    path = f'/apps_data/{app}/{kind}/'
     if platform != 'linux':
         return path
     curr_uid = os.geteuid()

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # this file is released under public domain and you can use without limitations
 
+from modules.folders import local_folder
 from ws_messaging import send_message, messaging_group
 from admin_support import AccessManager
 from send_email import email
@@ -426,14 +427,15 @@ def create_fb_card(vars):
     src = img_src[r:]
     app = request.application
     host = request.env.http_host
-    img_src = f'https://{host}/{app}/static/apps_data/social_cards{src}'
+    img_src = f'/{app}/static/apps_data/{app}/cards/photos{src}'
     # img_src = img_src.replace('http:', 'https:')
     content = create_card.card_data(vars.url, img_src, vars.title, vars.description)
     fname = create_key()
-    with open("/apps_data/social_cards/" + fname + ".html", "w", encoding="utf-8") as f:
+    folder = local_folder('cards')
+    with open(f"{folder}" + fname + ".html", "w", encoding="utf-8") as f:
         f.write(content)
     ### does not work return dict(card_url=f"{host}/{app}/static/apps_data/social_cards/{fname}.html")
-    return dict(card_url=f"cards.{host}/{fname}.html")
+    return dict(card_url=f"https://{host}/{app}/static/apps_data/{app}/cards/{fname}.html")
 
 @serve_json
 def create_qrcode(vars):
