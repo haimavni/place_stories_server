@@ -939,22 +939,14 @@ def resize_with_pad(im, target_width, target_height, color=(255,255,255,255)):
 def save_padded_photo(photo_path, target_photo_path, target_width=800, target_height=420, color=(224,224,224,255)):
     request = inject('request')
     app = request.application
-    app_area = app.split('__')[0]
     host = request.env.http_host
     im = Image.open(photo_path)
     padded = resize_with_pad(im, target_width, target_height, color)
-    # if not name:
-    #     r = photo_path.rfind('/')
-    #     name = photo_path[r+1:]
-    # folder_path = local_folder('padded_photos')
-    # path = folder_path + name
-    # padded.save(path, quality=100)
     padded.save(target_photo_path, quality=90)
     r = target_photo_path.rfind('/')
     file_name = target_photo_path[r:]
-    # url = f'http://cards.tol.life/padded_images{file_name}'
-    url = f'https://{host}/{app}/static/apps_data/{app}/cards/padded_images/{file_name}'
-    #return url_folder('padded_photos') + name
+    url = url_folder('cards') + f'padded_images/{file_name}'
+    ###url = f'https://{host}/{app}/static/apps_data/{app}/cards/padded_images/{file_name}'
     return url
 
 def get_padded_photo_url(photo_id):
