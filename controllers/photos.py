@@ -1,5 +1,5 @@
 from distutils import dir_util
-from folders import local_folder
+from folders import local_folder, photos_folder
 from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, \
      save_uploaded_photo, rotate_photo, save_member_face, save_article_face, create_zip_file, get_photo_pairs, find_similar_photos, \
      timestamped_photo_path, crop_a_photo, save_padded_photo, save_qr_photo
@@ -935,7 +935,7 @@ def get_padded_photo_url(vars):
     # r = photo_path.rfind("?")
     # if r > 0:
     #     photo_path = photo_path[:r]
-    photo_path = local_folder('photos') + photo_rec.photo_path
+    photo_path = photos_folder('orig') + photo_rec.photo_path
     comment(f'photo path: ', photo_path, ' target photo path: ', target_photo_path)
     padded_photo_url = save_padded_photo(photo_path, target_photo_path)
     return dict(padded_photo_url=padded_photo_url)
