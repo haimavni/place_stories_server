@@ -953,7 +953,7 @@ def save_padded_photo(photo_path, target_photo_path, target_width=800, target_he
     r = target_photo_path.rfind('/')
     file_name = target_photo_path[r:]
     # url = f'http://cards.tol.life/padded_images{file_name}'
-    url = f'https://{host}/{app}/static/apps_data/{app_area}/cards/padded_images/{file_name}'
+    url = f'https://{host}/{app}/static/apps_data/{app}/cards/padded_images/{file_name}'
     #return url_folder('padded_photos') + name
     return url
 
