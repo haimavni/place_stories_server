@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # this file is released under public domain and you can use without limitations
 
-from modules.folders import local_folder
+from folders import local_folder
 from ws_messaging import send_message, messaging_group
 from admin_support import AccessManager
 from send_email import email
