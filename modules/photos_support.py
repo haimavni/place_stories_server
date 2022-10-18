@@ -942,7 +942,7 @@ def save_padded_photo(photo_path, target_photo_path, target_width=1200, target_h
     padded.save(target_photo_path, quality=90)
     r = target_photo_path.rfind('/')
     file_name = target_photo_path[r+1:]
-    url = 'http://' + url_cards_folder() + f'padded_images/{file_name}'
+    url = 'https://' + url_cards_folder() + f'padded_images/{file_name}'
     comment = inject('comment')
     comment(f"save padded photo url {url}")
     return url
