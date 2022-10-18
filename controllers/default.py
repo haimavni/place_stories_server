@@ -422,7 +422,7 @@ def notify_new_feedback():
     email(receivers=receivers, subject='New Stories Feedback', message=message)
 
 @serve_json
-def create_fb_card(vars):
+def make_fb_card(vars):
     comment("entered create fb card---------------")
     app = request.application
     host = request.env.http_host
