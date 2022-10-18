@@ -943,16 +943,12 @@ def save_padded_photo(photo_path, target_photo_path, target_width=1200, target_h
     r = target_photo_path.rfind('/')
     file_name = target_photo_path[r+1:]
     url = 'https://' + url_cards_folder() + f'padded_images/{file_name}'
-    comment = inject('comment')
-    comment(f"save padded photo url {url}")
     return url
 
 def get_padded_photo_url(photo_id):
     db, request = inject('db', 'request')
     app = request.application
     app_area = app.split('__')[0]
-    # r = photo_url.rfind('.')
-    # ext = photo_url[r:]
     photo_rec = db(db.TblPhotos.id==photo_id).select().first()
     if not photo_rec:
         raise Exception(f"photo_id: {photo_id} - photo not found!")

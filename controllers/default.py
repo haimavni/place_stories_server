@@ -423,13 +423,11 @@ def notify_new_feedback():
 
 @serve_json
 def make_fb_card(vars):
-    comment("entered create fb card---------------")
     app = request.application
     host = request.env.http_host
     img_src = vars.img_src
     r = img_src.rfind('/')
     img_name = img_src[r+1:]
-    comment(f"vars.img_src: {vars.img_src }================= src is {img_name}")
     img_src = url_cards_folder() + f'padded_images/{img_name}'
     fname = create_key()
     card_url = f'https://cards.{host}/{app}/{fname}.html'

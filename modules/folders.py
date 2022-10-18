@@ -7,7 +7,7 @@ if platform == 'linux':
 
 
 def url_folder(kind):
-    request, comment = inject('request', 'comment')
+    request = inject('request')
     app = request.application
     app1 = app.split('__')[0]  # we want dev, test and www apps share the same photos
     h = 'https' if request.is_https else 'http'
