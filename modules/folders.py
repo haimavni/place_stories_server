@@ -37,8 +37,7 @@ def url_cards_folder():
     request = inject('request')
     app = request.application
     host = request.env.http_host
-    result = f'http://cards.{host}/{app}'
-
+    return f'http://cards.{host}/{app}'
 
 def system_folder():
     path = '/apps_data/system_data/'
