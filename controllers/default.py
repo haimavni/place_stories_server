@@ -428,7 +428,7 @@ def create_fb_card(vars):
     img_src = vars.img_src
     r = img_src.rfind('/')
     src = img_src[r+1:]
-    comment(f"src is ", src)
+    comment(f"vars.img_src: {vars.img_src }================= src is {src}")
     img_src = url_cards_folder() + f'padded_images{src}'
     card_url = f'http://cards.{host}/{app}/{fname}'
     content = create_card.card_data(vars.url, img_src, vars.title, vars.description)
