@@ -1,5 +1,5 @@
 from distutils import dir_util
-from folders import local_folder, photos_folder
+from folders import local_folder, local_cards_folder, photos_folder
 from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, \
      save_uploaded_photo, rotate_photo, save_member_face, save_article_face, create_zip_file, get_photo_pairs, find_similar_photos, \
      timestamped_photo_path, crop_a_photo, save_padded_photo, save_qr_photo
@@ -926,7 +926,7 @@ def get_padded_photo_url(vars):
     r = photo_rec.photo_path.rfind('.')
     ext = photo_rec.photo_path[r:]
     file_name = f'{crc & 0xffffffff:x}{ext}'
-    cards_folder = local_folder('cards') + 'padded_images/'
+    cards_folder = local_cards_folder() + 'padded_images/'
     dir_util.mkpath(cards_folder)
     target_photo_path = cards_folder + file_name
     photo_path = local_photos_folder('orig') + photo_rec.photo_path

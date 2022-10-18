@@ -942,7 +942,7 @@ def save_padded_photo(photo_path, target_photo_path, target_width=1200, target_h
     padded.save(target_photo_path, quality=90)
     r = target_photo_path.rfind('/')
     file_name = target_photo_path[r:]
-    url = url_folder('cards') + f'padded_images{file_name}'
+    url = url_cards_folder('cards') + f'padded_images/{file_name}'
     return url
 
 def get_padded_photo_url(photo_id):
@@ -959,7 +959,7 @@ def get_padded_photo_url(photo_id):
     ext = photo_path[r:]
     crc = photo_rec.crc
     file_name = f'{crc & 0xffffffff:x}{ext}'
-    path = f'/apps_data/{app_area}/cards/padded_images/'
+    path = local_cards_folder() + 'padded_images/'
     dir_util.mkpath(path)
     target_photo_path = path + file_name
     # r = photo_url.find('/apps_data')

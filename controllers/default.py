@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # this file is released under public domain and you can use without limitations
 
-from folders import local_folder, url_folder
+from folders import local_folder, local_cards_folder, url_folder
 from ws_messaging import send_message, messaging_group
 from admin_support import AccessManager
 from send_email import email
@@ -422,17 +422,19 @@ def notify_new_feedback():
 
 @serve_json
 def create_fb_card(vars):
+    app = request.application
+    host = request.env.http_host
     img_src = vars.img_src
     r = img_src.find('/padded_images')
     src = img_src[r+1:]
-    path = url_folder('cards')
-    img_src = path + f'{src}'
+    img_src = f'cards.{host}/{app}/{src}'
+    card_url = f'http://cards.{host}/{app}/{fname}'
     content = create_card.card_data(vars.url, img_src, vars.title, vars.description)
     fname = create_key()
-    folder = local_folder('cards')
+    folder = local_cards_folder()
     with open(f"{folder}" + fname + ".html", "w", encoding="utf-8") as f:
         f.write(content)
-    return dict(card_url=f"{path}{fname}.html")
+    return dict(card_url=card_url)
 
 @serve_json
 def create_qrcode(vars):

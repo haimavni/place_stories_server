@@ -27,6 +27,18 @@ def local_folder(kind):
         os.chown(path, uid, uid)
     return path
 
+def local_cards_folder():
+    request = inject('request')
+    app = request.application
+    path = f'/apps_data/cards/{app}/'
+    return path
+
+def url_cards_folder():
+    request = inject('request')
+    app = request.application
+    host = request.env.http_host
+    result = f'http://cards.{host}/{app}'
+
 
 def system_folder():
     path = '/apps_data/system_data/'
