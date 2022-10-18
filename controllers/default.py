@@ -432,7 +432,7 @@ def make_fb_card(vars):
     comment(f"vars.img_src: {vars.img_src }================= src is {img_name}")
     img_src = url_cards_folder() + f'padded_images/{img_name}'
     fname = create_key()
-    card_url = f'https://cards.{host}/{app}/{fname}'
+    card_url = f'https://cards.{host}/{app}/{fname}.html'
     content = create_card.card_data(vars.url, img_src, vars.title, vars.description)
     folder = local_cards_folder()
     with open(f"{folder}" + fname + ".html", "w", encoding="utf-8") as f:
