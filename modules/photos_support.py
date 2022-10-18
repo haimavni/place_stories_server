@@ -943,6 +943,8 @@ def save_padded_photo(photo_path, target_photo_path, target_width=1200, target_h
     r = target_photo_path.rfind('/')
     file_name = target_photo_path[r:]
     url = 'http://' + url_cards_folder() + f'padded_images/{file_name}'
+    comment = inject('comment')
+    comment(f"save padded photo url {url}")
     return url
 
 def get_padded_photo_url(photo_id):
@@ -962,11 +964,6 @@ def get_padded_photo_url(photo_id):
     path = local_cards_folder() + 'padded_images/'
     dir_util.mkpath(path)
     target_photo_path = path + file_name
-    # r = photo_url.find('/apps_data')
-    # photo_path = photo_url[r:]
-    r = photo_path.rfind("?")
-    if r > 0:
-        photo_path = photo_path[:r]
     padded_photo_url = save_padded_photo(photo_path, target_photo_path)
     return padded_photo_url
 
