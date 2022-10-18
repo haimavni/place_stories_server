@@ -426,7 +426,7 @@ def create_fb_card(vars):
     app = request.application
     host = request.env.http_host
     img_src = vars.img_src
-    r = img_src.find('/padded_images')
+    r = img_src.rfind('/')
     src = img_src[r+1:]
     img_src = url_cards_folder() + f'padded_images/{src}'
     card_url = f'http://cards.{host}/{app}/{fname}'
