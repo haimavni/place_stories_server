@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # this file is released under public domain and you can use without limitations
 
+from folders import local_folder, local_cards_folder, url_folder
+from folders import url_cards_folder
 from ws_messaging import send_message, messaging_group
 from admin_support import AccessManager
 from send_email import email
@@ -36,6 +38,7 @@ def index():
     fname1 = f'{app}/static/aurelia/index-{app}.html'
     if os.path.isfile('./applications/' + fname1):
         fname = '/' + fname1
+    fname = f'/{app}/aurelia'
     redirect(f"{fname}")
 
 def user():
@@ -419,20 +422,20 @@ def notify_new_feedback():
     email(receivers=receivers, subject='New Stories Feedback', message=message)
 
 @serve_json
-def create_fb_card(vars):
-    img_src = vars.img_src
-    r = img_src.find('/padded_images')
-    src = img_src[r:]
+def make_fb_card(vars):
     app = request.application
     host = request.env.http_host
-    img_src = f'https://{host}/{app}/static/apps_data/social_cards{src}'
-    # img_src = img_src.replace('http:', 'https:')
-    content = create_card.card_data(vars.url, img_src, vars.title, vars.description)
+    img_src = vars.img_src
+    r = img_src.rfind('/')
+    img_name = img_src[r+1:]
+    img_src = url_cards_folder() + f'padded_images/{img_name}'
     fname = create_key()
-    with open("/apps_data/social_cards/" + fname + ".html", "w", encoding="utf-8") as f:
+    card_url = f'https://cards.{host}/{app}/{fname}.html'
+    content = create_card.card_data(vars.url, img_src, vars.title, vars.description)
+    folder = local_cards_folder()
+    with open(f"{folder}" + fname + ".html", "w", encoding="utf-8") as f:
         f.write(content)
-    ### does not work return dict(card_url=f"{host}/{app}/static/apps_data/social_cards/{fname}.html")
-    return dict(card_url=f"cards.{host}/{fname}.html")
+    return dict(card_url=card_url)
 
 @serve_json
 def create_qrcode(vars):

@@ -936,30 +936,19 @@ def resize_with_pad(im, target_width, target_height, color=(255,255,255,255)):
     return background.convert('RGB')
 
 
-def save_padded_photo(photo_path, target_photo_path, target_width=800, target_height=420, color=(224,224,224,255)):
-    request = inject('request')
-    app = request.application
-    host = request.env.http_host
+def save_padded_photo(photo_path, target_photo_path, target_width=1200, target_height=630, color=(224,224,224,255)):
     im = Image.open(photo_path)
     padded = resize_with_pad(im, target_width, target_height, color)
-    # if not name:
-    #     r = photo_path.rfind('/')
-    #     name = photo_path[r+1:]
-    # folder_path = local_folder('padded_photos')
-    # path = folder_path + name
-    # padded.save(path, quality=100)
     padded.save(target_photo_path, quality=90)
     r = target_photo_path.rfind('/')
-    file_name = target_photo_path[r:]
-    # url = f'http://cards.tol.life/padded_images{file_name}'
-    url = f'https://{host}/{app}/static/apps_data/social_cards/padded_images/{file_name}'
-    #return url_folder('padded_photos') + name
+    file_name = target_photo_path[r+1:]
+    url = 'https://' + url_cards_folder() + f'padded_images/{file_name}'
     return url
 
 def get_padded_photo_url(photo_id):
-    db = inject('db')
-    # r = photo_url.rfind('.')
-    # ext = photo_url[r:]
+    db, request = inject('db', 'request')
+    app = request.application
+    app_area = app.split('__')[0]
     photo_rec = db(db.TblPhotos.id==photo_id).select().first()
     if not photo_rec:
         raise Exception(f"photo_id: {photo_id} - photo not found!")
@@ -968,12 +957,9 @@ def get_padded_photo_url(photo_id):
     ext = photo_path[r:]
     crc = photo_rec.crc
     file_name = f'{crc & 0xffffffff:x}{ext}'
-    target_photo_path = '/apps_data/social_cards/padded_images/' + file_name
-    # r = photo_url.find('/apps_data')
-    # photo_path = photo_url[r:]
-    r = photo_path.rfind("?")
-    if r > 0:
-        photo_path = photo_path[:r]
+    path = local_cards_folder() + 'padded_images/'
+    dir_util.mkpath(path)
+    target_photo_path = path + file_name
     padded_photo_url = save_padded_photo(photo_path, target_photo_path)
     return padded_photo_url
 

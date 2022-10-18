@@ -1,3 +1,5 @@
+from distutils import dir_util
+from folders import local_folder, local_cards_folder, photos_folder
 from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, \
      save_uploaded_photo, rotate_photo, save_member_face, save_article_face, create_zip_file, get_photo_pairs, find_similar_photos, \
      timestamped_photo_path, crop_a_photo, save_padded_photo, save_qr_photo
@@ -915,22 +917,20 @@ def set_cover_photo(vars):
 
 @serve_json
 def get_padded_photo_url(vars):
-    photo_url = vars.photo_url
+    #todo: duplicates code in photos suport
     photo_id = int(vars.photo_id)
-    r = photo_url.rfind('.')
-    ext = photo_url[r:]
     photo_rec = db(db.TblPhotos.id==photo_id).select().first()
     if photo_rec:
         crc = photo_rec.crc
     else:
-        raise Exception(f"url: {photo_url} / id: {photo_id} - photo not found!")
+        raise Exception(f"photo id: {photo_id} - photo not found!")
+    r = photo_rec.photo_path.rfind('.')
+    ext = photo_rec.photo_path[r:]
     file_name = f'{crc & 0xffffffff:x}{ext}'
-    target_photo_path = '/apps_data/social_cards/padded_images/' + file_name
-    r = photo_url.find('/apps_data')
-    photo_path = photo_url[r:]
-    r = photo_path.rfind("?")
-    if r > 0:
-        photo_path = photo_path[:r]
+    cards_folder = local_cards_folder() + 'padded_images/'
+    dir_util.mkpath(cards_folder)
+    target_photo_path = cards_folder + file_name
+    photo_path = local_photos_folder('orig') + photo_rec.photo_path
     padded_photo_url = save_padded_photo(photo_path, target_photo_path)
     return dict(padded_photo_url=padded_photo_url)
 

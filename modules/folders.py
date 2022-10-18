@@ -7,7 +7,7 @@ if platform == 'linux':
 
 
 def url_folder(kind):
-    request, comment = inject('request', 'comment')
+    request = inject('request')
     app = request.application
     app1 = app.split('__')[0]  # we want dev, test and www apps share the same photos
     h = 'https' if request.is_https else 'http'
@@ -17,7 +17,7 @@ def url_folder(kind):
 def local_folder(kind):
     request = inject('request')
     app = request.application.split('__')[0]  ## we want gbs__dev, gbs__test etc. all to use the same data
-    path = '/apps_data/{app}/{kind}/'.format(app=app, kind=kind)
+    path = f'/apps_data/{app}/{kind}/'
     if platform != 'linux':
         return path
     curr_uid = os.geteuid()
@@ -27,6 +27,17 @@ def local_folder(kind):
         os.chown(path, uid, uid)
     return path
 
+def local_cards_folder():
+    request = inject('request')
+    app = request.application
+    path = f'/apps_data/cards/{app}/'
+    return path
+
+def url_cards_folder():
+    request = inject('request')
+    app = request.application
+    host = request.env.http_host
+    return f'cards.{host}/{app}/'
 
 def system_folder():
     path = '/apps_data/system_data/'
