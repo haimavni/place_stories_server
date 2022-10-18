@@ -917,6 +917,7 @@ def set_cover_photo(vars):
 
 @serve_json
 def get_padded_photo_url(vars):
+    #todo: duplicates code in photos suport
     photo_id = int(vars.photo_id)
     photo_rec = db(db.TblPhotos.id==photo_id).select().first()
     if photo_rec:

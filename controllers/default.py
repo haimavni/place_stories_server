@@ -423,6 +423,7 @@ def notify_new_feedback():
 
 @serve_json
 def create_fb_card(vars):
+    comment("entered create fb card---------------")
     app = request.application
     host = request.env.http_host
     img_src = vars.img_src
