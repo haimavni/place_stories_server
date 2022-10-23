@@ -536,7 +536,7 @@ def get_message_list(vars):
                         timestamp=rec.TblStories.last_update_date,
                         pinned=p,
                         author=rec.auth_user.first_name + ' ' + rec.auth_user.last_name) for rec in lst]
-    return dict(message_list=result)
+    return dict(message_list=result[1:])
 
 
 @serve_json
