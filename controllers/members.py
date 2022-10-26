@@ -42,7 +42,8 @@ def create_parent(vars):
         db(db.TblMembers.id == child_id).update(father_id=parent_id)
     else:
         db(db.TblMembers.id == child_id).update(mother_id=parent_id)
-
+    member_rec = get_member_rec(parent_id)
+    ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL', member_rec=member_rec, new_member=True)
     return dict(member_id=parent_id, member=rec)
 
 

@@ -1,6 +1,7 @@
 '''
 This controller supports user-generated queries into the db.
-Fields for which specific attributes are defined can be used.Only these attributes are used in order to generate the UI
+Fields for which specific attributes are defined can be used.
+Only these attributes are used in order to generate the UI
 and usage of the queries
 '''
 
