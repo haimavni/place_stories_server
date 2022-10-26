@@ -505,7 +505,8 @@ db.define_table('TblConfiguration',
                 Field('exclusive', type='boolean'),
                 Field('enable_cuepoints', type='boolean', default=False),
                 Field('allow_publishing', type='boolean', default=False),
-                Field('expose_gallery', type='boolean', default=False)
+                Field('expose_gallery', type='boolean', default=False),
+                Field('short_bio_title', type='boolean', default=False)
                 )
 
 db.define_table('TblLocaleCustomizations',

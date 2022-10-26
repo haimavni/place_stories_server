@@ -241,6 +241,16 @@ def set_expose_gallery_option(vars):
     return dict()
 
 @serve_json
+def short_bio_title_option(vars):
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    short_bio_title_on = vars.option == 'user.short-bio-title-on'
+    config_rec.update_record(short_bio_title=short_bio_title_on)
+    return dict()
+
+@serve_json
 def set_quick_upload_option(vars):
     config_rec = get_config_rec()
     quick_upload_on = vars.option == 'user.quick-upload-on'

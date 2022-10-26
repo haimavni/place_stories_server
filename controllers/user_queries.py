@@ -18,3 +18,18 @@ def available_fields(vars):
         )
         field_list.append(rec)
     return dict(field_list=field_list)
+
+def make_query(vars):
+    field = db[vars.table_name][vars.field_name]
+    q = None
+    if vars.values:
+        return (field.belongs(vars.values))
+    if vars.min:
+        q = (field >= vars.min)
+    if vars.max:
+        if q:
+            q &= (field < vars.max)
+        else:
+            q = (field < vars.max)
+    if q:
+        return q
