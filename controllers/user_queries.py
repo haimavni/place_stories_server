@@ -19,17 +19,33 @@ def available_fields(vars):
         field_list.append(rec)
     return dict(field_list=field_list)
 
-def make_query(vars):
-    field = db[vars.table_name][vars.field_name]
-    q = None
-    if vars.values:
-        return (field.belongs(vars.values))
-    if vars.min:
-        q = (field >= vars.min)
-    if vars.max:
-        if q:
-            q &= (field < vars.max)
+@serve_json
+def do_query(vars):
+    table_name = table_name
+    query = None
+    for fld in vars.fields:
+        q = make_query(table_name, fld.field_name, fld.op, fld.value)
+        if query:
+            query &= q
         else:
-            q = (field < vars.max)
-    if q:
-        return q
+            query = q
+    lst = db(query).select()
+    lst = [rec.id for rec in lst]
+    return dict(selected_ids=lst)
+
+def make_query(table_name, field_name, op=None, value=None):
+    field = db[table_name][field_name]
+    if isinstance(value, list):
+        return (field.belongs(value))
+    # todo: use match once in python 3.10 or later
+    if op == "==":
+        return field == value
+    if op == "<":
+        return field < value
+    if op == "<=":
+        return field <= value
+    if op == ">":
+        return field > value
+    if op == ">=":
+        return field >= value
+    raise Exception(f"Unknown operator {op}")
