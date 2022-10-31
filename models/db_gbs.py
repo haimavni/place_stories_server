@@ -235,7 +235,7 @@ db.define_table('TblMembers',
                 Field('date_of_member_dateend', type='date', default=NO_DATE),
                 Field('Education', type='string'),
                 Field('FormerName', type='string'),
-                Field('gender', type='string'), #F, M and also FM and MF for transgenders...
+                Field('gender', type='string', description='gender', values=dict(male='M', female='F')), #F, M and also FM and MF for transgenders...
                 Field('IIDD', type='integer'),
                 Field('father_id', type='integer'), #all family relations can be derived from these 2 fields.
                 Field('mother_id', type='integer'), #virtual child can define childless married couple etc. 
