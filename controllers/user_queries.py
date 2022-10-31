@@ -15,8 +15,9 @@ def available_fields(vars):
         if not hasattr(field, 'description'):
             continue
         rec = dict(
-            type = field.type,
-            description = field.description
+            name=field.name,
+            type=field.type,
+            description=field.description
         )
         if hasattr(field, 'values'):
             rec['values'] = field.values
