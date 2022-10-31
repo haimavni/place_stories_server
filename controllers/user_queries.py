@@ -9,14 +9,17 @@ and usage of the queries
 def available_fields(vars):
     table = db[vars.table_name]
     field_list = []
-    for fld in table.fields():
-        comment(f"fld: {fld.name}")
-        if not hasattr(fld, 'description'):
+    field_names = table.fields()
+    for field_name in field_names:
+        field = table[field_name]
+        if not hasattr(field, 'description'):
             continue
         rec = dict(
-            type = fld.type,
-            description = fld.description
+            type = field.type,
+            description = field.description
         )
+        if hasattr(field, 'values'):
+            rec['values'] = field.values
         field_list.append(rec)
     return dict(field_list=field_list)
 
