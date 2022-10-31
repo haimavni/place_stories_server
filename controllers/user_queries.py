@@ -7,7 +7,7 @@ and usage of the queries
 
 @serve_json
 def available_fields(vars):
-    table = db[vars.table]
+    table = db[vars.table_name]
     field_list = []
     for fld in table.fields():
         if not hasattr(fld, 'description'):
