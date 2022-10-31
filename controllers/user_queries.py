@@ -13,7 +13,7 @@ def available_fields(vars):
         if not hasattr(fld, 'description'):
             continue
         rec = dict(
-            type = fld.type
+            type = fld.type,
             description = fld.description
         )
         field_list.append(rec)
