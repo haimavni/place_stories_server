@@ -10,6 +10,7 @@ def available_fields(vars):
     table = db[vars.table_name]
     field_list = []
     for fld in table.fields():
+        comment(f"fld: {fld.name}")
         if not hasattr(fld, 'description'):
             continue
         rec = dict(
@@ -21,7 +22,7 @@ def available_fields(vars):
 
 @serve_json
 def do_query(vars):
-    table_name = table_name
+    table_name = vars.table_name
     query = None
     for fld in vars.fields:
         q = make_query(table_name, fld.field_name, fld.op, fld.value)
