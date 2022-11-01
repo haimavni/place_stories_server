@@ -4,6 +4,7 @@ Fields for which specific attributes are defined can be used.
 Only these attributes are used in order to generate the UI
 and usage of the queries
 '''
+from date_utils import parse_date
 
 @serve_json
 def available_fields(vars):
@@ -43,6 +44,8 @@ def make_query(table_name, field_name, op=None, value=None):
     if isinstance(value, list):
         return (field.belongs(value))
     # todo: use match once in python 3.10 or later
+    if field.type == 'date':
+        date_unit, value = parse_date(value)
     if op == "==":
         return field == value
     if op == "<":
