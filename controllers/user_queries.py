@@ -6,9 +6,9 @@ and usage of the queries
 '''
 from date_utils import parse_date
 
-def comment(s):
-    with open('/apps_data/gbs/logs/comments.log', 'a', encoding='utf-8') as f:
-        f.write(str(s) + '\n')
+# def comment(s):
+#     with open('/apps_data/gbs/logs/comments.log', 'a', encoding='utf-8') as f:
+#         f.write(str(s) + '\n')
 
 @serve_json
 def available_fields(vars):
