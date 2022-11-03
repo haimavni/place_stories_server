@@ -38,6 +38,9 @@ def do_query(vars):
     fields = vars.fields
     keys = vars.keys()
     comment(str(keys))
+    comment(f"len of fields: {len(fields)}")
+    f0 = str(fields[0])
+    comment(f"f0: {f0}")
     query = None
     for fld in fields:
         q = make_query(table_name, fld.field_name, fld.op, fld.value)
