@@ -31,12 +31,10 @@ def available_fields(vars):
 
 @serve_json
 def do_query(vars):
-    drek = vars.__class__
+    drek = str(vars.__class__)
     comment(f"drek: {drek}")
     table_name = vars.table_name
     fields = vars.fields
-    cl = fields.__class__
-    comment(cl)
     query = None
     for fld in fields:
         q = make_query(table_name, fld.field_name, fld.op, fld.value)
