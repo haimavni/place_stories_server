@@ -11,9 +11,7 @@ class User_Error(Exception): #todo: the "_" is because of soon obsolete code. re
 def serve_json(func):
 
     def f():
-        t0 = datetime.datetime.now()
         s = request.body.read()
-        comment(f"argument: {s}")
         if len(s) > 0:
             y = json.loads(s)
             vars = json_to_storage(y)
