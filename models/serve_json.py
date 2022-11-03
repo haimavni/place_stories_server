@@ -11,6 +11,7 @@ class User_Error(Exception): #todo: the "_" is because of soon obsolete code. re
 def serve_json(func):
 
     def f():
+        comment(f"request.function: {request.function} {len(vars)} vars")
         s = request.body.read()
         if len(s) > 0:
             comment("non empty body")
@@ -18,7 +19,6 @@ def serve_json(func):
             vars = json_to_storage(y)
         else:
             vars = request.vars
-            comment(f"request.function: {request.function} {len(vars)} vars")
         for k in vars:
             s = vars[k]
             comment(f"k is {k}, s is {s}")
