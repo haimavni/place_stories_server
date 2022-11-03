@@ -35,23 +35,29 @@ def do_query(vars):
             query &= q
         else:
             query = q
+    if vars.negative:
+        query = ~query
     lst = db(query).select()
     lst = [rec.id for rec in lst]
+    lst = sorted(lst)
     return dict(selected_ids=lst)
 
 def make_query(table_name, field_name, op=None, value=None):
+    comment(f"table name: {table_name}, field_name: {field_name}")
     field = db[table_name][field_name]
     if isinstance(value, list):
         return (field.belongs(value))
     # todo: use match once in python 3.10 or later
     if field.type == 'date':
         date_unit, value = parse_date(value)
-    if op == "==":
-        return field == value
     if op == "<":
         return field < value
     if op == "<=":
         return field <= value
+    if op == "==":
+        return field == value
+    if op == "!=":
+        return field != value
     if op == ">":
         return field > value
     if op == ">=":
