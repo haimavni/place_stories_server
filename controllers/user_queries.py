@@ -36,6 +36,8 @@ def do_query(vars):
     table_name = vars.table_name
     comment(f"table name: {table_name}")
     fields = vars.fields
+    keys = vars.keys()
+    comment(str(keys))
     query = None
     for fld in fields:
         q = make_query(table_name, fld.field_name, fld.op, fld.value)
