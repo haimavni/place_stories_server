@@ -27,13 +27,14 @@ def available_fields(vars):
 
 @serve_json
 def do_query(vars):
+    drek = vars.__class__
+    comment(f"drek: {drek}")
     table_name = vars.table_name
+    fields = vars.fields
+    cl = fields.__class__
+    comment(cl)
     query = None
-    #comment(f"fields: {vars.fields}")
-    s = str(vars)
-    comment("in do query")
-    comment(s)
-    for fld in vars.fields:
+    for fld in fields:
         q = make_query(table_name, fld.field_name, fld.op, fld.value)
         if query:
             query &= q
