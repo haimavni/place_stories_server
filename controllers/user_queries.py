@@ -31,16 +31,8 @@ def available_fields(vars):
 
 @serve_json
 def do_query(vars):
-    drek = str(vars.__class__)
-    comment(f"drek: {drek}")
     table_name = vars.table_name
-    comment(f"table name: {table_name}")
     fields = vars.fields
-    keys = vars.keys()
-    comment(str(keys))
-    comment(f"len of fields: {len(fields)}")
-    f0 = str(fields[0])
-    comment(f"f0: {f0}")
     query = None
     for fld in fields:
         q = make_query(table_name, fld.field_name, fld.op, fld.value)
@@ -56,7 +48,6 @@ def do_query(vars):
     return dict(selected_ids=lst)
 
 def make_query(table_name, field_name, op=None, value=None):
-    comment(f"table name: {table_name} field_name: {field_name}")
     field = db[table_name][field_name]
     if isinstance(value, list):
         return (field.belongs(value))
