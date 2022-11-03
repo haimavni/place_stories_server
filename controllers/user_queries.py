@@ -29,6 +29,7 @@ def available_fields(vars):
 def do_query(vars):
     table_name = vars.table_name
     query = None
+    comment(f"fields: {vars.fields}, vars: {vars}")
     for fld in vars.fields:
         q = make_query(table_name, fld.field_name, fld.op, fld.value)
         if query:
