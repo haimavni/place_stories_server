@@ -6,7 +6,7 @@ def error_link(err_code):
     err_url = f'/admin/default/ticket/{app}/{err_code}'
     return err_url
 
-def show_error_list():
+def index():
     app = request.application
     dir = f'applications/{app}/errors'
     err_list = os.listdir(dir)
