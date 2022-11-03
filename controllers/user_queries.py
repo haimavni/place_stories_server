@@ -8,7 +8,7 @@ from date_utils import parse_date
 
 def comment(s):
     with open('/apps_data/gbs/logs/comments.log', 'a', encoding='utf-8') as f:
-        f.write(s)
+        f.write(str(s))
 
 @serve_json
 def available_fields(vars):
