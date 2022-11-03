@@ -8,7 +8,7 @@ from date_utils import parse_date
 
 def comment(s):
     with open('/apps_data/gbs/logs/comments.log', 'a', encoding='utf-8') as f:
-        f.write(str(s))
+        f.write(str(s) + '\n')
 
 @serve_json
 def available_fields(vars):
@@ -34,6 +34,7 @@ def do_query(vars):
     drek = str(vars.__class__)
     comment(f"drek: {drek}")
     table_name = vars.table_name
+    comment(f"table name: {table_name}")
     fields = vars.fields
     query = None
     for fld in fields:
