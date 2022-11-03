@@ -29,7 +29,10 @@ def available_fields(vars):
 def do_query(vars):
     table_name = vars.table_name
     query = None
-    comment(f"fields: {vars.fields}")
+    #comment(f"fields: {vars.fields}")
+    s = str(vars)
+    comment("in do query")
+    comment(s)
     for fld in vars.fields:
         q = make_query(table_name, fld.field_name, fld.op, fld.value)
         if query:
@@ -44,7 +47,7 @@ def do_query(vars):
     return dict(selected_ids=lst)
 
 def make_query(table_name, field_name, op=None, value=None):
-    comment(f"table name: {table_name}, field_name: {field_name}")
+    comment(f"table name: {table_name} field_name: {field_name}")
     field = db[table_name][field_name]
     if isinstance(value, list):
         return (field.belongs(value))
