@@ -11,7 +11,7 @@ class User_Error(Exception): #todo: the "_" is because of soon obsolete code. re
 def serve_json(func):
 
     def f():
-        comment(f"request.function: {request.function} {len(vars)} vars")
+        comment(f"request.function: {request.function} {len(request.vars)} request.vars")
         s = request.body.read()
         if len(s) > 0:
             comment("non empty body")
