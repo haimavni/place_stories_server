@@ -19,6 +19,7 @@ def serve_json(func):
             vars = request.vars
         for k in vars:
             s = vars[k]
+            comment(f"k is {k}, s is {s}")
             if isinstance(s, str) and (s.startswith('{') or s.startswith('[')):
                 vars[k] = json.loads(s)
         vars = json_to_storage(vars)
