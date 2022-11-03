@@ -6,6 +6,10 @@ and usage of the queries
 '''
 from date_utils import parse_date
 
+def comment(s):
+    with open('/apps_data/gbs/logs/comments.log', 'aw', encoding='utf-8') as f:
+        f.write(s)
+
 @serve_json
 def available_fields(vars):
     table = db[vars.table_name]
