@@ -13,10 +13,12 @@ def serve_json(func):
     def f():
         s = request.body.read()
         if len(s) > 0:
+            comment("non empty body")
             y = json.loads(s)
             vars = json_to_storage(y)
         else:
             vars = request.vars
+            comment(f"request.function: {request.function} {len(vars)} vars")
         for k in vars:
             s = vars[k]
             comment(f"k is {k}, s is {s}")
