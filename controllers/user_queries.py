@@ -32,14 +32,13 @@ def available_fields(vars):
 @serve_json
 def do_query(vars):
     table_name = vars.table_name
+    table = db[table_name]
     fields = vars.fields
-    query = None
+    field = table['deleted']
+    query = field != True
     for fld in fields:
-        q = make_query(table_name, fld.field_name, fld.op, fld.value)
-        if query:
-            query &= q
-        else:
-            query = q
+        q = make_query(table, fld.field_name, fld.op, fld.value)
+        query &= q
     if vars.negative:
         query = ~query
     lst = db(query).select()
@@ -47,8 +46,8 @@ def do_query(vars):
     lst = sorted(lst)
     return dict(selected_ids=lst)
 
-def make_query(table_name, field_name, op=None, value=None):
-    field = db[table_name][field_name]
+def make_query(table, field_name, op=None, value=None):
+    field = table[field_name]
     if isinstance(value, list):
         return (field.belongs(value))
     # todo: use match once in python 3.10 or later
