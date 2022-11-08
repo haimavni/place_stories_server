@@ -251,7 +251,7 @@ def short_bio_title_option(vars):
     return dict()
 
 @serve_json
-def articles_in_menu_option(vars):
+def set_articles_in_menu_option(vars):
     config_rec = db(db.TblConfiguration).select().first()
     if not config_rec:
         db.TblConfiguration.insert()
