@@ -251,6 +251,16 @@ def short_bio_title_option(vars):
     return dict()
 
 @serve_json
+def articles_in_menu_option(vars):
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    articles_in_menu_on = vars.option == 'user.articles-in-menu-on'
+    config_rec.update_record(articles_in_menu=articles_in_menu_on)
+    return dict()
+
+@serve_json
 def set_quick_upload_option(vars):
     config_rec = get_config_rec()
     quick_upload_on = vars.option == 'user.quick-upload-on'
