@@ -194,7 +194,6 @@ def get_articles(vars):
             article.article_id = rec.article_id
             article.name = rec1.TblArticles.name
         articles.append(article)
-    article_ids = set([article.article_id for articls in articles])
     return dict(articles=articles)
 
 @serve_json
