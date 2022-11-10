@@ -335,7 +335,7 @@ def update_cue_members(vars):
                 (db.TblMembersVideoCuePoints.member_id == mem_id)
             db(q).delete()
             #update link between members and video
-            q = (TblMembersVideos.member_id==mem_id) & (TblMembersVideos.video_id==video_id)
+            q = (db.TblMembersVideos.member_id==mem_id) & (db.TblMembersVideos.video_id==video_id)
             vmrec = db(q).select().first()
             if vmrec.cuepoints_count==1:
                 db(q).delete()
@@ -345,7 +345,7 @@ def update_cue_members(vars):
         if mem_id not in old_member_ids:
             db.TblMembersVideoCuePoints.insert(member_id=mem_id, cue_point_id=cue_id)
             #update link between members and video
-            q = (TblMembersVideos.member_id==mem_id) & (TblMembersVideos.video_id==video_id)
+            q = (db.TblMembersVideos.member_id==mem_id) & (db.TblMembersVideos.video_id==video_id)
             vmrec = db(q).select().first()
             if vmrec:
                 vmrec.update_record(cuepoints_count=vmrec.cuepoints_count+1)
