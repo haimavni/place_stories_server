@@ -606,7 +606,7 @@ db.define_table('TblSearches',
 db.define_table('TblMembersVideos',
                 Field('video_id', type=db.TblVideos),
                 Field('member_id', type=db.TblMembers),
-                Field('cuepoints_count', type='integer'
+                Field('cuepoints_count', type='integer')
                 )
 
 db.define_table('TblMembersDocs',
