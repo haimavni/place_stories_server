@@ -414,3 +414,8 @@ def get_video_topics(story_id):
     lst = make_unique(lst, 'id')
     return lst
 
+@serve_json
+def story_id_to_video_id(vars):
+    id = vars.id
+    vrec = db(db.TblVideos.story_id==id).select().first()
+    return dict(video_id=vrec.id)
