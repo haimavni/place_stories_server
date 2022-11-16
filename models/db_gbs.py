@@ -265,7 +265,8 @@ fields = [
     Field('approved', type='boolean')    
 ]
 lst = db(db.TblArticlePhotos).select()
-comment("length of lst is {len(lst)}")
+leng = len(lst)
+comment("length of lst is {leng}")
 db.define_table('TblMembers', *fields)
 
 db.define_table('TblArticles',
