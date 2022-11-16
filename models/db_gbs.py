@@ -266,7 +266,7 @@ fields = [
 ]
 lst = db(db.TblArticlePhotos).select()
 leng = len(lst)
-comment("length of lst is {leng}")
+comment(f"length of lst is {leng}")
 db.define_table('TblMembers', *fields)
 
 db.define_table('TblArticles',
