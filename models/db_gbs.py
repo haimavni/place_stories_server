@@ -264,6 +264,8 @@ fields = [
     Field('divorced_parents', type='boolean', default=False),  #do not show parents as couple
     Field('approved', type='boolean')    
 ]
+lst = db(db.TblArticlePhotos).select()
+comment("length of lst is ", len(lst))
 db.define_table('TblMembers', *fields)
 
 db.define_table('TblArticles',
