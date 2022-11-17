@@ -24,7 +24,15 @@ STORY4USER = [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, S
 VIS_NEVER = 0           #for non existing members such as the child of a childless couple (it just connects them)
 VIS_NOT_READY = 1
 VIS_VISIBLE = 2
-VIS_HIGH = 3            #
+VIS_HIGH = 3  
+
+db.define_table('TblPrivateFields',
+                Field('name', type='string'),
+                Field('table_name', type='string'),
+                Field('type', type='string'),  #string|integer|date|boolean
+                Field('description', type='string'),
+                Field('values', type='string') #opt1|opt2|... or opt1=1|opt2=2|.. 
+)
 
 db.define_table('TblChatGroup',
                 Field('name', type='string'),
@@ -213,48 +221,37 @@ fields = [
     Field.Virtual('full_name', lambda rec: (rec.title + ' ' if rec.title else '') + rec.first_name + ' ' + rec.last_name),
     Field('former_first_name', type='string'),
     Field('former_last_name', type='string'),
-    Field('DateOfAlia', type='string', comment='date-of-alia'),
-    Field('date_of_alia', type='date', default=NO_DATE, description='date-of-alia', values=[1,2,3]),
+    Field('date_of_alia', type='date', default=NO_DATE, description='members.date-of-alia'),
     Field('date_of_alia_dateunit', type='string', default='N'),
     Field('date_of_alia_datespan', type='integer', default=0),
     Field('date_of_alia_dateend', type='date', default=NO_DATE),
-    Field('DateOfBirth', type='string'),
-    Field('date_of_birth', type='date', default=NO_DATE), 
+    Field('date_of_birth', type='date', default=NO_DATE, description='members.date-of-birth'), 
     Field('date_of_birth_dateunit', type='string', default='N'), 
     Field('date_of_birth_datespan', type='integer', default=0), 
     Field('date_of_birth_dateend', type='date', default=NO_DATE),
-    Field('date_of_death', type='date', default=NO_DATE),
+    Field('date_of_death', type='date', default=NO_DATE, description='members.date-of-death'),
     Field('date_of_death_dateunit', type='string', default='N'),
     Field('date_of_death_datespan', type='integer', default=0),
     Field('date_of_death_dateend', type='date', default=NO_DATE),
-    Field('cause_of_death', type='integer', default=0),
-    Field('DateOfMember', type='string'),
+    Field('cause_of_death', type='integer', default=0, description='members.cause-of-death', 
+        values='members.dc-died=0|members.dc-fell=1|members.dc-killed-2|members.dc-murdered=3'),
     Field('date_of_member', type='date', default=NO_DATE),
     Field('date_of_member_dateunit', type='string', default='N'),
     Field('date_of_member_datespan', type='integer', default=0),
     Field('date_of_member_dateend', type='date', default=NO_DATE),
     Field('Education', type='string'),
-    Field('FormerName', type='string'),
-    Field('gender', type='string', description='gender', values=dict(male='M', female='F')), #F, M and also FM and MF for transgenders...
-    Field('IIDD', type='integer'),
+    Field('gender', type='string', description='gender', values='members.male=M|members.female=F'), #F, M and also FM and MF for transgenders...
     Field('father_id', type='integer'), #all family relations can be derived from these 2 fields.
     Field('mother_id', type='integer'), #virtual child can define childless married couple etc. 
     Field('member_photo_id', type='integer'),
     Field('visible', type='boolean'), #obsolete
     Field('visibility', type='integer'),
-    Field('Institute', type='string'),
-    Field('LifeStory', type='text'),
-    Field('LifeStoryNoHtml', type='text'),
     Field('story_id', type=db.TblStories),
     Field('Name', type='string'),
     Field('NickName', type='string'),
-    Field('ObjectID', type='integer'),
     Field('Object_id', type='integer'),
     Field('PageHits', type='integer'),
-    Field('PlaceOfBirth', type='string'),
-    Field('place_of_death', type='string', default=""),
-    Field('Professions', type='string'),
-    Field('StatusID', type='integer'),
+    Field('place_of_death', type='string', default="", description='members.place-of-death'),
     Field('Status_id', type='integer'),
     Field('facePhotoURL', type='string'),
     Field('facePhotoURL_webp', type='string'),
@@ -264,9 +261,6 @@ fields = [
     Field('divorced_parents', type='boolean', default=False),  #do not show parents as couple
     Field('approved', type='boolean')    
 ]
-lst = db(db.TblArticlePhotos).select()
-leng = len(lst)
-comment(f"length of lst is {leng}")
 db.define_table('TblMembers', *fields)
 
 db.define_table('TblArticles',
