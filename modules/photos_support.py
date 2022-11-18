@@ -540,11 +540,19 @@ def dhash_photo(photo_path=None, img=None):
     row_hash, col_hash = dhash.dhash_row_col(img)
     return dhash.format_hex(row_hash, col_hash)
 
+def profile_photo_moved(face):
+    db, comment = inject('db', 'comment')
+    member_profile_photo_path = db(db.TblMembers.id==face.member_id).select().first()
+    lst = member_profile_photo_path.split('-')
+    photo_id = int(lst[2])
+    comment(f"photo_id: {photo_id}, face.photo_id: ", {face.photo_id}, same={photo_id==face.photo_id})
+    return photo_id == face.photo_id
+
 def save_member_face(params):
     db, auth = inject('db', 'auth')
     face = params.face
     assert face.member_id > 0
-    if params.make_profile_photo:
+    if params.make_profile_photo or profile_photo_moved(face):
         face_photo_url = save_profile_photo(face, is_article=False)
     else:
         face_photo_url = None
@@ -615,12 +623,15 @@ def save_profile_photo(face, is_article=False):
     db = inject('db')
     rec = get_photo_rec(face.photo_id)
     input_path = local_photos_folder() + rec.photo_path
-    rnd = random.randint(0, 1000) #using same photo & just modify crop, change not seen - of caching
+    #rnd = random.randint(0, 10000) #using same photo & just modify crop, change not seen - of caching
     prefix = "AP" if is_article else "PP"
     iid = face.article_id if is_article else face.member_id
-    facePhotoURL = "{}-{}-{}-{:03}.jpg".format(prefix, iid, face.photo_id, rnd)
+    facePhotoURL = f"{prefix}-{iid}-{face.photo_id}.jpg" #todo: just add ?filedate when used
     output_path = local_photos_folder("profile_photos") + facePhotoURL
     crop(input_path, output_path, face)
+    now = datetime.datetime.now()
+    timestamp = int(round(now.timestamp()))
+    facePhotoURL += f"?d={timestamp}"
     if is_article:
         db(db.TblArticles.id == face.article_id).update(facePhotoURL=facePhotoURL)
     else:
