@@ -630,14 +630,15 @@ def save_profile_photo(face, is_article=False):
     output_path = local_photos_folder("profile_photos") + facePhotoURL
     crop(input_path, output_path, face)
     now = datetime.datetime.now()
+    facePhotoURL = photos_folder("profile_photos") + facePhotoURL 
     timestamp = int(round(now.timestamp()))
     facePhotoURL += f"?d={timestamp}"
     if is_article:
         db(db.TblArticles.id == face.article_id).update(facePhotoURL=facePhotoURL)
+        ws_messaging.send_message('ARTICLE_PROFILE_CHANGED', group='ALL', article_id=face.article_id, face_photo_url=facePhotoURL)
     else:
         db(db.TblMembers.id == face.member_id).update(facePhotoURL=facePhotoURL)
-    facePhotoURL = photos_folder("profile_photos") + facePhotoURL    
-    ws_messaging.send_message('ARTICLE_PROFILE_CHANGED', group='ALL', article_id=face.article_id, face_photo_url=facePhotoURL)
+        ws_messaging.send_message('PHOTO_PROFILE_CHANGED', group='ALL', photo_id=face.photo_id, face_photo_url=facePhotoURL)
     return facePhotoURL
 
 def get_photo_rec(photo_id):
