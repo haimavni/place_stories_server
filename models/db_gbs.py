@@ -31,7 +31,7 @@ db.define_table('TblPrivateFields',
                 Field('table_name', type='string'),
                 Field('type', type='string'),  #string|integer|date|boolean
                 Field('description', type='string'),
-                Field('values', type='string') #opt1|opt2|... or opt1=1|opt2=2|.. 
+                Field('options', type='string') #opt1|opt2|... or opt1=1|opt2=2|.. 
 )
 
 db.define_table('TblChatGroup',
@@ -234,13 +234,13 @@ fields = [
     Field('date_of_death_datespan', type='integer', default=0),
     Field('date_of_death_dateend', type='date', default=NO_DATE),
     Field('cause_of_death', type='integer', default=0, description='members.cause-of-death', 
-        values='members.dc-died=0|members.dc-fell=1|members.dc-killed-2|members.dc-murdered=3'),
+        options='members.dc-died=0|members.dc-fell=1|members.dc-killed-2|members.dc-murdered=3'),
     Field('date_of_member', type='date', default=NO_DATE),
     Field('date_of_member_dateunit', type='string', default='N'),
     Field('date_of_member_datespan', type='integer', default=0),
     Field('date_of_member_dateend', type='date', default=NO_DATE),
     Field('Education', type='string'),
-    Field('gender', type='string', description='gender', values='members.male=M|members.female=F'), #F, M and also FM and MF for transgenders...
+    Field('gender', type='string', description='gender', options='members.male=M|members.female=F'), #F, M and also FM and MF for transgenders...
     Field('father_id', type='integer'), #all family relations can be derived from these 2 fields.
     Field('mother_id', type='integer'), #virtual child can define childless married couple etc. 
     Field('member_photo_id', type='integer'),
