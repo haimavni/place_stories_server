@@ -542,7 +542,7 @@ def dhash_photo(photo_path=None, img=None):
 
 def profile_photo_moved(face):
     db, comment = inject('db', 'comment')
-    member_profile_photo_path = db(db.TblMembers.id==face.member_id).select().first()
+    member_profile_photo_path = db(db.TblMembers.id==face.member_id).select().first().facePhotoURL
     lst = member_profile_photo_path.split('-')
     photo_id = int(lst[2])
     comment(f"photo_id: {photo_id}, face.photo_id: ", {face.photo_id}, same={photo_id==face.photo_id})
