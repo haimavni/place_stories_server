@@ -630,7 +630,7 @@ def save_profile_photo(face, is_article=False):
     output_path = local_photos_folder("profile_photos") + facePhotoURL
     crop(input_path, output_path, face)
     now = datetime.datetime.now()
-    facePhotoURL = photos_folder("profile_photos") + facePhotoURL 
+    #facePhotoURL = photos_folder("profile_photos") + facePhotoURL 
     timestamp = int(round(now.timestamp()))
     facePhotoURL += f"?d={timestamp}"
     if is_article:
