@@ -580,7 +580,9 @@ def save_member_face(params):
     member_name = member_display_name(member_id=face.member_id)
     db(db.TblPhotos.id==face.photo_id).update(Recognized=True, handled=True)
     ws_messaging.send_message(key='MEMBER_PHOTO_LIST_CHANGED', group='ALL', article_id=face.article_id, photo_id=face.photo_id)
-    return Storage(member_name=member_name, face_photo_url=photos_folder("profile_photos") + face_photo_url)
+    if face_photo_url:
+        face_photo_url = photos_folder("profile_photos") + face_photo_url 
+    return Storage(member_name=member_name, face_photo_url=face_photo_url)
 
 def save_article_face(params):
     db, auth = inject('db', 'auth')
@@ -616,7 +618,9 @@ def save_article_face(params):
     article_name = rec.name
     db(db.TblPhotos.id==face.photo_id).update(Recognized=True, handled=True)
     ws_messaging.send_message(key='ARTICLE_PHOTO_LIST_CHANGED', group='ALL', article_id=face.article_id, photo_id=face.photo_id)
-    return Storage(article_name=article_name, face_photo_url=photos_folder("profile_photos") + face_photo_url)
+    if face_photo_url:
+        face_photo_url = photos_folder("profile_photos") + face_photo_url
+    return Storage(article_name=article_name, face_photo_url=face_photo_url)
 
 def save_profile_photo(face, is_article=False):
     db = inject('db')
