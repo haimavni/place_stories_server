@@ -600,7 +600,9 @@ def get_uploaded_info(vars):
 @serve_json
 def replace_duplicate_photos(vars):
     similars, candidates = find_similar_photos(vars.photos_to_keep)
+    comment(f"photos to keep: {vars.photos_to_keep}, similars: {similars}, candidates: {candidates}")
     photos_to_keep_set = set(vars.photos_to_keep) & candidates #we do not allow automatic change to the old photo
+    comment(f"photos_to_keep_set: {photos_to_keep_set}")
     dup_grp = 0
     group = []
     photo_patches = []
