@@ -250,7 +250,8 @@ def update_doc_members(vars):
 
 @serve_json
 def update_story_preview(vars):
-    comment(f"update story preview vars: {vars}")
+    comment(f"update story preview vars: {vars.keys()}")
+    return dict()
     story_id = int(vars.story_id)
     story_about_id = int(vars.story_about_id)
     story_rec = db(db.TblStories.id==story_id).select().first()
