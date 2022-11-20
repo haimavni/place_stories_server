@@ -254,7 +254,7 @@ def update_story_preview(vars):
     story_about_id = int(vars.story_about_id)
     story_rec = db(db.TblStories.id==story_id).select().first()
     story_about_rec = db(db.TblStories.id==story_about_id).select().first()
-    story_about_rec.update_record(preview=story_rec.preview)
+    story_rec.update_record(preview=story_about_rec.preview)
     return dict()
 
 # ----------------support functions-----------------
