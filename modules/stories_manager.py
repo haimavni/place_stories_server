@@ -157,6 +157,7 @@ class Stories:
         
         ###update_story_words_index(story_id)
         promote_word_indexing()
+        promote_set_story_sorting_keys()
         return Storage(story_id=story_id, creation_date=now, author=source, story_text=story_text, 
             last_update_date=now, preview=preview, name=name, new_story=True, used_for=story_info.used_for or STORY4EVENT)
 
@@ -299,6 +300,10 @@ class Stories:
 def promote_word_indexing():
     promote_task = inject('promote_task')
     promote_task('update_word_index_all')
+
+def promote_set_story_sorting_keys():
+    promote_task = inject('promote_task')
+    promote_task('set_story_sorting_keys')
     
 def mark_diffs(txt1, txt2):
     txt1 = handle_html_tags(txt1)
