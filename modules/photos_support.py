@@ -547,6 +547,13 @@ def profile_photo_moved(face):
     photo_id = int(lst[2].split('.')[0])
     return photo_id == face.photo_id
 
+def article_profile_photo_moved(face):
+    db = inject('db')
+    article_profile_photo_path = db(db.TblArticles.id==face.article_id).select().first().facePhotoURL
+    lst = article_profile_photo_path.split('-')
+    photo_id = int(lst[2].split('.')[0])
+    return photo_id == face.photo_id
+
 def save_member_face(params):
     db, auth = inject('db', 'auth')
     face = params.face
@@ -588,7 +595,7 @@ def save_article_face(params):
     db, auth = inject('db', 'auth')
     face = params.face
     assert face.article_id > 0
-    if params.make_profile_photo:
+    if params.make_profile_photo or article_profile_photo_moved(face):
         face_photo_url = save_profile_photo(face, is_article=True)
     else:
         face_photo_url = None
