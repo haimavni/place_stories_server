@@ -1122,6 +1122,7 @@ def set_story_list_data(story_list):
         updater=user_list[rec.updater_id] if rec.updater_id and rec.updater_id in user_list else dict(),
         checked=rec.checked,
         exact=rec.exact,
+        sorting_key=rec.sorting_key,
         ##exact=exact and params.search_type != 'advanced',
         author=rec.source or rec.author) for rec in story_list]
     assign_photos(result)
