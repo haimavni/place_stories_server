@@ -242,7 +242,8 @@ def set_story_sorting_keys():
     for rec in db(q).select():
         story_rec = rec.TblStories
         member_rec = rec.TblMembers
-        story_rec.update_record(sorting_key=member_rec.last_name + ' ' + member_rec.first_name)
+        key = (member_rec.last_name or '') + ' ' + (member_rec.first_name or '')
+        story_rec.update_record(sorting_key=key)
     q = (db.TblStories.deleted != True) & (db.TblStories.used_for != STORY4MEMBER)
     for rec in db(q).select():
         rec.update_record(sorting_key=rec.name)
