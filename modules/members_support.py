@@ -236,14 +236,26 @@ def check_dups():
             duplicates.append(dic[itm])
     return duplicates
 
-def set_story_sorting_keys():
+def set_story_sorting_keys(refresh=False):
     db, STORY4MEMBER = inject('db', 'STORY4MEMBER')
-    q = (db.TblStories.deleted != True) & (db.TblStories.used_for==STORY4MEMBER) & (db.TblMembers.story_id==db.TblStories.id)
+    if refresh:
+        db(db.TblStories.deleted != True).update(sorting_key = None)
+    q = (db.TblStories.deleted != True) & \
+        (db.TblStories.used_for==STORY4MEMBER) & \
+        (db.TblStories.sorting_key==None) & \
+        (db.TblMembers.story_id==db.TblStories.id)
+    nms = 0
     for rec in db(q).select():
+        nms += 1
         story_rec = rec.TblStories
         member_rec = rec.TblMembers
         key = (member_rec.last_name or '') + ' ' + (member_rec.first_name or '')
         story_rec.update_record(sorting_key=key)
-    q = (db.TblStories.deleted != True) & (db.TblStories.used_for != STORY4MEMBER)
+    q = (db.TblStories.deleted != True) & \
+        (db.TblStories.sorting_key==None) & \
+        (db.TblStories.used_for != STORY4MEMBER)
+    ns = 0
     for rec in db(q).select():
+        ns += 1
         rec.update_record(sorting_key=rec.name)
+    return dict(ns=ns, nms=nms)
