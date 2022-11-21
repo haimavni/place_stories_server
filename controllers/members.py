@@ -1051,7 +1051,7 @@ def _get_story_list(params, exact):  # exact means looking only for the passed k
             real_counters[used_for] = n
             if not n:
                 continue
-            sample_size = 100
+            sample_size = 100 if used_for != STORY4MEMBER else 1500
             dic = None
             if n > sample_size:
                 q1, dic = stories_random_sample(sample_size, used_for)
