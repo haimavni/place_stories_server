@@ -79,7 +79,8 @@ db.define_table('TblStories',
                 Field('imported_from', type='string'),
                 Field('first_story', type='integer'),
                 Field('chapter_num', type='integer'),
-                Field('num_chapters', type='integer')
+                Field('num_chapters', type='integer'),
+                Field('sorting_key', type='string', default=None)
 )                
 
 db.define_table('TblStoryVersions',

@@ -8,6 +8,3 @@ def remove_detached_member_stories():
             detached += 1
             db(db.TblStories.id==sid).update(deleted=True)
     return f'{detached} detached stories found'
-
-def zevel():
-    return 'stam'

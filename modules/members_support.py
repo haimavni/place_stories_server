@@ -236,15 +236,13 @@ def check_dups():
             duplicates.append(dic[itm])
     return duplicates
 
-    def remove_detached_member_stories():
-        db = inject('db')
-        lst = db(db.TblStories.used_for=='STORY4MEMBER').select(db.TblStories.id)
-        lst - [rec.id for rec in lst]
-        detached = 0
-        for sid in lst:
-            if db(db.TblMembers.story_id==sid).count() == 0:
-                comment(f'story #{sid} is detached')
-                detached += 1
-        return f'{detached} detached stories found'
-        
-
+def set_story_sorting_keys():
+    db, STORY4MEMBER = inject('db', 'STORY4MEMBER')
+    q = (db.TblStories.deleted != True) & (db.TblStories.used_for==STORY4MEMBER) & (db.TblMembers.story_id==db.TblStories.id)
+    for rec in db(q).select():
+        story_rec = rec.TblStories
+        member_rec = rec.TblMembers
+        story_rec.update_record(sorting_key=member_rec.last_name + ' ' + member_rec.first_name)
+    q = (db.TblStories.deleted != True) & (db.TblStories.used_for != STORY4MEMBER)
+    for rec in db(q).select():
+        rec.update_record(sorting_key=rec.name)
