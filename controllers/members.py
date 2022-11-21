@@ -308,7 +308,7 @@ def get_story_list(vars):
             story.audio_path = audio_path(story_id)
         elif k == STORY4MEMBER:
             story.profile_photo_path = profile_photo_path(story_id)
-        if result_type_counters[k] >= 100:
+        if result_type_counters[k] >= 100 and k != STORY4MEMBER:
             continue
         final_result.append(story)
     if real_counters:
