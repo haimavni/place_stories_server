@@ -244,7 +244,7 @@ class Stories:
                 rec.update_record(Name=name)
         elif story_info.used_for == STORY4PHOTO:
             photo_rec = db(db.TblPhotos.story_id==story_id).select().first()
-            photo_rec.update_record(Name=name)
+            photo_rec.update_record(Name=name, has_story_text=len(updated_story_text) > 20)
         elif story_info.used_for == STORY4AUDIO:
             audio_rec = db(db.TblAudios.story_id==story_id).select().first()
             audio_rec.update_record(name=name)

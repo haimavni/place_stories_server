@@ -1021,4 +1021,14 @@ def save_qr_photo(data):
     img.save(target_file_name)
     return url_folder('temp') + file_name
 
+def calc_story_has_text():
+    db = inject('db')
+    q = (db.TblPhotos.deleted!=True) & (db.TblStories.id==db.TblPhotos.story_id)
+    n = 0
+    for rec in db(q).select():
+        has_text = len(rec.TblStories.story) > 20
+        if has_text:
+            n += 1
+        rec.TblPhotos.update_record(has_story_text=has_text)
+    return f"{n} photos have story text"
 
