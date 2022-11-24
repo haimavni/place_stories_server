@@ -379,6 +379,7 @@ def get_slides_from_photo_list(q):
                 src=timestamped_photo_path(rec),
                 width=rec.width,
                 height=rec.height,
+                has_story_text=rec.has_story_text
                 ),
             src=timestamped_photo_path(rec),
             width=rec.width,
