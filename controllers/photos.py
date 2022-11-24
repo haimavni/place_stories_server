@@ -66,6 +66,7 @@ def get_photo_detail(vars):
                 latitude=rec.latitude,
                 longitude=rec.longitude,
                 zoom=rec.zoom,
+                has_story_text=rec.has_story_text,
                 chatroom_id=story.chatroom_id)
 
 @serve_json
