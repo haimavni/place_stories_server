@@ -384,6 +384,7 @@ def get_slides_from_photo_list(q):
             src=timestamped_photo_path(rec),
             width=rec.width,
             height=rec.height,
+            has_story_text=rec.has_story_text,
             title=rec.Description or rec.Name)
         if rec.id in photo_pairs:
             dic['back'] = photo_pairs[rec.id]
