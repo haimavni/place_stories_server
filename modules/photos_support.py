@@ -1028,7 +1028,7 @@ def calc_story_has_text():
     q = (db.TblPhotos.deleted!=True) & (db.TblStories.id==db.TblPhotos.story_id)
     n = 0
     for rec in db(q).select():
-        has_text = len(rec.TblStories.story) > 20
+        has_text = len(rec.TblStories.story) > 10
         if has_text:
             n += 1
         rec.TblPhotos.update_record(has_story_text=has_text)
