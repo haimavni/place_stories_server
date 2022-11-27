@@ -232,7 +232,7 @@ fields = [
     Field('date_of_birth_dateunit', type='string', default='N'), 
     Field('date_of_birth_datespan', type='integer', default=0), 
     Field('date_of_birth_dateend', type='date', default=NO_DATE),
-    Field('date_of_death', type='date', default=NO_DATE, , description='date-of-death'),
+    Field('date_of_death', type='date', default=NO_DATE, description='date-of-death'),
     Field('date_of_death_dateunit', type='string', default='N'),
     Field('date_of_death_datespan', type='integer', default=0),
     Field('date_of_death_dateend', type='date', default=NO_DATE),
