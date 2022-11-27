@@ -222,21 +222,21 @@ fields = [
     Field.Virtual('full_name', lambda rec: (rec.title + ' ' if rec.title else '') + rec.first_name + ' ' + rec.last_name),
     Field('former_first_name', type='string'),
     Field('former_last_name', type='string'),
-    Field('DateOfAlia', type='string', comment='date-of-alia'),
-    Field('date_of_alia', type='date', default=NO_DATE, description='date-of-alia', values=[1,2,3]),
+    Field('DateOfAlia', type='string'),
+    Field('date_of_alia', type='date', default=NO_DATE, description='date-of-alia'),
     Field('date_of_alia_dateunit', type='string', default='N'),
     Field('date_of_alia_datespan', type='integer', default=0),
     Field('date_of_alia_dateend', type='date', default=NO_DATE),
     Field('DateOfBirth', type='string'),
-    Field('date_of_birth', type='date', default=NO_DATE), 
+    Field('date_of_birth', type='date', default=NO_DATE, description='date-of-birth'), 
     Field('date_of_birth_dateunit', type='string', default='N'), 
     Field('date_of_birth_datespan', type='integer', default=0), 
     Field('date_of_birth_dateend', type='date', default=NO_DATE),
-    Field('date_of_death', type='date', default=NO_DATE),
+    Field('date_of_death', type='date', default=NO_DATE, , description='date-of-death'),
     Field('date_of_death_dateunit', type='string', default='N'),
     Field('date_of_death_datespan', type='integer', default=0),
     Field('date_of_death_dateend', type='date', default=NO_DATE),
-    Field('cause_of_death', type='integer', default=0),
+    Field('cause_of_death', type='integer', default=0, description='cause-of-death', options='died=0|fell=1|killed=3|murdered=3'),
     Field('DateOfMember', type='string'),
     Field('date_of_member', type='date', default=NO_DATE),
     Field('date_of_member_dateunit', type='string', default='N'),
@@ -244,13 +244,13 @@ fields = [
     Field('date_of_member_dateend', type='date', default=NO_DATE),
     Field('Education', type='string'),
     Field('FormerName', type='string'),
-    Field('gender', type='string', description='gender', values=dict(male='M', female='F')), #F, M and also FM and MF for transgenders...
+    Field('gender', type='string', description='gender', options="male='M'|female='F'"), #F, M and also FM and MF for transgenders...
     Field('IIDD', type='integer'),
     Field('father_id', type='integer'), #all family relations can be derived from these 2 fields.
     Field('mother_id', type='integer'), #virtual child can define childless married couple etc. 
     Field('member_photo_id', type='integer'),
     Field('visible', type='boolean'), #obsolete
-    Field('visibility', type='integer'),
+    Field('visibility', type='integer', description='visibility', options='vis-never=0|vis-not-ready=1|vis-visible=2|vis-high=3'),
     Field('Institute', type='string'),
     Field('LifeStory', type='text'),
     Field('LifeStoryNoHtml', type='text'),
@@ -270,7 +270,7 @@ fields = [
     Field('deleted', type='boolean', default=False),
     Field('update_time', type='datetime'),
     Field('updater_id', type=db.auth_user),
-    Field('divorced_parents', type='boolean', default=False),  #do not show parents as couple
+    Field('divorced_parents', type='boolean', default=False, optins='dp-normal=false|dp-hide=true'),  #do not show parents as couple
     Field('approved', type='boolean')    
 ]
 db.define_table('TblMembers', *fields)
