@@ -12,7 +12,7 @@ def email(receivers=["haimavni@gmail.com"], subject=None, message="", sender=Non
     host = request.env.http_host
     subject = subject or f"message from {host}"
     gmail.username = 'lifestone2508@gmail.com' # Your Gmail address
-    gmail.password = 'wdxrovalrscyksty'
+    gmail.password = '931632#Ha221005'  #'wdxrovalrscyksty'
     if isinstance(receivers, str):
         receivers = [receivers]
     if not sender:
@@ -25,6 +25,7 @@ def email(receivers=["haimavni@gmail.com"], subject=None, message="", sender=Non
         receivers=receivers,
         html=message
     )
+    return result
 
 def get_app_title():
     db = inject('db')
