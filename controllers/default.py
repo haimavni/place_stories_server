@@ -218,13 +218,13 @@ def get_curr_version(vars):
 def get_interested_contact(vars):
     name = vars.contact_name
     host = request.env.http_host
-    message = '''
+    message = f'''
     <html>
-    <div direction="{rtltr}">
+    <div direction="{vars.rtltr}">
     <p>
-    {name} contacted.<br/>
-    Mail: {email}<br/>
-    mobile: {mobile} 
+    {vars.contact_name} contacted.<br/>
+    Mail: {vars.contact_email}<br/>
+    mobile: {vars.contact_mobile} 
     </p>
     <p>
     Message is:
@@ -234,7 +234,7 @@ def get_interested_contact(vars):
     </p>
     </div>
     </html>
-    '''.format(rtltr=vars.rtltr, name=vars.contact_name, email=vars.contact_email, mobile=vars.contact_mobile, message=vars.contact_message)
+    '''
     result = email(sender="admin", receivers="haimavni@gmail.com", subject = "New Tol.Life prospect", message=message)
     error = "" if result else mail.error
     return dict(result=result, error=error)
@@ -358,13 +358,12 @@ def reset_password(vars):
     confirmation_url = '/{app}/default/confirm_password_reset?app_name={app_name}&registration_key={registration_key}&email={email}'. \
         format(app=request.application, app_name=app_name, registration_key=registration_key, email=vars.email)
     confirmation_link = 'http://{host}{confirmation_url}'.format(host=host, confirmation_url=confirmation_url)
-    mail_message_fmt = '''
-    Hi {first_name} {last_name},<br><br>
+    mail_message = f'''
+    Hi {user_rec.first_name} {user_rec.last_name},<br><br>
 
-    Click {link} to confirm your new password.<br><br>
+    Click {confirmation_link} to confirm your new password.<br><br>
 
     '''
-    mail_message = ('', mail_message_fmt.format(first_name=user_rec.first_name, last_name=user_rec.last_name, link=confirmation_link))
     result = email(receivers=vars.email, subject='New password', message=mail_message)
     if not result:
         error_message = mail.error.strerror
@@ -413,12 +412,12 @@ def notify_new_feedback():
     receivers = [r.email for r in lst]
     app = request.application
     host = request.env.http_origin
-    message = ('', '''
+    message = f'''
     New feedback has been received.
 
 
     Click <a href="{host}/{app}/static/aurelia/index.html#/feedbacks">here</a> to view.
-    '''.format(host=host,app=app).replace('\n', '<br>'))
+    '''.replace('\n', '<br>')
     email(receivers=receivers, subject='New Stories Feedback', message=message)
 
 @serve_json
