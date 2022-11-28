@@ -12,7 +12,8 @@ def email(receivers=["haimavni@gmail.com"], subject=None, message="", sender=Non
     host = request.env.http_host
     subject = subject or f"message from {host}"
     gmail.username = 'lifestone2508@gmail.com' # Your Gmail address
-    gmail.password = 'namqlagyfwdcxvac'
+    #gmail.password = 'namqlagyfwdcxvac'
+    gmail.password = 'jwgqycesegkrbzuz'
     if isinstance(receivers, str):
         receivers = [receivers]
     if not sender:
