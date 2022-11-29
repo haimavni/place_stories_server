@@ -150,8 +150,9 @@ from admin_support.access_manager import register_new_user
 
 try:
     if no_admin():
-        admin_id = register_new_user('admin@gbs.com', '931632', 'admin', 'admin')
-        auth.login_bare('admin@gbs.com', '931632')
+        admin_password = get_env_var("ADMIN_PASSWORD")
+        admin_id = register_new_user('admin@gbs.com', admin_password, 'admin', 'admin')
+        auth.login_bare('admin@gbs.com', admin_password)
         auth.set_access_manager(ACCESS_MANAGER, admin_id)
 except Exception as e:
     pass

@@ -3,10 +3,9 @@
 import os
 import re
 from send_email import email
-
 from admin_support.access_manager import register_new_user, AccessManager
-
 from gluon.utils import web2py_uuid
+from misc_utils import get_env_var
 
 
 def init_database():
@@ -16,7 +15,8 @@ def init_database():
     email,password,first_name,last_name = request.args
     first_name = re.sub(r'[()]', '', first_name)
     last_name = re.sub(r'[()]', '', last_name)
-    admin_id = register_new_user('admin@gbs.com', '931632', 'admin', 'admin')
+    admin_password = get_env_var("ADMIN_PASSWORD")
+    admin_id = register_new_user('admin@gbs.com', admin_password, 'admin', 'admin')
     usr_id = register_new_user(email, password, first_name, last_name)
     am = AccessManager()
     am.enable_roles(admin_id, [ACCESS_MANAGER])

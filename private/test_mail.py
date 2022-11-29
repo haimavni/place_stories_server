@@ -21,14 +21,14 @@
 import smtplib
 import ssl
 from email.message import EmailMessage
+from misc_utils import get_env_var
 
 def send_email():
     msg = EmailMessage()
     port = 587
     host = "smtp.gmail.com"
     sender = "lifestories2508@gmail.com"
-    #password = "jwgqycesegkrbzuz"
-    password = "cnafyauqnvmdlvcb"
+    password = get_env_var("MAIL_PASSWORD")
 
     msg['From'] = sender
     msg['To'] = ["haimavni@gmail.com", "hanavni@gmail.com"]
