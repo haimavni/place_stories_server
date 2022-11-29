@@ -13,6 +13,7 @@ import os
 
 ## app configuration made easy. Look inside private/appconfig.ini
 from gluon.contrib.appconfig import AppConfig
+from misc_utils import get_env_var
 
 ## once in production, remove reload=True to gain full speed
 myconf = AppConfig(reload=True)
@@ -22,8 +23,8 @@ def __open_db():
     db_host = os.getenv('DB_HOST') or "localhost"
     dbname = request.application
     adapter = 'psycopg2:'
-    db_user = os.getenv('DB_USER') or "lifestone"
-    db_password = os.getenv('DB_PASSWORD')
+    db_user = get_env_var('DB_USER')
+    db_password = get_env_var('DB_PASSWORD')
     #comment(f"db_password is {db_password}")
     #mystery - it is None!!!
     if not db_password:
