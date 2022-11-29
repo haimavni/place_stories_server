@@ -11,9 +11,9 @@ def email(receivers=["haimavni@gmail.com"], subject=None, message="", sender=Non
     request = inject('request')
     host = request.env.http_host
     subject = subject or f"message from {host}"
-    gmail.username = 'lifestone2508@gmail.com' # Your Gmail address
+    gmail.username = 'lifestories2508@gmail.com' # Your Gmail address
     #gmail.password = 'namqlagyfwdcxvac'
-    gmail.password = 'jwgqycesegkrbzuz'
+    gmail.password = 'cnafyauqnvmdlvcb'
     if isinstance(receivers, str):
         receivers = [receivers]
     if not sender:
@@ -21,7 +21,7 @@ def email(receivers=["haimavni@gmail.com"], subject=None, message="", sender=Non
     if not sender:
         sender = f'info@{host}'
     result = gmail.send(
-        sender=sender + f'<lifestone2508@gmail.com>',
+        sender=sender + f'<lifestories2508@gmail.com>',
         subject=subject,
         receivers=receivers,
         html=message

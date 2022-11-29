@@ -26,8 +26,9 @@ def send_email():
     msg = EmailMessage()
     port = 587
     host = "smtp.gmail.com"
-    sender = "lifestone2508@gmail.com"
-    password = "jwgqycesegkrbzuz"
+    sender = "lifestories2508@gmail.com"
+    #password = "jwgqycesegkrbzuz"
+    password = "cnafyauqnvmdlvcb"
 
     msg['From'] = sender
     msg['To'] = ["haimavni@gmail.com", "hanavni@gmail.com"]

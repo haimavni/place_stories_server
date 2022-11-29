@@ -1,8 +1,10 @@
+import os
+from dotenv import load_dotenv
+
 from sys import platform
 if platform == 'linux':
     from pwd import getpwnam, getpwuid
 
-import os
 import stat
 import getpass
 from .injections import inject
@@ -69,6 +71,9 @@ def chmod(path, mod):
         for f in files:
             os.chmod(os.path.join(root, f), mod)
 
+def get_env_var(var_name)            
+    load_dotenv('/home/www-data/web2py/.env')
+    return os.getenv(var_name)
 
 if __name__ == '__main__':
     fname = '/home/haim/aurelia-gbs/server/tol_server/logs/log_all.log'
