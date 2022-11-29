@@ -71,7 +71,7 @@ def chmod(path, mod):
         for f in files:
             os.chmod(os.path.join(root, f), mod)
 
-def get_env_var(var_name)            
+def get_env_var(var_name):            
     load_dotenv('/home/www-data/web2py/.env')
     return os.getenv(var_name)
 
