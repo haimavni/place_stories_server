@@ -314,6 +314,12 @@ def get_photo_list(vars):
     else:
         lst1 = []
     lst1_ids = [rec.id for rec in lst1]
+    recent_photo_ids = vars.recent_photo_ids
+    if recent_photo_ids:
+        lst2 = db(db.TblPhotos.id.belongs(recent_photo_ids)).select()
+        lst2 = [rec for rec in lst2 if rec.id not in lst1_ids]
+        lst1 += lst2;
+    lst1_ids = [rec.id for rec in lst1]
     lst = [rec.TblPhotos for rec in lst if rec.TblPhotos.id not in lst1_ids]
     lst = lst1 + lst
     photo_ids = [rec.id for rec in lst]
