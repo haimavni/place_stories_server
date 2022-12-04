@@ -64,6 +64,7 @@ def get_doc_list(vars):
         rec.doc_url = doc_url(rec.story_id)
         rec.doc_jpg_url = rec.doc_url.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', '.jpg')
         rec.keywords = rec1.TblStories.keywords
+        rec.name = rec1.TblStories.name
         doc_list.append(rec)
     return dict(doc_list=doc_list, no_results=not doc_list)
 
