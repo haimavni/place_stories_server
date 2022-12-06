@@ -288,6 +288,8 @@ def get_story_list(vars):
     for story in result:
         story_id = story.id
         k = story.used_for
+        if k == STORY4DOCAB: #temp. debugging
+            continue
         if k == STORY4DOC and doc_has_story_about(story_id):
             continue
         if k == STORY4DOCAB:
