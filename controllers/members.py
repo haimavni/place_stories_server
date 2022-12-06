@@ -290,12 +290,12 @@ def get_story_list(vars):
         k = story.used_for
         if k == STORY4DOCAB: #temp. debugging
             continue
-        if k == STORY4DOC and doc_has_story_about(story_id):
-            continue
-        if k == STORY4DOCAB:
-            story.used_for = STORY4DOC
-            k = STORY4DOC
-            story_id = story_id_of_story_about_id(story_id)
+        # if k == STORY4DOC and doc_has_story_about(story_id):
+        #     continue
+        # if k == STORY4DOCAB:
+        #     story.used_for = STORY4DOC
+        #     k = STORY4DOC
+        #     story_id = story_id_of_story_about_id(story_id)
         active_result_types |= {k}
         if k not in result_type_counters:
             result_type_counters[k] = 0
