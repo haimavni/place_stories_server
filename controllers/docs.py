@@ -134,8 +134,6 @@ def apply_to_checked_docs(vars):
         dates_info = None
 
     st = params.selected_topics
-    added = []
-    deleted = []
     changes = dict()
     new_topic_was_added = False
     for story_id in sdl:

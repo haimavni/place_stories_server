@@ -1688,6 +1688,8 @@ def story_id_of_story_about_id(story_about_id):
     doc_rec = db(db.TblDocs.story_about_id==story_about_id).select().first()
     if doc_rec:
         return doc_rec.story_id
+    comment(f"story about id {story_about_id} had no story_id")
+
     return None
 
 def doc_has_story_about(story_id):
