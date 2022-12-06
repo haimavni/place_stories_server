@@ -319,8 +319,6 @@ def get_story_list(vars):
     active_result_types = sorted(active_result_types)
     result = final_result
     result = set_story_list_data(result)
-    for k in result_type_counters:
-        comment(f'result_type_counters[{k}]: {result_type_counters[k]}')
     return dict(no_results=len(result)==0,
                 result=result,
                 active_result_types=active_result_types,
@@ -1238,7 +1236,6 @@ def save_story_data(story_info, user_id):
             doc_rec.update_record(name=story_info.name)
 
     key = 'STORY_WAS_SAVED' if old_story else 'NEW_STORY_ADDED'
-    comment("save story data ", key)
     ws_messaging.send_message(key=key, group='ALL', story_data=result)
     return result
 
@@ -1690,8 +1687,6 @@ def story_id_of_story_about_id(story_about_id):
     doc_rec = db(db.TblDocs.story_about_id==story_about_id).select().first()
     if doc_rec:
         return doc_rec.story_id
-    comment(f"story about id {story_about_id} had no story_id")
-
     return None
 
 def doc_has_story_about(story_id):
