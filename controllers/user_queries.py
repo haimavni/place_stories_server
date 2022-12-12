@@ -6,18 +6,15 @@ and usage of the queries
 '''
 from date_utils import parse_date
 
-# def comment(s):
-#     with open('/apps_data/gbs/logs/comments.log', 'a', encoding='utf-8') as f:
-#         f.write(str(s) + '\n')
-
 @serve_json
 def available_fields(vars):
     table = db[vars.table_name]
     field_list = []
+    fields = []
     field_names = table.fields()
     for field_name in field_names:
         field = table[field_name]
-        if not hasattr(field, 'description'):
+        if field_name != 'id' and not hasattr(field, 'description'):
             continue
         rec = dict(
             name=field.name,
@@ -27,6 +24,11 @@ def available_fields(vars):
         if hasattr(field, 'values'):
             rec['values'] = field.values
         field_list.append(rec)
+    if vars.record_id:
+        #place current_value in field_list
+        vmap = get_current_values(table, fields, vars.record_id)
+        for field in field_list:
+            field.current_value = vmap[field.name]
     return dict(field_list=field_list)
 
 @serve_json
@@ -66,3 +68,10 @@ def make_query(table, field_name, op=None, value=None):
     if op == ">=":
         return field >= value
     raise Exception(f"Unknown operator {op}")
+
+def get_current_values(table, fields, record_id):
+    rec = db(table.id==record_id).select(*fields).first()
+    result = dict()
+    for field_name in rec:
+        result[field_name] = rec[field_name]
+    return result

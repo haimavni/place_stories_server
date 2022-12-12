@@ -1,6 +1,7 @@
 import ws_messaging
 import datetime
 from send_email import email
+import re
 
 @serve_json
 def read_chatroom(vars):
@@ -44,16 +45,17 @@ def send_message(vars):
     chatroom_id = int(vars.room_number)
     now = datetime.datetime.now()
     user_id = auth.current_user() or int(vars.user_id) if vars.user_id else 2
+    message = message_to_link(vars.user_message)
     db.TblChats.insert(chat_group=chatroom_id,
                        author=user_id,
                        timestamp=now,
-                       message=vars.user_message)
+                       message=message)
     ws_messaging.send_message(key='INCOMING_MESSAGE' + str(vars.room_number),
                               group='CHATROOM' + str(vars.room_number),
                               author=user_id,
                               timestamp=str(now)[:19],
                               sender_name=auth.user_name(user_id),
-                              message=vars.user_message.replace('\n', '<br/>'))
+                              message=message.replace('\n', '<br/>'))
     notify_chatters(user_id, chatroom_id)
     return dict(good=True)
 
@@ -156,3 +158,12 @@ def calc_url(story):
         if photo:
             return '/{app}/static/aurelia/index.html#/photo-detail/{pid}/*'.format(app=request.application, pid=story.id)
     return ''
+
+def message_to_link(message):
+    pat = r"(?P<url>https?:\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-]))"
+    match = re.search(pat, message)
+    if not match:
+        return message
+    url = match.group(0)
+    msg = message.replace(url, '') or "Click here"
+    return f'<a href="{url}">{msg}</a>'
