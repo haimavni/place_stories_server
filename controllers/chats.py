@@ -162,6 +162,7 @@ def calc_url(story):
 def message_to_link(message):
     pat = r"(?P<url>https?:\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-]))"
     match = re.search(pat, message)
+    comment(f"message is {message}. match is {match}")
     if not match:
         return message
     url = match.group(0)
