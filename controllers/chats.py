@@ -162,7 +162,7 @@ def calc_url(story):
 def message_to_link(message):
     host = request.env.http_host
     if host in message:
-        message = message.replace(host, "https://{host}")
+        message = message.replace(host, f"https://{host}")
     pat = r"(?P<url>https?:\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-]))"
     match = re.search(pat, message)
     if not match:
