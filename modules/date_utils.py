@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import datetime
+import datetime, pytz
 from gluon.storage import Storage
 from .injections import inject
 
@@ -255,6 +255,10 @@ def init_story_dates():
             data['story_date' + date_suffix] = video_rec['video_date' + date_suffix]
         db(db.TblStories.id==video_rec.story_id).update(**data)
     comment('End initializing story dates')
+
+def now(timezone='Asia/Jerusalem'):
+    tz = pytz.timezone(timezone)   
+    return datetime.now(tz)  
         
 if __name__ == '__main__'    :
     test()

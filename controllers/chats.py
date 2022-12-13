@@ -1,6 +1,8 @@
 import ws_messaging
 import datetime
+import pytz    
 from send_email import email
+import date_utils
 import re
 
 @serve_json
@@ -43,7 +45,7 @@ def add_chatroom(vars):
 @serve_json
 def send_message(vars):
     chatroom_id = int(vars.room_number)
-    now = datetime.datetime.now()
+    now = date_utils.now()
     user_id = auth.current_user() or int(vars.user_id) if vars.user_id else 2
     message = message_to_link(vars.user_message)
     db.TblChats.insert(chat_group=chatroom_id,
