@@ -1,6 +1,5 @@
 import ws_messaging
 import datetime
-import pytz    
 from send_email import email
 import date_utils
 import re

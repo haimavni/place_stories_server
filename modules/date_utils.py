@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import datetime, pytz
+import datetime # , pytz
 from gluon.storage import Storage
 from .injections import inject
 
@@ -257,8 +257,8 @@ def init_story_dates():
     comment('End initializing story dates')
 
 def now(timezone='Asia/Jerusalem'):
-    tz = pytz.timezone(timezone)   
-    return datetime.datetime.now(tz)  
+    #tz = pytz.timezone(timezone)   
+    return datetime.datetime.now()  
         
 if __name__ == '__main__'    :
     test()
