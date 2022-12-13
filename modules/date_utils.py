@@ -258,7 +258,7 @@ def init_story_dates():
 
 def now(timezone='Asia/Jerusalem'):
     tz = pytz.timezone(timezone)   
-    return datetime.now(tz)  
+    return datetime.datetime.now(tz)  
         
 if __name__ == '__main__'    :
     test()
