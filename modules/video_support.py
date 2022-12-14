@@ -24,7 +24,9 @@ def youtube_info(src):
             comment("after 3")
         except Exception as e:
             comment(f"thumbnails: {thumbnails}")
-        comment(f"thumbnail_url: {thumbnail_url}")
+        comment("still alive the zona")
+        #comment(f"thumbnail_url: {thumbnail_url}")
+
         result = Storage(title=yt['title'],
                          description=yt['description'],
                          uploader=yt['uploader'],
