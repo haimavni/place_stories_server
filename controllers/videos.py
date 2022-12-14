@@ -107,11 +107,9 @@ def delete_videos(vars):
 
 @serve_json
 def get_video_list(vars):
-    selected_topics = vars.selected_topics or []
     q = make_videos_query(vars)
     lst = db(q).select()
     selected_video_list = vars.selected_video_list
-    result = []
     q = (db.TblVideos.id.belongs(selected_video_list)) & (db.TblStories.id == db.TblVideos.story_id)
     if selected_video_list:
         lst1 = db(q).select()

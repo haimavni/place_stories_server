@@ -14,19 +14,13 @@ def youtube_info(src):
         comment(f"ydl extract info of {url} got exception {e}")
         return None
     try:
-        yt_keys = yt.keys()
-        comment(f"youtube info keys: {yt_keys}")
-        #['id', 'title', 'formats', 'thumbnails', 'description', 'upload_date', 'uploader', 'uploader_id', 'uploader_url', 
-        # 'channel_id', 'channel_url', 'duration', 'view_count', 'average_rating', 'age_limit', 'webpage_url', 
-        # 'categories', 'tags', 'is_live', 'channel', 'extractor', 'webpage_url_basename', 'extractor_key', 'playlist', 
-        # 'playlist_index', 'thumbnail', 'display_id', 'requested_subtitles', 'requested_formats', 'format', 'format_id', 
-        # 'width', 'height', 'resolution', 'fps', 'vcodec', 'vbr', 'stretched_ratio', 'acodec', 'abr', 'ext'])
+        thumbnails = yt['thumbnails']
+        thumbnail_url = thumbnails[3]
         result = Storage(title=yt['title'],
                          description=yt['description'],
                          uploader=yt['uploader'],
                          duration=yt['duration'],
-                         thumbnail=yt['thumbnail'],
-                         thumbnails=yt['thumbnails'],
+                         thumbnail_url=thumbnail_url,
                          upload_date=yt['upload_date'])
     except Exception as e:
         comment(f"failed to calc result of {url}")
@@ -63,3 +57,18 @@ def calc_missing_youtube_info(count=10):
             cnt += 1
         db.commit()
     return dict(summary=f"{cnt} out of {len(lst)} videos calculated")
+
+def upgrade_youtube_info():
+    db = inject('db')
+    lst = db((db.TblVideos.video_type == 'youtube') & (db.TblVideos.deleted != True)).select()
+    bad = 0
+    good = 0
+    for vrec in lst:
+        yt_info = youtube_info(vrec.src)
+        if yt_info:
+            good += 1
+            vrec.update_record(duration=yt_info.duration, thumbnail_url=yt_info.thumbnail_url)
+        else:
+            bad += 1
+    return Storage(bad=bad, good=good)
+
