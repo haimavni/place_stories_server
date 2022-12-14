@@ -16,9 +16,16 @@ def youtube_info(src):
     try:
         yt_keys = yt.keys()
         comment(f"youtube info keys: {yt_keys}")
+        #['id', 'title', 'formats', 'thumbnails', 'description', 'upload_date', 'uploader', 'uploader_id', 'uploader_url', 
+        # 'channel_id', 'channel_url', 'duration', 'view_count', 'average_rating', 'age_limit', 'webpage_url', 
+        # 'categories', 'tags', 'is_live', 'channel', 'extractor', 'webpage_url_basename', 'extractor_key', 'playlist', 
+        # 'playlist_index', 'thumbnail', 'display_id', 'requested_subtitles', 'requested_formats', 'format', 'format_id', 
+        # 'width', 'height', 'resolution', 'fps', 'vcodec', 'vbr', 'stretched_ratio', 'acodec', 'abr', 'ext'])
         result = Storage(title=yt['title'],
                          description=yt['description'],
                          uploader=yt['uploader'],
+                         duration=yt['duration'],
+                         thumbnail=yt['thumbnail'],
                          upload_date=yt['upload_date'])
     except Exception as e:
         comment(f"failed to calc result of {url}")
