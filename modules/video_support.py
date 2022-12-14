@@ -14,6 +14,8 @@ def youtube_info(src):
         comment(f"ydl extract info of {url} got exception")
         return None
     try:
+        yt_keys = yt.keys()
+        comment(f"youtube info keys: {yt_keys}")
         result = Storage(title=yt['title'],
                          description=yt['description'],
                          uploader=yt['uploader'],
