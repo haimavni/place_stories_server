@@ -256,7 +256,7 @@ def init_story_dates():
         db(db.TblStories.id==video_rec.story_id).update(**data)
     comment('End initializing story dates')
 
-def now(timezone='Asia/Jerusalem'):
+def now(timezone='israel'):
     tz = pytz.timezone(timezone)   
     return datetime.datetime.now()  
         
