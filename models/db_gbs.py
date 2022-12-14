@@ -403,7 +403,7 @@ db.define_table('TblVideos',
                 Field('title', type='string'),
                 Field('description', type='text'),
                 Field('upload_date', type='datetime'),
-                Field('tumbnail_url', type='string'),
+                Field('thumbnail_url', type='string'),
                 Field('duration', type='integer')
                 )
 
