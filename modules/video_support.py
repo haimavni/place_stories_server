@@ -10,8 +10,8 @@ def youtube_info(src):
     ydl = YoutubeDL()
     try:
         yt = ydl.extract_info(url, download=False)
-    except:
-        comment(f"ydl extract info of {url} got exception")
+    except Exception as e:
+        comment(f"ydl extract info of {url} got exception {e}")
         return None
     try:
         yt_keys = yt.keys()
