@@ -6,7 +6,7 @@ from injections import inject
 
 def youtube_info(src):
     url = "https://www.youtube.com/embed/" + src + "?wmode=opaque"
-    comment = inject('comment')
+    comment, log_exception = inject('comment', 'log_exception')
     ydl = YoutubeDL()
     try:
         yt = ydl.extract_info(url, download=False)
@@ -24,7 +24,7 @@ def youtube_info(src):
             comment("after 3")
         except Exception as e:
             comment(f"thumbnails: {thumbnails}")
-        comment(f"thumbnails: {thumbnails}, thumbnail_url: {thumbnail_url}")
+        comment(f"thumbnail_url: {thumbnail_url}")
         result = Storage(title=yt['title'],
                          description=yt['description'],
                          uploader=yt['uploader'],
@@ -32,6 +32,7 @@ def youtube_info(src):
                          thumbnail_url=thumbnail_url,
                          upload_date=yt['upload_date'])
     except Exception as e:
+        log_exception('zevel')
         comment(f"failed to calc result of {url}: {e}")
         return None
     return result
