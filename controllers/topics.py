@@ -16,6 +16,7 @@ def get_topic_list(vars):
     else:
         usage = ""
     q = db.TblTopics.id > 0
+    comment(f"usage in get topic list is {usage}")
     if usage:
         q1 = None
         for c in usage:
