@@ -16,6 +16,7 @@ def youtube_info(src):
     try:
         thumbnails = yt['thumbnails']
         thumbnail_url = thumbnails[3]
+        comment(f"thumbnails: {thumbnails}, thumbnail_url: {thumbnail_url}")
         result = Storage(title=yt['title'],
                          description=yt['description'],
                          uploader=yt['uploader'],
@@ -72,5 +73,5 @@ def upgrade_youtube_info(chunk=10):
             vrec.update_record(duration=yt_info.duration, thumbnail_url=yt_info.thumbnail_url)
         else:
             bad += 1
-    return Storage(bad=bad, good=good)
+    return Storage(total=len(lst), bad=bad, good=good)
 
