@@ -14,7 +14,7 @@ def youtube_info(src):
         comment(f"ydl extract info of {url} got exception {e}")
         return None
     try:
-        comment("still alive")
+        comment(f"still alive. thumbnails in yt? {thumbnails in yt} ")
         thumbnails = yt['thumbnails']
         comment(f"thumbnails: {thumbnails}")
         try:
