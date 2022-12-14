@@ -15,7 +15,10 @@ def youtube_info(src):
         return None
     try:
         thumbnails = yt['thumbnails']
-        thumbnail_url = thumbnails[3]
+        try:
+            thumbnail_url = thumbnails[3]
+        except Exception as e:
+            comment(f"thumbnails: {thumbnails}")
         comment(f"thumbnails: {thumbnails}, thumbnail_url: {thumbnail_url}")
         result = Storage(title=yt['title'],
                          description=yt['description'],
@@ -24,7 +27,7 @@ def youtube_info(src):
                          thumbnail_url=thumbnail_url,
                          upload_date=yt['upload_date'])
     except Exception as e:
-        comment(f"failed to calc result of {url}")
+        comment(f"failed to calc result of {url}: {e}")
         return None
     return result
 
