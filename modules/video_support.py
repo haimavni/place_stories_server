@@ -16,6 +16,7 @@ def youtube_info(src):
     try:
         comment(f"still alive. thumbnails in yt? {'thumbnails' in yt} ")
         thumbnails = yt['thumbnails']
+        comment(f"still alive {len(thumbnails)}")
         comment(f"thumbnails: {thumbnails}")
         try:
             thumbnail_url = thumbnails[3]
