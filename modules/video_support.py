@@ -26,6 +26,7 @@ def youtube_info(src):
                          uploader=yt['uploader'],
                          duration=yt['duration'],
                          thumbnail=yt['thumbnail'],
+                         thumbnails=yt['thumbnails'],
                          upload_date=yt['upload_date'])
     except Exception as e:
         comment(f"failed to calc result of {url}")
