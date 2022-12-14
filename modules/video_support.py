@@ -17,9 +17,11 @@ def youtube_info(src):
         comment(f"still alive. thumbnails in yt? {'thumbnails' in yt} ")
         thumbnails = yt['thumbnails']
         comment(f"still alive {len(thumbnails)}")
-        comment(f"thumbnails: {thumbnails}")
+        #comment(f"thumbnails: {thumbnails}")
         try:
+            comment("before 3")
             thumbnail_url = thumbnails[3]
+            comment("after 3")
         except Exception as e:
             comment(f"thumbnails: {thumbnails}")
         comment(f"thumbnails: {thumbnails}, thumbnail_url: {thumbnail_url}")
