@@ -216,8 +216,6 @@ def get_curr_version(vars):
 
 @serve_json
 def get_interested_contact(vars):
-    name = vars.contact_name
-    host = request.env.http_host
     message = f'''
     <html>
     <div direction="{vars.rtltr}">
@@ -230,7 +228,7 @@ def get_interested_contact(vars):
     Message is:
     </p>
     <p>
-    {message}
+    {vars.message}
     </p>
     </div>
     </html>
