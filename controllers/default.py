@@ -216,19 +216,21 @@ def get_curr_version(vars):
 
 @serve_json
 def get_interested_contact(vars):
+    msg = vars.message
+    comment("=======msg is {msg}, mobile: {vars.mobile}");
     message = f'''
     <html>
     <div direction="{vars.rtltr}">
     <p>
-    {vars.contact_first_name} {vars.contact_last_name} contacted.<br/>
-    Mail: {vars.contact_email}<br/>
-    mobile: {vars.contact_mobile} 
+    {vars.first_name} {vars.last_name} contacted.<br/>
+    Mail: {vars.email}<br/>
+    mobile: {vars.mobile} 
     </p>
     <p>
     Message is:
     </p>
     <p>
-    {vars.message}
+    {msg}
     </p>
     </div>
     </html>
