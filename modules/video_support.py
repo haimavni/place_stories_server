@@ -66,9 +66,9 @@ def calc_missing_youtube_info(count=10):
 
 def upgrade_youtube_info(chunk=10):
     db = inject('db')
-    lst = db((db.TblVideos.video_type == 'youtube') & \
-        (db.TblVideos.deleted != True) & \
-            (db.TblVideos.duration==None)).select(limitby=(0, chunk))
+    q = (db.TblVideos.video_type == 'youtube') & (db.TblVideos.deleted != True) & (db.TblVideos.duration==None)
+    total = db(q).count()
+    lst = db(q).select(limitby=(0, chunk))
     bad = 0
     good = 0
     for vrec in lst:
@@ -78,5 +78,5 @@ def upgrade_youtube_info(chunk=10):
             vrec.update_record(duration=yt_info.duration, thumbnail_url=yt_info.thumbnail_url)
         else:
             bad += 1
-    return Storage(total=len(lst), bad=bad, good=good)
+    return Storage(total=total, bad=bad, good=good)
 
