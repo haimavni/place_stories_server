@@ -217,7 +217,6 @@ def get_curr_version(vars):
 @serve_json
 def get_interested_contact(vars):
     msg = vars.contact_message
-    comment(f"=======msg is {msg}, mobile: {vars.contact_mobile}");
     message = f'''
     <html>
     <div direction="{vars.rtltr}">
@@ -235,7 +234,6 @@ def get_interested_contact(vars):
     </div>
     </html>
     '''
-    comment(f"------message is {message}")
     result = email(sender="admin", receivers="haimavni@gmail.com", subject = "New Tol.Life prospect", message=message)
     error = "" if result else "error sending email"
     return dict(result=result, error=error)
@@ -313,7 +311,6 @@ def set_locale_override(vars):
     rec = db((db.TblLocaleCustomizations.lang==vars.lang) & (db.TblLocaleCustomizations.key==vars.key)).select().first()
     if rec:
         if vars.value == '---':
-            comment('about to delete lang override')
             n = db((db.TblLocaleCustomizations.lang==vars.lang) & (db.TblLocaleCustomizations.key==vars.key)).delete()
             if n != 1:
                 raise Exception('Locale override was not deleted')
@@ -385,7 +382,6 @@ def get_shortcut(vars):
             raise Exception('Non unique key')
         db.TblShortcuts.insert(url=url, key=key)
     shortcut = '/' + request.application + '?key='  + key
-    comment(f"get shortcut: {shortcut}")
     return dict(shortcut=shortcut)
 
 def create_key():
