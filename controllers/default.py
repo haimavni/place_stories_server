@@ -235,6 +235,7 @@ def get_interested_contact(vars):
     </div>
     </html>
     '''
+    comment(f"------message is {message}")
     result = email(sender="admin", receivers="haimavni@gmail.com", subject = "New Tol.Life prospect", message=message)
     error = "" if result else "error sending email"
     return dict(result=result, error=error)
