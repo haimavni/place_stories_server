@@ -19,14 +19,9 @@ def youtube_info(src):
         comment(f"still alive {len(thumbnails)}")
         #comment(f"thumbnails: {thumbnails}")
         try:
-            comment("before 3")
-            thumbnail_url = thumbnails[3]
-            comment("after 3")
+            thumbnail_url = thumbnails[3]['url']
         except Exception as e:
-            comment(f"thumbnails: {thumbnails}")
-        comment("still alive the zona")
-        #comment(f"thumbnail_url: {thumbnail_url}")
-
+            log_exception('thumbnail url')
         result = Storage(title=yt['title'],
                          description=yt['description'],
                          uploader=yt['uploader'],
@@ -34,14 +29,13 @@ def youtube_info(src):
                          thumbnail_url=thumbnail_url,
                          upload_date=yt['upload_date'])
     except Exception as e:
-        log_exception('zevel')
-        comment(f"failed to calc result of {url}: {e}")
+        log_exception('youtube info')
         return None
     return result
 
 
 def calc_youtube_info(video_id):
-    db, comment, STORY4VIDEO = inject('db', 'comment', 'STORY4VIDEO')
+    db, STORY4VIDEO = inject('db', 'STORY4VIDEO')
     vrec = db(db.TblVideos.id == video_id).select().first()
     if (not vrec) or (vrec.video_type != 'youtube'):
         return
