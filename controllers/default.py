@@ -220,7 +220,7 @@ def get_interested_contact(vars):
     <html>
     <div direction="{vars.rtltr}">
     <p>
-    {vars.contact_name} contacted.<br/>
+    {vars.contact_first_name} {vars.contact_last_name} contacted.<br/>
     Mail: {vars.contact_email}<br/>
     mobile: {vars.contact_mobile} 
     </p>
@@ -234,7 +234,7 @@ def get_interested_contact(vars):
     </html>
     '''
     result = email(sender="admin", receivers="haimavni@gmail.com", subject = "New Tol.Life prospect", message=message)
-    error = "" if result else mail.error
+    error = "" if result else "error sending email"
     return dict(result=result, error=error)
 
 @serve_json
