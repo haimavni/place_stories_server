@@ -217,7 +217,7 @@ def get_curr_version(vars):
 @serve_json
 def get_interested_contact(vars):
     msg = vars.message
-    comment("=======msg is {msg}, mobile: {vars.mobile}");
+    commentf("=======msg is {msg}, mobile: {vars.mobile}");
     message = f'''
     <html>
     <div direction="{vars.rtltr}">
