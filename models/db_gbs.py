@@ -484,8 +484,9 @@ db.define_table('TblPageHits',
 
 db.define_table('TblFeedback',
                 Field('fb_code_version', type='string'), 
-                Field('fb_bad_message', type='text'),
-                Field('fb_good_message', type='text'),
+                Field('fb_bad_message', type='text'),  #todo: delete after fb_message is working
+                Field('fb_good_message', type='text'), #todo: ditto
+                Field('fb_message', type='text'),
                 Field('fb_email', type='string'),
                 Field('fb_name', type='string'),
                 Field('fb_device_type', type='string'),

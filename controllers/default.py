@@ -241,8 +241,7 @@ def get_interested_contact(vars):
 @serve_json
 def save_feedback(vars):
     db.TblFeedback.insert(
-        fb_bad_message=vars.feedback_bad_message,
-        fb_good_message=vars.feedback_good_message,
+        fb_message=vars.feedback_message,
         fb_code_version=vars.code_version,
         fb_email=vars.feedback_email,
         fb_name=vars.feedback_name,
@@ -257,8 +256,7 @@ def get_feedbacks(vars):
     lst = db(db.TblFeedback).select(limitby=(0,200), orderby=~db.TblFeedback.id)
     feedbacks = [dict(name=r.fb_name,
                       email=r.fb_email,
-                      bad=r.fb_bad_message,
-                      good=r.fb_good_message,
+                      message=r.fb_message,
                       version=r.fb_code_version,
                       device_type=r.fb_device_type,
                       device_details=r.fb_device_details) for r in lst]
