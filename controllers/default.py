@@ -9,6 +9,7 @@ from send_email import email
 import create_card
 from gluon.storage import Storage
 from misc_utils import make_qr_code
+import datetime
 
 #########################################################################
 ## This is a sample controller
@@ -240,7 +241,9 @@ def get_interested_contact(vars):
 
 @serve_json
 def save_feedback(vars):
+    today = datetime.date.today()
     db.TblFeedback.insert(
+        fb_date=today,
         fb_message=vars.feedback_message,
         fb_code_version=vars.code_version,
         fb_email=vars.feedback_email,
@@ -255,12 +258,19 @@ def save_feedback(vars):
 def get_feedbacks(vars):
     lst = db(db.TblFeedback).select(limitby=(0,200), orderby=~db.TblFeedback.id)
     feedbacks = [dict(name=r.fb_name,
+                      date=fb_date_str(r)  ,
                       email=r.fb_email,
                       message=r.fb_message,
                       version=r.fb_code_version,
                       device_type=r.fb_device_type,
                       device_details=r.fb_device_details) for r in lst]
     return dict(feedbacks=feedbacks)
+
+def fb_date_str(fb_rec):
+    date = fb_rec.fb_date or fb_rec.fb_code_version
+    if not date:
+        return ''
+    return date.strftime('%d.%m.%Y')
 
 def test_collect_mail():
     from collect_emails import collect_mail
