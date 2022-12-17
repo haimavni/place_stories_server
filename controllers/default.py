@@ -269,7 +269,7 @@ def get_feedbacks(vars):
 def fb_date_str(fb_rec):
     date = fb_rec.fb_date
     if not date:
-        return fb_rec.fb_version
+        return fb_rec.fb_code_version
     return date.strftime('%d.%m.%Y')
 
 def test_collect_mail():
