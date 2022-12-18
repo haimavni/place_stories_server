@@ -138,8 +138,9 @@ class Publisher(object):
                 queue.put(Publisher.END_STREAM)
             channel.clear()
 
-global _publisher = None
+_publisher = None
 def get_publisher():
+    global _publisher
     if not _publisher:
         _publisher = Publisher()
     return _publisher
