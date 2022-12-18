@@ -134,3 +134,5 @@ class Publisher(object):
             for queue, _ in channel:
                 queue.put(Publisher.END_STREAM)
             channel.clear()
+
+publisher = Publisher()

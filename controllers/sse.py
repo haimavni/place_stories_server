@@ -1,6 +1,4 @@
-from sse import Publisher
-
-publisher = Publisher()
+from sse import publisher
 
 def subscribe():
     channel = request.vars.channel or "default channel"
