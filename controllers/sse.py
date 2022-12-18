@@ -4,7 +4,8 @@ publisher = Publisher()
 
 @serve_json
 def subscribe(vars):
-    publisher.subscribe(vars.channel)
+    comment(f"entered subscribe. {vars.channel}")
+    publisher.subscribe(vars.channel or "default channel")
     return dict()
 
 @serve_json
