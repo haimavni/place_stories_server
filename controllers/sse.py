@@ -12,6 +12,6 @@ def tease(vars):
     return dict(data=vars.data, channel=vars.channel)
 
 @serve_json
-def close():
+def close(vars):
     publisher.close()
     return dict()
