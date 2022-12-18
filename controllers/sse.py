@@ -1,6 +1,8 @@
 from sse import publisher
+import time
 
 def subscribe():
+    time.sleep(2000)
     channel = request.vars.channel or "default channel"
     comment(f"entered subscribe. {channel}")
     publisher.subscribe(channel)
