@@ -1,5 +1,6 @@
 from queue import Queue
 from collections import defaultdict, namedtuple
+from injections import inject
 
 Subscriber = namedtuple('Subscriber', 'queue, properties')
 
@@ -16,6 +17,8 @@ class Publisher(object):
         """
         Creates a new publisher with an empty list of subscribers.
         """
+        comment = inject("comment")
+        comment("init Publisher")
         self.subscribers_by_channel = defaultdict(list)
 
     def _get_subscribers_lists(self, channel):
