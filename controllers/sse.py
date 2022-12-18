@@ -10,5 +10,5 @@ def subscribe(vars):
 
 @serve_json
 def tease(vars):
-    publisher.publish(vars.data, vars.channel)
+    publisher.publish(vars.data, vars.channel or "default channel")
     return dict()
