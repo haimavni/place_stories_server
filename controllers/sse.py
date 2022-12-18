@@ -6,7 +6,7 @@ def subscribe():
     channel = request.vars.channel or "default channel"
     comment(f"entered subscribe. {channel}")
     publisher.subscribe(channel)
-    response.headers['Content-Type'] = 'text/stream'
+    response.headers['Content-Type'] = 'text-stream'
     return f"subscribed to {channel}"
 
 @serve_json
