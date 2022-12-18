@@ -2,11 +2,11 @@ from sse import Publisher
 
 publisher = Publisher()
 
-@serve_json
-def subscribe(vars):
-    comment(f"entered subscribe. {vars.channel}")
-    publisher.subscribe(vars.channel or "default channel")
-    return dict()
+def subscribe():
+    channel = request.vars.channel or "default channel"
+    comment(f"entered subscribe. {channel}")
+    publisher.subscribe(channel)
+    return f"subscribed to {channel}"
 
 @serve_json
 def tease(vars):
