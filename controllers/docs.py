@@ -283,6 +283,8 @@ def make_docs_query(params):
     if params.selected_topics:
         q1 = get_topics_query(params.selected_topics)
         q &= q1
+    if vars.show_untagged:
+        q &= (db.TblDocs.story_id==db.TblStories.id) & (db.TblStories.is_tagged==False)
     return q
 
 

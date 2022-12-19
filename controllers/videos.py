@@ -399,6 +399,8 @@ def make_videos_query(vars):
     if vars.selected_topics:
         q1 = get_topics_query(vars.selected_topics)
         q &= q1
+    if vars.show_untagged:
+        q &= (db.TblVideos.story_id==db.TblStories.id) & (db.TblStories.is_tagged==False)
     return q
 
 def get_video_topics(story_id):
