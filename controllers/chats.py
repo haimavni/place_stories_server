@@ -6,7 +6,7 @@ import re
 
 @serve_json
 def read_chatroom(vars):
-    messages = db(db.TblChats.chat_group==int(vars.room_number)).select(ordrby=db.TblChats.id)
+    messages = db(db.TblChats.chat_group==int(vars.room_number)).select(orderby=db.TblChats.id)
     for msg in messages:
         msg.sender_name = auth.user_name(msg.author)
         msg.message = msg.message.replace('\n', '<br/>')
