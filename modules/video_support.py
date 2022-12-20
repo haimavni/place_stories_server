@@ -72,8 +72,10 @@ def upgrade_youtube_info(chunk=50, video_list=None):
     try:
         total = db(q).count()
     except Exception as e:
-        log_exception("upgrade youtube info")
+        log_exception(f"upgrade youtube info for [{video_list}]")
+        comment(f"upgrade youtube info failed for [{video_list}]")
         return dict()
+    comment(f"upgrade youtube info succeeded for [{video_list}]")
     lst = db(q).select(limitby=(0, chunk))
     bad = 0
     good = 0
