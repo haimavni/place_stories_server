@@ -63,7 +63,6 @@ def calc_missing_youtube_info(count=10):
 
 def upgrade_youtube_info(chunk=50, video_list=None):
     db, comment, log_exception = inject('db', 'comment', 'log_exception')
-    comment(f"video list in upgrade youtube info: [{video_list}]")
     q = (db.TblVideos.video_type == 'youtube') & (db.TblVideos.deleted != True)
     if video_list:
         q &= (db.TblVideos.id.belongs(video_list))
