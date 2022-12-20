@@ -8,7 +8,7 @@ import ws_messaging
 from date_utils import update_record_dates, fix_record_dates_in, fix_record_dates_out
 from folders import url_video_folder
 from members_support import *
-
+from video_support import upgrade_youtube_info
 
 @serve_json
 def save_video(vars):
@@ -104,6 +104,11 @@ def delete_videos(vars):
     db(db.TblVideos.id.belongs(selected_videos)).update(deleted=True)
     return dict()
 
+@serve_json
+def refresh_video_thumbnails(vars):
+    selected_videos = vars.selected_videos
+    result = upgrade_youtube_info(video_list=selected_videos)
+    return result
 
 @serve_json
 def get_video_list(vars):

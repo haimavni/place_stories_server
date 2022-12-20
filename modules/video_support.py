@@ -64,9 +64,13 @@ def calc_missing_youtube_info(count=10):
         db.commit()
     return dict(summary=f"{cnt} out of {len(lst)} videos calculated")
 
-def upgrade_youtube_info(chunk=10):
+def upgrade_youtube_info(chunk=50, video_list=None):
     db = inject('db')
-    q = (db.TblVideos.video_type == 'youtube') & (db.TblVideos.deleted != True) & (db.TblVideos.duration==None)
+    q = (db.TblVideos.video_type == 'youtube') & (db.TblVideos.deleted != True)
+    if video_list:
+        q &= (db.TblVideos.id.belongs(video_list))
+    else:
+        q &= (db.TblVideos.duration==None)
     total = db(q).count()
     lst = db(q).select(limitby=(0, chunk))
     bad = 0
