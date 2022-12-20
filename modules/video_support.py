@@ -14,10 +14,7 @@ def youtube_info(src):
         comment(f"ydl extract info of {url} got exception {e}")
         return None
     try:
-        comment(f"still alive. thumbnails in yt? {'thumbnails' in yt} ")
         thumbnails = yt['thumbnails']
-        comment(f"still alive {len(thumbnails)}")
-        #comment(f"thumbnails: {thumbnails}")
         try:
             thumbnail_url = thumbnails[3]['url']
         except Exception as e:
@@ -65,14 +62,18 @@ def calc_missing_youtube_info(count=10):
     return dict(summary=f"{cnt} out of {len(lst)} videos calculated")
 
 def upgrade_youtube_info(chunk=50, video_list=None):
-    db, comment = inject('db', 'comment')
+    db, comment, log_exception = inject('db', 'comment', 'log_exception')
     comment(f"video list in upgrade youtube info: {video_list}")
     q = (db.TblVideos.video_type == 'youtube') & (db.TblVideos.deleted != True)
     if video_list:
         q &= (db.TblVideos.id.belongs(video_list))
     else:
         q &= (db.TblVideos.duration==None)
-    total = db(q).count()
+    try:
+        total = db(q).count()
+    except Exception as e:
+        log_exception("upgrade youtube info")
+        return dict()
     lst = db(q).select(limitby=(0, chunk))
     bad = 0
     good = 0
