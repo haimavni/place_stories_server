@@ -14,7 +14,7 @@ def available_fields(vars):
     field_names = table.fields()
     for field_name in field_names:
         field = table[field_name]
-        if field_name != 'id' and not hasattr(field, 'description'):
+        if field_name == 'id' or not hasattr(field, 'description'):
             continue
         rec = dict(
             name=field.name,
