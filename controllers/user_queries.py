@@ -19,10 +19,10 @@ def available_fields(vars):
         rec = dict(
             name=field.name,
             type=field.type,
-            description=field.description
+            description=getattr(field, 'description')
         )
-        if hasattr(field, 'values'):
-            rec['values'] = field.values
+        if hasattr(field, 'options'):
+            rec['options'] = getattr(field, 'options')
         field_list.append(rec)
     if vars.record_id:
         #place current_value in field_list
