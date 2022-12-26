@@ -228,10 +228,10 @@ def get_video_sample(vars):
     q = (db.TblVideos.deleted == False)
     q1 = q & (db.TblVideos.touch_time != NO_DATE)
     lst1 = db(q1).select(limitby=(0, 10), orderby=~db.TblVideos.touch_time)
-    lst1 = [dict(src=rec.src,video_id=rec.id, name=rec.name, thumbnail_src=rec.thumbnail_url) for rec in lst1]
+    lst1 = [dict(src=rec.src,video_id=rec.id, name=rec.name, thumbnail_url=rec.thumbnail_url) for rec in lst1]
     q2 = q & (db.TblVideos.touch_time == NO_DATE)
     lst2 = db(q2).select(limitby=(0, 200))
-    lst2 = [dict(src=rec.src,video_id=rec.id, name=rec.name, thumbnail_src=rec.thumbnail_url) for rec in lst2]
+    lst2 = [dict(src=rec.src,video_id=rec.id, name=rec.name, thumbnail_url=rec.thumbnail_url) for rec in lst2]
     if len(lst2) > 10:
         lst2 = random.sample(lst2, 10)
     lst = lst1 + lst2
