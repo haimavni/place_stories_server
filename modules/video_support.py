@@ -2,6 +2,7 @@ from youtube_dl import YoutubeDL
 import stories_manager
 from gluon.storage import Storage
 from injections import inject
+import datetime
 
 
 def youtube_info(src):
@@ -19,6 +20,9 @@ def youtube_info(src):
             thumbnail_url = thumbnails[3]['url']
         except Exception as e:
             log_exception('thumbnail url')
+        now = datetime.datetime.now()
+        timestamp = int(round(now.timestamp()))
+        thumbnail_url += f"?d={timestamp}" #so user will not see cached thumnail
         result = Storage(title=yt['title'],
                          description=yt['description'],
                          uploader=yt['uploader'],
