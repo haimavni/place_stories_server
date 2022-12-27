@@ -272,23 +272,12 @@ def get_story_list(vars):
         result1 = tmp[0] if tmp else []
         result1 = process_story_list(result1, exact=True)
         result1 = [r for r in result1 if r.id not in checked_story_ids]
+        y = [r.id for r in result1 if r.used_for==STORY4MEMBER]
+        comment(f"result1: {y}")
         tmp = _get_story_list(params, exact=False)
         result2 = tmp[0] if tmp else []
         result2 = process_story_list(result2)
         result2 = [r for r in result2 if r.id not in checked_story_ids]
-        comment(f"before if is phrase {is_phrase}")
-        if not is_phrase: #for single words we want full word matches first
-            x = [r.id for r in result2 if r.used_for==STORY4MEMBER]
-            y = [r.id for r in result1 if r.used_for==STORY4MEMBER]
-            comment(f"x before: {x}")
-            comment(f"y before {y}")
-            tmp = result1
-            result1 = result2
-            result2 = tmp
-            x = [r.id for r in result2 if r.used_for==STORY4MEMBER]
-            y = [r.id for r in result1 if r.used_for==STORY4MEMBER]
-            comment(f"x after: {x}")
-            comment(f"y after {y}")
     else:
         result0, real_counters = _get_story_list(params, False)
         result0 = process_story_list(result0)
@@ -1376,6 +1365,7 @@ def make_stories_query(params, exact):
         selected_stories = []
         if exact:
             single = len(params.keywords_str.split()) == 1
+            comment(f"single? {single}")
             if single:
                 q1 = (db.TblStories.name.regexp(r"\y" + params.keywords_str + r"\y")) | (
                       db.TblStories.story.regexp(r"\y" + params.keywords_str + r"\y"))
@@ -1387,7 +1377,6 @@ def make_stories_query(params, exact):
             keywords = params.keywords_str.split()
             # if len(keywords) == 1:
             #     return None
-            comment(f"keywords are {keywords}")
             for kw in keywords:
                 q &= (db.TblStories.name.contains(kw)) | (db.TblStories.story.contains(kw))
             
