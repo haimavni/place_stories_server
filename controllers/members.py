@@ -1377,8 +1377,8 @@ def make_stories_query(params, exact):
         if exact:
             single = len(params.keywords_str.split()) == 1
             if single:
-                q1 = (db.TblStories.name.regexp(r"\b" + params.keywords_str + r"\b")) | (
-                      db.TblStories.story.regexp(r"\b" + params.keywords_str + r"\b"))
+                q1 = (db.TblStories.name.regexp(r"\y" + params.keywords_str + r"\y")) | (
+                      db.TblStories.story.regexp(r"\y" + params.keywords_str + r"\y"))
             else:
                 q1 = (db.TblStories.name.contains(params.keywords_str)) | \
                      (db.TblStories.story.contains(params.keywords_str))
