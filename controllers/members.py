@@ -1381,8 +1381,11 @@ def make_stories_query(params, exact):
             keywords = params.keywords_str.split()
             # if len(keywords) == 1:
             #     return None
+            comment(f"keywords are {keywords}")
             for kw in keywords:
                 q &= (db.TblStories.name==kw) | (db.TblStories.story==kw)
+            cnt = db(q).count()
+            comment("count of not exact is {cnt}")
             # prevent duplicates:
             # q &= (~db.TblStories.name.contains(params.keywords_str)) & \
             #      (~db.TblStories.story.contains(params.keywords_str))
