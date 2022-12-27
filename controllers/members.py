@@ -276,10 +276,14 @@ def get_story_list(vars):
         result2 = tmp[0] if tmp else []
         result2 = process_story_list(result2)
         result2 = [r for r in result2 if r.id not in checked_story_ids]
-        # if not is_phrase: #for single words we want full word matches first
-        #     tmp = result1
-        #     result1 = result2
-        #     result2 = tmp
+        if not is_phrase: #for single words we want full word matches first
+            x = [r.id for r in result2]
+            y = [r.id for r in result1]
+            comment(f"x before: {x}, y before {y}")
+            tmp = result1
+            result1 = result2
+            result2 = tmp
+            comment(f"x afater: {x}, y after {y}")
     else:
         result0, real_counters = _get_story_list(params, False)
         result0 = process_story_list(result0)
