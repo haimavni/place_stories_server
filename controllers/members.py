@@ -276,6 +276,7 @@ def get_story_list(vars):
         result2 = tmp[0] if tmp else []
         result2 = process_story_list(result2)
         result2 = [r for r in result2 if r.id not in checked_story_ids]
+        comment(f"before if is phrase {is_phrase}")
         if not is_phrase: #for single words we want full word matches first
             x = [r.id for r in result2]
             y = [r.id for r in result1]
