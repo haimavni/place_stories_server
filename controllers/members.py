@@ -268,17 +268,18 @@ def get_story_list(vars):
         checked_story_ids = set([r.id for r in result0])
         has_keywords = bool(params.keywords_str)  # and vars.params.search_type in ['menu', 'simple']
         is_phrase = has_keywords and len(params.keywords_str.split()) > 1
-        result1 = _get_story_list(params, True)[0]
+        tmp = _get_story_list(params, True)
+        result1 = tmp[0] if tmp else []
         result1 = process_story_list(result1, exact=True)
         result1 = [r for r in result1 if r.id not in checked_story_ids]
-        tmp = _get_story_list(params, False)
+        tmp = _get_story_list(params, exact=False)
         result2 = tmp[0] if tmp else []
         result2 = process_story_list(result2)
         result2 = [r for r in result2 if r.id not in checked_story_ids]
-        if not is_phrase: #for single words we want full word matches first
-            tmp = result1
-            result1 = result2
-            result2 = tmp
+        # if not is_phrase: #for single words we want full word matches first
+        #     tmp = result1
+        #     result1 = result2
+        #     result2 = tmp
     else:
         result0, real_counters = _get_story_list(params, False)
         result0 = process_story_list(result0)
@@ -1374,8 +1375,8 @@ def make_stories_query(params, exact):
             for kw in keywords:
                 q &= (db.TblStories.name.contains(kw)) | (db.TblStories.story.contains(kw))
             # prevent duplicates:
-            # q &= (~db.TblStories.name.contains(params.keywords_str)) & \
-            #      (~db.TblStories.story.contains(params.keywords_str))
+            q &= (~db.TblStories.name.contains(params.keywords_str)) & \
+                 (~db.TblStories.story.contains(params.keywords_str))
     if selected_stories:
         q &= (db.TblStories.id.belongs(selected_stories))
     if params.days_since_update and params.days_since_update.value:
