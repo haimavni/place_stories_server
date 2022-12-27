@@ -271,7 +271,8 @@ def get_story_list(vars):
         result1 = _get_story_list(params, True)[0]
         result1 = process_story_list(result1, exact=True)
         result1 = [r for r in result1 if r.id not in checked_story_ids]
-        result2 = _get_story_list(params, False)[0]
+        tmp = _get_story_list(params, False)
+        result2 = tmp[0] if tmp else []
         result2 = process_story_list(result2)
         result2 = [r for r in result2 if r.id not in checked_story_ids]
         if not is_phrase: #for single words we want full word matches first
