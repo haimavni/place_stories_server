@@ -267,13 +267,17 @@ def get_story_list(vars):
         result0 = process_story_list(result0, checked=True)
         checked_story_ids = set([r.id for r in result0])
         has_keywords = bool(params.keywords_str)  # and vars.params.search_type in ['menu', 'simple']
-        result1 = _get_story_list(params, has_keywords)[0]
-        result1 = process_story_list(result1, exact=has_keywords)
+        is_phrase = has_keywords and len(params.keywords_str.split()) > 1
+        result1 = _get_story_list(params, True)[0]
+        result1 = process_story_list(result1, exact=True)
         result1 = [r for r in result1 if r.id not in checked_story_ids]
-
-        if has_keywords and len(params.keywords_str.split()) > 1:  # find all pages containing all words in this string
-            result2 = _get_story_list(params, False)[0]
-            result2 = process_story_list(result2)
+        result2 = _get_story_list(params, False)[0]
+        result2 = process_story_list(result2)
+        result2 = [r for r in result2 if r.id not in checked_story_ids]
+        if not is_phrase: #for single words we want full word matches first
+            tmp = result1
+            result1 = result2
+            result2 = tmp
     else:
         result0, real_counters = _get_story_list(params, False)
         result0 = process_story_list(result0)
