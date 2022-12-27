@@ -1377,8 +1377,8 @@ def make_stories_query(params, exact):
                 db.TblStories.story.contains(params.keywords_str))
         else:
             keywords = params.keywords_str.split()
-            if len(keywords) == 1:
-                return None
+            # if len(keywords) == 1:
+            #     return None
             for kw in keywords:
                 q &= (db.TblStories.name.contains(kw)) | (db.TblStories.story.contains(kw))
             # prevent duplicates:
