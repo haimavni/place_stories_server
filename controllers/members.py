@@ -278,15 +278,17 @@ def get_story_list(vars):
         result2 = [r for r in result2 if r.id not in checked_story_ids]
         comment(f"before if is phrase {is_phrase}")
         if not is_phrase: #for single words we want full word matches first
-            x = [r.id for r in result2]
-            y = [r.id for r in result1]
-            comment(f"x before: {x}, y before {y}")
+            x = [r.id for r in result2 if r.used_for==STORY4MEMBER]
+            y = [r.id for r in result1 if r.used_for==STORY4MEMBER]
+            comment(f"x before: {x}")
+            comment(f"y before {y}")
             tmp = result1
             result1 = result2
             result2 = tmp
-            x = [r.id for r in result2]
-            y = [r.id for r in result1]
-            comment(f"x afater: {x}, y after {y}")
+            x = [r.id for r in result2 if r.used_for==STORY4MEMBER]
+            y = [r.id for r in result1 if r.used_for==STORY4MEMBER]
+            comment(f"x after: {x}")
+            comment(f"y after {y}")
     else:
         result0, real_counters = _get_story_list(params, False)
         result0 = process_story_list(result0)
@@ -1380,7 +1382,7 @@ def make_stories_query(params, exact):
             # if len(keywords) == 1:
             #     return None
             for kw in keywords:
-                q &= (db.TblStories.name.contains(kw)) | (db.TblStories.story.contains(kw))
+                q &= (db.TblStories.name==kw) | (db.TblStories.story==kw)
             # prevent duplicates:
             # q &= (~db.TblStories.name.contains(params.keywords_str)) & \
             #      (~db.TblStories.story.contains(params.keywords_str))
