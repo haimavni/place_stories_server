@@ -1375,17 +1375,22 @@ def make_stories_query(params, exact):
     if params.keywords_str:
         selected_stories = []
         if exact:
-            q &= (db.TblStories.name.contains(params.keywords_str)) | (
-                db.TblStories.story.contains(params.keywords_str))
+            single = len(params.keywords.split()) == 1
+            if single:
+                q1 = (db.TblStories.name.regexp(r"\b" + params.keywords_str + r"\b")) | (
+                      db.TblStories.story.regexp(r"\b" + params.keywords_str + r"\b"))
+            else:
+                q1 = (db.TblStories.name.contains(params.keywords_str)) | \
+                     (db.TblStories.story.contains(params.keywords_str))
+            q &= q1
         else:
             keywords = params.keywords_str.split()
             # if len(keywords) == 1:
             #     return None
             comment(f"keywords are {keywords}")
             for kw in keywords:
-                q &= (db.TblStories.name==kw) | (db.TblStories.story==kw)
-            cnt = db(q).count()
-            comment(f"count of not exact is {cnt}")
+                q &= (db.TblStories.name.contains(kw)) | (db.TblStories.story.contains(kw))
+            
             # prevent duplicates:
             # q &= (~db.TblStories.name.contains(params.keywords_str)) & \
             #      (~db.TblStories.story.contains(params.keywords_str))
