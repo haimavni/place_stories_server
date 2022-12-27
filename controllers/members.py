@@ -284,6 +284,8 @@ def get_story_list(vars):
             tmp = result1
             result1 = result2
             result2 = tmp
+            x = [r.id for r in result2]
+            y = [r.id for r in result1]
             comment(f"x afater: {x}, y after {y}")
     else:
         result0, real_counters = _get_story_list(params, False)
@@ -1380,8 +1382,8 @@ def make_stories_query(params, exact):
             for kw in keywords:
                 q &= (db.TblStories.name.contains(kw)) | (db.TblStories.story.contains(kw))
             # prevent duplicates:
-            q &= (~db.TblStories.name.contains(params.keywords_str)) & \
-                 (~db.TblStories.story.contains(params.keywords_str))
+            # q &= (~db.TblStories.name.contains(params.keywords_str)) & \
+            #      (~db.TblStories.story.contains(params.keywords_str))
     if selected_stories:
         q &= (db.TblStories.id.belongs(selected_stories))
     if params.days_since_update and params.days_since_update.value:
