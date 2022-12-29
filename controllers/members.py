@@ -486,7 +486,7 @@ def get_member_names():
                    former_first_name=rec.former_first_name,
                    former_last_name=rec.former_last_name,
                    nick_name=rec.NickName,
-                   full_name=rec.first_name + ' ' + rec.last_name,
+                   full_name=(rec.first_name or "") + ' ' + (rec.last_name or ""),
                    gender=rec.gender,
                    birth_date=rec.date_of_birth,
                    visibility=rec.visibility,
