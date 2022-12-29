@@ -8,7 +8,7 @@ def db_id(app):
     uri = uri.encode('utf-8')
     return md5(uri).hexdigest()
     
-def move_app(app=None, src=None, dst=None):
+def move_app(cp_or_mv, app=None, src=None, dst=None):
     #collect all matching files and move them from src to dst
     #/home/haim/aurelia-gbs/server/tol_server
     if not app:
@@ -22,8 +22,8 @@ def move_app(app=None, src=None, dst=None):
     file_list = listdir(path)
     file_list = [f for f in file_list if app_id in f]
     with open("/home/haim/move_app.bash", "w") as out:
-        for f in file_list:
-            out.write("mv {path}/{src} {dst}\n".format(path=path, src=f, dst=dst))
+        for src in file_list:
+            out.write(f"{cp_or_mv} {path}/{src} {dst}\n")
     
 def remove_obsolete_dbs(active_apps=None):
     active_ids = set([])
@@ -59,7 +59,10 @@ if __name__ == '__main__':
             app_name = input("Enter app name: ")
             print("The db id is ", db_id(app_name))
         elif option == "2":
-            move_app()
+            cp_or_mv = input("Enter cp or mv: ")
+            if cp_or_mv not in ("mv", "cp"):
+                print("Please enter cp or mv")
+            move_app(cp_or_mv)
         elif option == "3":
             remove_obsolete_dbs()
         else:
