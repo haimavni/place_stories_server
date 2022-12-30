@@ -14,7 +14,7 @@ def move_app(cp_or_mv, app=None, new_app=None, src=None, dst=None):
     if not app:
         app = input("Enter app name: ")
     if not src:
-        print("select source:")
+        print("Select source:")
         print("1 - www")
         print("2 - test")
         print("3 - master")
@@ -26,7 +26,7 @@ def move_app(cp_or_mv, app=None, new_app=None, src=None, dst=None):
             src = "/home/www-data/tol_" + "www" if option == "1" else "test" if option == "2" else "master"
         print(f"source is {src}")
     if not dst:
-        print("select destination:")
+        print("Select destination:")
         print("1 - www")
         print("2 - test")
         print("3 - master")
@@ -36,12 +36,12 @@ def move_app(cp_or_mv, app=None, new_app=None, src=None, dst=None):
             dst = "/home/haim/sandbox/dst"
         else:
             dst = "/home/www-data/tol_" + "www" if option == "1" else "test" if option == "2" else "master"
-        print(f"destination is {src}")
+        print(f"Destination is {src}")
     app_id = db_id(app)
     target_app = input(f"enter target app ({app}): ")
     if not target_app:
         if src == dst:
-            print("copy into itself!")
+            print("Copy into itself!")
             exit()
         target_app = ""
     path = src + '/databases'
@@ -49,6 +49,9 @@ def move_app(cp_or_mv, app=None, new_app=None, src=None, dst=None):
     n = len(app_id)
     target_app_id = db_id(target_app)
     file_list = [f for f in file_list if app_id in f]
+    if not file_list:
+        print(f"app {app} not found in {path}!")
+        exit()
     with open("/home/haim/move_app.bash", "w") as out:
         for src in file_list:
             if target_app:
