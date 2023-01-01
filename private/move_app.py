@@ -23,7 +23,7 @@ def move_app(cp_or_mv, app=None, new_app=None, src=None, dst=None):
         if option == "4":
             src = "/home/haim/sandbox/src"
         else:
-            src = "/home/www-data/tol_" + "www" if option == "1" else "test" if option == "2" else "master"
+            src = "/home/www-data/tol_" + ("www" if option == "1" else "test" if option == "2" else "master")
         print(f"source is {src}")
     if not dst:
         print("Select destination:")
@@ -35,7 +35,7 @@ def move_app(cp_or_mv, app=None, new_app=None, src=None, dst=None):
         if option == "4":
             dst = "/home/haim/sandbox/dst"
         else:
-            dst = "/home/www-data/tol_" + "www" if option == "1" else "test" if option == "2" else "master"
+            dst = "/home/www-data/tol_" + ("www" if option == "1" else "test" if option == "2" else "master")
         print(f"Destination is {src}")
     app_id = db_id(app)
     target_app = input(f"enter target app ({app}): ")
