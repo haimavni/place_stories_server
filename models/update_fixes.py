@@ -31,12 +31,13 @@ def __apply_fixes():
         if f > last_applied_fix:
             comment(f"applying fix {f}")
             try:
-                _fixes[f]()
+                result = _fixes[f]()
             except Exception as e:
                 log_exception('Error applying fixes')
                 break
             else:
-                db(db.TblConfiguration.id==1).update(fix_level=f)
+                if result != "to-be-continued":
+                    db(db.TblConfiguration.id==1).update(fix_level=f)
                 db.commit()
     
 def _apply_fixes(): 
@@ -81,8 +82,12 @@ def fix_no_slide_show():
     db.commit()
 
 def fix_youtube_info():
-    upgrade_youtube_info(chunk=50)
+    result = upgrade_youtube_info(chunk=40)
     db.commit()
+    if result.total > 0:
+        return "to-be-continued" # to avoid timeout it has to be repeated
+    else:
+        return "done"
 
             
 _fixes = {
