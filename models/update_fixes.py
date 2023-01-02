@@ -1,6 +1,7 @@
 import random
 import time
 from date_utils import fix_all_date_ends, init_story_dates
+from video_support import upgrade_youtube_info
 #from topics_support import fix_is_tagged
 
 def _delay():
@@ -30,16 +31,16 @@ def __apply_fixes():
         if f > last_applied_fix:
             comment(f"applying fix {f}")
             try:
-                _fixes[f]()
+                result = _fixes[f]()
             except Exception as e:
                 log_exception('Error applying fixes')
                 break
             else:
-                db(db.TblConfiguration.id==1).update(fix_level=f)
+                if result != "to-be-continued":
+                    db(db.TblConfiguration.id==1).update(fix_level=f)
                 db.commit()
     
 def _apply_fixes(): 
-    return #skip it for now   
     lock_file_name = '{p}apply-fixes[{a}].lock'.format(p=log_path(), a=request.application)
     if os.path.isfile(lock_file_name):
         return
@@ -80,6 +81,14 @@ def fix_no_slide_show():
         prec.update_record(no_slide_show=False)
     db.commit()
 
+def fix_youtube_info():
+    result = upgrade_youtube_info(chunk=40)
+    db.commit()
+    if result.total > 0:
+        return "to-be-continued" # to avoid timeout it has to be repeated
+    else:
+        return "done"
+
             
 _fixes = {
     1: init_photo_back_sides,
@@ -91,7 +100,8 @@ _fixes = {
     7: fix_deleted_forever,
     8: fix_photo_recognized,
     9: fix_pdf_texts,
-    10: fix_no_slide_show
+    10: fix_no_slide_show,
+    11: fix_youtube_info
 }
 
 _init_configuration_table()
