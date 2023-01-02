@@ -40,7 +40,6 @@ def __apply_fixes():
                 db.commit()
     
 def _apply_fixes(): 
-    return #skip it for now   
     lock_file_name = '{p}apply-fixes[{a}].lock'.format(p=log_path(), a=request.application)
     if os.path.isfile(lock_file_name):
         return
