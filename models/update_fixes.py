@@ -1,6 +1,7 @@
 import random
 import time
 from date_utils import fix_all_date_ends, init_story_dates
+from video_support import upgrade_youtube_info
 #from topics_support import fix_is_tagged
 
 def _delay():
@@ -80,6 +81,10 @@ def fix_no_slide_show():
         prec.update_record(no_slide_show=False)
     db.commit()
 
+def fix_youtube_info():
+    upgrade_youtube_info(chunk=200)
+    db.commit()
+
             
 _fixes = {
     1: init_photo_back_sides,
@@ -91,7 +96,8 @@ _fixes = {
     7: fix_deleted_forever,
     8: fix_photo_recognized,
     9: fix_pdf_texts,
-    10: fix_no_slide_show
+    10: fix_no_slide_show,
+    11: fix_youtube_info
 }
 
 _init_configuration_table()
