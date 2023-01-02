@@ -81,7 +81,7 @@ def fix_no_slide_show():
     db.commit()
 
 def fix_youtube_info():
-    upgrade_youtube_info(chunk=200)
+    upgrade_youtube_info(chunk=50)
     db.commit()
 
             
