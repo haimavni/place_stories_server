@@ -6,16 +6,40 @@ import datetime
 
 def get_parents(member_id):
     member_rec = get_member_rec(member_id)
-    pa = member_rec.father_id
-    ma = member_rec.mother_id
-    pa_rec = get_member_rec(pa, prepend_path=True)
-    ma_rec = get_member_rec(ma, prepend_path=True)
+    pa = ma = pa2 = ma2 = None
+    if member_rec.father2_id:
+        pa = member_rec.father_id
+        pa2 = member_rec.father2_id
+    elif member_rec.mother2_id:
+        ma = member_rec.mother_id
+        ma2 = member_rec.mother2_id
+    else:
+        pa = member_rec.father_id
+        ma = member_rec.mother_id
     parents = Storage()
-    if pa_rec:
+    if pa:
+        pa_rec = get_member_rec(pa, prepend_path=True)
         parents.pa = pa_rec
-    if ma_rec:
+    if ma:
+        ma_rec = get_member_rec(ma, prepend_path=True)
         parents.ma = ma_rec
+    if pa2:
+        pa2_rec = get_member_rec(pa2, prepend_path=True)
+        parents.pa2 = pa2_rec
+    if ma2:
+        ma2_rec = get_member_rec(ma2, prepend_path=True)
+        parents.ma2 = ma2_rec
     return parents
+
+def get_bobezeides(member_id):
+    bobezeides = Storage()
+    parents = get_parents(member_id)
+    for who in ['pa', 'ma', 'pa2', 'ma2']:
+        parent = parents[who]
+        if parent:
+            mid = parent.id
+            bobezeides[who] = get_parents(mid)
+    return bobezeides
 
 def get_parent_list(member_id):
     parents = get_parents(member_id)
@@ -63,8 +87,15 @@ def get_children(member_id, hidden_too=False):
 def get_spouses(member_id):
     children = get_children(member_id, hidden_too=True)
     member_rec = get_member_rec(member_id)
-    spouses1 = [child.father_id for child in children if child.father_id and child.father_id != member_id and not child.divorced_parents]
-    spouses2 = [child.mother_id for child in children if child.mother_id and child.mother_id != member_id and not child.divorced_parents]
+    if member_rec.father2_id:
+        spouses1 = [child.father_id for child in children if child.father_id and child.father_id != member_id and not child.divorced_parents]
+        spouses2 = [child.father2_id for child in children if child.father2_id and child.father2_id != member_id and not child.divorced_parents]
+    elif member_rec.mother2_id:
+        spouses2 = [child.mother_id for child in children if child.mother_id and child.mother_id != member_id and not child.divorced_parents]
+        spouses2 = [child.mother2_id for child in children if child.mother2_id and child.mother2_id != member_id and not child.divorced_parents]
+    else:
+        spouses1 = [child.father_id for child in children if child.father_id and child.father_id != member_id and not child.divorced_parents]
+        spouses2 = [child.mother_id for child in children if child.mother_id and child.mother_id != member_id and not child.divorced_parents]
     spouses = spouses1 + spouses2
     spouses = [sp for sp in spouses if sp]  #to handle incomplete data
     visited = set([])
@@ -94,6 +125,7 @@ def get_family_connections(member_id):
     privileges = auth.get_privileges()
     is_admin = privileges.ADMIN if privileges else False
     result = Storage(
+        bobezedes=get_bobezeides()
         parents=parents,
         siblings=get_siblings(member_id),
         spouses=get_spouses(member_id),

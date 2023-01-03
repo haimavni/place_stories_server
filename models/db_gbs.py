@@ -247,7 +247,9 @@ fields = [
     Field('gender', type='string', description='gender', options="male='M'|female='F'"), #F, M and also FM and MF for transgenders...
     Field('IIDD', type='integer'),
     Field('father_id', type='integer'), #all family relations can be derived from these 2 fields.
-    Field('mother_id', type='integer'), #virtual child can define childless married couple etc. 
+    Field('mother_id', type='integer'), #virtual child can define childless married couple etc.
+    Field('father2_id', type='integer'),#to enable same sex couples
+    Field('mother2_id', type='integer'),
     Field('member_photo_id', type='integer'),
     Field('visible', type='boolean'), #obsolete
     Field('visibility', type='integer', description='visibility', options='vis-never=0|vis-not-ready=1|vis-visible=2|vis-high=3'),

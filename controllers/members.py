@@ -516,11 +516,16 @@ def remove_member(vars):
 def remove_parent(vars):
     member_id = vars.member_id
     who = vars.who
+    member_rec = db(db.TblMembers.id == member_id).select().first()
     if who == 'pa':
-        db(db.TblMembers.id == member_id).update(father_id=None)
+        member_rec.update_record(father_id=None)
     elif who == 'ma':
-        db(db.TblMembers.id == member_id).update(mother_id=None)
-
+        member_rec.update_record(mother_id=None)
+    elif who == 'pa2':
+        member_rec.update_record(father2_id=None)
+    elif who == 'ma2':
+        member_rec.update_record(mother2_id=None)
+    return dict()
 
 @serve_json
 def get_message_list(vars):
