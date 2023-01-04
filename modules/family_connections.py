@@ -29,6 +29,15 @@ def get_parents(member_id):
     if ma2:
         ma2_rec = get_member_rec(ma2, prepend_path=True)
         parents.ma2 = ma2_rec
+    pars = []
+    for p in ['pa', 'ma', 'pa2', 'ma2']:
+        if parents[p]:
+            pars.append(pars[p])
+    if len(pars) == 2:
+        parents.par1, parents.par2 = pars
+    elif len(pars) == 1:
+        parents.par1 = pars[0]
+    
     return parents
 
 def get_bobezeides(member_id):
@@ -119,7 +128,7 @@ def get_family_connections(member_id):
     #path = fc.find_path(493)
     
     parents = get_parents(member_id)
-    for p in ['pa', 'ma']:
+    for p in ['pa', 'ma', 'pa2', 'ma2']:
         if parents[p] and parents[p].visibility == VIS_NEVER:
             parents[p] = None
     privileges = auth.get_privileges()
