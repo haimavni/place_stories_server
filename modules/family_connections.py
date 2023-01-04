@@ -29,7 +29,7 @@ def get_parents(member_id):
     if ma2:
         ma2_rec = get_member_rec(ma2, prepend_path=True)
         parents.ma2 = ma2_rec
-    pars = parent_list[parents]
+    pars = parent_list(parents)
     if len(pars) == 2:
         parents.par1, parents.par2 = pars
     elif len(pars) == 1:
