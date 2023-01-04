@@ -44,8 +44,8 @@ def parent_list(parents):
             pars.append(parents[p])
     return pars
 
-def get_bobezeides(member_id):
-    bobezeides = []
+def get_grand_parents(member_id):
+    grand_parents = []
     parents = get_parents(member_id)
     found = False
     for who in ['pa', 'ma', 'pa2', 'ma2']:
@@ -55,10 +55,10 @@ def get_bobezeides(member_id):
             grands = parent_list(get_parents(mid))
             if grands:
                 found = True
-                bobezeides += grands
+                grand_parents += grands
     if not found:
-        bobezeides = None
-    return bobezeides
+        grand_parents = None
+    return grand_parents
 
 def get_parent_list(member_id):
     parents = get_parents(member_id)
@@ -145,7 +145,7 @@ def get_family_connections(member_id):
     privileges = auth.get_privileges()
     is_admin = privileges.ADMIN if privileges else False
     result = Storage(
-        bobezedes=get_bobezeides(member_id),
+        grand_parents=get_grand_parents(member_id),
         parents=parents,
         siblings=get_siblings(member_id),
         spouses=get_spouses(member_id),
