@@ -96,7 +96,7 @@ def get_children(member_id, hidden_too=False):
     member_rec = get_member_rec(member_id)
     db, VIS_NEVER = inject('db', 'VIS_NEVER')
     q = (db.TblMembers.mother_id==member_id) | (db.TblMembers.father_id==member_id)
-    q &= (db.TblMembers.mother2_id==member_id) | (db.TblMembers.father2_id==member_id)
+    q |= (db.TblMembers.mother2_id==member_id) | (db.TblMembers.father2_id==member_id)
     if not hidden_too:
         q &= (db.TblMembers.visibility != VIS_NEVER)
     q &= (db.TblMembers.deleted == False)
