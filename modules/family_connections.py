@@ -29,10 +29,7 @@ def get_parents(member_id):
     if ma2:
         ma2_rec = get_member_rec(ma2, prepend_path=True)
         parents.ma2 = ma2_rec
-    pars = []
-    for p in ['pa', 'ma', 'pa2', 'ma2']:
-        if parents[p]:
-            pars.append(parents[p])
+    pars = parent_list[parents]
     if len(pars) == 2:
         parents.par1, parents.par2 = pars
     elif len(pars) == 1:
@@ -40,14 +37,27 @@ def get_parents(member_id):
     
     return parents
 
+def parent_list(parents):
+    pars = []
+    for p in ['pa', 'ma', 'pa2', 'ma2']:
+        if parents[p]:
+            pars.append(parents[p])
+    return pars
+
 def get_bobezeides(member_id):
-    bobezeides = Storage()
+    bobezeides = []
     parents = get_parents(member_id)
+    found = False
     for who in ['pa', 'ma', 'pa2', 'ma2']:
         parent = parents[who]
         if parent:
             mid = parent.id
-            bobezeides[who] = get_parents(mid)
+            grands = parent_list(get_parents(mid))
+            if grands:
+                found = True
+                bobezeides += grands
+    if not found:
+        bobezeides = None
     return bobezeides
 
 def get_parent_list(member_id):
