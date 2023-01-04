@@ -32,7 +32,7 @@ def get_parents(member_id):
     pars = []
     for p in ['pa', 'ma', 'pa2', 'ma2']:
         if parents[p]:
-            pars.append(pars[p])
+            pars.append(parents[p])
     if len(pars) == 2:
         parents.par1, parents.par2 = pars
     elif len(pars) == 1:
