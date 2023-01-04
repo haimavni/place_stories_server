@@ -130,6 +130,8 @@ def get_spouses(member_id):
     ###spouses = list(set(spouses))  ## nice but does no preserve order
     result = [get_member_rec(m_id, prepend_path=True) for m_id in spouses]
     result = [member for member in result if member]
+    if len(result) > 1:
+        result[-1].together = True
     return result
 
 def get_family_connections(member_id):
