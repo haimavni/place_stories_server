@@ -125,7 +125,7 @@ def get_family_connections(member_id):
     privileges = auth.get_privileges()
     is_admin = privileges.ADMIN if privileges else False
     result = Storage(
-        bobezedes=get_bobezeides(),
+        bobezedes=get_bobezeides(member_id),
         parents=parents,
         siblings=get_siblings(member_id),
         spouses=get_spouses(member_id),
