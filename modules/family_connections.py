@@ -111,7 +111,7 @@ def get_spouses(member_id):
         spouses1 = [child.father_id for child in children if child.father_id and child.father_id != member_id and not child.divorced_parents]
         spouses2 = [child.father2_id for child in children if child.father2_id and child.father2_id != member_id and not child.divorced_parents]
     elif member_rec.mother2_id:
-        spouses2 = [child.mother_id for child in children if child.mother_id and child.mother_id != member_id and not child.divorced_parents]
+        spouses1 = [child.mother_id for child in children if child.mother_id and child.mother_id != member_id and not child.divorced_parents]
         spouses2 = [child.mother2_id for child in children if child.mother2_id and child.mother2_id != member_id and not child.divorced_parents]
     else:
         spouses1 = [child.father_id for child in children if child.father_id and child.father_id != member_id and not child.divorced_parents]
