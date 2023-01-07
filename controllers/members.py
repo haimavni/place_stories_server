@@ -1607,6 +1607,14 @@ def collect_search_stats(vars):
     else:
         db.TblSearches.insert(pattern=vars.search_pattern, count=1)
 
+@serve_json
+def divorce(vars):
+    member_id = int(vars.member_id)
+    spouse_id = int(vars.spouse_id)
+    value = 2 if vars.hide_spouse else 1
+    children = get_member_spouse_children(member_id, spouse_id)
+    for child in children:
+        child.update_record(divorced_parents=value)
 
 def story_kinds():
     story_kinds_arr = STORY4USER

@@ -114,8 +114,8 @@ def get_spouses(member_id):
         spouses1 = [child.mother_id for child in children if child.mother_id and child.mother_id != member_id and not child.divorced_parents]
         spouses2 = [child.mother2_id for child in children if child.mother2_id and child.mother2_id != member_id and not child.divorced_parents]
     else:
-        spouses1 = [child.father_id for child in children if child.father_id and child.father_id != member_id and not child.divorced_parents]
-        spouses2 = [child.mother_id for child in children if child.mother_id and child.mother_id != member_id and not child.divorced_parents]
+        spouses1 = [child.father_id for child in children if child.father_id and child.father_id != member_id and child.divorced_parents != 2]
+        spouses2 = [child.mother_id for child in children if child.mother_id and child.mother_id != member_id and child.divorced_parents != 2]
     spouses = spouses1 + spouses2
     spouses = [sp for sp in spouses if sp]  #to handle incomplete data
     visited = set([])
@@ -130,8 +130,6 @@ def get_spouses(member_id):
     ###spouses = list(set(spouses))  ## nice but does no preserve order
     result = [get_member_rec(m_id, prepend_path=True) for m_id in spouses]
     result = [member for member in result if member]
-    if len(result) > 1:
-        result[-1].together = "together"
     return result
 
 def get_family_connections(member_id):
@@ -155,6 +153,20 @@ def get_family_connections(member_id):
     )
     result.hasFamilyConnections = len(result.parents) > 0 or len(result.siblings) > 0 or len(result.spouses) > 0 or len(result.children) > 0
     return result
+
+def get_member_spouse_children(member_id, spouse_id):
+    db = inject("db")
+    member_rec = get_member_rec(member_id)
+    spouse_rec = get_member_rec(spouse_id)
+    if member_rec.gender == 'M':
+        qm = (db.TblMembers.father_id==member_id) | (db.TblMembers.father2_id==member_id)
+    else:
+        qm = (db.TblMembers.mother_id==member_id) | (db.TblMembers.mother2_id==member_id)
+    if spouse_rec.gender == 'M':
+        qs = (db.TblMembers.father_id==spouse_id) | (db.TblMembers.father2_id==spouse_id)
+    else:
+        qs = (db.TblMembers.mother_id==spouse_id) | (db.TblMembers.mother2_id==spouse_id)
+    return db(qm & qs).select()
 
 class AllFamilyConnections:
     
