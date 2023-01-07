@@ -1614,7 +1614,7 @@ def divorce(vars):
     value = 2 if vars.hide_spouse else 1
     children = get_member_spouse_children(member_id, spouse_id)
     for child in children:
-        child.update_record(divorced_parents=value)
+        child.update_record(parents_marital_status=value)
 
 def story_kinds():
     story_kinds_arr = STORY4USER

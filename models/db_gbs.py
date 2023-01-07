@@ -272,7 +272,7 @@ fields = [
     Field('deleted', type='boolean', default=False),
     Field('update_time', type='datetime'),
     Field('updater_id', type=db.auth_user),
-    Field('divorced_parents', type='integer', default=0, options='dp-normal=0|dp-divorced=1|dp-hide-couple=2'),  #do not show parents as couple
+    Field('parents_marital_status', type='integer', default=0, options='dp-normal=0|dp-divorced=1|dp-hide-couple=2'),  #do not show parents as couple
     Field('approved', type='boolean')    
 ]
 db.define_table('TblMembers', *fields)

@@ -108,14 +108,14 @@ def get_spouses(member_id):
     children = get_children(member_id, hidden_too=True)
     member_rec = get_member_rec(member_id)
     if member_rec.father2_id:
-        spouses1 = [child.father_id for child in children if child.father_id and child.father_id != member_id and not child.divorced_parents]
-        spouses2 = [child.father2_id for child in children if child.father2_id and child.father2_id != member_id and not child.divorced_parents]
+        spouses1 = [child.father_id for child in children if child.father_id and child.father_id != member_id and not child.parents_marital_status]
+        spouses2 = [child.father2_id for child in children if child.father2_id and child.father2_id != member_id and not child.parents_marital_status]
     elif member_rec.mother2_id:
-        spouses1 = [child.mother_id for child in children if child.mother_id and child.mother_id != member_id and not child.divorced_parents]
-        spouses2 = [child.mother2_id for child in children if child.mother2_id and child.mother2_id != member_id and not child.divorced_parents]
+        spouses1 = [child.mother_id for child in children if child.mother_id and child.mother_id != member_id and not child.parents_marital_status]
+        spouses2 = [child.mother2_id for child in children if child.mother2_id and child.mother2_id != member_id and not child.parents_marital_status]
     else:
-        spouses1 = [child.father_id for child in children if child.father_id and child.father_id != member_id and child.divorced_parents != 2]
-        spouses2 = [child.mother_id for child in children if child.mother_id and child.mother_id != member_id and child.divorced_parents != 2]
+        spouses1 = [child.father_id for child in children if child.father_id and child.father_id != member_id and child.parents_marital_status != 2]
+        spouses2 = [child.mother_id for child in children if child.mother_id and child.mother_id != member_id and child.parents_marital_status != 2]
     spouses = spouses1 + spouses2
     spouses = [sp for sp in spouses if sp]  #to handle incomplete data
     visited = set([])
