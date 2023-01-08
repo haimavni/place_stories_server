@@ -89,6 +89,13 @@ def fix_youtube_info():
     else:
         return "done"
 
+def fix_feedback_messages():
+    lst = db(db.TblFeedback.fb_message==None).select()
+    for fb in lst:
+        bf = fb.fb_bad_message
+        gf = fb.fb_good_message
+        fb.update_record(fb_message = bf + "<br>---------<br>" + gf)
+    return "done"
             
 _fixes = {
     1: init_photo_back_sides,
@@ -101,7 +108,8 @@ _fixes = {
     8: fix_photo_recognized,
     9: fix_pdf_texts,
     10: fix_no_slide_show,
-    11: fix_youtube_info
+    11: fix_youtube_info,
+    12: fix_feedback_messages
 }
 
 _init_configuration_table()
