@@ -129,7 +129,13 @@ def get_spouses(member_id):
     spouses = spouses1        
     ###spouses = list(set(spouses))  ## nice but does no preserve order
     result = [get_member_rec(m_id, prepend_path=True) for m_id in spouses]
-    result = [member for member in result if member]
+    result = [spouse for spouse in result if spouse]
+    for spouse in result:
+        children = get_member_spouse_children(member_id, spouse.id)
+        for child in children:
+            ms = child.parents_marital_status or 0
+            spouse.marital_status = "divorced" if ms == 1 else "together"
+            break
     return result
 
 def get_family_connections(member_id):
