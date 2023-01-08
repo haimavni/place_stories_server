@@ -1611,7 +1611,7 @@ def collect_search_stats(vars):
 def divorce(vars):
     member_id = int(vars.member_id)
     spouse_id = int(vars.spouse_id)
-    value = 2 if vars.hide_spouse else 1
+    value = int(vars.hide_spouse)
     children = get_member_spouse_children(member_id, spouse_id)
     for child in children:
         child.update_record(parents_marital_status=value)
