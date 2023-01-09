@@ -1626,8 +1626,8 @@ def divorce(vars):
     children = get_member_spouse_children(member_id, spouse_id)
     for child in children:
         child.update_record(parents_marital_status=value)
-    children = get_children(member_id)
-    return dict(children=children)
+    spouses = get_spouses(member_id)
+    return dict(spouses=spouses)
 
 def story_kinds():
     story_kinds_arr = STORY4USER
