@@ -488,6 +488,7 @@ def get_member_names():
                    nick_name=rec.NickName,
                    full_name=(rec.first_name or "") + ' ' + (rec.last_name or ""),
                    gender=rec.gender,
+                   parent_ids=get_parent_ids(rec),
                    birth_date=rec.date_of_birth,
                    visibility=rec.visibility,
                    approved=rec.approved,
@@ -497,6 +498,13 @@ def get_member_names():
            lst]
     arr.sort(key=lambda item: item.rnd)
     return arr
+
+def get_parent_ids(member_rec):
+    result = []
+    for fld in ['father_id', 'mother_id', 'father2_id', 'mother2_id' ]:
+        if member_rec[fld]:
+            result.append(member_rec[fld])
+    return result
 
 
 @serve_json
