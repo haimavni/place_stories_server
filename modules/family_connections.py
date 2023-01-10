@@ -134,7 +134,7 @@ def get_spouses(member_id):
         children = get_member_spouse_children(member_id, spouse.id)
         for child in children:
             ms = child.parents_marital_status or 0
-            spouse.marital_status = "divorced" if ms == 1 else "together"
+            spouse.marital_status = "divorced" if ms == 1 else "togetherxxx"
             break
     return result
 
