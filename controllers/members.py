@@ -488,6 +488,7 @@ def get_member_names():
                    nick_name=rec.NickName,
                    full_name=(rec.first_name or "") + ' ' + (rec.last_name or ""),
                    gender=rec.gender,
+                   parent_ids=get_parent_ids(rec),
                    birth_date=rec.date_of_birth,
                    visibility=rec.visibility,
                    approved=rec.approved,
@@ -497,6 +498,13 @@ def get_member_names():
            lst]
     arr.sort(key=lambda item: item.rnd)
     return arr
+
+def get_parent_ids(member_rec):
+    result = []
+    for fld in ['father_id', 'mother_id', 'father2_id', 'mother2_id' ]:
+        if member_rec[fld]:
+            result.append(member_rec[fld])
+    return result
 
 
 @serve_json
@@ -516,11 +524,16 @@ def remove_member(vars):
 def remove_parent(vars):
     member_id = vars.member_id
     who = vars.who
+    member_rec = db(db.TblMembers.id == member_id).select().first()
     if who == 'pa':
-        db(db.TblMembers.id == member_id).update(father_id=None)
+        member_rec.update_record(father_id=None)
     elif who == 'ma':
-        db(db.TblMembers.id == member_id).update(mother_id=None)
-
+        member_rec.update_record(mother_id=None)
+    elif who == 'pa2':
+        member_rec.update_record(father2_id=None)
+    elif who == 'ma2':
+        member_rec.update_record(mother2_id=None)
+    return dict()
 
 @serve_json
 def get_message_list(vars):
@@ -1602,6 +1615,19 @@ def collect_search_stats(vars):
     else:
         db.TblSearches.insert(pattern=vars.search_pattern, count=1)
 
+@serve_json
+def divorce(vars):
+    member_id = int(vars.member_id)
+    spouse_id = int(vars.spouse_id)
+    if vars.what == "undo-divorce":
+        value = 0
+    else:
+        value = int(vars.hide_spouse)
+    children = get_member_spouse_children(member_id, spouse_id)
+    for child in children:
+        child.update_record(parents_marital_status=value)
+    spouses = get_spouses(member_id)
+    return dict(spouses=spouses)
 
 def story_kinds():
     story_kinds_arr = STORY4USER

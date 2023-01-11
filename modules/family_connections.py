@@ -6,16 +6,59 @@ import datetime
 
 def get_parents(member_id):
     member_rec = get_member_rec(member_id)
-    pa = member_rec.father_id
-    ma = member_rec.mother_id
-    pa_rec = get_member_rec(pa, prepend_path=True)
-    ma_rec = get_member_rec(ma, prepend_path=True)
+    pa = ma = pa2 = ma2 = None
+    if member_rec.father2_id:
+        pa = member_rec.father_id
+        pa2 = member_rec.father2_id
+    elif member_rec.mother2_id:
+        ma = member_rec.mother_id
+        ma2 = member_rec.mother2_id
+    else:
+        pa = member_rec.father_id
+        ma = member_rec.mother_id
     parents = Storage()
-    if pa_rec:
+    if pa:
+        pa_rec = get_member_rec(pa, prepend_path=True)
         parents.pa = pa_rec
-    if ma_rec:
+    if ma:
+        ma_rec = get_member_rec(ma, prepend_path=True)
         parents.ma = ma_rec
+    if pa2:
+        pa2_rec = get_member_rec(pa2, prepend_path=True)
+        parents.pa2 = pa2_rec
+    if ma2:
+        ma2_rec = get_member_rec(ma2, prepend_path=True)
+        parents.ma2 = ma2_rec
+    pars = parent_list(parents)
+    if len(pars) == 2:
+        parents.par1, parents.par2 = pars
+    elif len(pars) == 1:
+        parents.par1 = pars[0]
+    
     return parents
+
+def parent_list(parents):
+    pars = []
+    for p in ['pa', 'ma', 'pa2', 'ma2']:
+        if parents[p]:
+            pars.append(parents[p])
+    return pars
+
+def get_grand_parents(member_id):
+    grand_parents = []
+    parents = get_parents(member_id)
+    found = False
+    for who in ['pa', 'ma', 'pa2', 'ma2']:
+        parent = parents[who]
+        if parent:
+            mid = parent.id
+            grands = parent_list(get_parents(mid))
+            if grands:
+                found = True
+                grand_parents += grands
+    if not found:
+        grand_parents = None
+    return grand_parents
 
 def get_parent_list(member_id):
     parents = get_parents(member_id)
@@ -53,6 +96,7 @@ def get_children(member_id, hidden_too=False):
     member_rec = get_member_rec(member_id)
     db, VIS_NEVER = inject('db', 'VIS_NEVER')
     q = (db.TblMembers.mother_id==member_id) | (db.TblMembers.father_id==member_id)
+    q |= (db.TblMembers.mother2_id==member_id) | (db.TblMembers.father2_id==member_id)
     if not hidden_too:
         q &= (db.TblMembers.visibility != VIS_NEVER)
     q &= (db.TblMembers.deleted == False)
@@ -63,8 +107,15 @@ def get_children(member_id, hidden_too=False):
 def get_spouses(member_id):
     children = get_children(member_id, hidden_too=True)
     member_rec = get_member_rec(member_id)
-    spouses1 = [child.father_id for child in children if child.father_id and child.father_id != member_id and not child.divorced_parents]
-    spouses2 = [child.mother_id for child in children if child.mother_id and child.mother_id != member_id and not child.divorced_parents]
+    if member_rec.father2_id:
+        spouses1 = [child.father_id for child in children if child.father_id and child.father_id != member_id and child.parents_marital_status != 2]
+        spouses2 = [child.father2_id for child in children if child.father2_id and child.father2_id != member_id and child.parents_marital_status != 2]
+    elif member_rec.mother2_id:
+        spouses1 = [child.mother_id for child in children if child.mother_id and child.mother_id != member_id and child.parents_marital_status != 2]
+        spouses2 = [child.mother2_id for child in children if child.mother2_id and child.mother2_id != member_id and child.parents_marital_status != 2]
+    else:
+        spouses1 = [child.father_id for child in children if child.father_id and child.father_id != member_id and child.parents_marital_status != 2]
+        spouses2 = [child.mother_id for child in children if child.mother_id and child.mother_id != member_id and child.parents_marital_status != 2]
     spouses = spouses1 + spouses2
     spouses = [sp for sp in spouses if sp]  #to handle incomplete data
     visited = set([])
@@ -78,7 +129,13 @@ def get_spouses(member_id):
     spouses = spouses1        
     ###spouses = list(set(spouses))  ## nice but does no preserve order
     result = [get_member_rec(m_id, prepend_path=True) for m_id in spouses]
-    result = [member for member in result if member]
+    result = [spouse for spouse in result if spouse]
+    for spouse in result:
+        children = get_member_spouse_children(member_id, spouse.id)
+        for child in children:
+            ms = child.parents_marital_status or 0
+            spouse.marital_status = "divorced" if ms == 1 else "togetherxxx"
+            break
     return result
 
 def get_family_connections(member_id):
@@ -88,12 +145,13 @@ def get_family_connections(member_id):
     #path = fc.find_path(493)
     
     parents = get_parents(member_id)
-    for p in ['pa', 'ma']:
+    for p in ['pa', 'ma', 'pa2', 'ma2']:
         if parents[p] and parents[p].visibility == VIS_NEVER:
             parents[p] = None
     privileges = auth.get_privileges()
     is_admin = privileges.ADMIN if privileges else False
     result = Storage(
+        grand_parents=get_grand_parents(member_id),
         parents=parents,
         siblings=get_siblings(member_id),
         spouses=get_spouses(member_id),
@@ -101,6 +159,20 @@ def get_family_connections(member_id):
     )
     result.hasFamilyConnections = len(result.parents) > 0 or len(result.siblings) > 0 or len(result.spouses) > 0 or len(result.children) > 0
     return result
+
+def get_member_spouse_children(member_id, spouse_id):
+    db = inject("db")
+    member_rec = get_member_rec(member_id)
+    spouse_rec = get_member_rec(spouse_id)
+    if member_rec.gender == 'M':
+        qm = (db.TblMembers.father_id==member_id) | (db.TblMembers.father2_id==member_id)
+    else:
+        qm = (db.TblMembers.mother_id==member_id) | (db.TblMembers.mother2_id==member_id)
+    if spouse_rec.gender == 'M':
+        qs = (db.TblMembers.father_id==spouse_id) | (db.TblMembers.father2_id==spouse_id)
+    else:
+        qs = (db.TblMembers.mother_id==spouse_id) | (db.TblMembers.mother2_id==spouse_id)
+    return db(qm & qs).select()
 
 class AllFamilyConnections:
     
