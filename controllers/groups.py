@@ -231,7 +231,7 @@ def mail_contacts(vars):
     group_name = db(db.TblTopics.id==grec.topic_id).select().first().name
     host = request.env.http_host
     #build recipient list and pass to send_mail
-    result = email(receivers=receivers, sender=f"info@{host}", sender=from_name, subject=grec.description, message=vars.mail_body, recipient_list=recipients)
+    result = email(receivers=receivers, sender=f"info@{host}", subject=grec.description, message=vars.mail_body, recipient_list=recipients)
     return dict(result = result)
 
 #-----------support functions----------------------------
