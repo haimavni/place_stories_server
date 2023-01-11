@@ -71,6 +71,8 @@ def get_group_info(vars):
     group_id = vars.group_id
     logo_url = get_logo_url(group_id)
     rec = db(db.TblGroups.id==group_id).select().first()
+    if not rec:
+        raise Exception("No group created yet.")
     return dict(title=topic_name(rec.topic_id),
                 description=rec.description,
                 logo_url=logo_url)
@@ -224,12 +226,12 @@ def mail_contacts(vars):
     from_name = vars.from_name or 'Test'
     comment("enter mail contacts, from: {}, group {}", from_name, group_id)
     recipients = db((db.TblGroupContacts.group_id==group_id) & (db.TblGroupContacts.deleted != True)).select()
+    receivers = [gc.email for gc in recipients]
     grec = db(db.TblGroups.id==group_id).select().first()
-    campaign_name = grec.description
     group_name = db(db.TblTopics.id==grec.topic_id).select().first().name
     host = request.env.http_host
     #build recipient list and pass to send_mail
-    result = email(campaign_name=group_name, from_address=f"info@{host}", from_name=from_name, subject=grec.description, body=vars.mail_body, recipient_list=recipients)
+    result = email(receivers=receivers, sender=f"info@{host}", sender=from_name, subject=grec.description, message=vars.mail_body, recipient_list=recipients)
     return dict(result = result)
 
 #-----------support functions----------------------------
