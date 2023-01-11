@@ -11,7 +11,7 @@ from admin_support import access_manager
 import stories_manager
 from gluon.storage import Storage
 from date_utils import update_record_dates, get_all_dates
-from send_email import send_email
+from send_email import email
 
 @serve_json
 def get_group_list(vars):
@@ -229,7 +229,7 @@ def mail_contacts(vars):
     group_name = db(db.TblTopics.id==grec.topic_id).select().first().name
     host = request.env.http_host
     #build recipient list and pass to send_mail
-    result = send_email(campaign_name=group_name, from_address=f"info@{host}", from_name=from_name, subject=grec.description, body=vars.mail_body, recipient_list=recipients)
+    result = email(campaign_name=group_name, from_address=f"info@{host}", from_name=from_name, subject=grec.description, body=vars.mail_body, recipient_list=recipients)
     return dict(result = result)
 
 #-----------support functions----------------------------
