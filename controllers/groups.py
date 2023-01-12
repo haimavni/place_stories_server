@@ -14,6 +14,7 @@ from date_utils import update_record_dates, get_all_dates
 from send_email import email
 from gluon._compat import to_bytes
 import os
+import array
 
 @serve_json
 def get_group_list(vars):
