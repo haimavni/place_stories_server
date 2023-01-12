@@ -12,6 +12,8 @@ import stories_manager
 from gluon.storage import Storage
 from date_utils import update_record_dates, get_all_dates
 from send_email import email
+from gluon._compat import to_bytes
+import os
 
 @serve_json
 def get_group_list(vars):
@@ -253,7 +255,8 @@ def get_logo_url(group_id):
     logo_name = rec.logo_name if rec and rec.logo_name else 'dummy-logo.jpg'
     return folder + logo_name
 
-def save_uploaded_logo(file_name, blob, group_id):
+def save_uploaded_logo(file_name, binVal, group_id):
+    blob = to_bytes(binVal)
     crc = zlib.crc32(blob)
     original_file_name, ext = os.path.splitext(file_name)
     file_name = '{crc:x}{ext}'.format(crc=crc & 0xffffffff, ext=ext)
