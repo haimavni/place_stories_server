@@ -78,7 +78,7 @@ def get_group_info(vars):
                 logo_url=logo_url)
 
 @serve_json
-def upload_logo(vars):
+def upload_group_logo(vars):
     comment(f"upload logo. vars: {vars}")
     fil = vars.file
     group_id=fil.info.group_id
