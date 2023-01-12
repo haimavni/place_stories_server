@@ -256,8 +256,11 @@ def get_logo_url(group_id):
     return folder + logo_name
 
 def save_uploaded_logo(file_name, binVal, group_id):
+    cls = binVal.__class__
+    comment(f"class of binval: {cls}")
     blob = to_bytes(binVal)
     crc = zlib.crc32(blob)
+    comment(f"class of binval after: {cls}")
     original_file_name, ext = os.path.splitext(file_name)
     file_name = '{crc:x}{ext}'.format(crc=crc & 0xffffffff, ext=ext)
     path = local_folder('logos')
