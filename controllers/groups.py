@@ -262,7 +262,7 @@ def save_uploaded_logo(file_name, binVal, group_id):
     file_name = '{crc:x}{ext}'.format(crc=crc & 0xffffffff, ext=ext)
     path = local_folder('logos')
     dir_util.mkpath(path)
-    stream = StringIO(blob)
+    stream = StringIO(binVal)
     img = Image.open(stream)
     width, height = img.size
     
