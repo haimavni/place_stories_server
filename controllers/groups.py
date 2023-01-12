@@ -260,12 +260,15 @@ def save_uploaded_logo(file_name, binVal, group_id):
     comment(f"class of binval: {cls}")
     blob = to_bytes(binVal)
     crc = zlib.crc32(blob)
-    comment(f"class of binval after: {cls}")
+    comment(f"class of binval after: '{cls}'")
     original_file_name, ext = os.path.splitext(file_name)
     file_name = '{crc:x}{ext}'.format(crc=crc & 0xffffffff, ext=ext)
     path = local_folder('logos')
     dir_util.mkpath(path)
-    stream = StringIO(binVal)
+    blob = array.array('B', [x for x in map(ord, binVal)]).tobytes()
+    stream = BytesIO(blob)
+
+    ###stream = StringIO(binVal)
     img = Image.open(stream)
     width, height = img.size
     
