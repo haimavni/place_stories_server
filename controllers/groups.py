@@ -142,6 +142,8 @@ def upload_photo(vars):
             usage = topic_rec.usage + 'P'
             topic_rec.update_record(usage=usage, topic_kind=2) #simple topic
     photo_url=timestamped_photo_path(photo_rec)
+    photo_width = photo_rec.width
+    photo_height = photo_rec.height
     if duplicate:
         story_rec = db(db.TblStories.id==photo_rec.story_id).select().first()
         photo_name = story_rec.name
@@ -170,8 +172,8 @@ def upload_photo(vars):
     ws_messaging.send_message(key='GROUP-PHOTO-UPLOADED', group=vars.file.info.ptp_key, photo_url=photo_url, photo_name=photo_name, 
                               photo_id=photo_id, photo_story=photo_story, duplicate=duplicate,
                               photographer_name=photographer_name,photo_date_str=photo_date_str,photo_date_datespan=photo_date_datespan,
-                              longitude=longitude,latitude=latitude,zoom=zoom,
-                              photo_topics=photo_topics, photographer_id=photographer_id)
+                              longitude=longitude,latitude=latitude,zoom=zoom, photo_topics=photo_topics, 
+                              photographer_id=photographer_id, photo_width=photo_width, photo_height=photo_height)
     return dict(photo_url=photo_url, upload_result=dict(duplicate=duplicate))
 
 @serve_json
