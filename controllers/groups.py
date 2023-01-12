@@ -79,7 +79,7 @@ def get_group_info(vars):
 
 @serve_json
 def upload_group_logo(vars):
-    comment(f"upload logo. vars: {vars}")
+    comment("================entered upload logo.")
     fil = vars.file
     group_id=fil.info.group_id
     file_name = save_uploaded_logo(fil.name, fil.BINvalue, group_id)
