@@ -15,6 +15,7 @@ from send_email import email
 from gluon._compat import to_bytes
 import os
 import array
+from io import BytesIO
 
 @serve_json
 def get_group_list(vars):
