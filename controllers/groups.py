@@ -170,6 +170,9 @@ def upload_photo(vars):
         latitude = None
         zoom = 8
     photo_topics = get_photo_topics(photo_rec.story_id)
+    topic_names = [topic.name for topic in photo_topics]
+    keywords = ';'.join(topic_names)
+    db(db.TblStories.id==photo_rec.story_id).update(keywords=keywords)
     
     ws_messaging.send_message(key='GROUP-PHOTO-UPLOADED', group=vars.file.info.ptp_key, photo_url=photo_url, photo_name=photo_name, 
                               photo_id=photo_id, photo_story=photo_story, duplicate=duplicate,
