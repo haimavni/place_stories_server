@@ -3,7 +3,7 @@ import zlib
 from io import StringIO
 import csv
 from PIL import Image, ImageFile
-from photos_support import save_uploaded_photo, photos_folder, timestamped_photo_path
+from photos_support import save_uploaded_photo, photos_folder, timestamped_photo_path, str_to_image
 from members_support import get_photo_topics
 from topics_support import *
 import ws_messaging
@@ -14,8 +14,6 @@ from date_utils import update_record_dates, get_all_dates
 from send_email import email
 from gluon._compat import to_bytes
 import os
-import array
-from io import BytesIO
 
 @serve_json
 def get_group_list(vars):
@@ -83,7 +81,6 @@ def get_group_info(vars):
 
 @serve_json
 def upload_group_logo(vars):
-    comment("================entered upload logo.")
     fil = vars.file
     group_id=fil.info.group_id
     file_name = save_uploaded_logo(fil.name, fil.BINvalue, group_id)
@@ -258,20 +255,12 @@ def get_logo_url(group_id):
     return folder + logo_name
 
 def save_uploaded_logo(file_name, binVal, group_id):
-    cls = binVal.__class__
-    comment(f"class of binval: {cls}")
-    blob = to_bytes(binVal)
-    crc = zlib.crc32(blob)
-    comment(f"class of binval after: '{cls}'")
+    img, crc = str_to_image(binVal)
     original_file_name, ext = os.path.splitext(file_name)
-    file_name = '{crc:x}{ext}'.format(crc=crc & 0xffffffff, ext=ext)
+    crc &= 0xffffffff
+    file_name = f'{crc:x}{ext}'
     path = local_folder('logos')
     dir_util.mkpath(path)
-    blob = array.array('B', [x for x in map(ord, binVal)]).tobytes()
-    stream = BytesIO(blob)
-
-    ###stream = StringIO(binVal)
-    img = Image.open(stream)
     width, height = img.size
     
     if height > MAX_SIZE or width > MAX_SIZE:

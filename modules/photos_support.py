@@ -1034,3 +1034,10 @@ def calc_story_has_text():
         rec.TblPhotos.update_record(has_story_text=has_text)
     return f"{n} photos have story text"
 
+def str_to_image(binVal: str):
+    blob = to_bytes(binVal)
+    crc = zlib.crc32(blob)
+    blob = array.array('B', [x for x in map(ord, binVal)]).tobytes()
+    stream = BytesIO(blob)
+    img = Image.open(stream)
+    return (img, crc)
