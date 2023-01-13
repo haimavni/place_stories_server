@@ -170,7 +170,7 @@ def upload_photo(vars):
         latitude = None
         zoom = 8
     photo_topics = get_photo_topics(photo_rec.story_id)
-    topic_names = [topic.name for topic in photo_topics]
+    topic_names = [topic['name'] for topic in photo_topics]
     keywords = ';'.join(topic_names)
     db(db.TblStories.id==photo_rec.story_id).update(keywords=keywords)
     
