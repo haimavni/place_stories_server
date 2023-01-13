@@ -38,7 +38,7 @@ def add_or_update_group(vars):
     else:
         topic_id = add_a_topic(vars.title)
         group_id = db.TblGroups.insert(topic_id=topic_id, description=vars.description)
-    group_data = dict(title=vars.title, description=vars.description,id=group_id)
+    group_data = dict(title=vars.title, description=vars.description,id=group_id, logo_name="dummy-logo.png")
     return dict(group_data=group_data)
 
 @serve_json
