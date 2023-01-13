@@ -251,7 +251,7 @@ def get_logo_url(group_id):
     group_id = int(group_id)
     rec = db(db.TblGroups.id==group_id).select().first()
     folder = url_folder('logos')
-    logo_name = rec.logo_name if rec and rec.logo_name else 'dummy-logo.jpg'
+    logo_name = rec.logo_name if rec and rec.logo_name else 'dummy-logo.png'
     return folder + logo_name
 
 def save_uploaded_logo(file_name, binVal, group_id):
