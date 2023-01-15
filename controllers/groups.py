@@ -261,7 +261,7 @@ def fill_data(message, recipient):
     def subst(match):
         symbol = match.group(1)
         return recipient[symbol]
-    return re.sub(r"!\[#([^#]+)#\]", lambda match: subst(match), message)
+    return re.sub(r"\[#([^#]+)#\]!", lambda match: subst(match), message)
 
 def text_to_html(txt):
     lst = txt.split('\n')
