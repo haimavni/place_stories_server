@@ -14,6 +14,7 @@ from date_utils import update_record_dates, get_all_dates
 from send_email import email
 from gluon._compat import to_bytes
 import os
+import re
 
 @serve_json
 def get_group_list(vars):
@@ -235,13 +236,32 @@ def mail_contacts(vars):
     recipients = db((db.TblGroupContacts.group_id==group_id) & (db.TblGroupContacts.deleted != True)).select()
     receivers = [gc.email for gc in recipients]
     grec = db(db.TblGroups.id==group_id).select().first()
-    group_name = db(db.TblTopics.id==grec.topic_id).select().first().name
+    db(db.TblTopics.id==grec.topic_id).select().first().name
     host = request.env.http_host
     #build recipient list and pass to send_mail
-    result = email(receivers=receivers, sender=f"info@{host}", subject=grec.description, message=vars.mail_body)
+    sender=f"info@{host}"
+    subject=grec.description
+    message=vars.mail_body
+    if vars.personal:
+        send_personal_email(recipients, sender, subject, message=message)
+    else:
+        result = email(receivers=receivers, sender=sender, subject=grec.description, message=vars.mail_body)
     return dict(result = result)
 
 #-----------support functions----------------------------
+
+def send_personal_email(recipients, sender, subject, message):
+    result = True
+    for recipient in recipients:
+        message = fill_data(message, recipient)
+        result = result and email(receivers=[recipient.email], sender=sender, subject=subject, message=message)
+    return result
+
+def fill_data(message, recipient):
+    def subst(match):
+        symbol = match.group(1)
+        return recipient[symbol]
+    return re.sub(r"!\[#([^#]+)#\]", lambda match: subst(match), message)
 
 def text_to_html(txt):
     lst = txt.split('\n')
