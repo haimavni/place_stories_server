@@ -243,7 +243,7 @@ def mail_contacts(vars):
     subject=grec.description
     message=vars.mail_body
     if vars.personal:
-        send_personal_email(recipients, sender, subject, message=message)
+        result = send_personal_email(recipients, sender, subject, message=message)
     else:
         result = email(receivers=receivers, sender=sender, subject=grec.description, message=vars.mail_body)
     return dict(result = result)
