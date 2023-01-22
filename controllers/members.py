@@ -1740,16 +1740,17 @@ def marry(member_id, spouse_id, member_gender):
     spouse_gender = spouse_rec.gender
     info = Storage()
     if member_gender == "M":
-        info.father = member_id;
+        info.father_id = member_id;
         if spouse_gender != member_gender:
-            info.mother = spouse_id
+            info.mother_id = spouse_id
         else:
-            info.father2 = spouse_id
+            info.father2_id = spouse_id
     if member_gender == "F":
-        info.mother = member_id;
+        info.mother_id = member_id;
         if spouse_gender != member_gender:
-            info.father = spouse_id
+            info.father_id = spouse_id
         else:
-            info.mother2 = spouse_id
+            info.mother2_id = spouse_id
         info.visibility = 0
-    db.TblMembers.insert(**info)
+    child_id = db.TblMembers.insert(**info)
+    comment(f"child id is {child_id}")
