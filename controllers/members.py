@@ -1735,7 +1735,6 @@ def doc_has_story_about(story_id):
     return doc_rec and doc_rec.story_about_id
 
 def marry(member_id, spouse_id, member_gender):
-    comment(f"member id: {member_id}, spouse_id: {spouse_id}, member gender: {member_gender}")
     spouse_rec = get_member_rec(spouse_id)
     spouse_gender = spouse_rec.gender
     info = Storage()
@@ -1753,4 +1752,3 @@ def marry(member_id, spouse_id, member_gender):
             info.mother2_id = spouse_id
         info.visibility = 0
     child_id = db.TblMembers.insert(**info)
-    comment(f"child id is {child_id}")
