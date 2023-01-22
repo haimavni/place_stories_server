@@ -450,6 +450,8 @@ def save_member_info(vars):
         member_info.update_time = datetime.datetime.now()
         member_info.updater_id = vars.user_id or auth.current_user() or 2
         member_info.approved = auth.has_membership(DATA_AUDITOR, user_id=vars.user_id)
+        if member_info.spouse_id:
+            marry(member_info.member_id, member_info.spouse_id, member_info.gender)
         result = insert_or_update(db.TblMembers, **member_info)
         if isinstance(result, dict):
             return dict(errors=result['errors'])
@@ -1731,3 +1733,22 @@ def story_id_of_story_about_id(story_about_id):
 def doc_has_story_about(story_id):
     doc_rec = db(db.TblDocs.story_id == story_id).select().first()
     return doc_rec and doc_rec.story_about_id
+
+def marry(member_id, spouse_id, member_gender):
+    spouse_rec = get_member_rec(spouse_id)
+    spouse_gender = spouse_rec.gender
+    info = Storage()
+    if member_gender == "M":
+        info.father = member_id;
+        if spouse_gender != member_gender:
+            info.mother = spouse_id
+        else:
+            info.father2 = spouse_id
+    if member_gender == "F":
+        info.mother = member_id;
+        if spouse_gender != member_gender:
+            info.father = spouse_id
+        else:
+            info.mother2 = spouse_id
+        info.visibility = 0
+    db.TblMembers.insert(**info)
