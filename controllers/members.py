@@ -451,7 +451,7 @@ def save_member_info(vars):
         member_info.updater_id = vars.user_id or auth.current_user() or 2
         member_info.approved = auth.has_membership(DATA_AUDITOR, user_id=vars.user_id)
         if member_info.spouse_id:
-            marry(member_info.member_id, member_info.spouse_id, member_info.gender)
+            marry(member_info.id, member_info.spouse_id, member_info.gender)
         result = insert_or_update(db.TblMembers, **member_info)
         if isinstance(result, dict):
             return dict(errors=result['errors'])
