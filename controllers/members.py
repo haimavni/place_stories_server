@@ -978,7 +978,7 @@ def new_member_rec(gender=None, first_name="", last_name=""):
             last_name=last_name,
             former_first_name="",
             former_last_name="",
-            visibility=VIS_NOT_READY,
+            visibility=VIS_VISIBLE,
             date_of_death_dateunit='N',
             date_of_death=Storage(
                 date='',
