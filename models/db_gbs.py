@@ -524,7 +524,8 @@ db.define_table('TblConfiguration',
                 Field('allow_publishing', type='boolean', default=False),
                 Field('expose_gallery', type='boolean', default=False),
                 Field('short_bio_title', type='boolean', default=False),
-                Field('articles_in_menu', type='boolean', default=True)
+                Field('articles_in_menu', type='boolean', default=True),
+                Field('show_chat_buttons', type='boolean', default=True)
                 )
 
 db.define_table('TblLocaleCustomizations',

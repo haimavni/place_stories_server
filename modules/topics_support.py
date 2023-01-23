@@ -45,7 +45,7 @@ def calculate_all_story_keywords(): #not in use. one time for upgrade
     '''
     lst = db.executesql(cmd)
     for r in lst:
-        keywords = ';'.join(r[1])
+        keywords = '; '.join(r[1])
         db(db.TblStories.id==r[0]).update(keywords=keywords)
     n = len(lst)
 
