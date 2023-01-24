@@ -51,6 +51,7 @@ def create_parent(vars):
 def create_new_member(vars):
     # todo: move code of photos/save_face to module and use it to complete the operation. in the client, go to
     #  the new member to edit its data
+    # todo: refactor - use create_member to replace first part
     name = (vars.name or vars.default_name).strip() + ' '
     lst = name.split(' ')
     first_name, last_name = lst[0], ' '.join(lst[1:])
@@ -80,6 +81,30 @@ def create_new_member(vars):
     ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL', member_rec=member_rec, new_member=True)
     return dict(member_id=member_id, member=rec)
 
+@serve_json
+def create_spouse(vars):
+    member_id, rec = create_member(vars)
+    member_rec = get_member_rec(member_id)
+    member_rec = json_to_storage(member_rec)
+    ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL', member_rec=member_rec, new_member=True)
+    return dict(member_id=member_id, member=rec)
+
+def create_member(vars):
+    name = (vars.name or vars.default_name).strip() + ' '
+    lst = name.split(' ')
+    first_name, last_name = lst[0], ' '.join(lst[1:])
+    first_name = first_name.strip()
+    last_name = last_name.strip()
+    rec = new_member_rec(first_name=first_name, last_name=last_name)
+    rec.member_info.updater_id = auth.current_user()
+    rec.member_info.update_time = datetime.datetime.now()
+    rec.member_info.approved = auth.has_membership(DATA_AUDITOR)
+    rec.member_info.date_of_birth = NO_DATE
+    rec.member_info.date_of_death = NO_DATE
+    rec.member_info.gender = vars.gender
+    member_id = db.TblMembers.insert(**rec.member_info)
+    rec.member_info.id = member_id
+    return member_id, rec
 
 @serve_json
 def get_member_details(vars):
