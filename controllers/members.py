@@ -77,7 +77,7 @@ def create_new_member(vars):
     rec.member_info.face_photo_url = tmp.face_photo_url
     member_rec = get_member_rec(member_id)
     member_rec.facePhotoURL = tmp.face_photo_url
-    ##member_rec.facePhotoURL = photos_folder('profile_photos') + (member_rec.facePhoto_URL or "dummy_face.png")
+    member_rec.facePhotoURL = photos_folder('profile_photos') + (member_rec.facePhoto_URL or "dummy_face.png")
     member_rec = json_to_storage(member_rec)
     ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL', member_rec=member_rec, new_member=True)
     return dict(member_id=member_id, member=rec)
