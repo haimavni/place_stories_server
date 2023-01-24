@@ -102,6 +102,7 @@ def create_member(vars):
     rec.member_info.date_of_birth = NO_DATE
     rec.member_info.date_of_death = NO_DATE
     rec.member_info.gender = vars.gender
+    rec.member_info.facePhotoURL=photos_folder('profile_photos') + (member_info.facePhotoURL or "dummy_face.png")
     member_id = db.TblMembers.insert(**rec.member_info)
     rec.member_info.id = member_id
     return member_id, rec
