@@ -102,9 +102,10 @@ def create_member(vars):
     rec.member_info.date_of_birth = NO_DATE
     rec.member_info.date_of_death = NO_DATE
     rec.member_info.gender = vars.gender
-    rec.member_info.facePhotoURL=photos_folder('profile_photos') + "dummy_face.png"
+    rec.member_info.facePhotoURL="dummy_face.png"
     member_id = db.TblMembers.insert(**rec.member_info)
     rec.member_info.id = member_id
+    rec.member_info.facePhotoURL = photos_folder('profile_photos') + "dummy_face.png"
     return member_id, rec
 
 @serve_json
