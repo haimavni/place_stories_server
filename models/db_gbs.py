@@ -525,7 +525,8 @@ db.define_table('TblConfiguration',
                 Field('expose_gallery', type='boolean', default=False),
                 Field('short_bio_title', type='boolean', default=False),
                 Field('articles_in_menu', type='boolean', default=True),
-                Field('show_chat_buttons', type='boolean', default=True)
+                Field('show_chat_buttons', type='boolean', default=True),
+                Field('single_doc_entry', type='boolean', default=False)
                 )
 
 db.define_table('TblLocaleCustomizations',
