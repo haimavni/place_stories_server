@@ -301,6 +301,8 @@ def update_video_cue_points(vars):
             db((db.TblVideoCuePoints.video_id == video_id) & (db.TblVideoCuePoints.time == t)).update(description=dic[t])
         else:
             db.TblVideoCuePoints.insert(time=t, description=dic[t], video_id=video_id)
+    story_id = db(db.TblVideos.id==video_id).select().first().story_id
+    invalidate_index(story_id)
     return dict()
 
 @serve_json
@@ -424,3 +426,7 @@ def story_id_to_video_id(vars):
     id = vars.id
     vrec = db(db.TblVideos.story_id==id).select().first()
     return dict(video_id=vrec.id)
+
+def invalidate_index(story_id):
+    story_rec = db(db.TblStories.id==story_id).select().first()
+    story_rec.update_record(indexing_date=NO_DATE, last_update_date=request.now)
