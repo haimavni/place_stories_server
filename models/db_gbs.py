@@ -406,7 +406,8 @@ db.define_table('TblVideos',
                 Field('description', type='text'),
                 Field('upload_date', type='datetime'),
                 Field('thumbnail_url', type='string'),
-                Field('duration', type='integer')
+                Field('duration', type='integer'),
+                Field('quepoints_text', type='string', default='')
                 )
 
 db.define_table('TblDocs',

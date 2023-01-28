@@ -1399,33 +1399,67 @@ def query_has_data(params):
            (params.approval_state and params.approval_state.id in [2, 3]) or params.selected_topics or \
            params.show_untagged or params.selected_words or params.deleted_stories
 
+def keywords_query(q, keywords_str, exact):
+    if exact:
+        single = len(params.keywords_str.split()) == 1
+        if single:
+            q1 = (db.TblStories.name.regexp(r"\y" + params.keywords_str + r"\y")) | (
+                    db.TblStories.story.regexp(r"\y" + params.keywords_str + r"\y"))
+        else:
+            q1 = (db.TblStories.name.contains(params.keywords_str)) | \
+                    (db.TblStories.story.contains(params.keywords_str))
+        q &= q1
+    else:
+        keywords = params.keywords_str.split()
+        for kw in keywords:
+            q &= (db.TblStories.name.contains(kw)) | (db.TblStories.story.contains(kw))
+    return q
 
-def make_stories_query(params, exact):
+def cuepoints_text_query(q, keywords_str, exact):
+    q1 = (db.TblStories.used_for == STORY4VIDEO) & (db.TblVidoes.story_id==db.TblStories.id)
+    if exact:
+        single = len(params.keywords_str.split()) == 1 
+        if single:
+            q1 &= (db.TblVideos.cuepoints_text.regexp(r"\y" + params.keywords_str + r"\y"))
+        else:
+            q1 &= (db.TblStories.cuepoints_text.contains(params.keywords_str))
+    else:
+        keywords = params.keywords_str.split()
+        for kw in keywords:
+            q1 &= (db.TblStories.cuepoints_text.contains(kw))
+    q &= q1
+    return q
+        
+def make_stories_query(params, exact, cuepoints=False):
     q = init_query(db.TblStories, editing=params.editing, is_deleted=params.deleted_stories)
     q &= (db.TblStories.used_for.belongs(story_kinds()))
     selected_stories = params.selected_stories
-    if params.keywords_str:
+    keywords_str = params.keywords_str
+    if keywords_str:
         selected_stories = []
-        if exact:
-            single = len(params.keywords_str.split()) == 1
-            comment(f"single? {single}")
-            if single:
-                q1 = (db.TblStories.name.regexp(r"\y" + params.keywords_str + r"\y")) | (
-                      db.TblStories.story.regexp(r"\y" + params.keywords_str + r"\y"))
-            else:
-                q1 = (db.TblStories.name.contains(params.keywords_str)) | \
-                     (db.TblStories.story.contains(params.keywords_str))
-            q &= q1
+        if cuepoints:
+            q = keywords_query(q, keywords_str, exact)
         else:
-            keywords = params.keywords_str.split()
-            # if len(keywords) == 1:
-            #     return None
-            for kw in keywords:
-                q &= (db.TblStories.name.contains(kw)) | (db.TblStories.story.contains(kw))
+            q = cuepoints_text_query(q, keywords_str, exact)
+        # if exact:
+        #     single = len(params.keywords_str.split()) == 1
+        #     if single:
+        #         q1 = (db.TblStories.name.regexp(r"\y" + params.keywords_str + r"\y")) | (
+        #               db.TblStories.story.regexp(r"\y" + params.keywords_str + r"\y"))
+        #     else:
+        #         q1 = (db.TblStories.name.contains(params.keywords_str)) | \
+        #              (db.TblStories.story.contains(params.keywords_str))
+        #     q &= q1
+        # else:
+        #     keywords = params.keywords_str.split()
+        #     # if len(keywords) == 1:
+        #     #     return None
+        #     for kw in keywords:
+        #         q &= (db.TblStories.name.contains(kw)) | (db.TblStories.story.contains(kw))
             
-            # prevent duplicates:
-            # q &= (~db.TblStories.name.contains(params.keywords_str)) & \
-            #      (~db.TblStories.story.contains(params.keywords_str))
+        #     # prevent duplicates:
+        #     # q &= (~db.TblStories.name.contains(params.keywords_str)) & \
+        #     #      (~db.TblStories.story.contains(params.keywords_str))
     if selected_stories:
         q &= (db.TblStories.id.belongs(selected_stories))
     if params.days_since_update and params.days_since_update.value:
