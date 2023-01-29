@@ -1425,7 +1425,7 @@ def keywords_query(q, keywords_str, exact):
     return q
 
 def cuepoints_text_query(q, keywords_str, exact):
-    q1 = (db.TblStories.used_for == STORY4VIDEO) & (db.TblVidoes.story_id==db.TblStories.id)
+    q1 = (db.TblStories.used_for == STORY4VIDEO) & (db.TblVideos.story_id==db.TblStories.id)
     if exact:
         single = len(params.keywords_str.split()) == 1 
         if single:
