@@ -1412,14 +1412,14 @@ def keywords_query(q, keywords_str, exact):
     if exact:
         single = len(params.keywords_str.split()) == 1
         if single:
-            q1 = (db.TblStories.name.regexp(r"\y" + params.keywords_str + r"\y")) | (
-                    db.TblStories.story.regexp(r"\y" + params.keywords_str + r"\y"))
+            q1 = (db.TblStories.name.regexp(r"\y" + keywords_str + r"\y")) | (
+                    db.TblStories.story.regexp(r"\y" + keywords_str + r"\y"))
         else:
-            q1 = (db.TblStories.name.contains(params.keywords_str)) | \
-                    (db.TblStories.story.contains(params.keywords_str))
+            q1 = (db.TblStories.name.contains(keywords_str)) | \
+                    (db.TblStories.story.contains(keywords_str))
         q &= q1
     else:
-        keywords = params.keywords_str.split()
+        keywords = keywords_str.split()
         for kw in keywords:
             q &= (db.TblStories.name.contains(kw)) | (db.TblStories.story.contains(kw))
     return q
