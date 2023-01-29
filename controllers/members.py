@@ -282,6 +282,8 @@ def get_story_list(vars):
     qhd = query_has_data(vars.params)
     result1 = []
     result2 = []
+    result3 = []
+    result4 = []
     real_counters = None #will show true total numbers
     if params.selected_book:
         result0 = get_checked_stories(params)
@@ -294,26 +296,33 @@ def get_story_list(vars):
         result0 = get_checked_stories(params)
         result0 = process_story_list(result0, checked=True)
         checked_story_ids = set([r.id for r in result0])
-        has_keywords = bool(params.keywords_str)  # and vars.params.search_type in ['menu', 'simple']
-        is_phrase = has_keywords and len(params.keywords_str.split()) > 1
+        #-------------------------------------------------------------
         tmp = _get_story_list(params, True)
         result1 = tmp[0] if tmp else []
         result1 = process_story_list(result1, exact=True)
         result1 = [r for r in result1 if r.id not in checked_story_ids]
-        y = [r.id for r in result1 if r.used_for==STORY4MEMBER]
-        comment(f"result1: {y}")
+        checked_story_ids |= set([r.id for r in result1])
+        #-------------------------------------------------------------
         tmp = _get_story_list(params, exact=False)
         result2 = tmp[0] if tmp else []
         result2 = process_story_list(result2)
         result2 = [r for r in result2 if r.id not in checked_story_ids]
+        checked_story_ids |= set([r.id for r in result2])
+        #-------------------------------------------------------------
+        tmp = _get_story_list(params, exact=True, cuepoints=True)
+        result3 = tmp[0] if tmp else []
+        result3 = process_story_list(result3)
+        result3 = [r for r in result3 if r.id not in checked_story_ids]
+        checked_story_ids |= set([r.id for r in result3])
+        #-------------------------------------------------------------
+        tmp = _get_story_list(params, exact=False, cuepoints=True)
+        result4 = tmp[0] if tmp else []
+        result4 = process_story_list(result4)
+        result4 = [r for r in result4 if r.id not in checked_story_ids]
     else:
         result0, real_counters = _get_story_list(params, False)
         result0 = process_story_list(result0)
-    visited = set([r.id for r in result0])
-    result1 = [r for r in result1 if r.id not in visited]
-    visited |= set([r.id for r in result1])
-    result2 = [r for r in result2 if r.id not in visited]
-    result = result0 + result1 + result2
+    result = result0 + result1 + result2 + result3 + result4
     result_type_counters = dict()
     active_result_types = set()
     final_result = []
