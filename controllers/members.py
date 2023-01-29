@@ -1410,7 +1410,7 @@ def query_has_data(params):
 
 def keywords_query(q, keywords_str, exact):
     if exact:
-        single = len(params.keywords_str.split()) == 1
+        single = len(keywords_str.split()) == 1
         if single:
             q1 = (db.TblStories.name.regexp(r"\y" + keywords_str + r"\y")) | (
                     db.TblStories.story.regexp(r"\y" + keywords_str + r"\y"))
