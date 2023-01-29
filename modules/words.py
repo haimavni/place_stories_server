@@ -120,7 +120,8 @@ def extract_story_words(story_id):
     if preview and rec.used_for == STORY4DOC:
         s += remove_all_tags(preview) + ' '
     if rec.used_for == STORY4VIDEO:
-        s += cuepoints_text(story_id)
+        vid_rec = db(db.TblVideos.story_id==story_id).select().first()
+        s += vid_rec.cuepoints_text
     s += remove_all_tags(html)
     lst = extract_words(s)
     if not lst:
@@ -131,15 +132,6 @@ def extract_story_words(story_id):
             dic[w] = 0
         dic[w] += 1
     return dic
-
-def cuepoints_text(story_id):
-    db = inject('db')
-    vid_rec = db(db.TblVideos.story_id==story_id).select().first()
-    result = ""
-    for cuepoint in db(db.TblVideoCuePoints.video_id==vid_rec.id).select():
-        result += cuepoint.description + ' '
-    vid_rec.update_record(cuepoints_text=result)
-    return result
 
 def retrieve_story_words(story_id):
     from .injections import inject

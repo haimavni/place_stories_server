@@ -8,7 +8,7 @@ import ws_messaging
 from date_utils import update_record_dates, fix_record_dates_in, fix_record_dates_out
 from folders import url_video_folder
 from members_support import *
-from video_support import upgrade_youtube_info
+from video_support import upgrade_youtube_info, update_cuepoints_text
 
 @serve_json
 def save_video(vars):
@@ -302,6 +302,7 @@ def update_video_cue_points(vars):
         else:
             db.TblVideoCuePoints.insert(time=t, description=dic[t], video_id=video_id)
     story_id = db(db.TblVideos.id==video_id).select().first().story_id
+    update_cuepoints_text(video_id;
     invalidate_index(story_id)
     return dict()
 

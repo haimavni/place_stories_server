@@ -91,3 +91,14 @@ def upgrade_youtube_info(chunk=50, video_list=None):
             bad += 1
     return Storage(total=total, bad=bad, good=good)
 
+def update_cuepoints_text(video_id):
+    db = inject('db')
+    vid_rec = db(db.TblVideos.id==video_id).select().first()
+    result = ""
+    for cuepoint in db(db.TblVideoCuePoints.video_id==video_id).select():
+        result += cuepoint.description + ' '
+    vid_rec.update_record(cuepoints_text=result)
+    return result
+
+
+
