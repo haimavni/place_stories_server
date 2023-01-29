@@ -302,7 +302,7 @@ def update_video_cue_points(vars):
         else:
             db.TblVideoCuePoints.insert(time=t, description=dic[t], video_id=video_id)
     story_id = db(db.TblVideos.id==video_id).select().first().story_id
-    update_cuepoints_text(video_id;
+    update_cuepoints_text(video_id);
     invalidate_index(story_id)
     return dict()
 
