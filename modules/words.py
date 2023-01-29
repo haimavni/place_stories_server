@@ -138,7 +138,7 @@ def cuepoints_text(story_id):
     result = ""
     for cuepoint in db(db.TblVideoCuePoints.video_id==vid_rec.id).select():
         result += cuepoint.description + ' '
-    vid_rec.update_record(quepoints_text=result)
+    vid_rec.update_record(cuepoints_text=result)
     return result
 
 def retrieve_story_words(story_id):
