@@ -1427,13 +1427,13 @@ def keywords_query(q, keywords_str, exact):
 def cuepoints_text_query(q, keywords_str, exact):
     q1 = (db.TblStories.used_for == STORY4VIDEO) & (db.TblVideos.story_id==db.TblStories.id)
     if exact:
-        single = len(params.keywords_str.split()) == 1 
+        single = len(keywords_str.split()) == 1 
         if single:
-            q1 &= (db.TblVideos.cuepoints_text.regexp(r"\y" + params.keywords_str + r"\y"))
+            q1 &= (db.TblVideos.cuepoints_text.regexp(r"\y" + keywords_str + r"\y"))
         else:
-            q1 &= (db.TblStories.cuepoints_text.contains(params.keywords_str))
+            q1 &= (db.TblStories.cuepoints_text.contains(keywords_str))
     else:
-        keywords = params.keywords_str.split()
+        keywords = keywords_str.split()
         for kw in keywords:
             q1 &= (db.TblStories.cuepoints_text.contains(kw))
     q &= q1
