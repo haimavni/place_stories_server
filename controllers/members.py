@@ -1075,9 +1075,9 @@ def get_checked_stories(params):
     return checked_story_list
 
 
-def _get_story_list(params, exact):  # exact means looking only for the passed keywords string as a whole
+def _get_story_list(params, exact, cuepoints=False):  # exact means looking only for the passed keywords string as a whole
     order_option = params.order_option.value if params.order_option else 'normal'
-    q = make_stories_query(params, exact)
+    q = make_stories_query(params, exact, cuepoints=cuepoints)
     real_counters = dict()
     if order_option == 'by-chats':
         q &= (db.TblStories.chatroom_id != None)
@@ -1447,9 +1447,9 @@ def make_stories_query(params, exact, cuepoints=False):
     if keywords_str:
         selected_stories = []
         if cuepoints:
-            q = keywords_query(q, keywords_str, exact)
-        else:
             q = cuepoints_text_query(q, keywords_str, exact)
+        else:
+            q = keywords_query(q, keywords_str, exact)
         # if exact:
         #     single = len(params.keywords_str.split()) == 1
         #     if single:
