@@ -1435,7 +1435,7 @@ def cuepoints_text_query(q, keywords_str, exact):
     else:
         keywords = keywords_str.split()
         for kw in keywords:
-            q1 &= (db.TblStories.cuepoints_text.contains(kw))
+            q1 &= (db.TblVideos.cuepoints_text.contains(kw))
     q &= q1
     return q
         
