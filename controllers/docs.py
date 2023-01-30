@@ -209,6 +209,7 @@ def get_doc_info(vars):
                 doc_src=doc_src,
                 doc_name=doc_name,
                 story_about=story_about,
+                doc_story=doc_story,
                 doc_topics=doc_topics,
                 doc_date_str=all_dates.doc_date.date,
                 doc_date_datespan=all_dates.doc_date.span,
