@@ -41,9 +41,9 @@ def remove_topic(vars):
     topic_id = vars.topic_id
     lst = db(db.TblItemTopics.topic_id==topic_id).select()
     lst = [Storage(item_type=rec.item_type, story_id=rec.story_id) for rec in lst]
-    n = db(db.TblTopics.id==topic_id).delete()
+    db(db.TblTopics.id==topic_id).delete()
     for rec in lst:
-        recalc_keywords_str(rec.item_type, rec.story_id)
+        recalc_keywords_str(rec.story_id)
     return dict()
    
 @serve_json

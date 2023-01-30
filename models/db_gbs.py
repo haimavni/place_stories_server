@@ -24,7 +24,8 @@ STORY4USER = [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, S
 VIS_NEVER = 0           #for non existing members such as the child of a childless couple (it just connects them)
 VIS_NOT_READY = 1
 VIS_VISIBLE = 2
-VIS_HIGH = 3  
+VIS_HIGH = 3
+KW_SEP = ";  "  
 
 db.define_table('TblPrivateFields',
                 Field('name', type='string'),
@@ -406,7 +407,8 @@ db.define_table('TblVideos',
                 Field('description', type='text'),
                 Field('upload_date', type='datetime'),
                 Field('thumbnail_url', type='string'),
-                Field('duration', type='integer')
+                Field('duration', type='integer'),
+                Field('cuepoints_text', type='text', default='')
                 )
 
 db.define_table('TblDocs',
@@ -524,7 +526,9 @@ db.define_table('TblConfiguration',
                 Field('allow_publishing', type='boolean', default=False),
                 Field('expose_gallery', type='boolean', default=False),
                 Field('short_bio_title', type='boolean', default=False),
-                Field('articles_in_menu', type='boolean', default=True)
+                Field('articles_in_menu', type='boolean', default=True),
+                Field('show_chat_buttons', type='boolean', default=True),
+                Field('single_doc_entry', type='boolean', default=False)
                 )
 
 db.define_table('TblLocaleCustomizations',

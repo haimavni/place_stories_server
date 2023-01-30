@@ -51,6 +51,7 @@ def create_parent(vars):
 def create_new_member(vars):
     # todo: move code of photos/save_face to module and use it to complete the operation. in the client, go to
     #  the new member to edit its data
+    # todo: refactor - use create_member to replace first part
     name = (vars.name or vars.default_name).strip() + ' '
     lst = name.split(' ')
     first_name, last_name = lst[0], ' '.join(lst[1:])
@@ -80,6 +81,33 @@ def create_new_member(vars):
     ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL', member_rec=member_rec, new_member=True)
     return dict(member_id=member_id, member=rec)
 
+@serve_json
+def create_spouse(vars):
+    member_id, rec = create_member(vars)
+    member_rec = get_member_rec(member_id)
+    member_rec.facePhotoURL = photos_folder('profile_photos') + "dummy_face.png"
+    member_rec = json_to_storage(member_rec)
+    ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL', member_rec=member_rec, new_member=True)
+    return dict(member_id=member_id, member=rec)
+
+def create_member(vars):
+    name = (vars.name or vars.default_name).strip() + ' '
+    lst = name.split(' ')
+    first_name, last_name = lst[0], ' '.join(lst[1:])
+    first_name = first_name.strip()
+    last_name = last_name.strip()
+    rec = new_member_rec(first_name=first_name, last_name=last_name)
+    rec.member_info.updater_id = auth.current_user()
+    rec.member_info.update_time = datetime.datetime.now()
+    rec.member_info.approved = auth.has_membership(DATA_AUDITOR)
+    rec.member_info.date_of_birth = NO_DATE
+    rec.member_info.date_of_death = NO_DATE
+    rec.member_info.gender = vars.gender
+    rec.member_info.facePhotoURL="dummy_face.png"
+    member_id = db.TblMembers.insert(**rec.member_info)
+    rec.member_info.id = member_id
+    rec.member_info.facePhotoURL = photos_folder('profile_photos') + "dummy_face.png"
+    return member_id, rec
 
 @serve_json
 def get_member_details(vars):
@@ -254,6 +282,8 @@ def get_story_list(vars):
     qhd = query_has_data(vars.params)
     result1 = []
     result2 = []
+    result3 = []
+    result4 = []
     real_counters = None #will show true total numbers
     if params.selected_book:
         result0 = get_checked_stories(params)
@@ -266,26 +296,33 @@ def get_story_list(vars):
         result0 = get_checked_stories(params)
         result0 = process_story_list(result0, checked=True)
         checked_story_ids = set([r.id for r in result0])
-        has_keywords = bool(params.keywords_str)  # and vars.params.search_type in ['menu', 'simple']
-        is_phrase = has_keywords and len(params.keywords_str.split()) > 1
+        #-------------------------------------------------------------
         tmp = _get_story_list(params, True)
         result1 = tmp[0] if tmp else []
         result1 = process_story_list(result1, exact=True)
         result1 = [r for r in result1 if r.id not in checked_story_ids]
-        y = [r.id for r in result1 if r.used_for==STORY4MEMBER]
-        comment(f"result1: {y}")
+        checked_story_ids |= set([r.id for r in result1])
+        #-------------------------------------------------------------
         tmp = _get_story_list(params, exact=False)
         result2 = tmp[0] if tmp else []
         result2 = process_story_list(result2)
         result2 = [r for r in result2 if r.id not in checked_story_ids]
+        checked_story_ids |= set([r.id for r in result2])
+        #-------------------------------------------------------------
+        tmp = _get_story_list(params, exact=True, cuepoints=True)
+        result3 = tmp[0] if tmp else []
+        result3 = process_story_list(result3)
+        result3 = [r for r in result3 if r.id not in checked_story_ids]
+        checked_story_ids |= set([r.id for r in result3])
+        #-------------------------------------------------------------
+        tmp = _get_story_list(params, exact=False, cuepoints=True)
+        result4 = tmp[0] if tmp else []
+        result4 = process_story_list(result4)
+        result4 = [r for r in result4 if r.id not in checked_story_ids]
     else:
         result0, real_counters = _get_story_list(params, False)
         result0 = process_story_list(result0)
-    visited = set([r.id for r in result0])
-    result1 = [r for r in result1 if r.id not in visited]
-    visited |= set([r.id for r in result1])
-    result2 = [r for r in result2 if r.id not in visited]
-    result = result0 + result1 + result2
+    result = result0 + result1 + result2 + result3 + result4
     result_type_counters = dict()
     active_result_types = set()
     final_result = []
@@ -450,6 +487,8 @@ def save_member_info(vars):
         member_info.update_time = datetime.datetime.now()
         member_info.updater_id = vars.user_id or auth.current_user() or 2
         member_info.approved = auth.has_membership(DATA_AUDITOR, user_id=vars.user_id)
+        if member_info.spouse_id:
+            marry(member_info.id, member_info.spouse_id, member_info.gender)
         result = insert_or_update(db.TblMembers, **member_info)
         if isinstance(result, dict):
             return dict(errors=result['errors'])
@@ -711,7 +750,7 @@ def apply_topics_to_selected_stories(vars):
 
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         curr_tags.sort()
-        keywords = "; ".join(curr_tags)
+        keywords = KW_SEP.join(curr_tags)
         rec = db(db.TblStories.id == story_id).select().first()
         rec.update_record(keywords=keywords, is_tagged=bool(keywords))
 
@@ -753,7 +792,7 @@ def apply_topics_to_story(vars):
             # should remove usage_char from usage if it was the last one...
             db(q).delete()
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
-        keywords = "; ".join(curr_tags)
+        keywords = KW_SEP.join(curr_tags)
         rec = db(db.TblStories.id == story_id).select().first()
         rec.update_record(keywords=keywords, is_tagged=bool(keywords))
 
@@ -976,7 +1015,7 @@ def new_member_rec(gender=None, first_name="", last_name=""):
             last_name=last_name,
             former_first_name="",
             former_last_name="",
-            visibility=VIS_NOT_READY,
+            visibility=VIS_VISIBLE,
             date_of_death_dateunit='N',
             date_of_death=Storage(
                 date='',
@@ -1036,9 +1075,9 @@ def get_checked_stories(params):
     return checked_story_list
 
 
-def _get_story_list(params, exact):  # exact means looking only for the passed keywords string as a whole
+def _get_story_list(params, exact, cuepoints=False):  # exact means looking only for the passed keywords string as a whole
     order_option = params.order_option.value if params.order_option else 'normal'
-    q = make_stories_query(params, exact)
+    q = make_stories_query(params, exact, cuepoints=cuepoints)
     real_counters = dict()
     if order_option == 'by-chats':
         q &= (db.TblStories.chatroom_id != None)
@@ -1369,33 +1408,67 @@ def query_has_data(params):
            (params.approval_state and params.approval_state.id in [2, 3]) or params.selected_topics or \
            params.show_untagged or params.selected_words or params.deleted_stories
 
+def keywords_query(q, keywords_str, exact):
+    if exact:
+        single = len(keywords_str.split()) == 1
+        if single:
+            q1 = (db.TblStories.name.regexp(r"\y" + keywords_str + r"\y")) | (
+                    db.TblStories.story.regexp(r"\y" + keywords_str + r"\y"))
+        else:
+            q1 = (db.TblStories.name.contains(keywords_str)) | \
+                    (db.TblStories.story.contains(keywords_str))
+        q &= q1
+    else:
+        keywords = keywords_str.split()
+        for kw in keywords:
+            q &= (db.TblStories.name.contains(kw)) | (db.TblStories.story.contains(kw))
+    return q
 
-def make_stories_query(params, exact):
+def cuepoints_text_query(q, keywords_str, exact):
+    q1 = (db.TblStories.used_for == STORY4VIDEO) & (db.TblVideos.story_id==db.TblStories.id)
+    if exact:
+        single = len(keywords_str.split()) == 1 
+        if single:
+            q1 &= (db.TblVideos.cuepoints_text.regexp(r"\y" + keywords_str + r"\y"))
+        else:
+            q1 &= (db.TblVideos.cuepoints_text.contains(keywords_str))
+    else:
+        keywords = keywords_str.split()
+        for kw in keywords:
+            q1 &= (db.TblVideos.cuepoints_text.contains(kw))
+    q &= q1
+    return q
+        
+def make_stories_query(params, exact, cuepoints=False):
     q = init_query(db.TblStories, editing=params.editing, is_deleted=params.deleted_stories)
     q &= (db.TblStories.used_for.belongs(story_kinds()))
     selected_stories = params.selected_stories
-    if params.keywords_str:
+    keywords_str = params.keywords_str
+    if keywords_str:
         selected_stories = []
-        if exact:
-            single = len(params.keywords_str.split()) == 1
-            comment(f"single? {single}")
-            if single:
-                q1 = (db.TblStories.name.regexp(r"\y" + params.keywords_str + r"\y")) | (
-                      db.TblStories.story.regexp(r"\y" + params.keywords_str + r"\y"))
-            else:
-                q1 = (db.TblStories.name.contains(params.keywords_str)) | \
-                     (db.TblStories.story.contains(params.keywords_str))
-            q &= q1
+        if cuepoints:
+            q = cuepoints_text_query(q, keywords_str, exact)
         else:
-            keywords = params.keywords_str.split()
-            # if len(keywords) == 1:
-            #     return None
-            for kw in keywords:
-                q &= (db.TblStories.name.contains(kw)) | (db.TblStories.story.contains(kw))
+            q = keywords_query(q, keywords_str, exact)
+        # if exact:
+        #     single = len(params.keywords_str.split()) == 1
+        #     if single:
+        #         q1 = (db.TblStories.name.regexp(r"\y" + params.keywords_str + r"\y")) | (
+        #               db.TblStories.story.regexp(r"\y" + params.keywords_str + r"\y"))
+        #     else:
+        #         q1 = (db.TblStories.name.contains(params.keywords_str)) | \
+        #              (db.TblStories.story.contains(params.keywords_str))
+        #     q &= q1
+        # else:
+        #     keywords = params.keywords_str.split()
+        #     # if len(keywords) == 1:
+        #     #     return None
+        #     for kw in keywords:
+        #         q &= (db.TblStories.name.contains(kw)) | (db.TblStories.story.contains(kw))
             
-            # prevent duplicates:
-            # q &= (~db.TblStories.name.contains(params.keywords_str)) & \
-            #      (~db.TblStories.story.contains(params.keywords_str))
+        #     # prevent duplicates:
+        #     # q &= (~db.TblStories.name.contains(params.keywords_str)) & \
+        #     #      (~db.TblStories.story.contains(params.keywords_str))
     if selected_stories:
         q &= (db.TblStories.id.belongs(selected_stories))
     if params.days_since_update and params.days_since_update.value:
@@ -1731,3 +1804,22 @@ def story_id_of_story_about_id(story_about_id):
 def doc_has_story_about(story_id):
     doc_rec = db(db.TblDocs.story_id == story_id).select().first()
     return doc_rec and doc_rec.story_about_id
+
+def marry(member_id, spouse_id, member_gender):
+    spouse_rec = get_member_rec(spouse_id)
+    spouse_gender = spouse_rec.gender
+    info = Storage()
+    if member_gender == "M":
+        info.father_id = member_id;
+        if spouse_gender != member_gender:
+            info.mother_id = spouse_id
+        else:
+            info.father2_id = spouse_id
+    if member_gender == "F":
+        info.mother_id = member_id;
+        if spouse_gender != member_gender:
+            info.father_id = spouse_id
+        else:
+            info.mother2_id = spouse_id
+        info.visibility = 0
+    child_id = db.TblMembers.insert(**info)

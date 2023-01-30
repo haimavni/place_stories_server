@@ -109,7 +109,7 @@ def tally_words(html, dic, story_id, story_name, preview=''):
 
 def extract_story_words(story_id):
     from .injections import inject
-    db, STORY4DOC = inject('db', 'STORY4DOC')
+    db, STORY4DOC, STORY4VIDEO = inject('db', 'STORY4DOC', 'STORY4VIDEO')
     rec = db(db.TblStories.id==story_id).select().first()
     if (not rec) or rec.deleted:
         return None
@@ -119,6 +119,9 @@ def extract_story_words(story_id):
     s = story_name + ' '
     if preview and rec.used_for == STORY4DOC:
         s += remove_all_tags(preview) + ' '
+    if rec.used_for == STORY4VIDEO:
+        vid_rec = db(db.TblVideos.story_id==story_id).select().first()
+        s += vid_rec.cuepoints_text
     s += remove_all_tags(html)
     lst = extract_words(s)
     if not lst:

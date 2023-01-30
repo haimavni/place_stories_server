@@ -8,7 +8,7 @@ import ws_messaging
 from date_utils import update_record_dates, fix_record_dates_in, fix_record_dates_out
 from folders import url_video_folder
 from members_support import *
-from video_support import upgrade_youtube_info
+from video_support import upgrade_youtube_info, update_cuepoints_text
 
 @serve_json
 def save_video(vars):
@@ -187,7 +187,7 @@ def apply_to_selected_videos(vars):
                 deleted.append(item)
                 db(q).delete()
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
-        keywords = "; ".join(curr_tags)
+        keywords = KW_SEP.join(curr_tags)
         changes[vid] = dict(keywords=keywords, video_id=vid)
         rec = db(db.TblVideos.id == vid).select().first()
         rec1 = db(db.TblStories.id == rec.story_id).select().first()
@@ -301,6 +301,9 @@ def update_video_cue_points(vars):
             db((db.TblVideoCuePoints.video_id == video_id) & (db.TblVideoCuePoints.time == t)).update(description=dic[t])
         else:
             db.TblVideoCuePoints.insert(time=t, description=dic[t], video_id=video_id)
+    story_id = db(db.TblVideos.id==video_id).select().first().story_id
+    update_cuepoints_text(video_id);
+    invalidate_index(story_id)
     return dict()
 
 @serve_json
@@ -424,3 +427,7 @@ def story_id_to_video_id(vars):
     id = vars.id
     vrec = db(db.TblVideos.story_id==id).select().first()
     return dict(video_id=vrec.id)
+
+def invalidate_index(story_id):
+    story_rec = db(db.TblStories.id==story_id).select().first()
+    story_rec.update_record(indexing_date=NO_DATE, last_update_date=request.now)

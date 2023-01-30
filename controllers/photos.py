@@ -419,7 +419,7 @@ def apply_to_selected_photos(vars):
                 #should remove 'P' from usage if it was the last one...
                 db(q).delete()
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
-        keywords = "; ".join(curr_tags)
+        keywords = KW_SEP.join(curr_tags)
         if story_id:
             db(db.TblStories.id == story_id).update(keywords=keywords, is_tagged=bool(keywords))
         if rec:
@@ -472,7 +472,7 @@ def apply_topics_to_photo(vars):
     curr_tag_ids -= deleted
     curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
     curr_tags = sorted(curr_tags)
-    keywords = "; ".join(curr_tags)
+    keywords = KW_SEP.join(curr_tags)
     is_tagged = len(curr_tags) > 0
     srec = db(db.TblStories.id==rec.story_id).select().first()
     srec.update_record(keywords=keywords, is_tagged=is_tagged)

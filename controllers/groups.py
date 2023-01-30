@@ -3,7 +3,7 @@ import zlib
 from io import StringIO
 import csv
 from PIL import Image, ImageFile
-from photos_support import save_uploaded_photo, photos_folder, timestamped_photo_path
+from photos_support import save_uploaded_photo, photos_folder, timestamped_photo_path, str_to_image
 from members_support import get_photo_topics
 from topics_support import *
 import ws_messaging
@@ -11,7 +11,10 @@ from admin_support import access_manager
 import stories_manager
 from gluon.storage import Storage
 from date_utils import update_record_dates, get_all_dates
-from send_email import send_email
+from send_email import email
+from gluon._compat import to_bytes
+import os
+import re
 
 @serve_json
 def get_group_list(vars):
@@ -36,7 +39,7 @@ def add_or_update_group(vars):
     else:
         topic_id = add_a_topic(vars.title)
         group_id = db.TblGroups.insert(topic_id=topic_id, description=vars.description)
-    group_data = dict(title=vars.title, description=vars.description,id=group_id)
+    group_data = dict(title=vars.title, description=vars.description, id=group_id, logo_url=get_logo_url(group_id))
     return dict(group_data=group_data)
 
 @serve_json
@@ -71,12 +74,14 @@ def get_group_info(vars):
     group_id = vars.group_id
     logo_url = get_logo_url(group_id)
     rec = db(db.TblGroups.id==group_id).select().first()
+    if not rec:
+        raise Exception("No group created yet.")
     return dict(title=topic_name(rec.topic_id),
                 description=rec.description,
                 logo_url=logo_url)
 
 @serve_json
-def upload_logo(vars):
+def upload_group_logo(vars):
     fil = vars.file
     group_id=fil.info.group_id
     file_name = save_uploaded_logo(fil.name, fil.BINvalue, group_id)
@@ -140,6 +145,8 @@ def upload_photo(vars):
             usage = topic_rec.usage + 'P'
             topic_rec.update_record(usage=usage, topic_kind=2) #simple topic
     photo_url=timestamped_photo_path(photo_rec)
+    photo_width = photo_rec.width
+    photo_height = photo_rec.height
     if duplicate:
         story_rec = db(db.TblStories.id==photo_rec.story_id).select().first()
         photo_name = story_rec.name
@@ -164,12 +171,15 @@ def upload_photo(vars):
         latitude = None
         zoom = 8
     photo_topics = get_photo_topics(photo_rec.story_id)
+    topic_names = [topic['name'] for topic in photo_topics]
+    keywords = '; '.join(topic_names)
+    db(db.TblStories.id==photo_rec.story_id).update(keywords=keywords)
     
     ws_messaging.send_message(key='GROUP-PHOTO-UPLOADED', group=vars.file.info.ptp_key, photo_url=photo_url, photo_name=photo_name, 
                               photo_id=photo_id, photo_story=photo_story, duplicate=duplicate,
                               photographer_name=photographer_name,photo_date_str=photo_date_str,photo_date_datespan=photo_date_datespan,
-                              longitude=longitude,latitude=latitude,zoom=zoom,
-                              photo_topics=photo_topics, photographer_id=photographer_id)
+                              longitude=longitude,latitude=latitude,zoom=zoom, photo_topics=photo_topics, 
+                              photographer_id=photographer_id, photo_width=photo_width, photo_height=photo_height)
     return dict(photo_url=photo_url, upload_result=dict(duplicate=duplicate))
 
 @serve_json
@@ -224,15 +234,34 @@ def mail_contacts(vars):
     from_name = vars.from_name or 'Test'
     comment("enter mail contacts, from: {}, group {}", from_name, group_id)
     recipients = db((db.TblGroupContacts.group_id==group_id) & (db.TblGroupContacts.deleted != True)).select()
+    receivers = [gc.email for gc in recipients]
     grec = db(db.TblGroups.id==group_id).select().first()
-    campaign_name = grec.description
-    group_name = db(db.TblTopics.id==grec.topic_id).select().first().name
+    db(db.TblTopics.id==grec.topic_id).select().first().name
     host = request.env.http_host
     #build recipient list and pass to send_mail
-    result = send_email(campaign_name=group_name, from_address=f"info@{host}", from_name=from_name, subject=grec.description, body=vars.mail_body, recipient_list=recipients)
+    sender=f"info@{host}"
+    subject=grec.description
+    message=vars.mail_body
+    if vars.personal:
+        result = send_personal_email(recipients, sender, subject, message=message)
+    else:
+        result = email(receivers=receivers, sender=sender, subject=grec.description, message=vars.mail_body)
     return dict(result = result)
 
 #-----------support functions----------------------------
+
+def send_personal_email(recipients, sender, subject, message):
+    result = True
+    for recipient in recipients:
+        message = fill_data(message, recipient)
+        result = result and email(receivers=[recipient.email], sender=sender, subject=subject, message=message)
+    return result
+
+def fill_data(message, recipient):
+    def subst(match):
+        symbol = match.group(1)
+        return recipient[symbol]
+    return re.sub(r"\[#([^#]+)#\]!", lambda match: subst(match), message)
 
 def text_to_html(txt):
     lst = txt.split('\n')
@@ -245,17 +274,16 @@ def get_logo_url(group_id):
     group_id = int(group_id)
     rec = db(db.TblGroups.id==group_id).select().first()
     folder = url_folder('logos')
-    logo_name = rec.logo_name if rec and rec.logo_name else 'dummy-logo.jpg'
+    logo_name = rec.logo_name if rec and rec.logo_name else 'dummy-logo.png'
     return folder + logo_name
 
-def save_uploaded_logo(file_name, blob, group_id):
-    crc = zlib.crc32(blob)
+def save_uploaded_logo(file_name, binVal, group_id):
+    img, crc = str_to_image(binVal)
     original_file_name, ext = os.path.splitext(file_name)
-    file_name = '{crc:x}{ext}'.format(crc=crc & 0xffffffff, ext=ext)
+    crc &= 0xffffffff
+    file_name = f'{crc:x}{ext}'
     path = local_folder('logos')
     dir_util.mkpath(path)
-    stream = StringIO(blob)
-    img = Image.open(stream)
     width, height = img.size
     
     if height > MAX_SIZE or width > MAX_SIZE:

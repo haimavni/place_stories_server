@@ -114,7 +114,7 @@ def apply_topics_to_doc(vars):
     curr_tag_ids -= deleted
     curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
     curr_tags = sorted(curr_tags)
-    keywords = "; ".join(curr_tags)
+    keywords = KW_SEP.join(curr_tags)
     is_tagged = len(curr_tags) > 0
     srec = db(db.TblStories.id == rec.story_id).select().first()
     srec.update_record(keywords=keywords, is_tagged=is_tagged)
@@ -159,7 +159,7 @@ def apply_to_checked_docs(vars):
                 ###deleted.append(item)
                 db(q).delete()
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
-        keywords = "; ".join(curr_tags)
+        keywords = KW_SEP.join(curr_tags)
         changes[doc_id] = dict(keywords=keywords, doc_id=doc_id)
         rec = db(db.TblDocs.id == doc_id).select().first()
         rec = db(db.TblStories.id == rec.story_id).select().first()
@@ -209,6 +209,7 @@ def get_doc_info(vars):
                 doc_src=doc_src,
                 doc_name=doc_name,
                 story_about=story_about,
+                doc_story=doc_story,
                 doc_topics=doc_topics,
                 doc_date_str=all_dates.doc_date.date,
                 doc_date_datespan=all_dates.doc_date.span,
