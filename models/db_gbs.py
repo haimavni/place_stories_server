@@ -24,7 +24,8 @@ STORY4USER = [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, S
 VIS_NEVER = 0           #for non existing members such as the child of a childless couple (it just connects them)
 VIS_NOT_READY = 1
 VIS_VISIBLE = 2
-VIS_HIGH = 3  
+VIS_HIGH = 3
+KW_SEP = ";  "  
 
 db.define_table('TblPrivateFields',
                 Field('name', type='string'),

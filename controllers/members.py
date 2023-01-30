@@ -750,7 +750,7 @@ def apply_topics_to_selected_stories(vars):
 
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         curr_tags.sort()
-        keywords = "; ".join(curr_tags)
+        keywords = KW_SEP.join(curr_tags)
         rec = db(db.TblStories.id == story_id).select().first()
         rec.update_record(keywords=keywords, is_tagged=bool(keywords))
 
@@ -792,7 +792,7 @@ def apply_topics_to_story(vars):
             # should remove usage_char from usage if it was the last one...
             db(q).delete()
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
-        keywords = "; ".join(curr_tags)
+        keywords = KW_SEP.join(curr_tags)
         rec = db(db.TblStories.id == story_id).select().first()
         rec.update_record(keywords=keywords, is_tagged=bool(keywords))
 

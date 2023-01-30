@@ -187,7 +187,7 @@ def apply_to_selected_videos(vars):
                 deleted.append(item)
                 db(q).delete()
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
-        keywords = "; ".join(curr_tags)
+        keywords = KW_SEP.join(curr_tags)
         changes[vid] = dict(keywords=keywords, video_id=vid)
         rec = db(db.TblVideos.id == vid).select().first()
         rec1 = db(db.TblStories.id == rec.story_id).select().first()

@@ -1,11 +1,11 @@
 from .injections import inject
 
 def recalc_keywords_str(story_id):
-    db = inject('db')
+    db, KW_SEP = inject('db', 'KW_SEP')
     q = (db.TblItemTopics.story_id==story_id) & (db.TblTopics.id==db.TblItemTopics.topic_id)
     lst = db(q).select()
     topic_names = [r.TblTopics.name for r in lst]
-    topics_str = '; '.join(topic_names)
+    topics_str = KW_SEP.join(topic_names)
     db(db.TblStories.id==story_id).update(keywords=topics_str)
 
 def recalc_all_keywords():
