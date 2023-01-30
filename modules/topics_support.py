@@ -9,6 +9,7 @@ def recalc_keywords_str(story_id):
     db(db.TblStories.id==story_id).update(keywords=topics_str)
 
 def recalc_all_keywords():
+    db = inject('db')
     for srec in db(db.TblStories.deleted!=True).select(db.TblStories.id):
         recalc_keywords_str(srec.id)
 
