@@ -297,7 +297,7 @@ def get_story_list(vars):
         result0 = process_story_list(result0, checked=True)
         checked_story_ids = set([r.id for r in result0])
         #-------------------------------------------------------------
-        tmp = _get_story_list(params, True)
+        tmp = _get_story_list(params, exact=True)
         result1 = tmp[0] if tmp else []
         result1 = process_story_list(result1, exact=True)
         result1 = [r for r in result1 if r.id not in checked_story_ids]
@@ -305,19 +305,19 @@ def get_story_list(vars):
         #-------------------------------------------------------------
         tmp = _get_story_list(params, exact=False)
         result2 = tmp[0] if tmp else []
-        result2 = process_story_list(result2)
+        result2 = process_story_list(result2, exact=False)
         result2 = [r for r in result2 if r.id not in checked_story_ids]
         checked_story_ids |= set([r.id for r in result2])
         #-------------------------------------------------------------
         tmp = _get_story_list(params, exact=True, cuepoints=True)
         result3 = tmp[0] if tmp else []
-        result3 = process_story_list(result3)
+        result3 = process_story_list(result3, exact=True)
         result3 = [r for r in result3 if r.id not in checked_story_ids]
         checked_story_ids |= set([r.id for r in result3])
         #-------------------------------------------------------------
         tmp = _get_story_list(params, exact=False, cuepoints=True)
         result4 = tmp[0] if tmp else []
-        result4 = process_story_list(result4)
+        result4 = process_story_list(result4, exact=False)
         result4 = [r for r in result4 if r.id not in checked_story_ids]
     else:
         result0, real_counters = _get_story_list(params, False)
