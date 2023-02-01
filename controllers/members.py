@@ -562,9 +562,9 @@ def _get_deceased_members():
         death_day_of_year=day_of_year(rec.TblMembers.date_of_death),
         death_day_of_year_relative=day_of_year(rec.TblMembers.date_of_death, relative=True),
         death_day_since_epoch=days_since_epoch(rec.TblMembers.date_of_death),
-        facePhotoURL=photos_folder('profile_photos') + (rec.TblMembers.facePhotoURL or "dummy_face.png")
-        bio_preview=rec.TblStories.preview,
-    )]
+        facePhotoURL=photos_folder('profile_photos') + (rec.TblMembers.facePhotoURL or "dummy_face.png"),
+        bio_preview=rec.TblStories.preview
+    ) for rec in lst]
     return arr
 
 def get_parent_ids(member_rec):
