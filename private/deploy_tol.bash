@@ -45,7 +45,7 @@ ls -l ~/deployment_folder/scripts >> ~/log/deploy_history.log
 git br -v >> ~/log/deploy_history.log
 python ~/server_src/private/fix_index_html.py $1
 cp ./favicon.ico  ~/deployment_folder
-### git checkout master until merge with master
+git checkout master
 
 echo "
 lcd /home/haim/deployment_folder

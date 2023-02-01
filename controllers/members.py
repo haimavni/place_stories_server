@@ -6,7 +6,7 @@ import stories_manager
 import ws_messaging
 from audios_support import audio_path
 from dal_utils import insert_or_update
-from date_utils import parse_date, update_record_dates
+from date_utils import parse_date, update_record_dates, date_str, day_of_year, days_since_epoch
 from docs_support import doc_url
 from family_connections import *
 from gluon.utils import web2py_uuid
@@ -22,6 +22,9 @@ from words import calc_used_languages, read_words_index, get_all_story_previews,
 def member_list(vars):
     return dict(member_list=get_member_names())
 
+@serve_json
+def get_deceased_members(vars):
+    return dict(members=_get_deceased_members())
 
 @serve_json
 def create_parent(vars):
@@ -536,6 +539,35 @@ def get_member_names():
                    facePhotoURL=photos_folder('profile_photos') + (rec.facePhotoURL or "dummy_face.png")) for rec in
            lst]
     arr.sort(key=lambda item: item.rnd)
+    return arr
+
+def _get_deceased_members():
+    q = (db.TblMembers.deleted!=True)&(db.TblMembers.date_of_death!=NO_DATE)&(db.TblMembers.story_id==db.TblStories.id)
+    lst = db(q).select(
+        db.TblMembers.id,
+        db.TblMembers.first_name,
+        db.TblMembers.last_name,
+        db.TblMembers.NickName,
+        db.TblMembers.date_of_birth,
+        db.TblMembers.date_of_birth_dateunit,
+        db.TblMembers.date_of_death,
+        db.TblMembers.date_of_death_dateunit,
+        db.TblMembers.gender,
+        db.TblMembers.facePhotoURL,
+        db.TblStories.preview
+        )
+    arr = [Storage(
+        id=rec.TblMembers.id,
+        last_name=rec.TblMembers.last_name,
+        full_name=(rec.TblMembers.first_name or "") + ' ' + (rec.TblMembers.last_name or ""),
+        birth_date=date_str(rec.TblMembers.date_of_birth, rec.TblMembers.date_of_birth_dateunit),
+        death_date=date_str(rec.TblMembers.date_of_death, rec.TblMembers.date_of_death_dateunit),
+        death_day_of_year=day_of_year(rec.TblMembers.date_of_death),
+        death_day_of_year_relative=day_of_year(rec.TblMembers.date_of_death, relative=True),
+        death_day_since_epoch=days_since_epoch(rec.TblMembers.date_of_death),
+        facePhotoURL=photos_folder('profile_photos') + (rec.TblMembers.facePhotoURL or "dummy_face.png"),
+        bio_preview=rec.TblStories.preview
+    ) for rec in lst]
     return arr
 
 def get_parent_ids(member_rec):
