@@ -261,6 +261,7 @@ def now(timezone='israel'):
     return datetime.datetime.now(tz)
 
 def date_str(date, dateunit):
+    NO_DATE = inject('NO_DATE')
     if date == NO_DATE:
         return ""
     year, month, day = date.split("-")
