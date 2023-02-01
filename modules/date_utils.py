@@ -258,7 +258,35 @@ def init_story_dates():
 
 def now(timezone='israel'):
     tz = pytz.timezone(timezone)   
-    return datetime.datetime.now(tz)  
+    return datetime.datetime.now(tz)
+
+def date_str(date, dateunit):
+    if date == NO_DATE:
+        return ""
+    year, month, day = date.split("-")
+    if dateunit == "D":
+        return f"{day:2}.{month:2}.{year}"
+    elif dateunit == "M":
+        return f"{month:2}.{year}"
+    else:
+        return f"{year}"
+
+def day_of_year(date_string, relative=False):
+    date = datetime.datetime.strptime(date_string, '%Y-%m-%d')
+    day = date.timetuple().tm_yday
+    if relative:
+        today = datetime.date.today()
+        day_of_year_today = today.timetuple().tm_yday
+        if day >= day_of_year_today:
+            return day - day_of_year_today
+        return day + 365 - day_of_year_today
+    return day
+
+def days_since_epoch(date=None):
+    epoch = datetime.datetime.utcfromtimestamp(0)
+    date = date or datetime.datetime.today()
+    d =  date - epoch
+    return d.days      
         
 if __name__ == '__main__'    :
     print(f"now is {now()}")
