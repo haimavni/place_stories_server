@@ -264,9 +264,9 @@ def date_str(date, dateunit):
     if dateunit == "N":
         return ""
     if dateunit == "D":
-        return f"{date.day:2}.{date.month:2}.{date.year}"
+        return f"{date.day:02}.{date.month:02}.{date.year}"
     elif dateunit == "M":
-        return f"{date.month:2}.{date.year}"
+        return f"{date.month:02}.{date.year}"
     else:
         return f"{date.year}"
 
