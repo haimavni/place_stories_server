@@ -556,6 +556,7 @@ def _get_deceased_members():
         db.TblStories.preview
         )
     arr = [Storage(
+        id=rec.id,
         full_name=(rec.TblMembers.first_name or "") + ' ' + (rec.TblMembers.last_name or ""),
         birth_date=date_str(rec.TblMembers.date_of_birth, rec.TblMembers.date_of_birth_dateunit),
         death_date=date_str(rec.TblMembers.date_of_death, rec.TblMembers.date_of_death_dateunit),
