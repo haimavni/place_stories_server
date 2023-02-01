@@ -544,6 +544,7 @@ def get_member_names():
 def _get_deceased_members():
     q = (db.TblMembers.deleted!=True)&(db.TblMembers.date_of_death!=NO_DATE)&(db.TblMembers.story_id==db.TblStories.id)
     lst = db(q).select(
+        db.TblMembers.id,
         db.TblMembers.first_name,
         db.TblMembers.last_name,
         db.TblMembers.NickName,
