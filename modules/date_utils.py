@@ -282,7 +282,10 @@ def day_of_year(date, relative=False):
 
 def days_since_epoch(date=None):
     epoch = datetime.datetime.utcfromtimestamp(0)
-    date = date or datetime.datetime.today()
+    if date:
+        date = datetime.datetime(year=date.year, month=date.month, day=date.day)
+    else:
+        date = datetime.datetime.today()
     d =  date - epoch
     return d.days      
         
