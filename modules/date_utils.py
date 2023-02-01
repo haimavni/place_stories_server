@@ -261,16 +261,14 @@ def now(timezone='israel'):
     return datetime.datetime.now(tz)
 
 def date_str(date, dateunit):
-    NO_DATE = inject('NO_DATE')
-    if date == NO_DATE:
+    if dateunit == "N":
         return ""
-    year, month, day = date.split("-")
     if dateunit == "D":
-        return f"{day:2}.{month:2}.{year}"
+        return f"{date.day:2}.{date.month:2}.{date.year}"
     elif dateunit == "M":
-        return f"{month:2}.{year}"
+        return f"{date.month:2}.{date.year}"
     else:
-        return f"{year}"
+        return f"{date.year}"
 
 def day_of_year(date_string, relative=False):
     date = datetime.datetime.strptime(date_string, '%Y-%m-%d')
