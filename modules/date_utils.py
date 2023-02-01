@@ -270,8 +270,7 @@ def date_str(date, dateunit):
     else:
         return f"{date.year}"
 
-def day_of_year(date_string, relative=False):
-    date = datetime.datetime.strptime(date_string, '%Y-%m-%d')
+def day_of_year(date, relative=False):
     day = date.timetuple().tm_yday
     if relative:
         today = datetime.date.today()
