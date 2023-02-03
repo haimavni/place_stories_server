@@ -45,7 +45,7 @@ def print_topics_file(vars):
     return dict(out_name=out_name)
 
 def print_topics(topic_list, out_file, level=0):
-    for topic_rec in topic_list():
+    for topic_rec in topic_list:
         if topic_rec.topic_kind==1: #compound
             topic_children = db(db.TblTopicGroups.parent==topic_rec.id).select()
             topic_children = [tc.id for tc in topic_children]
