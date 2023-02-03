@@ -48,14 +48,15 @@ def print_topics_file(vars):
 
 def print_topics(topic_list, out_file, level=0):
     for topic_rec in topic_list:
+        if topic_rec.topic_kind == 0:
+            continue
+        out_file.write(' ' * level * 4)
+        out_file.write(topic_rec.name + "\n")
         if topic_rec.topic_kind==1: #compound
             topic_children = db(db.TblTopicGroups.parent==topic_rec.id).select()
             topic_children = [tc.id for tc in topic_children]
             lst = db(db.TblTopics.id.belongs(topic_children)).select(orderby=db.TblTopics.topic_kind | db.TblTopics.name)
             print_topics(lst, out_file, level+1)
-        else:
-            out_file.write(' ' * level * 4)
-            out_file.write(topic_rec.name + "\n")
 
 @serve_json 
 def remove_topic(vars):
