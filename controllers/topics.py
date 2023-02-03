@@ -1,5 +1,6 @@
 import ws_messaging
 from topics_support import *
+from folders import url_folder
 
 @serve_json
 def get_topic_list(vars):
@@ -42,7 +43,8 @@ def print_topics_file(vars):
     out_name = log_path() + "topics.txt"
     with open(out_name, "w", encoding="utf-8") as out_file:
         print_topics(topic_list, out_file)
-    return dict(out_name=out_name)
+    topics_file_url = url_folder("logs") + "topics.txt"
+    return dict(topics_file_url=topics_file_url)
 
 def print_topics(topic_list, out_file, level=0):
     for topic_rec in topic_list:
