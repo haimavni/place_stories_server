@@ -38,7 +38,7 @@ def get_topic_list(vars):
 
 @serve_json
 def print_topics_file(vars):
-    q = db.TblTopics.id>0
+    q = db.TblTopics.topic_kind > 0
     topic_list = db(q).select(orderby=db.TblTopics.topic_kind | db.TblTopics.name)
     out_name = log_path() + "topics.txt"
     with open(out_name, "w", encoding="utf-8") as out_file:
@@ -48,8 +48,6 @@ def print_topics_file(vars):
 
 def print_topics(topic_list, out_file, level=0):
     for topic_rec in topic_list:
-        if topic_rec.topic_kind == 0:
-            continue
         out_file.write(' ' * level * 4)
         out_file.write(topic_rec.name + "\n")
         if topic_rec.topic_kind==1: #compound
