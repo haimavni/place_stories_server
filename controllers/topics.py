@@ -44,7 +44,7 @@ def print_topics_file(vars):
     with open(out_name, "w", encoding="utf-8") as out_file:
         print_topics(topic_list, out_file)
     topics_file_url = url_folder("logs") + "topics.txt"
-    return dict(topics_file_url=topics_file_url)
+    return dict(topics_file_url=topics_file_url, topic_list=topic_list)
 
 def print_topics(topic_list, out_file, level=0):
     for topic_rec in topic_list:
@@ -52,7 +52,7 @@ def print_topics(topic_list, out_file, level=0):
         out_file.write(topic_rec.name + "\n")
         if topic_rec.topic_kind==1: #compound
             topic_children = db(db.TblTopicGroups.parent==topic_rec.id).select()
-            topic_children = [tc.id for tc in topic_children]
+            topic_children = [tc.child for tc in topic_children]
             lst = db(db.TblTopics.id.belongs(topic_children)).select(orderby=db.TblTopics.topic_kind | db.TblTopics.name)
             print_topics(lst, out_file, level+1)
 
