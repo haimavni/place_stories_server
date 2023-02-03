@@ -40,7 +40,7 @@ def print_topics_file(vars):
     q = db.TblTopics.id>0
     topic_list = db(q).select(orderby=db.TblTopics.topic_kind | db.TblTopics.name)
     out_name = log_path() + "topics.txt"
-    with open(out_name, "w", encoding="utf-8") as out_file:
+    with open(out_name, "w", encode="utf-8") as out_file:
         print_topics(topic_list, out_file)
     return dict(out_name=out_name)
 
