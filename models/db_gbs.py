@@ -247,7 +247,7 @@ fields = [
     Field('date_of_exit_dateunit', type='string', default='N'),
     Field('date_of_exit_datespan', type='integer', default=0),
     Field('date_of_exit_dateend', type='date', default=NO_DATE),
-    Field('exit_type', type='integer', options="death=1|left=2")
+    Field('exit_type', type='integer', options="death=1|left=2"),
     Field('Education', type='string'),
     Field('FormerName', type='string'),
     Field('gender', type='string', description='gender', options="male='M'|female='F'"), #F, M and also FM and MF for transgenders...
