@@ -242,7 +242,7 @@ fields = [
     Field('date_of_entry_dateunit', type='string', default='N'),
     Field('date_of_entry_datespan', type='integer', default=0),
     Field('date_of_entry_dateend', type='date', default=NO_DATE),
-    Field('entry_type', type='integer', options="birth=1|joined=2|marry=3")
+    Field('entry_type', type='integer', options="birth=1|joined=2|marry=3"),
     Field('date_of_exit', type='date', default=NO_DATE),
     Field('date_of_exit_dateunit', type='string', default='N'),
     Field('date_of_exit_datespan', type='integer', default=0),
