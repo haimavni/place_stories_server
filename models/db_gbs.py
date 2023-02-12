@@ -238,6 +238,7 @@ fields = [
     Field('date_of_death_datespan', type='integer', default=0),
     Field('date_of_death_dateend', type='date', default=NO_DATE),
     Field('cause_of_death', type='integer', default=0, description='cause-of-death', options='died=0|fell=1|killed=3|murdered=3'),
+    Field('DateOfMember', type='string'),
     Field('date_of_entry', type='date', default=NO_DATE),
     Field('date_of_entry_dateunit', type='string', default='N'),
     Field('date_of_entry_datespan', type='integer', default=0),
