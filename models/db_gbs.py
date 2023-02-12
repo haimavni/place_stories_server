@@ -238,11 +238,16 @@ fields = [
     Field('date_of_death_datespan', type='integer', default=0),
     Field('date_of_death_dateend', type='date', default=NO_DATE),
     Field('cause_of_death', type='integer', default=0, description='cause-of-death', options='died=0|fell=1|killed=3|murdered=3'),
-    Field('DateOfMember', type='string'),
-    Field('date_of_member', type='date', default=NO_DATE),
-    Field('date_of_member_dateunit', type='string', default='N'),
-    Field('date_of_member_datespan', type='integer', default=0),
-    Field('date_of_member_dateend', type='date', default=NO_DATE),
+    Field('date_of_entry', type='date', default=NO_DATE),
+    Field('date_of_entry_dateunit', type='string', default='N'),
+    Field('date_of_entry_datespan', type='integer', default=0),
+    Field('date_of_entry_dateend', type='date', default=NO_DATE),
+    Field('entry_type', type='integer', options="birth=1|joined=2|marry=3")
+    Field('date_of_exit', type='date', default=NO_DATE),
+    Field('date_of_exit_dateunit', type='string', default='N'),
+    Field('date_of_exit_datespan', type='integer', default=0),
+    Field('date_of_exit_dateend', type='date', default=NO_DATE),
+    Field('exit_type', type='integer', options="death=1|left=2")
     Field('Education', type='string'),
     Field('FormerName', type='string'),
     Field('gender', type='string', description='gender', options="male='M'|female='F'"), #F, M and also FM and MF for transgenders...
@@ -431,6 +436,12 @@ db.define_table('TblDocs',
                 Field('crc', type='bigint'),
                 Field('upload_date', type='datetime')
                 )
+
+db.define_table('TblDocSegments',
+                Field('doc_id', type=db.TblDocs),
+                Field('page_num', type='integer'),
+                Field('story_id', type=db.TblStories)
+)                
 
 db.define_table('TblAudios',
                 Field('name', type='string'),
@@ -632,6 +643,11 @@ db.define_table('TblMembersVideos',
 
 db.define_table('TblMembersDocs',
                 Field('doc_id', type=db.TblDocs),
+                Field('member_id', type=db.TblMembers)
+                )
+
+db.define_table('TblMembersDocSegments',
+                Field('doc_segment_id', type=db.TblDocSegments),
                 Field('member_id', type=db.TblMembers)
                 )
 
