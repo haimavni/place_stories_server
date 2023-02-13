@@ -203,6 +203,34 @@ def get_doc_info(vars):
                        facePhotoURL=photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png"),
                        full_name=member.first_name + ' ' + member.last_name)
                for member in members]
+    q = (db.TblDocSegments.doc_id==doc_id) & 
+        (db.TblStories.id==db.TblDocSegments.story_id) &
+        (db.TblMembersDocSegments.doc_segment_id==db.TblDocSegments.id)
+
+    # cmd = f'''
+    #     SELECT "TblDocSegments"."id",
+    #            "TblDocSegments"."page_num",
+    #            "TblStories"."id",
+    #            "TblStories"."name",
+    #            array_agg("TblMembersDocSegments"."member_id") FROM "TblDocSegments", "TblMembersDocSegments", "TblStories" 
+    #     WHERE (("TblDocSegments"."doc_id" = {doc_id}) AND 
+    #         ("TblStories"."id" = "TblDocSegments"."story_id") AND
+    #         ("TblMembersDocSegments"."doc_segment_id"=="TblDocSegments"."id")
+    #     GROUP BY "TblMembersDocSegments"."member_id";
+    # ''' 
+    # doc_segments = db.executesql(cmd)       
+    doc_segments = db(q).select(
+        db.TblDocSegments.id, 
+        db.TblDocSegments.page_num, 
+        db.TblStories.id, 
+        db.TblStories.name,
+        db.TblMembersDocSegments.member_id)
+    doc_segments = [dict(
+        id=ds.TblDocSegments.id,
+        name=ds.TblStories.name, 
+        story_id=ds.TblStories.id, 
+        page_num=ds.TblDocSegments.page_num
+        ) for ds in doc_segments]
 
     return dict(doc=doc_rec,
                 doc_id=doc_id,
@@ -216,7 +244,8 @@ def get_doc_info(vars):
                 doc_date_dateunit=all_dates.doc_date.unit,
                 story_id=story_id,
                 chatroom_id=chatroom_id,
-                members=members
+                members=members,
+                doc_segments=doc_segments
                 )
 
 
