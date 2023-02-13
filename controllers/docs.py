@@ -203,8 +203,8 @@ def get_doc_info(vars):
                        facePhotoURL=photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png"),
                        full_name=member.first_name + ' ' + member.last_name)
                for member in members]
-    q = (db.TblDocSegments.doc_id==doc_id) & 
-        (db.TblStories.id==db.TblDocSegments.story_id) &
+    q = (db.TblDocSegments.doc_id==doc_id) & \
+        (db.TblStories.id==db.TblDocSegments.story_id) & \
         (db.TblMembersDocSegments.doc_segment_id==db.TblDocSegments.id)
 
     # cmd = f'''
