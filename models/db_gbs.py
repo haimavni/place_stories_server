@@ -444,11 +444,11 @@ db.define_table('TblDocs',
                 Field('upload_date', type='datetime')
                 )
 
-# db.define_table('TblDocSegments',
-#                 Field('doc_id', type=db.TblDocs),
-#                 Field('page_num', type='integer'),
-#                 Field('story_id', type=db.TblStories)
-# )                
+db.define_table('TblDocSegments',
+                Field('doc_id', type=db.TblDocs),
+                Field('page_num', type='integer'),
+                Field('story_id', type=db.TblStories)
+)                
 
 db.define_table('TblAudios',
                 Field('name', type='string'),
@@ -653,11 +653,11 @@ db.define_table('TblMembersDocs',
                 Field('member_id', type=db.TblMembers)
                 )
 
-# db.define_table('TblMembersDocSegments',
-#                 Field('doc_segment_id', type=db.TblDocSegments),
-#                 Field('member_id', type=db.TblMembers),
-#                 Field('member_count', type='integer')
-#                 )
+db.define_table('TblMembersDocSegments',
+                Field('doc_segment_id', type=db.TblDocSegments),
+                Field('member_id', type=db.TblMembers),
+                Field('member_count', type='integer')
+                )
 
 db.define_table('TblVideoCuePoints',
                 Field('video_id', type=db.TblVideos),
