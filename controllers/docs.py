@@ -203,36 +203,33 @@ def get_doc_info(vars):
                        facePhotoURL=photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png"),
                        full_name=member.first_name + ' ' + member.last_name)
                for member in members]
-    # q = (db.TblDocSegments.doc_id==doc_id) & \
-    #     (db.TblStories.id==db.TblDocSegments.story_id) & \
-    #     (db.TblMembersDocSegments.doc_segment_id==db.TblDocSegments.id)
 
-    cmd = f'''
-        SELECT "TblDocSegments"."id",
-               "TblDocSegments"."page_num",
-               "TblStories"."id",
-               "TblStories"."name",
-               array_agg("TblMembersDocSegments"."member_id") FROM "TblDocSegments", "TblMembersDocSegments", "TblStories" 
-        WHERE (("TblDocSegments"."doc_id" = {doc_id}) AND 
-            ("TblStories"."id" = "TblDocSegments"."story_id") AND
-            ("TblMembersDocSegments"."doc_segment_id"="TblDocSegments"."id"))
-        GROUP BY 
-                 "TblDocSegments"."id", 
-                 "TblDocSegments"."page_num",
-                 "TblStories"."id",
-                 "TblStories"."name";
-    ''' 
-    doc_segments1 = db.executesql(cmd)
-    doc_segments = []
-    for doc_segment in doc_segments1:
-        item = dict(
-            segment_id = doc_segment[0],
-            page_num = doc_segment[1],
-            story_id = doc_segment[2],
-            segment_name = doc_segment[3],
-            member_ids = doc_segment[4]
-        )
-        doc_segments.append(item)
+    # cmd = f'''
+    #     SELECT "TblDocSegments"."id",
+    #            "TblDocSegments"."page_num",
+    #            "TblStories"."id",
+    #            "TblStories"."name",
+    #            array_agg("TblMembersDocSegments"."member_id") FROM "TblDocSegments", "TblMembersDocSegments", "TblStories" 
+    #     WHERE (("TblDocSegments"."doc_id" = {doc_id}) AND 
+    #         ("TblStories"."id" = "TblDocSegments"."story_id") AND
+    #         ("TblMembersDocSegments"."doc_segment_id"="TblDocSegments"."id"))
+    #     GROUP BY 
+    #              "TblDocSegments"."id", 
+    #              "TblDocSegments"."page_num",
+    #              "TblStories"."id",
+    #              "TblStories"."name";
+    # ''' 
+    # doc_segments1 = db.executesql(cmd)
+    # doc_segments = []
+    # for doc_segment in doc_segments1:
+    #     item = dict(
+    #         segment_id = doc_segment[0],
+    #         page_num = doc_segment[1],
+    #         story_id = doc_segment[2],
+    #         segment_name = doc_segment[3],
+    #         member_ids = doc_segment[4]
+    #     )
+    #     doc_segments.append(item)
 
     return dict(doc=doc_rec,
                 doc_id=doc_id,
@@ -246,8 +243,7 @@ def get_doc_info(vars):
                 doc_date_dateunit=all_dates.doc_date.unit,
                 story_id=story_id,
                 chatroom_id=chatroom_id,
-                members=members,
-                doc_segments=doc_segments
+                members=members
                 )
 
 @serve_json
