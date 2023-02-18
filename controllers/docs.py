@@ -207,30 +207,32 @@ def get_doc_info(vars):
     #     (db.TblStories.id==db.TblDocSegments.story_id) & \
     #     (db.TblMembersDocSegments.doc_segment_id==db.TblDocSegments.id)
 
-    # cmd = f'''
-    #     SELECT "TblDocSegments"."id",
-    #            "TblDocSegments"."page_num",
-    #            "TblStories"."id",
-    #            "TblStories"."name",
-    #            array_agg("TblMembersDocSegments"."member_id") FROM "TblDocSegments", "TblMembersDocSegments", "TblStories" 
-    #     WHERE (("TblDocSegments"."doc_id" = {doc_id}) AND 
-    #         ("TblStories"."id" = "TblDocSegments"."story_id") AND
-    #         ("TblMembersDocSegments"."doc_segment_id"=="TblDocSegments"."id")
-    #     GROUP BY "TblMembersDocSegments"."member_id";
-    # ''' 
-    # doc_segments = db.executesql(cmd)       
-    # doc_segments = db(q).select(
-    #     db.TblDocSegments.id, 
-    #     db.TblDocSegments.page_num, 
-    #     db.TblStories.id, 
-    #     db.TblStories.name,
-    #     db.TblMembersDocSegments.member_id)
-    # doc_segments = [dict(
-    #     id=ds.TblDocSegments.id,
-    #     name=ds.TblStories.name, 
-    #     story_id=ds.TblStories.id, 
-    #     page_num=ds.TblDocSegments.page_num
-    #     ) for ds in doc_segments]
+    cmd = f'''
+        SELECT "TblDocSegments"."id",
+               "TblDocSegments"."page_num",
+               "TblStories"."id",
+               "TblStories"."name",
+               array_agg("TblMembersDocSegments"."member_id") FROM "TblDocSegments", "TblMembersDocSegments", "TblStories" 
+        WHERE (("TblDocSegments"."doc_id" = {doc_id}) AND 
+            ("TblStories"."id" = "TblDocSegments"."story_id") AND
+            ("TblMembersDocSegments"."doc_segment_id"="TblDocSegments"."id"))
+        GROUP BY 
+                 "TblDocSegments"."id", 
+                 "TblDocSegments"."page_num",
+                 "TblStories"."id",
+                 "TblStories"."name";
+    ''' 
+    doc_segments1 = db.executesql(cmd)
+    doc_segments = []
+    for doc_segment in doc_segments1:
+        item = dict(
+            segment_id = doc_segment[0],
+            page_num = doc_segment[1],
+            story_id = doc_segment[2],
+            segment_name = doc_segment[3],
+            member_ids = doc_segment[4]
+        )
+        doc_segments.append(item)
 
     return dict(doc=doc_rec,
                 doc_id=doc_id,
@@ -245,9 +247,17 @@ def get_doc_info(vars):
                 story_id=story_id,
                 chatroom_id=chatroom_id,
                 members=members,
-                doc_segments=[] #doc_segments
+                doc_segments=doc_segments
                 )
 
+@serve_json
+def add_doc_segment(vars):
+    doc_id = int(vars.doc_id)
+    page_num = int(vars.page_num)
+    sm = stories_manager.stories()
+    story_id = sm.get_empty_story(used_for=STORY4DOCSEGMET)
+    segment_id = db.TblDocSegments.insert(doc_id=doc_id, page_num=page_num, story_id=story_id)
+    return dict(segment_id=segment_id)
 
 @serve_json
 def update_doc_date(vars):

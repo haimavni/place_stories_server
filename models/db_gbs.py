@@ -19,7 +19,9 @@ STORY4AUDIO = 10
 STORY4LETTER = 11
 STORY4ARTICLE = 12
 STORY4DOCAB = 13
-STORY4USER = [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4AUDIO, STORY4ARTICLE, STORY4DOCAB]
+STORY4DOCSEGMET = 14
+STORY4USER = [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, 
+    STORY4AUDIO, STORY4ARTICLE, STORY4DOCAB, STORY4DOCSEGMET]
 
 VIS_NEVER = 0           #for non existing members such as the child of a childless couple (it just connects them)
 VIS_NOT_READY = 1
@@ -653,7 +655,8 @@ db.define_table('TblMembersDocs',
 
 db.define_table('TblMembersDocSegments',
                 Field('doc_segment_id', type=db.TblDocSegments),
-                Field('member_id', type=db.TblMembers)
+                Field('member_id', type=db.TblMembers),
+                Field('member_count', type='integer')
                 )
 
 db.define_table('TblVideoCuePoints',
