@@ -180,7 +180,7 @@ def upload_photo(vars):
                               photographer_name=photographer_name,photo_date_str=photo_date_str,photo_date_datespan=photo_date_datespan,
                               longitude=longitude,latitude=latitude,zoom=zoom, photo_topics=photo_topics, 
                               photographer_id=photographer_id, photo_width=photo_width, photo_height=photo_height)
-    notify_new_upload(user_id, photo_width, duplicate)
+    notify_new_upload(user_id, photo_id, duplicate)
     return dict(photo_url=photo_url, upload_result=dict(duplicate=duplicate))
 
 @serve_json
