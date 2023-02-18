@@ -35,13 +35,13 @@ def move_app(cp_or_mv, app=None, new_app=None, src=None, dst=None):
         if option == "4":
             dst = "/home/haim/sandbox/dst"
         else:
-            dst = "/home/www-data/tol_" + ("www" if option == "1" else "test" if option == "2" else "master")
-        print(f"Destination is {src}")
+            dst = "/home/www-data/tol_" + ("www" if option == "1" else "test" if option == "2" else "master" if option == "3" else "local")
+        print(f"Destination is {dst}")
     app_id = db_id(app)
     target_app = input(f"enter target app ({app}): ")
     if not target_app:
         if src == dst:
-            print("Copy into itself!")
+            print("Copying into itself!")
             exit()
         target_app = ""
     path = src + '/databases'

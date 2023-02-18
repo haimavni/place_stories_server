@@ -180,6 +180,7 @@ def upload_photo(vars):
                               photographer_name=photographer_name,photo_date_str=photo_date_str,photo_date_datespan=photo_date_datespan,
                               longitude=longitude,latitude=latitude,zoom=zoom, photo_topics=photo_topics, 
                               photographer_id=photographer_id, photo_width=photo_width, photo_height=photo_height)
+    notify_new_upload(user_id, photo_id, duplicate)
     return dict(photo_url=photo_url, upload_result=dict(duplicate=duplicate))
 
 @serve_json
@@ -299,3 +300,21 @@ def resized(width, height):
     y = 1.0 * MAX_SIZE / height
     r = x if x < y else y
     return int(round(r * width)), int(round(r * height))
+
+def notify_new_upload(user_id, photo_id, duplicate):
+    lst = db((db.auth_membership.group_id==ADMIN)&(db.auth_user.id==db.auth_membership.user_id)&(db.auth_user.id>1)).select(db.auth_user.email)
+    receivers = [r.email for r in lst]
+    app = request.application
+    host = request.env.http_origin
+    dup = "(duplicate) " if duplicate else ""
+    user_info = auth.user_info(user_id)
+    message = f'''
+    {user_info.name} - {user_info.email} has uploaded a {dup} photo.
+
+
+
+    Click <a href="{host}/{app}/static/aurelia/index.html#/photos/{photo_id}/*">here</a> to view.
+    '''.replace('\n', '<br>')
+    email(receivers=receivers, subject='A user has uploaded a photo', message=message)
+
+

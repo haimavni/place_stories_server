@@ -26,9 +26,13 @@ def replace_divs(s):
 def replace_nbsps(s):
     return s.replace('&nbsp;', '&#9899;')
 
+def remove_special_chars(s):
+    return s.replace("“", '"')
+
 def clean_html(html, nbsp_too=True):
     html = remove_style_defs(html)
     html = replace_divs(html)
+    html = remove_special_chars(html)
     if nbsp_too:
         html = replace_nbsps(html)
         ###html = html.replace("&nbsp;", "")

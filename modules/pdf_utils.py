@@ -13,6 +13,7 @@ from gluon.storage import Storage
 
 from pdf2image import convert_from_path
 import pdfplumber
+from PyPDF2 import PdfReader
 from .injections import inject
 import psutil
 import fitz
@@ -49,7 +50,18 @@ def detect_rtl(doc):
                 return True
     return n2 > n1
 
-def pdf_to_text(pdfname, num_pages_extracted):
+def pdf_to_text(pdfname, num_pages_extracted=0):
+    with open(pdfname, 'rb') as f:
+        pdf = PdfReader(f)
+        pages = pdf.pages
+        num_pages = len(pages)
+        result = ""
+        for page in pages:
+            text = page.extract_text()
+            result += text
+    return Storage(text=result, num_pages_extracted=num_pages, num_pages=num_pages)
+
+def pdf_to_text_obsolete(pdfname, num_pages_extracted):
     comment, log_exception = inject('comment', 'log_exception')
     comment(f"about to open {pdfname}")
     num_pages_extracted = num_pages_extracted or 0
@@ -86,7 +98,7 @@ def pdf_to_text(pdfname, num_pages_extracted):
         log_exception(f"error in pdf to text {result}")
     return Storage(text=result, num_pages_extracted=n, num_pages=num_pages)
 
-def pdf_to_text(pdfname, num_pagesst_extracted):   
+def pdf_to_text_obsolete2(pdfname, num_pagesst_extracted):   
     doc = fitz.open(pdfname)  # open document
     result = ''
     num_pages_extracted = 0
