@@ -1134,7 +1134,7 @@ def _get_story_list(params, exact, cuepoints=False):  # exact means looking only
         lst1 = [r for r in lst1]
     elif not query_has_data(params):
         lst1 = []
-        for used_for in story_kinds():
+        for used_for in story_kinds(params):
             q = (db.TblStories.deleted != True) & (db.TblStories.used_for == used_for)
             n = db(q).count()
             real_counters[used_for] = n
@@ -1156,7 +1156,7 @@ def _get_story_list(params, exact, cuepoints=False):  # exact means looking only
         if not q:
             return []
         lst1 = []
-        for used_for in story_kinds():
+        for used_for in story_kinds(params):
             q1 = q & (db.TblStories.used_for == used_for)
             lst0 = db(q1).select(limitby=(0, 1000), orderby=~db.TblStories.story_len)
             lst1 += lst0
@@ -1473,7 +1473,7 @@ def cuepoints_text_query(q, keywords_str, exact):
         
 def make_stories_query(params, exact, cuepoints=False):
     q = init_query(db.TblStories, editing=params.editing, is_deleted=params.deleted_stories)
-    q &= (db.TblStories.used_for.belongs(story_kinds()))
+    q &= (db.TblStories.used_for.belongs(story_kinds(params)))
     selected_stories = params.selected_stories
     keywords_str = params.keywords_str
     if keywords_str:
@@ -1734,7 +1734,9 @@ def divorce(vars):
     spouses = get_spouses(member_id)
     return dict(spouses=spouses)
 
-def story_kinds():
+def story_kinds(params):
+    if (params.events_only):
+        return [STORY4EVENT]
     story_kinds_arr = STORY4USER
     if auth.user_has_privilege(HELP_AUTHOR):
         story_kinds_arr += [STORY4HELP]
