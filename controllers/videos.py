@@ -363,7 +363,7 @@ def update_cue_members(vars):
             else:
                 db.TblMembersVideos.insert(member_id=mem_id, video_id=video_id, cuepoints_count=1)
     members = db(db.TblMembersVideos.video_id==video_id).select(db.TblMembers.id, db.TblMembers.facePhotoURL)
-    return dict(members=members)
+    return dict(members=members, cue_id=cue_id)
 
 @serve_json
 def video_cue_points(vars):
