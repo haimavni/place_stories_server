@@ -384,7 +384,7 @@ def calc_cue_points(video_id):
         cue_id=rec.id, 
         time=rec.time, 
         description=rec.description, 
-        member_ids=calc_cue_members(video_id, rec.time)
+        member_ids=calc_cue_members(video_id, rec.id)
         ) for rec in lst]
     return cue_points
 
