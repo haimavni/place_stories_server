@@ -337,8 +337,7 @@ def update_cue_members(vars):
         cid = db.TblVideoCuePoints.insert(video_id=video_id, time=vars.time, description=vars.description, member_ids=vars.member_ids)
     member_ids = vars.member_ids
     old_member_ids = calc_cue_members(video_id, cid)
-    q = (db.TblVideoCuePoints.video_id == video_id) & \
-        (db.TblVideoCuePoints.id == cid)
+    q = (db.TblVideoCuePoints.id == cid)
     rec = db(q).select().first()
     cue_id = rec.id
     for mem_id in old_member_ids:
