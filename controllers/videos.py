@@ -288,23 +288,27 @@ def get_video_info(vars):
 def update_video_cue_points(vars):
     video_id = int(vars.video_id)
     old_cp = db(db.TblVideoCuePoints.video_id==video_id).select()
-    old_cp_set = set([cp.time for cp in old_cp])
-    new_cp_set = set([cp.time for cp in vars.cue_points])
+    old_cp_set = set([cp.id for cp in old_cp])
+    new_cp_set = set([cp.id for cp in vars.cue_points])
+    added_cue_points = dict()
     dic = dict()
     for cp in vars.cue_points:
-        dic[cp.time] = cp.description
-    for t in old_cp_set:
-        if t not in new_cp_set:
-            db((db.TblVideoCuePoints.video_id == video_id)&(db.TblVideoCuePoints.time == t)).delete()
-    for t in new_cp_set:
-        if t in old_cp_set:
-            db((db.TblVideoCuePoints.video_id == video_id) & (db.TblVideoCuePoints.time == t)).update(description=dic[t])
+        dic[cp.id] = [cp.time, cp.description]
+    for cid in old_cp_set:
+        if cid not in new_cp_set:
+            db((db.TblVideoCuePoints.video_id == video_id)&(db.TblVideoCuePoints.id == cid)).delete()
+    for cid in new_cp_set:
+        if cid in old_cp_set:
+            db((db.TblVideoCuePoints.video_id == video_id) & (db.TblVideoCuePoints.id == cid)). \
+                update(time=dic[cid][0], description=dic[cid][1])
         else:
-            db.TblVideoCuePoints.insert(time=t, description=dic[t], video_id=video_id)
+            tim = dic[cid][0]
+            new_id = db.TblVideoCuePoints.insert(time=tim, description=dic[cid][1], video_id=video_id)
+            added_cue_points[tim] = new_id
     story_id = db(db.TblVideos.id==video_id).select().first().story_id
     update_cuepoints_text(video_id);
     invalidate_index(story_id)
-    return dict()
+    return dict(added_cue_points=added_cue_points)
 
 @serve_json
 def update_video_members(vars):
@@ -328,11 +332,11 @@ def update_video_members(vars):
 @serve_json
 def update_cue_members(vars):
     video_id = int(vars.video_id)
-    time = int(vars.time)
+    cid = int(vars.cue_id)
     member_ids = vars.member_ids
-    old_member_ids = calc_cue_members(video_id, time)
+    old_member_ids = calc_cue_members(video_id, cid)
     q = (db.TblVideoCuePoints.video_id == video_id) & \
-        (db.TblVideoCuePoints.time == time)
+        (db.TblVideoCuePoints.id == cid)
     rec = db(q).select().first()
     cue_id = rec.id
     for mem_id in old_member_ids:
@@ -365,10 +369,10 @@ def video_cue_points(vars):
     cue_points = calc_cue_points(vars.video_id)
     return dict(cue_points=cue_points)
 
-def calc_cue_members(video_id, time):
+def calc_cue_members(video_id, cue_id):
     q = (db.TblMembersVideoCuePoints.cue_point_id == db.TblVideoCuePoints.id) & \
         (db.TblVideoCuePoints.video_id == video_id) & \
-        (db.TblVideoCuePoints.time == time)
+        (db.TblVideoCuePoints.id == cue_id)
     lst = db(q).select()
     member_ids = [rec.TblMembersVideoCuePoints.member_id for rec in lst]
     return member_ids
@@ -376,7 +380,12 @@ def calc_cue_members(video_id, time):
 def calc_cue_points(video_id):
     q = (db.TblVideoCuePoints.video_id == video_id)
     lst = db(q).select(orderby=db.TblVideoCuePoints.time)
-    cue_points = [dict(time=rec.time, description=rec.description, member_ids=calc_cue_members(video_id, rec.time)) for rec in lst]
+    cue_points = [dict(
+        cue_id=rec.id, 
+        time=rec.time, 
+        description=rec.description, 
+        member_ids=calc_cue_members(video_id, rec.time)
+        ) for rec in lst]
     return cue_points
 
 
