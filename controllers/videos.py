@@ -272,7 +272,7 @@ def get_video_info(vars):
     members = db(db.TblMembers.id.belongs(member_ids)).select()
     members = [Storage(id=member.id,
                        facePhotoURL=photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png"),
-                       full_name=member.first_name + ' ' + member.last_name) for member in members]
+                       full_name=get_full_name(member)) for member in members]
     return dict(video_source=video_source,
                 video_story=video_story,
                 video_id=video_id,
@@ -283,6 +283,16 @@ def get_video_info(vars):
                 video_topics=video_topics,
                 members=members,
                 cue_points=cue_points)
+
+def get_full_name(member):
+    result = ""
+    if member.first_name:
+        result += member.first_name
+    if member.last_name:
+        if result:
+            result += " "
+        result += member.last_name
+    return result
 
 @serve_json
 def update_video_cue_points(vars):
@@ -305,7 +315,7 @@ def update_video_cue_points(vars):
         else:
             tim = dic[cid][0]
             new_id = db.TblVideoCuePoints.insert(time=tim, description=dic[cid][1], video_id=video_id)
-            comment(f"new cue {new_id} was created in update video cue points")
+            # comment(f"new cue {new_id} was created in update video cue points")
             added_cue_points[tim] = new_id
     story_id = db(db.TblVideos.id==video_id).select().first().story_id
     update_cuepoints_text(video_id);
@@ -335,9 +345,9 @@ def update_video_members(vars):
 def update_cue_members(vars):
     video_id = int(vars.video_id)
     cid = int(vars.cue_id)
-    if not cid:
-        cid = db.TblVideoCuePoints.insert(video_id=video_id, time=vars.time, description=vars.description, member_ids=vars.member_ids)
-        comment(f"updating members, new cid created {cid}")
+    # if not cid:
+    #     cid = db.TblVideoCuePoints.insert(video_id=video_id, time=vars.time, description=vars.description, member_ids=vars.member_ids)
+    #     comment(f"updating members, new cid created {cid}")
     member_ids = vars.member_ids
     old_member_ids = calc_cue_members(video_id, cid)
     q = (db.TblVideoCuePoints.id == cid)
@@ -365,8 +375,7 @@ def update_cue_members(vars):
                 vmrec.update_record(cuepoints_count=vmrec.cuepoints_count+1)
             else:
                 db.TblMembersVideos.insert(member_id=mem_id, video_id=video_id, cuepoints_count=1)
-    members = db(db.TblMembersVideos.video_id==video_id).select(db.TblMembers.id, db.TblMembers.facePhotoURL)
-    return dict(members=members, cue_id=cue_id)
+    return dict(cue_id=cue_id)
 
 @serve_json
 def video_cue_points(vars):
