@@ -291,6 +291,7 @@ def update_video_cue_points(vars):
     old_cp_set = set([cp.id for cp in old_cp])
     new_cp_set = set([cp.cue_id for cp in vars.cue_points])
     added_cue_points = dict()
+    new_id = None
     dic = dict()
     for cp in vars.cue_points:
         dic[cp.cue_id] = [cp.time, cp.description]
@@ -309,7 +310,7 @@ def update_video_cue_points(vars):
     story_id = db(db.TblVideos.id==video_id).select().first().story_id
     update_cuepoints_text(video_id);
     invalidate_index(story_id)
-    return dict(added_cue_points=added_cue_points)
+    return dict(cue_id=new_id)
 
 @serve_json
 def update_video_members(vars):
