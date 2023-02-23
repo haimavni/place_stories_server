@@ -304,6 +304,7 @@ def update_video_cue_points(vars):
         else:
             tim = dic[cid][0]
             new_id = db.TblVideoCuePoints.insert(time=tim, description=dic[cid][1], video_id=video_id)
+            comment(f"new cue {new_id} was created in update video cue points")
             added_cue_points[tim] = new_id
     story_id = db(db.TblVideos.id==video_id).select().first().story_id
     update_cuepoints_text(video_id);
@@ -335,6 +336,7 @@ def update_cue_members(vars):
     cid = int(vars.cue_id)
     if not cid:
         cid = db.TblVideoCuePoints.insert(video_id=video_id, time=vars.time, description=vars.description, member_ids=vars.member_ids)
+        comment(f"updating members, new cid created {cid}")
     member_ids = vars.member_ids
     old_member_ids = calc_cue_members(video_id, cid)
     q = (db.TblVideoCuePoints.id == cid)
