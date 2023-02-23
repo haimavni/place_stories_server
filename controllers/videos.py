@@ -289,11 +289,11 @@ def update_video_cue_points(vars):
     video_id = int(vars.video_id)
     old_cp = db(db.TblVideoCuePoints.video_id==video_id).select()
     old_cp_set = set([cp.id for cp in old_cp])
-    new_cp_set = set([cp.id for cp in vars.cue_points])
+    new_cp_set = set([cp.cue_id for cp in vars.cue_points])
     added_cue_points = dict()
     dic = dict()
     for cp in vars.cue_points:
-        dic[cp.id] = [cp.time, cp.description]
+        dic[cp.cue_id] = [cp.time, cp.description]
     for cid in old_cp_set:
         if cid not in new_cp_set:
             db((db.TblVideoCuePoints.video_id == video_id)&(db.TblVideoCuePoints.id == cid)).delete()
