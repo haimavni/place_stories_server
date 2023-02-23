@@ -334,7 +334,7 @@ def update_cue_members(vars):
     video_id = int(vars.video_id)
     cid = int(vars.cue_id)
     if not cid:
-        cid = db.TblCuePoints.insert(time=vars.time, description=vars.description, member_ids=vars.member_ids)
+        cid = db.TblVideoCuePoints.insert(time=vars.time, description=vars.description, member_ids=vars.member_ids)
     member_ids = vars.member_ids
     old_member_ids = calc_cue_members(video_id, cid)
     q = (db.TblVideoCuePoints.video_id == video_id) & \
