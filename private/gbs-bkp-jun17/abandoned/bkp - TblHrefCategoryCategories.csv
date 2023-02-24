@@ -1,7 +1,0 @@
-ChildCategoryID,ParentCategoryID,ChildHierarchyLevel
-26,1,2
-27,26,3
-28,26,3
-29,1,2
-30,29,3
-31,29,3
