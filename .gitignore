@@ -15,6 +15,7 @@ private/deployment_folder
 pip-log.txt
 pip-delete-this-directory.txt
 */web2py/applications/*
+*bkp*
 
 # virtualenv
 .venv
