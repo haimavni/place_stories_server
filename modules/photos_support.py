@@ -545,8 +545,11 @@ def dhash_photo(photo_path=None, img=None):
 def profile_photo_moved(face):
     db = inject('db')
     member_profile_photo_path = db(db.TblMembers.id==face.member_id).select().first().facePhotoURL
-    lst = member_profile_photo_path.split('-')
-    photo_id = int(lst[2].split('.')[0])
+    if member_profile_photo_path:
+        lst = member_profile_photo_path.split('-')
+        photo_id = int(lst[2].split('.')[0])
+    else:
+        photo_id = face.photo_id
     return photo_id == face.photo_id
 
 def article_profile_photo_moved(face):
