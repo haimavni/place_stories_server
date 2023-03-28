@@ -204,7 +204,7 @@ def get_doc_info(vars):
                        full_name=member.first_name + ' ' + member.last_name)
                for member in members]
 
-    # cmd = f'''
+    #todo cmd = f'''
     #     SELECT "TblDocSegments"."id",
     #            "TblDocSegments"."page_num",
     #            "TblStories"."id",
@@ -243,15 +243,16 @@ def get_doc_info(vars):
                 doc_date_dateunit=all_dates.doc_date.unit,
                 story_id=story_id,
                 chatroom_id=chatroom_id,
-                members=members
+                members=members #,
                 )
+#todo doc_segments=doc_segments
 
 @serve_json
 def add_doc_segment(vars):
     doc_id = int(vars.doc_id)
     page_num = int(vars.page_num)
     sm = stories_manager.stories()
-    story_id = sm.get_empty_story(used_for=STORY4DOCSEGMET)
+    story_id = sm.get_empty_story(used_for=STORY4DOCSEGMENT)
     segment_id = db.TblDocSegments.insert(doc_id=doc_id, page_num=page_num, story_id=story_id)
     return dict(segment_id=segment_id)
 
