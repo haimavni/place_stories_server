@@ -278,7 +278,8 @@ def test_collect_mail():
 
 @serve_json
 def get_hit_statistics(vars):
-    total_count = db(db.TblPageHits.what=='APP').select().first().count
+    crec = db(db.TblPageHits.what=='APP').select().first()
+    total_count = cref.count if crec else 0
     tables = dict(
         MEMBER=db.TblMembers,
         EVENT=db.TblStories,
