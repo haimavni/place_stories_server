@@ -177,7 +177,7 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
     result = sm.add_story(story_info)
     story_id = result.story_id
 
-    if embedded_photo_date:
+    if embedded_photo_date and not original_file_name.startswith("scanned"):
         photo_date = embedded_photo_date.date()
         photo_date_dateend = photo_date + datetime.timedelta(days=1)
         photo_date_dateunit = 'D'
