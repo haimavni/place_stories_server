@@ -147,13 +147,6 @@ db.define_table('TblEventPhotos',
                 Field('Photo_id', type='integer'),
 )
 
-db.define_table('TblEventTypes',
-                Field('Description', type='string'),
-                Field('IIDD', type='integer'),
-                Field('ImageName', type='string'),
-                Field('Name', type='string'),
-)
-
 db.define_table('TblEvents',
                 Field('Description', type='text'),
                 Field('DescriptionNoHtml', type='text'),
@@ -165,7 +158,7 @@ db.define_table('TblEvents',
                 Field('event_date_dateend', type='date', default=NO_DATE),
                 Field('EventRank', type='integer'),
                 Field('IIDD', type='integer'),
-                Field('Name', type='string'),
+                Field('name', type='string'),
                 Field('ObjectID', type='integer'),
                 Field('Object_id', type='integer'),
                 Field('PageHits', type='integer'),
@@ -270,7 +263,7 @@ fields = [
     Field('LifeStory', type='text'),
     Field('LifeStoryNoHtml', type='text'),
     Field('story_id', type=db.TblStories),
-    Field('Name', type='string'),
+    Field('name', type='string'),
     Field('NickName', type='string'),
     Field('ObjectID', type='integer'),
     Field('Object_id', type='integer'),
@@ -333,7 +326,7 @@ db.define_table('TblPhotos',
                 Field('LocationInDisk', type='string'),
                 Field('photo_path', type='string'),
                 Field('webp_photo_path', type='string'),
-                Field('Name', type='string'),
+                Field('name', type='string'),
                 Field('original_file_name', type='string'),
                 Field('embedded_photo_date', type='datetime'),
                 Field('ObjectID', type='integer'), #obsolete, to be replaced by the following line
@@ -468,16 +461,6 @@ db.define_table('TblAudios',
                 Field('recorder_id', type=db.TblRecorders)
                 )
 
-db.define_table('TblStatuses',
-                Field('IIDD', type='integer'),
-                Field('Name', type='string'),
-)
-
-db.define_table('TblSuperAdmins',
-                Field('IIDD', type='integer'),
-                Field('Name', type='string'),
-                Field('Password', type='string'),
-)
 
 db.define_table('TblTerms',
                 Field('Background', type='text'),
@@ -487,7 +470,7 @@ db.define_table('TblTerms',
                 Field('InventedBy', type='string'),
                 Field('InventedByMemberID', type='integer'),
                 Field('InventedByMember_id', type='integer'),
-                Field('Name', type='string'),
+                Field('name', type='string'),
                 Field('ObjectID', type='integer'),
                 Field('Object_id', type='integer'),
                 Field('PageHits', type='integer'),
@@ -501,7 +484,8 @@ db.define_table('TblPageHits',
                 Field('what', type='string'),
                 Field('item_id', type='integer'),
                 Field('count', type='integer', default=0),
-                Field('new_count', type='integer', default=0)
+                Field('new_count', type='integer', default=0),
+                Field('date', type='date')
                 )
 
 db.define_table('TblFeedback',
@@ -705,10 +689,10 @@ def write_indexing_sql_scripts():
 write_indexing_sql_scripts()                
 
 translatable_fields = dict(
-    TblEvents = ['Description', 'Name', 'Keyword', 'Place', 'SSource'],
+    TblEvents = ['Description', 'name', 'Keyword', 'Place', 'SSource'],
     TblMembers = ['first_name', 'last_name', 'former_first_name', 'former_last_name', 'NickName'],
     TblPhotographers = ['name'],
-    TblPhotos = ['Description', 'Name'],
+    TblPhotos = ['Description', 'name'],
     TblTopics = ['name', 'description'],
     TblVideos = ['name'],
     TblTerms = ['name']

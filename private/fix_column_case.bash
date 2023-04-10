@@ -1,0 +1,1 @@
+sudo -u postgres psql $1 -f /home/www-data/tol_master/private/fix_column_case.sql

@@ -15,5 +15,5 @@ for elem in lst:
     story_rec.update_record(used_for=STORY4MEMBER)
     member_rec = db(db.TblMembers.id==mem_id).select().first()
     member_rec.update_record(story_id=story_id)
-    photo_story_id = make_photo_story(photo_rec.Name)
+    photo_story_id = make_photo_story(photo_rec.name)
     photo_rec.update_record(story_id=photo_story_id)

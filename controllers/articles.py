@@ -244,7 +244,7 @@ def get_article_stories(article_id):
         event = rec.TblEvents
         story = rec.TblStories
         dic = dict(
-            topic = event.Name,
+            topic = event.name,
             name = story.name,
             story_id = story.id,
             story_text = story.story,
