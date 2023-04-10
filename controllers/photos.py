@@ -50,7 +50,7 @@ def get_photo_detail(vars):
     else:
         back = None
     return dict(photo_src=timestamped_photo_path(rec, webp_supported=vars.webpSupported),
-                photo_name=rec.Name,
+                photo_name=rec.name,
                 original_file_name=rec.original_file_name,
                 embedded_photo_date=rec.embedded_photo_date,
                 photo_topics=photo_topics,
@@ -115,7 +115,7 @@ def get_photo_info(vars):
     else:
         photographer_rec = Storage()
     result = dict(
-        name=rec.Name,
+        name=rec.name,
         description=rec.Description,
         photographer=photographer_rec.name,
         photo_date_str=all_dates.photo_date.date,
@@ -132,7 +132,7 @@ def save_photo_info(vars):
     pinf = vars.photo_info
     unit, date = parse_date(pinf.photo_date_str)
     photo_rec = db((db.TblPhotos.id == vars.photo_id) & (db.TblPhotos.deleted != True)).select().first()
-    if pinf.name != photo_rec.Name:
+    if pinf.name != photo_rec.name:
         smgr = stories_manager.Stories(vars.user_id)
         smgr.update_story_name(photo_rec.story_id, pinf.name)
     photo_date_str = pinf.photo_date_str
@@ -140,8 +140,6 @@ def save_photo_info(vars):
     pinf.photo_date = date
     pinf.photo_date_dateunit = unit
     del pinf.photographer
-    pinf.Name = pinf.name
-    del pinf.name
     ###pinf.Recognized = True
     photo_rec.update_record(**pinf)
     if photo_date_str:
@@ -522,9 +520,9 @@ def download_files(vars):
     photo_list = []
     for p in lst:
         if p.oversize:
-            photo_list.append(Storage(path=oversize_folder + p.photo_path, name=p.Name))
+            photo_list.append(Storage(path=oversize_folder + p.photo_path, name=p.name))
         else:
-            photo_list.append(Storage(path=folder + p.photo_path, name=p.Name))
+            photo_list.append(Storage(path=folder + p.photo_path, name=p.name))
     create_zip_file(local_photos_folder("downloads") + zip_name, photo_list)
     download_url = photos_folder("downloads") + zip_name + ".zip"
     return dict(download_url=download_url)
@@ -815,10 +813,10 @@ def process_photo_list(lst, photo_pairs=dict(), webpSupported=False):
     for rec in lst:
         tpp = timestamped_photo_path(rec, webp_supported=webpSupported)
         keywords=kws[rec.story_id]
-        rec_title='{}: {}'.format(rec.Name, keywords)
+        rec_title='{}: {}'.format(rec.name, keywords)
         dic = Storage(
             description=rec.Description or "",
-            name=rec.Name,
+            name=rec.name,
             original_file_name=rec.original_file_name,
             keywords=keywords,
             title=rec_title,

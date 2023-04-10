@@ -1340,7 +1340,7 @@ def get_member_stories(member_id):
         event = rec.TblEvents
         story = rec.TblStories
         dic = dict(
-            topic=event.Name,
+            topic=event.name,
             name=story.name,
             story_id=story.id,
             story_text=story.story,
@@ -1367,7 +1367,7 @@ def get_member_terms(member_id):
         term = rec.TblTerms
         story = rec.TblStories
         dic = dict(
-            topic=term.Name,
+            topic=term.name,
             name=story.name,
             story_id=story.id,
             story_text=story.story,

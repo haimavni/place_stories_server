@@ -59,6 +59,7 @@ def move_app(cp_or_mv, app=None, new_app=None, src=None, dst=None):
                 out.write(f"{cp_or_mv} {path}/{src:64} {dst}/databases/{target_app_id + src[n:]}\n")
             else:
                 out.write(f"{cp_or_mv} {path}/{src:64} {dst}/\n")
+        out.write(f"chown www-data:www-data {dst}/databases/*")
     
 def remove_obsolete_dbs(active_apps=None):
     active_ids = set([])

@@ -385,7 +385,7 @@ def get_slides_from_photo_list(q):
             width=rec.width,
             height=rec.height,
             has_story_text=rec.has_story_text,
-            title=rec.Description or rec.Name)
+            title=rec.Description or rec.name)
         if rec.id in photo_pairs:
             dic['back'] = photo_pairs[rec.id]
             dic['flipped'] = False
@@ -692,7 +692,7 @@ def fix_missing_story_ids():
     sm = Stories()
     lst = db((db.TblPhotos.story_id == None) & (db.TblPhotos.deleted != True)).select()
     for prec in lst:
-        story_info = sm.get_empty_story(used_for=STORY4PHOTO, story_text="", name=prec.Name)
+        story_info = sm.get_empty_story(used_for=STORY4PHOTO, story_text="", name=prec.name)
         result = sm.add_story(story_info)
         story_id = result.story_id
         prec.update_record(story_id=story_id)

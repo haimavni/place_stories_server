@@ -29,7 +29,7 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
 
 
 def older_display_name(rec, full):
-    s = rec.Name or ''
+    s = rec.name or ''
     if full and rec.FormerName:
         s += ' ({})'.format(rec.FormerName)
     if full and rec.NickName:
