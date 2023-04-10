@@ -243,7 +243,7 @@ def get_doc_info(vars):
                 doc_date_dateunit=all_dates.doc_date.unit,
                 story_id=story_id,
                 chatroom_id=chatroom_id,
-                members=members #,
+                members=members
                 )
 #todo doc_segments=doc_segments
 
