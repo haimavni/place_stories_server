@@ -3,8 +3,7 @@
 echo Fix column names
 echo ----------------
 echo #
-# declare -a dbnames=("crossing" "gbs__test" "k_aza" "kavigdor" "rishpon")
-declare -a dbnames=("crossing" "k_aza" "ron" "erez_h")
+declare -a dbnames=("crossing" "gbs__test" "k_aza" "kavigdor" "rishpon")
 
 for dbname in "${dbnames[@]}"
 do
