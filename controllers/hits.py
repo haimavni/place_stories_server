@@ -27,9 +27,9 @@ def get_hit_statistics(vars):
     for period in periods:
         start_date = end_date - timedelta(days=period)
         if period == 1:
-            q &= db.TblPageHits.date == end_date
+            q = db.TblPageHits.date == end_date
         elif period:
-            q &= (db.TblPageHits.date >= start_date) & (
+            q = (db.TblPageHits.date >= start_date) & (
                 db.TblPageHits.date <= end_date)
         else:
             q = db.TblPageHits.id > 0
