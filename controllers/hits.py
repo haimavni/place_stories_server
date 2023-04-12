@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 @serve_json
 def count_hit(vars):
     what = vars.what.upper()
-    date = datetime.date()
+    date = datetime.today()
     item_id = int(vars.item_id)
     rec = db(
         (db.TblPageHits.what == what) & 
