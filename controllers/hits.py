@@ -22,7 +22,7 @@ def get_hit_statistics(vars):
     periods = [1, 7, 30, 0]
     end_date = end_date - timedelta(days=1)
     result = dict()
-    whats = db(db.TblPageHits.what, groupby=db.TblPageHits.what).select()
+    whats = db(db.TblPageHits).select(db.TblPageHits.what, groupby=db.TblPageHits.what)
     whats = [w.what for w in whats]
     for period in periods:
         start_date = end_date - timedelta(days=period)
