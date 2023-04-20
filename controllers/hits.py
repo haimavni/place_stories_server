@@ -25,7 +25,7 @@ def get_hit_statistics(vars):
     whats = db(db.TblPageHits).select(db.TblPageHits.what, groupby=db.TblPageHits.what)
     whats = [w.what for w in whats]
     for period in periods:
-        start_date = end_date - timedelta(days=period)
+        start_date = end_date - datetime.timedelta(days=period)
         if period == 1:
             q = db.TblPageHits.date == end_date
         elif period:
