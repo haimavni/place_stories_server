@@ -217,6 +217,7 @@ fields = [
     Field('last_name', type='string'),
     Field.Virtual('full_name', lambda rec: (rec.title + ' ' if rec.title else '') + rec.first_name + ' ' + rec.last_name),
     #Field.Virtual('name', lambda rec: (rec.first_name + ' ' if rec.first_name else "") + (rec.last_name if rec.last_name else "")),
+    Field('name', default="noname", compute=lambda rec: (rec.first_name + ' ' if rec.first_name else "") + (rec.last_name if rec.last_name else "")),
     Field('former_first_name', type='string'),
     Field('former_last_name', type='string'),
     Field('DateOfAlia', type='string'),
