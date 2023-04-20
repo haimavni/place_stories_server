@@ -1,9 +1,9 @@
-from datetime import datetime, timedelta
+import datetime
 
 @serve_json
 def count_hit(vars):
     what = vars.what.upper()
-    date = datetime.today()
+    date = datetime.datetime.today()
     item_id = int(vars.item_id)
     rec = db(
         (db.TblPageHits.what == what) & 
@@ -18,9 +18,9 @@ def count_hit(vars):
 
 @serve_json
 def get_hit_statistics(vars):
-    end_date = vars.end_date if vars.end_date else datetime.today()
+    end_date = vars.end_date if vars.end_date else datetime.datetime.today()
     periods = [1, 7, 30, 0]
-    end_date = end_date - timedelta(days=1)
+    end_date = end_date - datetime.timedelta(days=1)
     result = dict()
     whats = db(db.TblPageHits).select(db.TblPageHits.what, groupby=db.TblPageHits.what)
     whats = [w.what for w in whats]
