@@ -35,7 +35,7 @@ def get_hit_statistics(vars):
             q = db.TblPageHits.id > 0
         totals = db(q).select(db.TblPageHits.what,
                               db.TblPageHits.count.sum(), groupby=db.TblPageHits.what)
-        totals = [dict(what=rec.what, sum=rec._extra['SUM("TblPageHits", "count")']) for rec in totals]
+        #totals = [dict(what=rec.what, sum=rec._extra['SUM("TblPageHits", "count")']) for rec in totals]
         detailed = db(q).select(db.TblPageHits.what, db.TblPageHits.item_id, db.TblPageHits.name, db.TblPageHits.count.sum(),
                                 groupby=(db.TblPageHits.what, db.TblPageHits.item_id))
         detailed = [dict(what=rec.what, item_id=rec.item_id, name=item.name, sum=rec._extra['SUM("TblPageHits", "count")]']) for rec in detailed]
