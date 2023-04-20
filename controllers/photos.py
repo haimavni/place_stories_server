@@ -350,7 +350,7 @@ def get_photo_list(vars):
 
 @serve_json
 def get_theme_data(vars):
-    path = images_folder()
+    images_path = images_folder()
     local_path = local_images_folder()
     files = dict(
         header_background='header-background.png',
@@ -368,7 +368,8 @@ def get_theme_data(vars):
             continue
             #comment("file {} is missing", k)
         comment("before append")
-        result[k] = append_file_date(path) 
+        ctime = round(os.path.getctime(path))
+        result[k] = images_path + files[k] + f"?d={ctime}" 
     return dict(files=result)
 
 @serve_json
