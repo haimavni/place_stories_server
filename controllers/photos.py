@@ -2,7 +2,7 @@ from distutils import dir_util
 from folders import local_folder, local_cards_folder, photos_folder
 from photos_support import photos_folder, local_photos_folder, images_folder, local_images_folder, \
      save_uploaded_photo, rotate_photo, save_member_face, save_article_face, create_zip_file, get_photo_pairs, find_similar_photos, \
-     timestamped_photo_path, crop_a_photo, save_padded_photo, save_qr_photo
+     timestamped_photo_path, crop_a_photo, save_padded_photo, save_qr_photo, append_file_date
 import ws_messaging
 import stories_manager
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, fix_record_dates_out
@@ -361,7 +361,7 @@ def get_theme_data(vars):
     )
     result = dict()
     for k in files:
-        result[k] = path + files[k] if os.path.exists(local_path + files[k]) else ''
+        result[k] = append_file_date(path + files[k]) if os.path.exists(local_path + files[k]) else ''
         if not os.path.exists(local_path + files[k]):
             pass
             #comment("file {} is missing", k)
