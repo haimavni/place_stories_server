@@ -1044,9 +1044,3 @@ def str_to_image(binVal: str):
     stream = BytesIO(blob)
     img = Image.open(stream)
     return (img, crc)
-
-def append_file_date(filename):
-    comment = inject("comment")
-    comment(f"append: filename is {filename}")
-    ctime = round(os.path.getctime(filename))
-    return f"{filename}?d={ctime}"

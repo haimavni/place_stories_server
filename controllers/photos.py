@@ -360,14 +360,10 @@ def get_theme_data(vars):
         content_background='bgs/body-bg.jpg'
     )
     result = dict()
-    comment(f"local path is {local_path}")
     for k in files:
         path = local_path + files[k]
-        comment(f"k is {k}, path is {path}")
         if not os.path.exists(path):
             continue
-            #comment("file {} is missing", k)
-        comment("before append")
         ctime = round(os.path.getctime(path))
         result[k] = images_path + files[k] + f"?d={ctime}" 
     return dict(files=result)
