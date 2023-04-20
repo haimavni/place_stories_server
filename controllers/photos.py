@@ -360,11 +360,15 @@ def get_theme_data(vars):
         content_background='bgs/body-bg.jpg'
     )
     result = dict()
+    comment(f"local path is {local_path}")
     for k in files:
-        if not os.path.exists(local_path + files[k]):
+        path = local_path + files[k]
+        comment(f"k is {k}, path is {path}")
+        if not os.path.exists(path):
             continue
             #comment("file {} is missing", k)
-        result[k] = append_file_date(path + files[k]) 
+        comment("before append")
+        result[k] = append_file_date(path) 
     return dict(files=result)
 
 @serve_json
