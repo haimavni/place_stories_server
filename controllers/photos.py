@@ -361,10 +361,10 @@ def get_theme_data(vars):
     )
     result = dict()
     for k in files:
-        result[k] = append_file_date(path + files[k]) if os.path.exists(local_path + files[k]) else ''
         if not os.path.exists(local_path + files[k]):
-            pass
+            continue
             #comment("file {} is missing", k)
+        result[k] = append_file_date(path + files[k]) 
     return dict(files=result)
 
 @serve_json
