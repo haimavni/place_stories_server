@@ -46,7 +46,7 @@ def get_hit_statistics(vars):
                 q = db.TblPageHits.id > 0
             q &= (db.TblPageHits.count != None)
             q &= (db.TblPageHits.what == what)
-            totals = db(q).select(db.TblPageHits.what, db.TblPageHits.count.sum())
+            totals = db(q).select(db.TblPageHits.what, db.TblPageHits.count.sum(), groupby=db.TblPageHits.what)
             #totals = [dict(what=rec.what, sum=rec._extra['SUM("TblPageHits", "count")']) for rec in totals]
             if not tbl:
                 continue
