@@ -24,22 +24,36 @@ def get_hit_statistics(vars):
     result = dict()
     whats = db(db.TblPageHits).select(db.TblPageHits.what, groupby=db.TblPageHits.what)
     whats = [w.what for w in whats]
+    tables = dict(
+        APP=None,
+        MEMBER=db.TblMembers,
+        EVENT=db.TblStories,
+        PHOTO=db.TblPhotos,
+        TERM=db.TblStories,
+        DOC=db.TblDocs,
+        VIDEO=db.TblVideos
+    )
     for period in periods:
-        start_date = end_date - datetime.timedelta(days=period)
-        if period == 1:
-            q = db.TblPageHits.date == end_date
-        elif period:
-            q = (db.TblPageHits.date >= start_date) & (
-                db.TblPageHits.date <= end_date)
-        else:
-            q = db.TblPageHits.id > 0
-        totals = db(q).select(db.TblPageHits.what,
-                              db.TblPageHits.count.sum(), groupby=db.TblPageHits.what)
-        #totals = [dict(what=rec.what, sum=rec._extra['SUM("TblPageHits", "count")']) for rec in totals]
-        #detailed = db(q).select(db.TblPageHits.what, db.TblPageHits.item_id, db.TblPageHits.name, db.TblPageHits.count.sum(),
-        detailed = db(q).select(db.TblPageHits.what, db.TblPageHits.item_id, db.TblPageHits.count.sum(),
-                                groupby=(db.TblPageHits.what, db.TblPageHits.item_id))
-        #detailed = [dict(what=rec.what, item_id=rec.item_id, name=item.name, sum=rec._extra['SUM("TblPageHits", "count")]']) for rec in detailed]
-        #detailed = [dict(what=rec.what, item_id=rec.item_id, sum=rec._extra['SUM("TblPageHits", "count")]']) for rec in detailed]
+        for what in tables:
+            tbl = tables[what]
+            start_date = end_date - datetime.timedelta(days=period)
+            if period == 1:
+                q = db.TblPageHits.date == end_date
+            elif period:
+                q = (db.TblPageHits.date >= start_date) & (
+                    db.TblPageHits.date <= end_date)
+            else:
+                q = db.TblPageHits.id > 0
+            q &= (db.TblPageHits.count != None)
+            q &= (db.TblHits.what == what)
+            totals = db(q).select(db.TblPageHits.what, db.TblPageHits.count.sum())
+            #totals = [dict(what=rec.what, sum=rec._extra['SUM("TblPageHits", "count")']) for rec in totals]
+            if not tbl:
+                continue
+            q &= (db.TblPageHits.item_id==tbl.id)
+            q &= (tbl.deleted != True)
+            detailed = db(q).select(db.TblPageHits.what, db.TblPageHits.item_id, tbl.name, db.TblPageHits.count.sum())
+            #detailed = [dict(what=rec.what, item_id=rec.item_id, name=item.name, sum=rec._extra['SUM("TblPageHits", "count")]']) for rec in detailed]
+            #detailed = [dict(what=rec.what, item_id=rec.item_id, sum=rec._extra['SUM("TblPageHits", "count")]']) for rec in detailed]
         result[period] = dict(totals=totals, detailed=detailed)
     return result
