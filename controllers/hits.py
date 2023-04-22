@@ -22,8 +22,8 @@ def get_hit_statistics(vars):
     periods = [1, 7, 30, 0]
     end_date = end_date - datetime.timedelta(days=1)
     result = dict()
-    whats = db(db.TblPageHits).select(db.TblPageHits.what, groupby=db.TblPageHits.what)
-    whats = [w.what for w in whats]
+    # whats = db(db.TblPageHits).select(db.TblPageHits.what, groupby=db.TblPageHits.what)
+    # whats = [w.what for w in whats]
     tables = dict(
         APP=None,
         MEMBER=db.TblMembers,
