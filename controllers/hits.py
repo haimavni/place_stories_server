@@ -35,7 +35,7 @@ def get_hit_statistics(vars):
     )
     for period in periods:
         totals = dict()
-        detailed = []
+        detailed = dict()
         for what in tables:
             tbl = tables[what]
             start_date = end_date - datetime.timedelta(days=period)
