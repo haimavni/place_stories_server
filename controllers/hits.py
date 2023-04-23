@@ -33,11 +33,11 @@ def get_hit_statistics(vars):
         DOC=db.TblDocs,
         VIDEO=db.TblVideos
     )
-    for period in periods:
+    for what in tables:
         totals = dict()
         detailed = dict()
-        for what in tables:
-            tbl = tables[what]
+        tbl = tables[what]
+        for period in periods:
             start_date = end_date - datetime.timedelta(days=period)
             if period == 1:
                 q = db.TblPageHits.date == end_date
@@ -48,17 +48,15 @@ def get_hit_statistics(vars):
                 q = db.TblPageHits.id > 0
             q &= (db.TblPageHits.count != None)
             q &= (db.TblPageHits.what == what)
-            count = db(q).count()
-            comment(f"total count of {what}/{period} is {count}")
-            totals[what] = db(q).select(db.TblPageHits.count.sum())
+            totals[period] = db(q).select(db.TblPageHits.count.sum())
             #totals = [dict(what=rec.what, sum=rec._extra['SUM("TblPageHits", "count")']) for rec in totals]
             if not tbl:
                 continue
             q &= (db.TblPageHits.item_id==tbl.id)
             q &= (tbl.deleted != True)
-            detailed[what] = db(q).select(db.TblPageHits.item_id, tbl.name, db.TblPageHits.count.sum(),
+            detailed[period] = db(q).select(db.TblPageHits.item_id, tbl.name, db.TblPageHits.count.sum(),
                                     groupby=[db.TblPageHits.item_id, tbl.name])
             #detailed = [dict(what=rec.what, item_id=rec.item_id, name=item.name, sum=rec._extra['SUM("TblPageHits", "count")]']) for rec in detailed]
             #detailed = [dict(what=rec.what, item_id=rec.item_id, sum=rec._extra['SUM("TblPageHits", "count")]']) for rec in detailed]
-        result[period] = dict(totals=totals, detailed=detailed)
+        result[what] = dict(totals=totals, detailed=detailed)
     return result
