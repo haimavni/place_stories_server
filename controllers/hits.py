@@ -48,7 +48,8 @@ def get_hit_statistics(vars):
                 q = db.TblPageHits.id > 0
             q &= (db.TblPageHits.count != None)
             q &= (db.TblPageHits.what == what)
-            totals[period] = db(q).select(db.TblPageHits.count.sum()).first()
+            prec = db(q).select(db.TblPageHits.count.sum()).first()
+            totals[period] = prec._extra['SUM("TblPageHits"."count")']
             #totals = [dict(what=rec.what, sum=rec._extra['SUM("TblPageHits", "count")']) for rec in totals]
             if not tbl:
                 continue
