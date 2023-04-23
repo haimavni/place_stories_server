@@ -35,6 +35,7 @@ def get_hit_statistics(vars):
     )
     for period in periods:
         totals = dict()
+        detailed = []
         for what in tables:
             tbl = tables[what]
             start_date = end_date - datetime.timedelta(days=period)
@@ -55,8 +56,8 @@ def get_hit_statistics(vars):
                 continue
             q &= (db.TblPageHits.item_id==tbl.id)
             q &= (tbl.deleted != True)
-            detailed = db(q).select(db.TblPageHits.what, db.TblPageHits.item_id, tbl.name, db.TblPageHits.count.sum(),
-                                    groupby=[db.TblPageHits.what, db.TblPageHits.item_id, tbl.name])
+            detailed[what] = db(q).select(db.TblPageHits.item_id, tbl.name, db.TblPageHits.count.sum(),
+                                    groupby=[db.TblPageHits.item_id, tbl.name])
             #detailed = [dict(what=rec.what, item_id=rec.item_id, name=item.name, sum=rec._extra['SUM("TblPageHits", "count")]']) for rec in detailed]
             #detailed = [dict(what=rec.what, item_id=rec.item_id, sum=rec._extra['SUM("TblPageHits", "count")]']) for rec in detailed]
         result[period] = dict(totals=totals, detailed=detailed)
