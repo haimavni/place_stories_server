@@ -56,7 +56,7 @@ def get_hit_statistics(vars):
             q &= (tbl.deleted != True)
             detailed[period] = db(q).select(db.TblPageHits.item_id, tbl.name, db.TblPageHits.count.sum(),
                                     groupby=[db.TblPageHits.item_id, tbl.name],
-                                    sortby=~db.TblPageHits.count.sum())
+                                    orderby=~db.TblPageHits.count.sum())
             #detailed = [dict(what=rec.what, item_id=rec.item_id, name=item.name, sum=rec._extra['SUM("TblPageHits", "count")]']) for rec in detailed]
             #detailed = [dict(what=rec.what, item_id=rec.item_id, sum=rec._extra['SUM("TblPageHits", "count")]']) for rec in detailed]
         result[what] = dict(totals=totals, detailed=detailed)
