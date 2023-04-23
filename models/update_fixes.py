@@ -96,6 +96,11 @@ def fix_feedback_messages():
         gf = fb.fb_good_message
         fb.update_record(fb_message = bf + "<br>---------<br>" + gf)
     return "done"
+
+def fix_member_names():
+    for mrec in db(db.TblMembers.deleted!=True).select():
+        mrec.update_record(name=(mrec.first_name + ' ' if mrec.first_name else "") + (mrec.last_name if mrec.last_name else ""))
+    return "done"
             
 _fixes = {
     1: init_photo_back_sides,
@@ -109,7 +114,8 @@ _fixes = {
     9: fix_pdf_texts,
     10: fix_no_slide_show,
     11: fix_youtube_info,
-    12: fix_feedback_messages
+    12: fix_feedback_messages,
+    13: fix_member_names
 }
 
 _init_configuration_table()
