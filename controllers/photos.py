@@ -74,8 +74,7 @@ def update_photo_caption(vars):
     photo_id = int(vars.photo_id)
     caption = vars.caption
     photo_rec = db((db.TblPhotos.id==photo_id) & (db.TblPhotos.deleted != True)).select().first()
-    ##photo_rec.update(Name=caption, Recognized=True)
-    photo_rec.update(Name=caption, handled=True)
+    photo_rec.update(name=caption, handled=True)
     sm = stories_manager.Stories()
     sm.update_story_name(photo_rec.story_id, caption)
     return dict(bla='bla')
@@ -885,7 +884,7 @@ def upload_chunk(vars):
         record_id = db.TblPhotos.insert(
             photo_path=sub_folder + file_name,
             original_file_name=original_file_name,
-            Name=original_file_name,
+            name=original_file_name,
             crc=crc,
             story_id=story_id,
             uploader=vars.user_id,

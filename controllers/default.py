@@ -292,7 +292,6 @@ def get_hit_statistics(vars):
     else:
         fld = db.TblPageHits.count
     for what in tables:
-        name = 'name' if what in ['EVENT', 'TERM'] else 'full_name' if what == 'MEMBER' else 'Name'
         tbl = tables[what]
         lst = db((db.TblPageHits.what==what)&(db.TblPageHits.item_id==tbl.id)& (tbl.deleted != True) & (fld!=None)). \
             select(limitby=(0,2000), orderby=~fld)

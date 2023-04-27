@@ -1307,7 +1307,7 @@ def save_story_data(story_info, user_id):
     if story_info.used_for == STORY4PHOTO:
         photo_rec = db(
             (db.TblPhotos.story_id == story_info.story_id) & (db.TblPhotos.deleted != True)).select().first()
-        photo_rec.update_record(Name=story_info.name)
+        photo_rec.update_record(name=story_info.name)
     if story_info.used_for == STORY4DOC:  # ugly...
         doc_rec = db(db.TblDocs.story_id==story_id).select().first()
         if doc_rec.story_about_id:
