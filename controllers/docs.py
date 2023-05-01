@@ -226,7 +226,7 @@ def get_doc_info(vars):
         item = dict(
             segment_id = doc_segment[0],
             page_num = doc_segment[1],
-            page_part_num = doc_segment[2]
+            page_part_num = doc_segment[2],
             story_id = doc_segment[3],
             segment_name = doc_segment[4],
             member_ids = doc_segment[5]
