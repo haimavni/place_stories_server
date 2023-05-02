@@ -257,7 +257,7 @@ def create_segment(vars):
     page_num = vars.page_num
     page_part_num = vars.page_part_num
     story_info = Storage(story_text="---", name="noname", used_for=STORY4DOCSEGMENT, preview="----")
-    sm = stories_manager.stories()
+    sm = stories_manager.Stories()
     story_id = sm.add_story(story_info)
     segment_id = db.TblDocSegments.insert(doc_id=doc_id, page_num=page_num, page_part_num=page_part_num, story_id=story_id)
     return dict(segment_id=segment_id)
