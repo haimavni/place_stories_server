@@ -232,7 +232,6 @@ def get_doc_info(vars):
             member_ids = doc_segment[5]
         )
         doc_segments.append(item)
-    comment(f"----------document has {doc_rec.num_pages} pages")
 
     return dict(doc=doc_rec,
                 doc_id=doc_id,
@@ -248,6 +247,7 @@ def get_doc_info(vars):
                 chatroom_id=chatroom_id,
                 members=members,
                 num_pages=doc_rec.num_pages,
+                doc_segments1=doc_segments1,
                 doc_segments=doc_segments
                 )
 
