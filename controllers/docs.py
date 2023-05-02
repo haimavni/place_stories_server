@@ -238,16 +238,20 @@ def get_doc_info(vars):
     ''' 
     ###doc_segments1 = db.executesql(cmd)
     doc_segments = []
-    doc_segments1 = db(db.TblDocSegments.doc_id==doc_id).select(orderby=db.TblDocSegments.page_num | db.TblDocSegments.page_part_num)
+    q = (db.TblDocSegments.doc_id==doc_id) & (db.TblDocSegments.story_id==db.TblStories.id)
+    doc_segments1 = db(q).select( \
+        db.TblDocSegments.page_num, \
+        db.TblDocSegments.page_part_num, \
+        db.TblStories.name, \
+        orderby=db.TblDocSegments.page_num | db.TblDocSegments.page_part_num)
     for doc_segment in doc_segments1:
         members = db(db.TblMembersDocSegments.doc_segment_id==db.TblDocSegments.id).select()
         member_ids = [mem.member_id for mem in members]
         item = dict(
-            segment_id = doc_segment.id,
-            page_num = doc_segment.page_num,
-            page_part_num = doc_segment.page_part_num,
-            story_id = doc_segment.story_id,
-            #segment_name = doc_segment[4],
+            segment_id = doc_segment.TblDocSegments.id,
+            page_num = doc_segment.TblDocSegments.page_num,
+            page_part_num = doc_segment.TblDocSegments.page_part_num,
+            name = doc_segment.TblStories.name,
             member_ids = member_ids
         )
         doc_segments.append(item)
