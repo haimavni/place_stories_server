@@ -236,10 +236,10 @@ def get_doc_info(vars):
                  "TblStories"."id",
                  "TblStories"."name";
     ''' 
-    doc_segments1 = db.executesql(cmd)
+    ###doc_segments1 = db.executesql(cmd)
     doc_segments = []
-    doc_segments = db(db.TblDocSegments.doc_id==doc_id).select(orderby=db.TblDocSegments.page_num | db.TblDocSegments.page_part_num)
-    for doc_segment in doc_segments:
+    doc_segments1 = db(db.TblDocSegments.doc_id==doc_id).select(orderby=db.TblDocSegments.page_num | db.TblDocSegments.page_part_num)
+    for doc_segment in doc_segments1:
         members = db(db.TblMembersDocSegments.doc_segment_id==db.TblDocSegments.id).select()
         member_ids = [mem.member_id for mem in members]
         item = dict(
