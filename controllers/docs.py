@@ -232,6 +232,7 @@ def get_doc_info(vars):
             member_ids = doc_segment[5]
         )
         doc_segments.append(item)
+    comment(f"----------document has {doc_rec.num_pages} pages")
 
     return dict(doc=doc_rec,
                 doc_id=doc_id,
@@ -246,8 +247,20 @@ def get_doc_info(vars):
                 story_id=story_id,
                 chatroom_id=chatroom_id,
                 members=members,
+                num_pages=doc_rec.num_pages,
                 doc_segments=doc_segments
                 )
+
+@serve_json
+def create_segment(vars):
+    doc_id = vars.doc_id
+    page_num = vars.page_num
+    page_part_num = vars.page_part_num
+    story_info = Storage(story_text="---", name="noname", used_for=STORY4DOCSEGMENT, preview="----")
+    sm = stories_manager.stories()
+    story_id = sm.add_story(story_info)
+    segment_id = db.TblDocSegments.insert(doc_id=doc_id, page_num=page_num, page_part_num=page_part_num, story_id=story_id)
+    return dict(segment_id=segment_id)
 
 @serve_json
 def add_doc_segment(vars):
