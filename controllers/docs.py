@@ -241,7 +241,6 @@ def get_doc_info(vars):
             member_ids = member_ids
         )
         doc_segments.append(item)
-    doc_segments = doc_segments1
 
     return dict(doc=doc_rec,
                 doc_id=doc_id,
