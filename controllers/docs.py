@@ -204,21 +204,6 @@ def get_doc_info(vars):
                        full_name=member.first_name + ' ' + member.last_name)
                for member in members]
 
-    cmd = f'''
-        SELECT "TblDocSegments"."id",
-               "TblDocSegments"."page_num",
-               "TblDocSegments"."page_part_num",
-               "TblStories"."id",
-               "TblStories"."name" FROM "TblDocSegments", "TblStories" 
-        WHERE (("TblDocSegments"."doc_id" = {doc_id}) AND 
-            ("TblStories"."id" = "TblDocSegments"."story_id"))
-        GROUP BY 
-                 "TblDocSegments"."id", 
-                 "TblDocSegments"."page_num",
-                 "TblDocSegments"."page_part_num",
-                 "TblStories"."id",
-                 "TblStories"."name";
-    ''' 
     keeper = f'''
         SELECT "TblDocSegments"."id",
                "TblDocSegments"."page_num",
@@ -237,24 +222,25 @@ def get_doc_info(vars):
                  "TblStories"."name";
     ''' 
     ###doc_segments1 = db.executesql(cmd)
-    doc_segments = []
     q = (db.TblDocSegments.doc_id==doc_id) & (db.TblDocSegments.story_id==db.TblStories.id)
     doc_segments1 = db(q).select( \
+        db.TblDocSegments.id, \
         db.TblDocSegments.page_num, \
         db.TblDocSegments.page_part_num, \
         db.TblStories.name, \
         orderby=db.TblDocSegments.page_num | db.TblDocSegments.page_part_num)
-    # for doc_segment in doc_segments1:
-    #     members = db(db.TblMembersDocSegments.doc_segment_id==db.TblDocSegments.id).select()
-    #     member_ids = [mem.member_id for mem in members]
-    #     item = dict(
-    #         segment_id = doc_segment.TblDocSegments.id,
-    #         page_num = doc_segment.TblDocSegments.page_num,
-    #         page_part_num = doc_segment.TblDocSegments.page_part_num,
-    #         name = doc_segment.TblStories.name,
-    #         member_ids = member_ids
-    #     )
-    #     doc_segments.append(item)
+    doc_segments = []
+    for doc_segment in doc_segments1:
+        members = db(db.TblMembersDocSegments.doc_segment_id==db.TblDocSegments.id).select()
+        member_ids = [mem.member_id for mem in members]
+        item = dict(
+            segment_id = doc_segment.TblDocSegments.id,
+            page_num = doc_segment.TblDocSegments.page_num,
+            page_part_num = doc_segment.TblDocSegments.page_part_num,
+            name = doc_segment.TblStories.name,
+            member_ids = member_ids
+        )
+        doc_segments.append(item)
     doc_segments = doc_segments1
 
     return dict(doc=doc_rec,
