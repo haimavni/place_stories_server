@@ -75,7 +75,7 @@ class Stories:
             merger = mim.Merger()
             story_text = merger.diff_apply_bulk(story, diffs, reverse=reverse)
             display_version = story_versions[to_story_version].display_version
-        editable_preview = rec.used_for == STORY4DOC  #todo: better pass as parameter?
+        editable_preview = False ###rec.used_for == STORY4DOC  #todo: better pass as parameter?
         if editable_preview:
             preview = rec.preview or get_reisha(story_text)
         else:
