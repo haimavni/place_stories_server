@@ -334,12 +334,7 @@ def get_story_list(vars):
         k = story.used_for
         if k == STORY4DOCAB: #temp. debugging
             continue
-        # if k == STORY4DOC and doc_has_story_about(story_id):
-        #     continue
-        # if k == STORY4DOCAB:
-        #     story.used_for = STORY4DOC
-        #     k = STORY4DOC
-        #     story_id = story_id_of_story_about_id(story_id)
+
         active_result_types |= {k}
         if k not in result_type_counters:
             result_type_counters[k] = 0
@@ -1310,19 +1305,7 @@ def save_story_data(story_info, user_id):
         photo_rec.update_record(name=story_info.name)
     if story_info.used_for == STORY4DOC:  # ugly...
         doc_rec = db(db.TblDocs.story_id==story_id).select().first()
-        if doc_rec.story_about_id:
-            story_about_rec = db(db.TblStories.id==doc_rec.story_about_id).select().first()
-            story_about_rec.update_record(name=story_info.name)
-            doc_rec.update_record(name=story_info.name)
-    if story_info.used_for == STORY4DOCAB:  # uglier...
-        doc_rec = db(db.TblDocs.story_about_id == story_id).select().first()
-        if doc_rec:
-            main_story_rec = db(db.TblStories.id == doc_rec.story_id).select().first()
-            main_story_rec.update_record(name=story_info.name)
-            main_story_rec.update_record(preview=main_story_rec.preview)
-            if not main_story_rec.story:
-                main_story_rec.update_record(story=main_story_rec.preview)
-            doc_rec.update_record(name=story_info.name)
+        doc_rec.update_record(name=story_info.name)
 
     key = 'STORY_WAS_SAVED' if old_story else 'NEW_STORY_ADDED'
     ws_messaging.send_message(key=key, group='ALL', story_data=result)
@@ -1828,16 +1811,6 @@ def decode_sorting_key(sk):
         return []
     lst = sk.split('-')
     return [int(s) for s in lst]
-
-def story_id_of_story_about_id(story_about_id):
-    doc_rec = db(db.TblDocs.story_about_id==story_about_id).select().first()
-    if doc_rec:
-        return doc_rec.story_id
-    return None
-
-def doc_has_story_about(story_id):
-    doc_rec = db(db.TblDocs.story_id == story_id).select().first()
-    return doc_rec and doc_rec.story_about_id
 
 def marry(member_id, spouse_id, member_gender):
     spouse_rec = get_member_rec(spouse_id)

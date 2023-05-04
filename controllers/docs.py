@@ -174,28 +174,19 @@ def apply_to_checked_docs(vars):
 @serve_json
 def get_doc_info(vars):
     doc_id = int(vars.doc_id)
-    if vars.caller == 'docs':
-        doc_rec = db(db.TblDocs.id == doc_id).select().first()
-    else:
-        doc_rec = db(db.TblDocs.story_about_id == doc_id).select().first()
-        if not doc_rec:
-            doc_rec = db(db.TblDocs.story_id == doc_id).select().first()
-        if not doc_rec:
-            comment(f'BUG!!! caller: {vars.caller}, doc_id: {doc_id}')
-        doc_id = doc_rec.id
+    doc_rec = db(db.TblDocs.id == doc_id).select().first()
+    # else:
+    #     doc_rec = db(db.TblDocs.story_id == doc_id).select().first()
+    if not doc_rec:
+        comment(f'BUG!!! caller: {vars.caller}, doc_id: {doc_id}')
     all_dates = get_all_dates(doc_rec)
     doc_src = doc_url(doc_rec.story_id)
     doc_name = db(db.TblStories.id==doc_rec.story_id).select(db.TblStories.name).first().name
     doc_topics = get_object_topics(doc_rec.story_id, 'D')
     sm = stories_manager.Stories()
-    story_about= sm.get_story(doc_rec.story_about_id)
     doc_story = sm.get_story(doc_rec.story_id)
     story_id = doc_story.story_id
     chatroom_id = doc_story.chatroom_id
-    if not story_about:
-        story_info = Storage(story_text=doc_story.preview, name=doc_name, used_for=STORY4DOCAB, preview=doc_story.preview)
-        story_about = sm.add_story(story_info)
-        doc_rec.update_record(story_about_id=story_about.story_id)
     member_ids = db(db.TblMembersDocs.doc_id==doc_id).select()
     member_ids = [m.member_id for m in member_ids]
     members = db(db.TblMembers.id.belongs(member_ids)).select()
@@ -246,7 +237,6 @@ def get_doc_info(vars):
                 doc_id=doc_id,
                 doc_src=doc_src,
                 doc_name=doc_name,
-                story_about=story_about,
                 doc_story=doc_story,
                 doc_topics=doc_topics,
                 doc_date_str=all_dates.doc_date.date,
@@ -312,10 +302,8 @@ def update_doc_members(vars):
 @serve_json
 def update_story_preview(vars):
     story_id = int(vars.story_id)
-    story_about_id = int(vars.story_about_id)
     story_rec = db(db.TblStories.id==story_id).select().first()
-    story_about_rec = db(db.TblStories.id==story_about_id).select().first()
-    story_rec.update_record(preview=story_about_rec.preview)
+    story_rec.update_record(preview=story_rec.preview)
     return dict()
 
 # ----------------support functions-----------------
