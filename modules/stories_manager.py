@@ -185,22 +185,23 @@ class Stories:
             #rec = self.find_translation(rec, language)
         now = datetime.datetime.now()
         preview = ''
-        if story_info.used_for == STORY4DOC:
-            if not story_info.preview:
-                story_info.preview = get_reisha(updated_story_text)
-            preview = story_info.preview
-            data = Storage(last_update_date=now, story_text=updated_story_text)
-            if story_info.preview and rec.preview != story_info.preview:
-                data.preview = story_info.preview
-            else:
-                data.preview = rec.preview
-            if story_info.name and rec.name != story_info.name:
-                data.name = story_info.name
-            else:
-                data.name = rec.name
-            data.source = story_info.source
-            rec.update_record(**data)
-        elif rec.story != updated_story_text:
+        # if story_info.used_for == STORY4DOC:
+        #     if not story_info.preview:
+        #         story_info.preview = get_reisha(updated_story_text)
+        #     preview = story_info.preview
+        #     data = Storage(last_update_date=now, story_text=updated_story_text)
+        #     if story_info.preview and rec.preview != story_info.preview:
+        #         data.preview = story_info.preview
+        #     else:
+        #         data.preview = rec.preview
+        #     if story_info.name and rec.name != story_info.name:
+        #         data.name = story_info.name
+        #     else:
+        #         data.name = rec.name
+        #     data.source = story_info.source
+        #     rec.update_record(**data)
+        # elif
+        if rec.story != updated_story_text:
             merger = mim.Merger()
             delta = merger.diff_make(rec.story, updated_story_text)
             last_version = db((db.TblStoryVersions.story_id==story_id)&(db.TblStoryVersions.language==rec.language)).count() + 1
@@ -392,3 +393,14 @@ def mark_marked_rows(lst):
         result += '</span>'
     return result
     
+
+    def recalculate_previews():
+        lst = db(db.TblStories.used_for==STORY4DOC).select()
+        n = 0
+        for rec in lst:
+            story_text = rec.story
+            preview = get_reisha(story_text)
+            if preview != rec.preview:
+                n += 1
+                rec.update_record(preview=preview)
+        return f"{n} previews recalculated"
