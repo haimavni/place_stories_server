@@ -194,25 +194,6 @@ def get_doc_info(vars):
                        facePhotoURL=photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png"),
                        full_name=member.first_name + ' ' + member.last_name)
                for member in members]
-
-    keeper = f'''
-        SELECT "TblDocSegments"."id",
-               "TblDocSegments"."page_num",
-               "TblDocSegments"."page_part_num",
-               "TblStories"."id",
-               "TblStories"."name",
-               array_agg("TblMembersDocSegments"."member_id") FROM "TblDocSegments", "TblMembersDocSegments", "TblStories" 
-        WHERE (("TblDocSegments"."doc_id" = {doc_id}) AND 
-            ("TblStories"."id" = "TblDocSegments"."story_id") AND
-            ("TblMembersDocSegments"."doc_segment_id"="TblDocSegments"."id"))
-        GROUP BY 
-                 "TblDocSegments"."id", 
-                 "TblDocSegments"."page_num",
-                 "TblDocSegments"."page_part_num",
-                 "TblStories"."id",
-                 "TblStories"."name";
-    ''' 
-    ###doc_segments1 = db.executesql(cmd)
     q = (db.TblDocSegments.doc_id==doc_id) & (db.TblDocSegments.story_id==db.TblStories.id)
     doc_segments1 = db(q).select( \
         db.TblDocSegments.id, \
@@ -251,11 +232,37 @@ def get_doc_info(vars):
                 )
 
 @serve_json
+def get_doc_segment_info(vars):
+    doc_segment_id = int(vars.doc_segment_id)
+    doc_segment_rec = db(db.TblDocSegments.id==doc_segment_id).select().first()
+    sm = stories_manager.Stories()
+    doc_segment_story = sm.get_story(doc_segment_rec.story_id)
+    story_id = doc_segment_story.story_id
+    chatroom_id = doc_segment_story.chatroom_id
+    member_ids = db(db.TblMembersDocSegments.doc_segment_id==doc_segment_id).select()
+    member_ids = [m.member_id for m in member_ids]
+    members = db(db.TblMembers.id.belongs(member_ids)).select()
+    members = [Storage(id=member.id,
+                       facePhotoURL=photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png"),
+                       full_name=member.name)
+               for member in members]
+    return dict(
+        doc_segment=doc_segment_rec,
+        members=members,
+        name=doc_segment_story.name,
+        chatroom_id=chatroom_id,
+        story_id=story_id,
+        story=doc_segment_story,
+        page_num=doc_segment_rec.page_num,
+        page_part_num=doc_segment_rec.page_part_num
+    )
+
+@serve_json
 def create_segment(vars):
     doc_id = vars.doc_id
     page_num = vars.page_num
     page_part_num = vars.page_part_num
-    story_info = Storage(story_text="---", name="noname", used_for=STORY4DOCSEGMENT, preview="----")
+    story_info = Storage(story_text="---", name=f"new segment {doc_id}/{page_num}/{page_part_num}", used_for=STORY4DOCSEGMENT, preview="----")
     sm = stories_manager.Stories()
     story_id = sm.add_story(story_info).story_id
     segment_id = db.TblDocSegments.insert(doc_id=doc_id, page_num=page_num, page_part_num=page_part_num, story_id=story_id)
