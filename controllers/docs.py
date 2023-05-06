@@ -262,7 +262,10 @@ def create_segment(vars):
     doc_id = vars.doc_id
     page_num = vars.page_num
     page_part_num = vars.page_part_num
-    story_info = Storage(story_text="---", name=f"new segment {doc_id}/{page_num}/{page_part_num}", used_for=STORY4DOCSEGMENT, preview="----")
+    story_info = Storage(story_text="---", 
+                         name=f"new segment {doc_id}/{page_num}/{page_part_num}", 
+                         used_for=STORY4DOCSEGMENT, 
+                         preview="----")
     sm = stories_manager.Stories()
     story_id = sm.add_story(story_info).story_id
     segment_id = db.TblDocSegments.insert(doc_id=doc_id, page_num=page_num, page_part_num=page_part_num, story_id=story_id)
