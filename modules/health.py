@@ -3,7 +3,7 @@ from .injections import inject
 
 def verify_topic_types(typ):
     db = inject('db')
-    usage_of_char = {'E': 2, 'P': 3, 'T': 4, 'V': 8, 'D': 9, 'A': 10}
+    usage_of_char = {'E': 2, 'P': 3, 'T': 4, 'V': 8, 'D': 9, 'A': 10, 'S': 14}
     usage = usage_of_char[typ]
     vtopics = db(db.TblTopics.usage.like(f"%{typ}%")).select()
     topic_ids = db((db.TblStories.used_for == usage) &

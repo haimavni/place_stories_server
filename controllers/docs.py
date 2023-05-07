@@ -82,10 +82,15 @@ def delete_checked_docs(vars):
 def apply_topics_to_doc(vars):
     all_tags = calc_all_tags()
     doc_id = int(vars.doc_id)
-    rec = db(db.TblDocs.id == doc_id).select().first()
+    doc_segment_id = int(vars.doc_segment_id) if vars.doc_segment_id else None
+    topic_type = "S" if doc_segment_id else "D"
+    if doc_segment_id:
+        rec = db(db.TblDocSegments.id == doc_segment_id).select().first()
+    else:
+        rec = db(db.TblDocs.id == doc_id).select().first()
     story_id = rec.story_id if rec else None
     topics = vars.topics
-    curr_tag_ids = set(get_tag_ids(story_id, "D"))
+    curr_tag_ids = set(get_tag_ids(story_id, topic_type))
     new_tag_ids = set([t.id for t in topics])
     added = set([])
     deleted = set([])
@@ -93,18 +98,18 @@ def apply_topics_to_doc(vars):
         if tag_id not in curr_tag_ids:
             added |= set([tag_id])
             db.TblItemTopics.insert(
-                item_type="D",
+                item_type=topic_type,
                 topic_id=tag_id,
                 story_id=story_id)
             topic_rec = db(db.TblTopics.id == tag_id).select().first()
-            if 'D' not in topic_rec.usage:
-                usage = topic_rec.usage + 'D'
+            if topic_type not in topic_rec.usage:
+                usage = topic_rec.usage + topic_type
                 topic_rec.update_record(usage=usage, topic_kind=2)  # simple topic
 
     for tag_id in curr_tag_ids:
         if tag_id not in new_tag_ids:
             deleted |= set([tag_id])
-            q = (db.TblItemTopics.item_type == "D") & \
+            q = (db.TblItemTopics.item_type == topic_type) & \
                 (db.TblItemTopics.story_id == story_id) & \
                 (db.TblItemTopics.topic_id == tag_id)
             # should remove 'P' from usage if it was the last one...
@@ -118,6 +123,7 @@ def apply_topics_to_doc(vars):
     is_tagged = len(curr_tags) > 0
     srec = db(db.TblStories.id == rec.story_id).select().first()
     srec.update_record(keywords=keywords, is_tagged=is_tagged)
+    return dict()
     # rec.update_record(Recognized=True)
     # rec.update_record(handled=True)
 
@@ -125,6 +131,7 @@ def apply_topics_to_doc(vars):
 def apply_to_checked_docs(vars):
     all_tags = calc_all_tags()
     params = vars.params
+    topic_type = "S" if params.view_doc_segments else "D"
     sdl = params.checked_doc_list
     if params.docs_date_str:
         dates_info = dict(
@@ -138,22 +145,22 @@ def apply_to_checked_docs(vars):
     new_topic_was_added = False
     for story_id in sdl:
         drec = db(db.TblDocs.story_id == story_id).select().first()  # get rid of _term_id_
-        curr_tag_ids = set(get_tag_ids(story_id, 'D'))
+        curr_tag_ids = set(get_tag_ids(story_id, topic_type))
         for tpc in st:
             topic = tpc.option
             doc_id = drec.id  # get rid of _term_id_
             if topic.sign == "plus" and topic.id not in curr_tag_ids:
-                new_id = db.TblItemTopics.insert(item_type='D', topic_id=topic.id, story_id=story_id)
+                new_id = db.TblItemTopics.insert(item_type=topic_type, topic_id=topic.id, story_id=story_id)
                 curr_tag_ids |= set([topic.id])
                 ###added.append(item)
                 topic_rec = db(db.TblTopics.id == topic.id).select().first()
                 if topic_rec.topic_kind == 0:  # never used
                     new_topic_was_added = True
-                if 'D' not in topic_rec.usage:
-                    usage = topic_rec.usage + 'D'
+                if topic_type not in topic_rec.usage:
+                    usage = topic_rec.usage + topic_type
                     topic_rec.update_record(usage=usage, topic_kind=2)  # topic is simple
             elif topic.sign == "minus" and topic.id in curr_tag_ids:
-                q = (db.TblItemTopics.item_type == 'D') & (db.TblItemTopics.story_id == story_id) & (
+                q = (db.TblItemTopics.item_type == topic_type) & (db.TblItemTopics.story_id == story_id) & (
                             db.TblItemTopics.topic_id == topic.id)  # got rid of _item_id_
                 curr_tag_ids -= set([topic.id])
                 ###deleted.append(item)
@@ -182,7 +189,7 @@ def get_doc_info(vars):
     all_dates = get_all_dates(doc_rec)
     doc_src = doc_url(doc_rec.story_id)
     doc_name = db(db.TblStories.id==doc_rec.story_id).select(db.TblStories.name).first().name
-    doc_topics = get_object_topics(doc_rec.story_id, 'D')
+    doc_topics = get_object_topics(doc_rec.story_id, "D")
     sm = stories_manager.Stories()
     doc_story = sm.get_story(doc_rec.story_id)
     story_id = doc_story.story_id
@@ -246,7 +253,7 @@ def get_doc_segment_info(vars):
                        facePhotoURL=photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png"),
                        full_name=member.name)
                for member in members]
-    doc_topics = get_object_topics(story_id, 'D')
+    doc_topics = get_object_topics(story_id, "S")
     return dict(
         doc_segment=doc_segment_rec,
         members=members,
