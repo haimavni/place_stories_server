@@ -211,7 +211,7 @@ def get_doc_info(vars):
     doc_segments = []
     for doc_segment in doc_segments1:
         members = db(db.TblMembersDocSegments.doc_segment_id==db.TblDocSegments.id).select()
-        member_ids = [mem.member_id for mem in members]
+        member_ids = [mem.TblMembersDocSegments.member_id for mem in members]
         item = dict(
             segment_id = doc_segment.TblDocSegments.id,
             page_num = doc_segment.TblDocSegments.page_num,
