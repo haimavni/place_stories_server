@@ -246,6 +246,7 @@ def get_doc_segment_info(vars):
                        facePhotoURL=photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png"),
                        full_name=member.name)
                for member in members]
+    doc_topics = get_object_topics(story_id, 'D')
     return dict(
         doc_segment=doc_segment_rec,
         members=members,
@@ -254,7 +255,8 @@ def get_doc_segment_info(vars):
         story_id=story_id,
         story=doc_segment_story,
         page_num=doc_segment_rec.page_num,
-        page_part_num=doc_segment_rec.page_part_num
+        page_part_num=doc_segment_rec.page_part_num,
+        doc_topics=doc_topics
     )
 
 @serve_json
