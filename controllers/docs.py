@@ -319,6 +319,25 @@ def update_doc_members(vars):
     return dict(members=members)
 
 @serve_json
+def update_doc_segment_members(vars):
+    doc_segment_id = int(vars.doc_segment_id)
+    old_members = db(db.TblMembersDocSegments.doc_segment_id==doc_segment_id).select()
+    old_member_ids = [m.member_id for m in old_members]
+    old_members_set = set(old_member_ids)
+    new_members = vars.member_ids
+    new_members_set = set(new_members)
+    deleted_members = [mid for mid in old_members if mid not in new_members_set]
+    q = (db.TblMembersDocSegments.doc_segment_id==doc_segment_id) & (db.TblMembersDocSegments.member_id.belongs(deleted_members))
+    db(q).delete()
+    for mid in new_members:
+        if mid not in old_members_set:
+            db.TblMembersDocSegments.insert(doc_segment_id=doc_segment_id, member_id=mid)
+    members = db(db.TblMembers.id.belongs(new_members)).select(db.TblMembers.id, db.TblMembers.facePhotoURL)
+    for member in members:
+        member.facePhotoURL = photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png")
+    return dict(members=members)
+
+@serve_json
 def update_story_preview(vars):
     story_id = int(vars.story_id)
     story_rec = db(db.TblStories.id==story_id).select().first()
