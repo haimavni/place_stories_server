@@ -81,13 +81,14 @@ def delete_checked_docs(vars):
 @serve_json
 def apply_topics_to_doc(vars):
     all_tags = calc_all_tags()
-    doc_id = int(vars.doc_id)
-    doc_segment_id = int(vars.doc_segment_id) if vars.doc_segment_id else None
-    topic_type = "S" if doc_segment_id else "D"
-    if doc_segment_id:
+    if vars.doc_segment_id:
+        doc_segment_id = int(vars.doc_segment_id)
         rec = db(db.TblDocSegments.id == doc_segment_id).select().first()
+        topic_type = "S"
     else:
+        doc_id = int(vars.doc_id)
         rec = db(db.TblDocs.id == doc_id).select().first()
+        topic_type = "D"
     story_id = rec.story_id if rec else None
     topics = vars.topics
     curr_tag_ids = set(get_tag_ids(story_id, topic_type))
