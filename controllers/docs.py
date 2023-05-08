@@ -272,7 +272,7 @@ def create_segment(vars):
     doc_id = vars.doc_id
     page_num = vars.page_num
     page_part_num = vars.page_part_num
-    untitled = vars.new_segment_str
+    untitled = vars.untitled
     story_info = Storage(story_text="---", 
                          name=f"{untitled} {doc_id}/{page_num}/{page_part_num}", 
                          used_for=STORY4DOCSEGMENT, 
