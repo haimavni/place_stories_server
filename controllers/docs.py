@@ -252,7 +252,7 @@ def get_doc_segment_info(vars):
     members = db(db.TblMembers.id.belongs(member_ids)).select()
     members = [Storage(id=member.id,
                        facePhotoURL=photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png"),
-                       full_name=member.name)
+                       full_name=member.first_name + ' ' + member.last_name)
                for member in members]
     doc_topics = get_object_topics(story_id, "S")
     return dict(
@@ -272,8 +272,9 @@ def create_segment(vars):
     doc_id = vars.doc_id
     page_num = vars.page_num
     page_part_num = vars.page_part_num
+    untitled = vars.new_segment_str
     story_info = Storage(story_text="---", 
-                         name=f"new segment {doc_id}/{page_num}/{page_part_num}", 
+                         name=f"{untitled} {doc_id}/{page_num}/{page_part_num}", 
                          used_for=STORY4DOCSEGMENT, 
                          preview="----")
     sm = stories_manager.Stories()
