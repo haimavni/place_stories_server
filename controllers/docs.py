@@ -202,12 +202,13 @@ def get_doc_info(vars):
                        facePhotoURL=photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png"),
                        full_name=member.first_name + ' ' + member.last_name)
                for member in members]
-    q = (db.TblDocSegments.doc_id==doc_id) & (db.TblDocSegments.story_id==db.TblStories.id)
+    q = (db.TblDocSegments.doc_id==doc_id) & (db.TblDocSegments.story_id==db.TblStories.id) & (db.TblStories.deleted!=True)
     doc_segments1 = db(q).select( \
         db.TblDocSegments.id, \
         db.TblDocSegments.page_num, \
         db.TblDocSegments.page_part_num, \
         db.TblStories.name, \
+        db.TblStories.id, \
         orderby=db.TblDocSegments.page_num | db.TblDocSegments.page_part_num)
     doc_segments = []
     for doc_segment in doc_segments1:
@@ -217,6 +218,7 @@ def get_doc_info(vars):
             segment_id = doc_segment.TblDocSegments.id,
             page_num = doc_segment.TblDocSegments.page_num,
             page_part_num = doc_segment.TblDocSegments.page_part_num,
+            story_id = doc_segment.TblStories.id,
             name = doc_segment.TblStories.name,
             member_ids = seg_member_ids
         )
@@ -345,6 +347,16 @@ def update_story_preview(vars):
     story_rec = db(db.TblStories.id==story_id).select().first()
     story_rec.update_record(preview=story_rec.preview)
     return dict()
+
+@serve_json
+def remove_doc_segment(vars):
+    doc_segment_id = vars.doc_segment_id
+    ds_rec = db(db.TblDocSegments.id==doc_segment_id).select().first()
+    story_deleted = False
+    if ds_rec.story_id:
+        db(db.TblStories.id==ds_rec.story_id).update(deleted=True)
+        story_deleted = True
+    return dict(story_deleted=story_deleted)
 
 # ----------------support functions-----------------
 
