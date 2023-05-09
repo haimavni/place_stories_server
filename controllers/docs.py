@@ -273,10 +273,11 @@ def get_doc_segment_info(vars):
 def create_segment(vars):
     doc_id = vars.doc_id
     page_num = vars.page_num
-    page_part_num = vars.page_part_num
+    page_part_num = int(vars.page_part_num)
     untitled = vars.untitled
+    ppns = str(page_part_num) if page_part_num else ""
     story_info = Storage(story_text="---", 
-                         name=f"{untitled} {doc_id}/{page_num}/{page_part_num}", 
+                         name=f"{untitled} {page_num}/{ppns}", 
                          used_for=STORY4DOCSEGMENT, 
                          preview="----")
     sm = stories_manager.Stories()
