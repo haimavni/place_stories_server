@@ -140,12 +140,41 @@ def generate_jpgs_for_all_pdfs():
         if not os.path.isfile(pdf_path):
             continue
         jpg_path = pdf_path.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', '.jpg')
-        r = jpg_path.rfind('/')
-        p = jpg_path[:r+1]
-        dir_util.mkpath(p)
-        jpg_path = pdf_jpg_folder + rec.doc_path.replace('.pdf', '.jpg')
+        # r = jpg_path.rfind('/')
+        # p = jpg_path[:r+1]
+        # dir_util.mkpath(p)
+        # jpg_path = pdf_jpg_folder + rec.doc_path.replace('.pdf', '.jpg')
         save_pdf_jpg(pdf_path, jpg_path)
     return len(lst)
+
+def generate_jpgs_for_all_pdf_segmements():
+    db = inject('db')
+    q = (db.TblDocSegments.story_id = db.TblStories.id) & \
+        (db.TblStories.deleted != True) & \
+        (db.TblDocs.id==db.TblDocSegments.doc_id)
+    lst = db(q).select()
+    pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/'
+    dir_util.mkpath(pdf_jpg_folder)
+    for rec in lst:
+        pdf_path = local_docs_folder() + rec.TblDocs.doc_path
+        if not os.path.isfile(pdf_path):
+            continue
+        page_num = rec.TblDocSegments.page_num
+        jpg_path = pdf_path.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', f"-{page_num}.jpg")
+        # r = jpg_path.rfind('/')
+        # p = jpg_path[:r+1]
+        # dir_util.mkpath(p)
+        # jpg_path = pdf_jpg_folder + rec.doc_path.replace('.pdf', '.jpg')
+        save_pdf_jpg(pdf_path, jpg_path, page_num=page_num)
+    return len(lst)
+
+def pdf_segment_image_path(segment_id):
+    seg_rec = db(db.TblDocSegments.id==segment_id)
+    pdf_rec = db(db.TblDocs.id==seg_rec.doc_id)
+    pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/'
+    pdf_path = pdf_jpg_folder + pdf_rec.doc_path
+    return pdf_path.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', f"-{seg_rec.page_num}.jpg")
+
 
 def calc_doc_story(doc_id):
     try:
@@ -253,4 +282,11 @@ def doc_url(story_id):
     path = folder + rec.doc_path
     return path
 
+def doc_segment_url(story_id):
+    db = inject('db')
+    folder = docs_folder()
+    seg_rec = db(db.TblDocSegments.story_id==story_id).select().first()
+    doc_rec = db(db.TblDocs.id==seg_rec.doc_id).select().first()
+    path = folder + doc_rec.doc_path + f"#page={seg_rec.page_num}"
+    return path
 

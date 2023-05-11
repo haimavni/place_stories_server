@@ -118,8 +118,7 @@ def get_photo_info(vars):
         description=rec.Description,
         photographer=photographer_rec.name,
         photo_date_str=all_dates.photo_date.date,
-        photo_date_datespan=all_dates.photo_date.span,
-        photo_date_dateunit=all_dates.photo_date.unit
+        photo_date_datespan=all_dates.photo_date.span
     )
     return result
 

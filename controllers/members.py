@@ -721,7 +721,7 @@ def delete_story(vars):
 def apply_topics_to_selected_stories(vars):
     used_for = vars.used_for
     if used_for:
-        usage_chars = 'xMEPTxxxVDA'
+        usage_chars = 'xMEPTxxxVDAxxxS'
         usage_char = usage_chars[used_for]
     else:
         usage_char = 'x'
@@ -1664,6 +1664,13 @@ def copy_story_date_to_object_date(story_rec):
                               doc_date_dateunit=story_rec.story_date_dateunit,
                               doc_date_datespan=story_rec.story_date_datespan,
                               doc_date_dateend=story_rec.story_date_dateend,
+                              )
+    elif story_rec.used_for == STORY4DOCSEGMENT:
+        doc_seg_rec = db(db.TblDocsegments.story_id == story_rec.id).select().first()
+        doc_seg_rec.update_record(doc_seg_date=doc_seg_rec.story_date,
+                              doc_seg_date_dateunit=doc_seg_rec.story_date_dateunit,
+                              doc_seg_date_datespan=doc_seg_rec.story_date_datespan,
+                              doc_seg_date_dateend=doc_seg_rec.story_date_dateend,
                               )
     elif story_rec.used_for == STORY4AUDIO:
         audio_rec = db(db.TblAudios.story_id == story_rec.id).select().first()

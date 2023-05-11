@@ -71,6 +71,39 @@ def get_doc_list(vars):
 
 
 @serve_json
+def get_doc_segment_list(vars):
+    params = vars.params
+    if params.checked_doc_list:
+        q = (db.TblDocSegments.story_id.belongs(params.checked_doc_list)) & (db.TblStories.id == db.TblDocSegments.story_id)
+        lst0 = db(q).select()
+        lst0 = [rec for rec in lst0]
+        for rec in lst0:
+            rec.TblDocSegments.checked = True
+    else:
+        lst0 = []
+    selected_topics = params.selected_topics or []
+    q = make_doc_segments_query(params)
+    lst = db(q).select(orderby=~db.TblDocSegments.id)
+    lst = [rec for rec in lst if rec.TblDocSegments.story_id not in params.checked_doc_list]
+    lst = lst0 + lst
+    doc_segment_list = []
+    for rec1 in lst:
+        rec = rec1.TblDocSegments
+        story_rec = rec1.TblStories
+        fix_record_dates_out(story_rec)
+        story = get_story_by_id(rec.story_id)
+        rec.story = story
+        rec.doc_url = doc_url(rec.story_id)
+        s = f"-{params.page_num}.jpg"
+        rec.doc_jpg_url = rec.doc_url.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', s)
+        rec.keywords = rec1.TblStories.keywords
+        rec.name = rec1.TblStories.name
+        rec.doc_date = rec1.TblStories.story_date
+        doc_segment_list.append(rec)
+    return dict(doc_segment_list=doc_segment_list, no_results=not doc_segment_list)
+
+
+@serve_json
 def delete_checked_docs(vars):
     checked_doc_list = vars.params.checked_doc_list
     db(db.TblDocs.story_id.belongs(checked_doc_list)).update(deleted=True)
@@ -232,7 +265,6 @@ def get_doc_info(vars):
                 doc_topics=doc_topics,
                 doc_date_str=all_dates.doc_date.date,
                 doc_date_datespan=all_dates.doc_date.span,
-                doc_date_dateunit=all_dates.doc_date.unit,
                 story_id=story_id,
                 chatroom_id=chatroom_id,
                 members=members,
@@ -257,6 +289,9 @@ def get_doc_segment_info(vars):
                        full_name=member.first_name + ' ' + member.last_name)
                for member in members]
     doc_topics = get_object_topics(story_id, "S")
+    #### all_dates = get_all_dates(doc_segment_rec)
+    all_dates = get_all_dates(doc_segment_story)
+
     return dict(
         doc_segment=doc_segment_rec,
         members=members,
@@ -266,7 +301,9 @@ def get_doc_segment_info(vars):
         story=doc_segment_story,
         page_num=doc_segment_rec.page_num,
         page_part_num=doc_segment_rec.page_part_num,
-        doc_topics=doc_topics
+        doc_topics=doc_topics,
+        doc_seg_date_str=all_dates.doc_seg_date.date,
+        doc_seg_date_datespan=all_dates.doc_seg_date.span
     )
 
 @serve_json
@@ -388,6 +425,9 @@ def make_docs_query(params):
     if params.show_untagged:
         q &= (db.TblDocs.story_id==db.TblStories.id) & (db.TblStories.is_tagged==False)
     return q
+
+def make_doc_segments_query(params):
+    pass
 
 
 def get_story_by_id(story_id):
