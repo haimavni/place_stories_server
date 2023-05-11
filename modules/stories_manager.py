@@ -98,6 +98,10 @@ class Stories:
             approved_version=rec.approved_version,
             last_version=rec.last_version,
             last_update_date = rec.last_update_date,
+            story_date=rec.story_date,
+            story_date_dateunit=rec.story_date_dateunit,
+            story_date_dateend=rec.story_date_dateend,
+            story_date_datespan=rec.story_date_datespan,
             updater_id = rec.updater_id
         )
         return story_info
