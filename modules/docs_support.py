@@ -177,6 +177,7 @@ def pdf_segment_image_path(segment_id):
 
 
 def calc_doc_story(doc_id):
+    return False
     try:
         db, STORY4DOC, log_exception, comment = inject('db', 'STORY4DOC', 'log_exception', 'comment')
         doc_rec = db(db.TblDocs.id==doc_id).select().first()
@@ -224,6 +225,7 @@ def calc_doc_story(doc_id):
     return good
     
 def calc_doc_stories(time_budget=None):
+    return dict()
     try:
         db, comment, log_exception = inject('db', 'comment', 'log_exception')
         chunk = 10
