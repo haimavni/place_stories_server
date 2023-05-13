@@ -149,7 +149,7 @@ def generate_jpgs_for_all_pdfs():
 
 def generate_jpgs_for_all_pdf_segmements():
     db = inject('db')
-    q = (db.TblDocSegments.story_id = db.TblStories.id) & \
+    q = (db.TblDocSegments.story_id==db.TblStories.id) & \
         (db.TblStories.deleted != True) & \
         (db.TblDocs.id==db.TblDocSegments.doc_id)
     lst = db(q).select()
