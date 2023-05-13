@@ -303,7 +303,7 @@ def get_doc_segment_info(vars):
         page_part_num=doc_segment_rec.page_part_num,
         doc_topics=doc_topics,
         doc_seg_date_str=all_dates.story_date.date,
-        doc_seg_date_datespan=all_dates.doc_seg_date.span
+        doc_seg_date_datespan=all_dates.tory_date.span
     )
 
 @serve_json
