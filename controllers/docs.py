@@ -342,7 +342,7 @@ def update_doc_date(vars):
     story_id = int(vars.story_id)
     story_rec = db(db.TblStories.id==story_id).select().first()
     dates_info = dict(
-        story_date=(vars._date_str, int(vars.doc_date_datespan))
+        story_date=(vars.doc_date_str, int(vars.doc_date_datespan))
     )
     update_record_dates(story_rec, dates_info)
     return dict()
