@@ -340,7 +340,7 @@ def update_doc_date(vars):
     rec = db((db.TblDocs.id == int(vars.doc_id)) & (db.TblDocs.deleted != True)).select().first()
     update_record_dates(rec, doc_dates_info)
     story_id = int(vars.story_id)
-    story_rec = db(db.TblStories.id==story_id)
+    story_rec = db(db.TblStories.id==story_id).select().first()
     update_record_dates(story_rec, doc_dates_info)
     return dict()
 
