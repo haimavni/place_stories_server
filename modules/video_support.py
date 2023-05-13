@@ -1,4 +1,4 @@
-from youtube_dl import YoutubeDL
+from yt_dlp import YoutubeDL
 import stories_manager
 from gluon.storage import Storage
 from injections import inject
