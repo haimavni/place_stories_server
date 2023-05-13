@@ -341,7 +341,10 @@ def update_doc_date(vars):
     update_record_dates(rec, doc_dates_info)
     story_id = int(vars.story_id)
     story_rec = db(db.TblStories.id==story_id).select().first()
-    update_record_dates(story_rec, doc_dates_info)
+    dates_info = dict(
+        story_date=(vars._date_str, int(vars.doc_date_datespan))
+    )
+    update_record_dates(story_rec, dates_info)
     return dict()
 
 @serve_json
