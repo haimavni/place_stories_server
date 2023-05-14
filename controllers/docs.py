@@ -334,11 +334,11 @@ def add_doc_segment(vars):
 @serve_json
 def update_doc_date(vars):
     # doc_date_str = vars.doc_date_str
-    doc_dates_info = dict(
-        doc_date=(vars.doc_date_str, int(vars.doc_date_datespan))
-    )
-    rec = db((db.TblDocs.id == int(vars.doc_id)) & (db.TblDocs.deleted != True)).select().first()
-    update_record_dates(rec, doc_dates_info)
+    # doc_dates_info = dict(
+    #     doc_date=(vars.doc_date_str, int(vars.doc_date_datespan))
+    # )
+    # rec = db((db.TblDocs.id == int(vars.doc_id)) & (db.TblDocs.deleted != True)).select().first()
+    # update_record_dates(rec, doc_dates_info)
     story_id = int(vars.story_id)
     story_rec = db(db.TblStories.id==story_id).select().first()
     dates_info = dict(

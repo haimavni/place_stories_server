@@ -4,7 +4,7 @@ from .date_utils import get_all_dates
 
 
 def get_member_rec(member_id, member_rec=None, prepend_path=False):
-    db, auth = inject('db', 'auth')
+    db, auth, NO_DATE = inject('db', 'auth', 'NO_DATE')
     if member_rec:
         rec = member_rec  # used when initially all members are loaded into the cache
     elif not member_id:
@@ -25,6 +25,10 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
     rec.name = member_display_name(rec, full=False)
     if prepend_path:
         rec.facePhotoURL = photos_folder('profile_photos') + (rec.facePhotoURL or 'dummy_face.png')
+    if rec.date_of_death != NO_DATE:
+        rec.life_status = "dead"
+    else:
+        rec.life_status = "alive"
     return rec
 
 
