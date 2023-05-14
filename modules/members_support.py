@@ -7,7 +7,6 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
     db, auth, comment, NO_DATE = inject('db', 'auth', 'comment', 'NO_DATE')
     is_dead = False
     if member_rec:
-        is_dead = member_rec.date_of_death != NO_DATE
         rec = member_rec  # used when initially all members are loaded into the cache
     elif not member_id:
         return None
@@ -19,6 +18,7 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
         return None
     if rec.updater_id:
         rec.updater_name = auth.user_name(rec.updater_id)
+    is_dead = rec.date_of_death != NO_DATE
     dates = get_all_dates(rec)
     rec = Storage(rec.as_dict())
     for d in dates:
@@ -27,7 +27,7 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
     rec.name = member_display_name(rec, full=False)
     if prepend_path:
         rec.facePhotoURL = photos_folder('profile_photos') + (rec.facePhotoURL or 'dummy_face.png')
-    comment(f"-----rec.date_of_death is {rec.date_of_death} mrec: {member_rec.date_of_death}, is dead? {is_dead}")
+    comment(f"-----rec.date_of_death is {rec.date_of_death}, is dead? {is_dead}")
     if is_dead:
         rec.life_status = "dead"
     else:
