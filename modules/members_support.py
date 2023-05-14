@@ -27,8 +27,8 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
     rec.name = member_display_name(rec, full=False)
     if prepend_path:
         rec.facePhotoURL = photos_folder('profile_photos') + (rec.facePhotoURL or 'dummy_face.png')
+    comment(f"-----rec.date_of_death is {rec.date_of_death} mrec: {member_rec.date_of_death}, is dead? {is_dead}")
     if is_dead:
-        comment(f"rec.date_of_death is {rec.date_of_death} {member_rec.date_of_death}")
         rec.life_status = "dead"
     else:
         rec.life_status = "alive"
