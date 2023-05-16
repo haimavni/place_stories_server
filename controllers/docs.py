@@ -433,8 +433,33 @@ def make_docs_query(params):
     return q
 
 def make_doc_segments_query(params):
-    pass
-
+    q = init_query(db.TblDocSegments, params.editing)
+    q &= (db.TblDocs.id == db.TblDocSegments.doc_id)
+    if params.days_since_upload:
+        days = params.days_since_upload.value
+        if days:
+            upload_date = datetime.datetime.today() - datetime.timedelta(days=days)
+            q &= (db.TblDocs.upload_date >= upload_date)
+    opt = params.selected_uploader
+    if opt == 'mine':
+        q &= (db.TblDocs.uploader == params.user_id)
+    elif opt == 'users':
+        q &= (db.TblDocs.uploader != None)
+    opt = params.selected_dates_option
+    if opt == 'selected_dates_option':
+        pass
+    elif opt == 'dated':
+        q &= (db.TblDocs.doc_date != NO_DATE)
+    elif opt == 'undated':
+        q &= (db.TblDocs.doc_date == NO_DATE)
+    if params.selected_doc_segments:
+        q &= (db.TblDocSegments.story_id.belongs(params.selected_doc_segments))
+    if params.selected_topics:
+        q1 = get_topics_query(params.selected_topics)
+        q &= q1
+    if params.show_untagged:
+        q &= (db.TblDocSegments.story_id==db.TblStories.id) & (db.TblStories.is_tagged==False)
+    return q
 
 def get_story_by_id(story_id):
     sm = stories_manager.Stories()
