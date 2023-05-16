@@ -89,11 +89,12 @@ def get_doc_segment_list(vars):
     doc_segment_list = []
     for rec1 in lst:
         rec = rec1.TblDocSegments
+        rec.segment_id = rec.id
         story_rec = rec1.TblStories
         fix_record_dates_out(story_rec)
         story = rec1.TblStories
         rec.story = story
-        rec.doc_segment_url = doc_segment_url(rec1)
+        rec.doc_url = doc_segment_url(rec1)
         rec.doc_jpg_url = doc_segment_jpg_url(rec1)
         rec.keywords = rec1.TblStories.keywords
         rec.name = rec1.TblStories.name
