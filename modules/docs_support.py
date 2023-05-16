@@ -185,8 +185,10 @@ def pdf_segment_image_path(segment_id):
     seg_rec = db(db.TblDocSegments.id==segment_id).select().first()
     pdf_rec = db(db.TblDocs.id==seg_rec.doc_id).select().first()
     pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/'
-    pdf_path = pdf_jpg_folder + pdf_rec.doc_path
-    return pdf_path.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', f"-{seg_rec.page_num}.jpg")
+    doc_path = pdf_rec.doc_path
+    r = doc_path.rfind("/")
+    pdf_jpg_name = doc_path[r+1:].replace('.pdf', f"-{seg_rec.page_num}.jpg")
+    return pdf_jpg_folder + pdf_jpg_name
 
 def calc_doc_story(doc_id):
     return False
