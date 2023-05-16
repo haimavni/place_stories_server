@@ -1,5 +1,5 @@
 import datetime
-from docs_support import save_uploaded_doc, doc_url, doc_segment_url, calc_doc_story, create_uploading_doc, save_uploading_chunk, \
+from docs_support import save_uploaded_doc, doc_url, doc_segment_url, create_uploading_doc, save_uploading_chunk, \
     handle_loaded_doc, save_doc_segment_thumbnail
 from members_support import calc_grouped_selected_options, calc_all_tags, get_tag_ids, init_query, get_topics_query, get_object_topics, photos_folder
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, \
@@ -15,8 +15,6 @@ def upload_doc(vars):
     user_id = int(vars.user_id) if vars.user_id else auth.current_user()
     fil = vars.file
     result = save_uploaded_doc(fil.name, fil.BINvalue, user_id)
-    if result != 'duplicate':
-        calc_doc_story(result)
     return dict(upload_result=result)
 
 

@@ -77,20 +77,19 @@ def handle_loaded_doc(record_id):
     pdf_jpg_path = pdf_jpg_folder + file_name.replace('.pdf', '.jpg')
     save_pdf_jpg(doc_file_name, pdf_jpg_path)
     chmod(pdf_jpg_path, 0o777)
-    calc_doc_story(record_id)
-    db.commit()
 
 def save_doc_segment_thumbnail(doc_segment_id):
     db = inject('db')
     pdf_seg_rec = db(db.TblDocSegments.id==doc_segment_id).select().first()
     doc_rec = db(db.TblDocs.id==pdf_seg_rec.doc_id).select().first()
+    path, file_name = os.path.split(doc_rec.doc_path)
     doc_file_name = local_docs_folder() + doc_rec.doc_path
-    pdf_jpg_path = pdf_segment_image_path(doc_segment_id)
+    pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/' + path + '/'
+    dir_util.mkpath(pdf_jpg_folder)
+    s = f"-{pdf_seg_rec.page_num}.jpg"
+    pdf_jpg_path = pdf_jpg_folder + file_name.replace('.pdf', s)
     save_pdf_jpg(doc_file_name, pdf_jpg_path, pdf_seg_rec.page_num)
     chmod(pdf_jpg_path, 0o777)
-    db.commit()
-
-
 
 # code below is obsolete
 def save_uploaded_doc(file_name, s, user_id, sub_folder=None):
@@ -179,109 +178,6 @@ def generate_jpgs_for_all_pdf_segmements():
         # jpg_path = pdf_jpg_folder + rec.doc_path.replace('.pdf', '.jpg')
         save_pdf_jpg(pdf_path, jpg_path, page_num=page_num)
     return len(lst)
-
-def pdf_segment_image_path(segment_id):
-    db = inject("db")
-    seg_rec = db(db.TblDocSegments.id==segment_id).select().first()
-    pdf_rec = db(db.TblDocs.id==seg_rec.doc_id).select().first()
-    pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/'
-    doc_path = pdf_rec.doc_path
-    r = doc_path.rfind("/")
-    pdf_jpg_name = doc_path[r+1:].replace('.pdf', f"-{seg_rec.page_num}.jpg")
-    return pdf_jpg_folder + pdf_jpg_name
-
-def calc_doc_story(doc_id):
-    return False
-    try:
-        db, STORY4DOC, log_exception, comment = inject('db', 'STORY4DOC', 'log_exception', 'comment')
-        doc_rec = db(db.TblDocs.id==doc_id).select().first()
-        if doc_rec.text_extracted:
-            return True
-        doc_file_name = local_docs_folder() + doc_rec.doc_path
-        comment(f"enter calc_doc_story of {doc_file_name}")
-        sm = Stories()
-        good = True
-        pdf_result = None
-        try:
-            pdf_result = pdf_to_text(doc_file_name, doc_rec.num_pages_extracted)
-        except Exception as e:
-            log_exception(f'PDF to text error in {doc_rec.doc_path}. Name: {doc_rec.original_file_name}')
-            txt = ''
-            good = False
-            raise
-        if not pdf_result:
-            txt = '- - - - -'
-        if doc_rec.story_id:
-            txt = ''
-            if doc_rec.num_pages_extracted:
-                story_info = sm.get_story(doc_rec.story_id)
-                txt = story_info.story_text
-            txt = txt + pdf_result.text
-            story_info = Storage(
-                story_text=txt,
-                name=doc_rec.name
-            )
-            sm.update_story(doc_rec.story_id, story_info)
-            doc_rec.update_record(text_extracted=pdf_result.num_pages==pdf_result.num_pages_extracted,
-                                  num_pages=pdf_result.num_pages,
-                                  num_pages_extracted=pdf_result.num_pages_extracted)
-        else:
-            story_info = sm.get_empty_story(used_for=STORY4DOC, story_text=pdf_result.text, name=doc_rec.original_file_name)
-            result = sm.add_story(story_info)
-            story_id = result.story_id
-            doc_rec.update_record(story_id=story_id,
-                                  text_extracted=pdf_result.num_pages==pdf_result.num_pages_extracted,
-                                  num_pages=pdf_result.num_pages,
-                                  num_pages_extracted=pdf_result.num_pages_extracted)
-    except Exception as e:
-        log_exception('Error calculating {}'.format(doc_rec.doc_path))
-        return False
-    return good
-    
-def calc_doc_stories(time_budget=None):
-    return dict()
-    try:
-        db, comment, log_exception = inject('db', 'comment', 'log_exception')
-        chunk = 10
-        comment("Start calc doc stories cycle")
-        q = (db.TblDocs.text_extracted != True) & (db.TblDocs.deleted != True)
-        n = db(q).count()
-        comment('Start calc doc stories. {} documents left to calculate.', n)
-        if not n:
-            return dict(result="nothing to recalculate")
-        time_budget = time_budget or (500 - 25) #will exit the loop 25 seconds before the a new cycle starts
-        t0 = datetime.datetime.now()
-        ns = 0
-        nf = 0
-        try:
-            while True:
-                dif = datetime.datetime.now() - t0
-                elapsed = int(dif.total_seconds())
-                if elapsed > time_budget:
-                    break
-                doc_ids = []
-                comment('Calc doc stories. {} documents left to calculate.', n)
-                lst = db(q).select(db.TblDocs.id, limitby=(0, chunk))
-                for rec in lst:
-                    if calc_doc_story(rec.id):
-                        doc_ids.append(rec.id)
-                        ns += 1
-                    else:
-                        nf += 1
-                db.commit()
-                comment("{} good, {} bad uploaded", ns, nf)
-                ws_messaging.send_message('DOCS_WERE_UPLOADED', group='ALL', doc_ids=doc_ids)
-                if ns + nf >= n:
-                    break;
-        except:
-            log_exception('Error while calculating doc stories')
-        finally:
-            comment("Finished cycle of calculating doc stories")
-    except Exception as e:
-        log_exception('Error calculating doc stories')
-        raise
-    return dict(good=ns, bad=nf)
-
 
 def docs_folder(): 
     return url_folder('docs')
