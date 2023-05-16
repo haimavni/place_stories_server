@@ -1,5 +1,6 @@
 import datetime
-from docs_support import save_uploaded_doc, doc_url, doc_jpg_url, doc_segment_url, create_uploading_doc, save_uploading_chunk, \
+from docs_support import save_uploaded_doc, doc_url, doc_jpg_url, \
+    doc_segment_url, doc_segment_jpg_url, create_uploading_doc, save_uploading_chunk, \
     handle_loaded_doc, save_doc_segment_thumbnail
 from members_support import calc_grouped_selected_options, calc_all_tags, get_tag_ids, init_query, get_topics_query, get_object_topics, photos_folder
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, \
@@ -88,11 +89,10 @@ def get_doc_segment_list(vars):
         rec = rec1.TblDocSegments
         story_rec = rec1.TblStories
         fix_record_dates_out(story_rec)
-        story = get_story_by_id(rec.story_id)
+        story = rec1.TblStories
         rec.story = story
-        rec.doc_segment_url = doc_segment_url(rec.story_id)
-        s = f"-{params.page_num}.jpg"
-        rec.doc_jpg_url = rec.doc_segment_url.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', s)
+        rec.doc_segment_url = doc_segment_url(rec1)
+        rec.doc_jpg_url = doc_segment_jpg_url(rec1)
         rec.keywords = rec1.TblStories.keywords
         rec.name = rec1.TblStories.name
         rec.doc_date = rec1.TblStories.story_date
