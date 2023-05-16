@@ -73,7 +73,9 @@ def get_doc_list(vars):
 def get_doc_segment_list(vars):
     params = vars.params
     if params.checked_doc_list:
-        q = (db.TblDocSegments.story_id.belongs(params.checked_doc_list)) & (db.TblStories.id == db.TblDocSegments.story_id)
+        q = (db.TblDocSegments.story_id.belongs(params.checked_doc_list)) & \
+            (db.TblStories.id == db.TblDocSegments.story_id) \
+            (db.TblDocs.id == db.TblDocSegments.doc_id)
         lst0 = db(q).select()
         lst0 = [rec for rec in lst0]
         for rec in lst0:

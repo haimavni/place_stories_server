@@ -196,13 +196,13 @@ def doc_jpg_url(drec):
 
 def doc_segment_url(rec):
     doc_rec = rec.TblDocs
-    seg_rec = rec.TblSegmentDocs
+    seg_rec = rec.TblDocSegments
     folder = docs_folder()
     path = folder + doc_rec.doc_path + f"#page={seg_rec.page_num}"
     return path
 
 def doc_segment_jpg_url(rec):
     doc_rec = rec.TblDocs
-    seg_rec = rec.TblSegmentDocs
+    seg_rec = rec.TblDocSegments
     folder = docs_folder() + "pdf_jpgs/"
     return folder + doc_rec.doc_path.replace(".pdf", f"-{seg_rec.page_num}.jpg")
