@@ -225,7 +225,7 @@ def get_doc_info(vars):
     doc_topics = get_object_topics(doc_rec.story_id, "D")
     # sm = stories_manager.Stories()
     # doc_story = sm.get_story(doc_rec.story_id)
-    story_id = doc_story.story_id
+    story_id = doc_rec.story_id
     chatroom_id = doc_story.chatroom_id
     member_ids = db(db.TblMembersDocs.doc_id==doc_id).select()
     member_ids = [m.member_id for m in member_ids]
