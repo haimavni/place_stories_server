@@ -83,7 +83,7 @@ def handle_loaded_doc(record_id):
 def save_doc_segment_thumbnail(doc_segment_id):
     db = inject('db')
     pdf_seg_rec = db(db.TblDocSegments.id==doc_segment_id).select().first()
-    doc_rec = db(db.TblDocs.id==pdf_seg_rec.doc_id)
+    doc_rec = db(db.TblDocs.id==pdf_seg_rec.doc_id).select().first()
     doc_file_name = local_docs_folder() + doc_rec.doc_path
     pdf_jpg_path = pdf_segment_image_path(doc_segment_id)
     save_pdf_jpg(doc_file_name, pdf_jpg_path, pdf_seg_rec.page_num)
