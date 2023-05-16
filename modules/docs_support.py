@@ -79,7 +79,7 @@ def handle_loaded_doc(record_id):
     chmod(pdf_jpg_path, 0o777)
 
 def save_doc_segment_thumbnail(doc_segment_id):
-    db = inject('db')
+    db, comment = inject('db', 'comment')
     pdf_seg_rec = db(db.TblDocSegments.id==doc_segment_id).select().first()
     doc_rec = db(db.TblDocs.id==pdf_seg_rec.doc_id).select().first()
     path, file_name = os.path.split(doc_rec.doc_path)
@@ -88,6 +88,7 @@ def save_doc_segment_thumbnail(doc_segment_id):
     dir_util.mkpath(pdf_jpg_folder)
     s = f"-{pdf_seg_rec.page_num}.jpg"
     pdf_jpg_path = pdf_jpg_folder + file_name.replace('.pdf', s)
+    comment(f"-----save doc seg thumb {doc_file_name} at {pdf_jpg_path} ")
     save_pdf_jpg(doc_file_name, pdf_jpg_path, pdf_seg_rec.page_num)
     chmod(pdf_jpg_path, 0o777)
 
