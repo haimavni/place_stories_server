@@ -186,20 +186,23 @@ def docs_folder():
 def local_docs_folder(): 
     return local_folder('docs')
 
-def doc_url(story_id):
-    db = inject('db')
+def doc_url(drec):
     folder = docs_folder()
-    rec = db(db.TblDocs.story_id==story_id).select().first()
-    if not rec:
-        return "Document not found"
-    path = folder + rec.doc_path
-    return path
+    return folder + drec.doc_path
 
-def doc_segment_url(story_id):
-    db = inject('db')
+def doc_jpg_url(drec):
+    folder = docs_folder() + "pdf_jpgs/"
+    return folder + drec.doc_path.replace(".pdf", ".jpg")
+
+def doc_segment_url(rec):
+    doc_rec = rec.TblDocs
+    seg_rec = rec.TblSegmentDocs
     folder = docs_folder()
-    seg_rec = db(db.TblDocSegments.story_id==story_id).select().first()
-    doc_rec = db(db.TblDocs.id==seg_rec.doc_id).select().first()
     path = folder + doc_rec.doc_path + f"#page={seg_rec.page_num}"
     return path
 
+def doc_segment_jpg_url(rec):
+    doc_rec = rec.TblDocs
+    seg_rec = rec.TblSegmentDocs
+    folder = docs_folder() + "pdf_jpgs/"
+    return folder + doc_rec.doc_path.replace(".pdf", f"-{seg_rec.page_num}.jpg")

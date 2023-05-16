@@ -1,5 +1,5 @@
 import datetime
-from docs_support import save_uploaded_doc, doc_url, doc_segment_url, create_uploading_doc, save_uploading_chunk, \
+from docs_support import save_uploaded_doc, doc_url, doc_jpg_url, doc_segment_url, create_uploading_doc, save_uploading_chunk, \
     handle_loaded_doc, save_doc_segment_thumbnail
 from members_support import calc_grouped_selected_options, calc_all_tags, get_tag_ids, init_query, get_topics_query, get_object_topics, photos_folder
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, \
@@ -59,8 +59,8 @@ def get_doc_list(vars):
         fix_record_dates_out(rec)
         story = get_story_by_id(rec.story_id)
         rec.story = story
-        rec.doc_url = doc_url(rec.story_id)
-        rec.doc_jpg_url = rec.doc_url.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', '.jpg')
+        rec.doc_url = doc_url(rec)
+        rec.doc_jpg_url = doc_jpg_url(rec)
         rec.keywords = rec1.TblStories.keywords
         rec.name = rec1.TblStories.name
         rec.doc_date = rec1.TblStories.story_date
@@ -79,7 +79,6 @@ def get_doc_segment_list(vars):
             rec.TblDocSegments.checked = True
     else:
         lst0 = []
-    selected_topics = params.selected_topics or []
     q = make_doc_segments_query(params)
     lst = db(q).select(orderby=~db.TblDocSegments.id)
     lst = [rec for rec in lst if rec.TblDocSegments.story_id not in params.checked_doc_list]
@@ -213,17 +212,16 @@ def apply_to_checked_docs(vars):
 @serve_json
 def get_doc_info(vars):
     doc_id = int(vars.doc_id)
-    doc_rec = db(db.TblDocs.id == doc_id).select().first()
-    # else:
-    #     doc_rec = db(db.TblDocs.story_id == doc_id).select().first()
-    if not doc_rec:
-        comment(f'BUG!!! caller: {vars.caller}, doc_id: {doc_id}')
-    all_dates = get_all_dates(doc_rec)
-    doc_src = doc_url(doc_rec.story_id)
-    doc_name = db(db.TblStories.id==doc_rec.story_id).select(db.TblStories.name).first().name
+    q = (db.TblDocs.id == doc_id) & (db.TblStories.id == db.TblDocs.story_id)
+    rec = db(q).select().first()
+    doc_rec = rec.TblDocs
+    doc_story = rec.TblStories
+    all_dates = get_all_dates(doc_story)
+    doc_src = doc_url(doc_rec)
+    doc_name = doc_story.name
     doc_topics = get_object_topics(doc_rec.story_id, "D")
-    sm = stories_manager.Stories()
-    doc_story = sm.get_story(doc_rec.story_id)
+    # sm = stories_manager.Stories()
+    # doc_story = sm.get_story(doc_rec.story_id)
     story_id = doc_story.story_id
     chatroom_id = doc_story.chatroom_id
     member_ids = db(db.TblMembersDocs.doc_id==doc_id).select()
@@ -233,7 +231,9 @@ def get_doc_info(vars):
                        facePhotoURL=photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png"),
                        full_name=member.first_name + ' ' + member.last_name)
                for member in members]
-    q = (db.TblDocSegments.doc_id==doc_id) & (db.TblDocSegments.story_id==db.TblStories.id) & (db.TblStories.deleted!=True)
+    q = (db.TblDocSegments.doc_id==doc_id) & \
+        (db.TblDocSegments.story_id==db.TblStories.id) & \
+        (db.TblStories.deleted!=True)
     doc_segments1 = db(q).select( \
         db.TblDocSegments.id, \
         db.TblDocSegments.page_num, \
@@ -261,8 +261,8 @@ def get_doc_info(vars):
                 doc_name=doc_name,
                 doc_story=doc_story,
                 doc_topics=doc_topics,
-                doc_date_str=all_dates.doc_date.date,
-                doc_date_datespan=all_dates.doc_date.span,
+                doc_date_str=all_dates.story_date.date,
+                doc_date_datespan=all_dates.story_date.span,
                 story_id=story_id,
                 chatroom_id=chatroom_id,
                 members=members,
@@ -287,7 +287,6 @@ def get_doc_segment_info(vars):
                        full_name=member.first_name + ' ' + member.last_name)
                for member in members]
     doc_topics = get_object_topics(story_id, "S")
-    #### all_dates = get_all_dates(doc_segment_rec)
     all_dates = get_all_dates(doc_segment_story)
 
     return dict(
