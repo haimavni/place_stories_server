@@ -181,6 +181,7 @@ def generate_jpgs_for_all_pdf_segmements():
     return len(lst)
 
 def pdf_segment_image_path(segment_id):
+    db = inject("db")
     seg_rec = db(db.TblDocSegments.id==segment_id)
     pdf_rec = db(db.TblDocs.id==seg_rec.doc_id).select().first()
     pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/'
