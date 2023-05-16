@@ -218,13 +218,13 @@ def get_doc_info(vars):
     q = (db.TblDocs.id == doc_id) & (db.TblStories.id == db.TblDocs.story_id)
     rec = db(q).select().first()
     doc_rec = rec.TblDocs
-    doc_story = rec.TblStories
+    #doc_story = rec.TblStories
     all_dates = get_all_dates(doc_story)
     doc_src = doc_url(doc_rec)
     doc_name = doc_story.name
     doc_topics = get_object_topics(doc_rec.story_id, "D")
-    # sm = stories_manager.Stories()
-    # doc_story = sm.get_story(doc_rec.story_id)
+    sm = stories_manager.Stories()
+    doc_story = sm.get_story(doc_rec.story_id)
     story_id = doc_rec.story_id
     chatroom_id = doc_story.chatroom_id
     member_ids = db(db.TblMembersDocs.doc_id==doc_id).select()
