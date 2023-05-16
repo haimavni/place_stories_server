@@ -1,6 +1,6 @@
 import datetime
-from docs_support import save_uploaded_doc, doc_url, calc_doc_story, create_uploading_doc, save_uploading_chunk, \
-    handle_loaded_doc
+from docs_support import save_uploaded_doc, doc_url, doc_segment_url, calc_doc_story, create_uploading_doc, save_uploading_chunk, \
+    handle_loaded_doc, save_doc_segment_thumbnail
 from members_support import calc_grouped_selected_options, calc_all_tags, get_tag_ids, init_query, get_topics_query, get_object_topics, photos_folder
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, \
     fix_record_dates_out
@@ -93,9 +93,9 @@ def get_doc_segment_list(vars):
         fix_record_dates_out(story_rec)
         story = get_story_by_id(rec.story_id)
         rec.story = story
-        rec.doc_url = doc_url(rec.story_id)
+        rec.doc_segment_url = doc_segment_url(rec.story_id)
         s = f"-{params.page_num}.jpg"
-        rec.doc_jpg_url = rec.doc_url.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', s)
+        rec.doc_jpg_url = rec.doc_segment_url.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', s)
         rec.keywords = rec1.TblStories.keywords
         rec.name = rec1.TblStories.name
         rec.doc_date = rec1.TblStories.story_date
@@ -320,6 +320,7 @@ def create_segment(vars):
     sm = stories_manager.Stories()
     story_id = sm.add_story(story_info).story_id
     segment_id = db.TblDocSegments.insert(doc_id=doc_id, page_num=page_num, page_part_num=page_part_num, story_id=story_id)
+    save_doc_segment_thumbnail(segment_id)
     return dict(segment_id=segment_id, name=story_info.name)
 
 @serve_json

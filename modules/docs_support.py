@@ -80,6 +80,17 @@ def handle_loaded_doc(record_id):
     calc_doc_story(record_id)
     db.commit()
 
+def save_doc_segment_thumbnail(doc_segment_id):
+    pdf_seg_rec = db(db.TblDocSegments.doc_id==doc_segment_id).select().first()
+    doc_rec = db(db.TblDocs.id==pdf_seg_rec.doc_id)
+    doc_file_name = local_docs_folder() + doc_rec.doc_path
+    pdf_jpg_path = pdf_segment_image_path(doc_segment_id)
+    save_pdf_jpg(doc_file_name, pdf_jpg_path, pdf_seg_rec.page_num)
+    chmod(pdf_jpg_path, 0o777)
+    db.commit()
+
+
+
 # code below is obsolete
 def save_uploaded_doc(file_name, s, user_id, sub_folder=None):
     auth, log_exception, db, STORY4DOC = inject('auth', 'log_exception', 'db', 'STORY4DOC')
@@ -170,11 +181,10 @@ def generate_jpgs_for_all_pdf_segmements():
 
 def pdf_segment_image_path(segment_id):
     seg_rec = db(db.TblDocSegments.id==segment_id)
-    pdf_rec = db(db.TblDocs.id==seg_rec.doc_id)
+    pdf_rec = db(db.TblDocs.id==seg_rec.doc_id).select().first()
     pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/'
     pdf_path = pdf_jpg_folder + pdf_rec.doc_path
     return pdf_path.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', f"-{seg_rec.page_num}.jpg")
-
 
 def calc_doc_story(doc_id):
     return False
