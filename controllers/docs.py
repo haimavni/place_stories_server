@@ -277,7 +277,9 @@ def get_doc_info(vars):
 @serve_json
 def get_doc_segment_info(vars):
     doc_segment_id = int(vars.doc_segment_id)
-    doc_segment_rec = db(db.TblDocSegments.id==doc_segment_id).select().first()
+    q = (db.TblDocSegments.id==doc_segment_id) & (db.TblDocs.id == db.TblDocSegments.doc_id)
+    rec = db(q).select().first()
+    doc_segment_rec = rec.TblDocSegments;
     sm = stories_manager.Stories()
     doc_segment_story = sm.get_story(doc_segment_rec.story_id)
     story_id = doc_segment_story.story_id
@@ -291,9 +293,11 @@ def get_doc_segment_info(vars):
                for member in members]
     doc_topics = get_object_topics(story_id, "S")
     all_dates = get_all_dates(doc_segment_story)
+    doc_src = doc_segment_url(rec)
 
     return dict(
         doc_segment=doc_segment_rec,
+        doc_src=doc_src,
         members=members,
         name=doc_segment_story.name,
         chatroom_id=chatroom_id,
