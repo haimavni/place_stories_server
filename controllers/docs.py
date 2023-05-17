@@ -469,3 +469,14 @@ def make_doc_segments_query(params):
 def get_story_by_id(story_id):
     sm = stories_manager.Stories()
     return sm.get_story(story_id)
+
+
+@serve_json
+def upload_thumbnail(vars):
+    user_id = vars.user_id
+    comment("start handling uploaded doc thumbnail file")
+    fil = vars.file
+    result = save_uploaded_thumbnail(fil.name, fil.BINvalue, user_id)
+
+def save_uploaded_thumbnail(fname, blob, user_id):
+    pass
