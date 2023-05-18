@@ -98,6 +98,7 @@ def save_doc_segment_thumbnail(doc_segment_id):
 def save_uploaded_thumbnail(data, doc_id, segment_id):
     #sometimes the above function silently fails to create file
     db, comment = inject('db', 'comment')
+    comment(f"------------ save uploaded thumbail {doc_id} / {segment_id}")
     blob = array.array('B', [x for x in map(ord, data)]).tobytes()
     doc_rec = db(db.TblDocs.id==doc_id).select().first()
     page_num = None
@@ -105,6 +106,7 @@ def save_uploaded_thumbnail(data, doc_id, segment_id):
         doc_seg_rec = db(db.TblDocSegments.id==segment_id).select().first()
         page_num = doc_seg_rec.page_num
     pdf_jpg_path = get_pdf_jpg_path(doc_rec.doc_path, page_num)
+    comment(f"pdf_jpg_path: ", {pdf_jpg_path})
     with open(pdf_jpg_path, "bw") as f:
         f.write(blob)
     chmod(pdf_jpg_path, 0o777)
