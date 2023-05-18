@@ -79,24 +79,48 @@ def handle_loaded_doc(record_id):
     chmod(pdf_jpg_path, 0o777)
 
 def save_doc_segment_thumbnail(doc_segment_id):
+    # save using pdf2image which does not always works
     db, comment = inject('db', 'comment')
     pdf_seg_rec = db(db.TblDocSegments.id==doc_segment_id).select().first()
     doc_rec = db(db.TblDocs.id==pdf_seg_rec.doc_id).select().first()
-    path, file_name = os.path.split(doc_rec.doc_path)
     doc_file_name = local_docs_folder() + doc_rec.doc_path
-    pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/' + path + '/'
-    dir_util.mkpath(pdf_jpg_folder)
-    s = f"-{pdf_seg_rec.page_num}.jpg"
-    pdf_jpg_path = pdf_jpg_folder + file_name.replace('.pdf', s)
+    #-------
+    pdf_jpg_path = get_pdf_jpg_path(doc_rec.path, pdf_seg_rec.page_num)
+    # path, file_name = os.path.split(doc_rec.doc_path)
+    # pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/' + path + '/'
+    # dir_util.mkpath(pdf_jpg_folder)
+    # s = f"-{pdf_seg_rec.page_num}.jpg"
+    # pdf_jpg_path = pdf_jpg_folder + file_name.replace('.pdf', s)
     comment(f"-----save doc seg thumb {doc_file_name} at {pdf_jpg_path} ")
     save_pdf_jpg(doc_file_name, pdf_jpg_path, pdf_seg_rec.page_num)
     chmod(pdf_jpg_path, 0o777)
 
-# code below is obsolete
-def save_uploaded_doc(file_name, s, user_id, sub_folder=None):
+def save_uploaded_thumbnail(data, doc_id, segment_id):
+    #sometimes the above function silently fails to create file
+    db, comment = inject('db', 'comment')
+    blob = array.array('B', [x for x in map(ord, data)]).tobytes()
+    doc_rec = db(db.TblDocs.id==doc_id).select().first()
+    page_num = None
+    if segment_id:
+        doc_seg_rec = db(db.TblDocSegments.id==segment_id).select().first()
+        page_num = doc_seg_rec.page_num
+    pdf_jpg_path = get_pdf_jpg_path(doc_rec.doc_path, page_num)
+    with open(pdf_jpg_path, "bw") as f:
+        f.write(blob)
+    return True
+
+def get_pdf_jpg_path(doc_path, page_num=None):    
+    path, file_name = os.path.split(doc_path)
+    pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/' + path + '/'
+    dir_util.mkpath(pdf_jpg_folder)
+    s = f"-{page_num}.jpg" if page_num else ".jpg"
+    return pdf_jpg_folder + file_name.replace('.pdf', s)
+
+# code below is obsolete??
+def save_uploaded_doc(file_name, data, user_id, sub_folder=None):
     auth, log_exception, db, STORY4DOC = inject('auth', 'log_exception', 'db', 'STORY4DOC')
     user_id = user_id or auth.current_user()
-    blob = array.array('B', [x for x in map(ord, s)]).tobytes()
+    blob = array.array('B', [x for x in map(ord, data)]).tobytes()
     crc = zlib.crc32(blob)
     cnt = db((db.TblDocs.crc == crc) & (db.TblDocs.deleted != True)).count()
     if cnt > 0:
