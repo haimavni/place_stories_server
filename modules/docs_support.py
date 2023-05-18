@@ -107,6 +107,7 @@ def save_uploaded_thumbnail(data, doc_id, segment_id):
     pdf_jpg_path = get_pdf_jpg_path(doc_rec.doc_path, page_num)
     with open(pdf_jpg_path, "bw") as f:
         f.write(blob)
+    chmod(pdf_jpg_path, 0o777)
     return True
 
 def get_pdf_jpg_path(doc_path, page_num=None):    
