@@ -480,5 +480,5 @@ def upload_thumbnail(vars):
     comment(f"start handling uploaded doc thumbnail file {doc_id}/{segment_id}")
     fil = vars.file
     result = save_uploaded_thumbnail(fil.BINvalue, doc_id, segment_id)
-    return dict(result=result)
+    return dict(upload_result=result)
 
