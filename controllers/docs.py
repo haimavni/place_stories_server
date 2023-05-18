@@ -472,7 +472,7 @@ def get_story_by_id(story_id):
 
 
 @serve_json
-def upload_thumbnail(vars)
+def upload_thumbnail(vars):
     x = dir(vars)
     comment(f"vars in upload thumbnail: {x}")
     doc_id = vars.info.doc_id
