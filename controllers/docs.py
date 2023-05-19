@@ -476,7 +476,8 @@ def upload_thumbnail(vars):
     info = vars.file.info
     doc_id = info.doc_id
     segment_id = info.setment_id
-    comment(f"vars in upload thumbnail: {info}")
+    keys = info.keys()
+    comment(f"keys in upload thumbnail: {keys}")
     comment(f"start handling uploaded doc thumbnail file {doc_id}/{segment_id}")
     fil = vars.file
     result = save_uploaded_thumbnail(fil.BINvalue, doc_id, segment_id)
