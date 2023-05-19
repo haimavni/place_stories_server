@@ -95,7 +95,7 @@ def save_doc_segment_thumbnail(doc_segment_id):
     save_pdf_jpg(doc_file_name, pdf_jpg_path, pdf_seg_rec.page_num)
     chmod(pdf_jpg_path, 0o777)
 
-def save_uploaded_thumbnail(data, doc_id, segment_id):
+def save_uploaded_thumbnail(data, doc_id, segment_id, ptp_key):
     #sometimes the above function silently fails to create file
     db, comment = inject('db', 'comment')
     comment(f"------------ save uploaded thumbail {doc_id} / {segment_id}")
@@ -110,6 +110,7 @@ def save_uploaded_thumbnail(data, doc_id, segment_id):
     with open(pdf_jpg_path, "bw") as f:
         f.write(blob)
     chmod(pdf_jpg_path, 0o777)
+    ws_messaging.send_message(key='DOC-SEG-THUMB-UPLOADED', group=ptp_key, good=True)
     return True
 
 def get_pdf_jpg_path(doc_path, page_num=None):    
