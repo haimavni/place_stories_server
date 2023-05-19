@@ -475,7 +475,7 @@ def get_story_by_id(story_id):
 def upload_thumbnail(vars):
     info = vars.file.info
     doc_id = info.doc_id
-    segment_id = info.setment_id
+    segment_id = info.segment_id
     keys = info.keys()
     comment(f"keys in upload thumbnail: {keys}")
     comment(f"start handling uploaded doc thumbnail file {doc_id}/{segment_id}")
