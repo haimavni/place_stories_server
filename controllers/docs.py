@@ -297,6 +297,7 @@ def get_doc_segment_info(vars):
 
     return dict(
         doc_segment=doc_segment_rec,
+        doc_id=doc_segment_rec.doc_id,
         doc_src=doc_src,
         members=members,
         name=doc_segment_story.name,
