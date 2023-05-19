@@ -106,7 +106,7 @@ def save_uploaded_thumbnail(data, doc_id, segment_id):
         doc_seg_rec = db(db.TblDocSegments.id==segment_id).select().first()
         page_num = doc_seg_rec.page_num
     pdf_jpg_path = get_pdf_jpg_path(doc_rec.doc_path, page_num)
-    comment(f"pdf_jpg_path: ", {pdf_jpg_path})
+    comment(f"pdf_jpg_path: , {pdf_jpg_path}")
     with open(pdf_jpg_path, "bw") as f:
         f.write(blob)
     chmod(pdf_jpg_path, 0o777)
@@ -117,7 +117,9 @@ def get_pdf_jpg_path(doc_path, page_num=None):
     pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/' + path + '/'
     dir_util.mkpath(pdf_jpg_folder)
     s = f"-{page_num}.jpg" if page_num else ".jpg"
-    return pdf_jpg_folder + file_name.replace('.pdf', s)
+    result = pdf_jpg_folder + file_name.replace('.pdf', s)
+    comment(f"===========in get pdf jpg path {page_num}, result is {result}")
+    return result
 
 # code below is obsolete??
 def save_uploaded_doc(file_name, data, user_id, sub_folder=None):
