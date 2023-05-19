@@ -473,11 +473,10 @@ def get_story_by_id(story_id):
 
 @serve_json
 def upload_thumbnail(vars):
-    x = dir(vars.keys())
-    comment(f"vars in upload thumbnail: {x}")
     info = vars.file.info
     doc_id = info.doc_id
     segment_id = info.setment_id
+    comment(f"vars in upload thumbnail: {info}")
     comment(f"start handling uploaded doc thumbnail file {doc_id}/{segment_id}")
     fil = vars.file
     result = save_uploaded_thumbnail(fil.BINvalue, doc_id, segment_id)
