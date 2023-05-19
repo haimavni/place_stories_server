@@ -118,7 +118,6 @@ def get_pdf_jpg_path(doc_path, page_num=None):
     dir_util.mkpath(pdf_jpg_folder)
     s = f"-{page_num}.jpg" if page_num else ".jpg"
     result = pdf_jpg_folder + file_name.replace('.pdf', s)
-    comment(f"===========in get pdf jpg path {page_num}, result is {result}")
     return result
 
 # code below is obsolete??
