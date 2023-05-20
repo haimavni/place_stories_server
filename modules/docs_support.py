@@ -227,7 +227,9 @@ def doc_jpg_url(drec):
     return folder + drec.doc_path.replace(".pdf", ".jpg")
 
 def doc_segment_url(story_id, rec=None):
-    db = inject("db")
+    db, comment = inject("db", "comment")
+    boom = "given rec" if rec else "no rec"
+    comment(f"==========story id is {story_id} {boom}")
     if not rec:
         q = (db.TblDocSegments.story_id==story_id) & \
             (db.TblDocs.id==db.TblDocSegments.doc_id)
