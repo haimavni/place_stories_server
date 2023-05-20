@@ -344,7 +344,8 @@ def get_story_list(vars):
         story.editable_preview = False
         if k == STORY4DOC:
             story.doc_url = doc_url(story_id)
-            ###story.editable_preview = True
+        elif k == STORY4DOCSEGMENT:
+            story.doc_segment_url = doc_segment_url(story_id)
         elif k == STORY4AUDIO:
             story.audio_path = audio_path(story_id)
         elif k == STORY4MEMBER:

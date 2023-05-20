@@ -60,7 +60,7 @@ def get_doc_list(vars):
         fix_record_dates_out(rec)
         story = get_story_by_id(rec.story_id)
         rec.story = story
-        rec.doc_url = doc_url(rec)
+        rec.doc_url = doc_url(None, rec)
         rec.doc_jpg_url = doc_jpg_url(rec)
         rec.keywords = rec1.TblStories.keywords
         rec.name = rec1.TblStories.name
@@ -94,7 +94,7 @@ def get_doc_segment_list(vars):
         fix_record_dates_out(story_rec)
         story = rec1.TblStories
         rec.story = story
-        rec.doc_url = doc_segment_url(rec1)
+        rec.doc_url = doc_segment_url(None, rec1)
         rec.doc_jpg_url = doc_segment_jpg_url(rec1)
         rec.keywords = rec1.TblStories.keywords
         rec.name = rec1.TblStories.name
@@ -219,7 +219,7 @@ def get_doc_info(vars):
     rec = db(q).select().first()
     doc_rec = rec.TblDocs
     #doc_story = rec.TblStories
-    doc_src = doc_url(doc_rec)
+    doc_src = doc_url(None, doc_rec)
     doc_topics = get_object_topics(doc_rec.story_id, "D")
     sm = stories_manager.Stories()
     doc_story = sm.get_story(doc_rec.story_id)
@@ -293,7 +293,7 @@ def get_doc_segment_info(vars):
                for member in members]
     doc_topics = get_object_topics(story_id, "S")
     all_dates = get_all_dates(doc_segment_story)
-    doc_src = doc_segment_url(rec)
+    doc_src = doc_segment_url(None, rec)
 
     return dict(
         doc_segment=doc_segment_rec,
