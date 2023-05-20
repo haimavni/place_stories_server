@@ -686,11 +686,12 @@ def delete_checked_stories(vars):
     q = db.TblStories.id.belongs(checked_stories)
     n = db(q).update(deleted=deleted)
     tbls = {STORY4MEMBER: db.TblMembers, STORY4EVENT: db.TblEvents, STORY4PHOTO: db.TblPhotos, STORY4TERM: db.TblTerms,
-            STORY4VIDEO: db.TblVideos, STORY4DOC: db.TblDocs, STORY4ARTICLE: db.TblArticles}
+            STORY4VIDEO: db.TblVideos, STORY4DOC: db.TblDocs, STORY4DOCSEGMENT: db.TblDocSegments, 
+            STORY4ARTICLE: db.TblArticles}
 
     # if story is associated with member, photo, video or document, need to skip it or delete the item too
-    for usage in [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4AUDIO,
-                  STORY4ARTICLE]:
+    for usage in [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4DOCSEGMENT,
+                  STORY4AUDIO, STORY4ARTICLE]:
         q1 = q & (db.TblStories.used_for == usage)
         lst = db(q1).select()
         story_ids = [rec.id for rec in lst]
@@ -1303,7 +1304,7 @@ def save_story_data(story_info, user_id):
         photo_rec = db(
             (db.TblPhotos.story_id == story_info.story_id) & (db.TblPhotos.deleted != True)).select().first()
         photo_rec.update_record(name=story_info.name)
-    if story_info.used_for == STORY4DOC:  # ugly...
+    if story_info.used_for == STORY4DOC:  # ugly... #todo: use only names in tblstories
         doc_rec = db(db.TblDocs.story_id==story_id).select().first()
         doc_rec.update_record(name=story_info.name)
 
@@ -1625,6 +1626,7 @@ def item_of_story_id(used_for, story_id):
         STORY4FEEDBACK: None,
         STORY4VIDEO: db.TblVideos,
         STORY4DOC: db.TblDocs,
+        STORY4DOCSEGMENT: db.TblDocSegments,
         STORY4AUDIO: db.TblAudios,
         STORY4ARTICLE: db.TblArticles
     }
