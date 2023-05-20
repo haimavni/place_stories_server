@@ -229,11 +229,13 @@ def doc_jpg_url(drec):
 def doc_segment_url(story_id, rec=None):
     db, comment = inject("db", "comment")
     boom = "given rec" if rec else "no rec"
-    comment(f"==========story id is {story_id} {boom}")
     if not rec:
         q = (db.TblDocSegments.story_id==story_id) & \
             (db.TblDocs.id==db.TblDocSegments.doc_id)
         rec = db(q).select().first()
+    if not rec:
+        comment(f"==========story id is {story_id} {boom}")
+        return None
     doc_rec = rec.TblDocs
     seg_rec = rec.TblDocSegments
     folder = docs_folder()
