@@ -7,8 +7,7 @@ import ws_messaging
 from audios_support import audio_path
 from dal_utils import insert_or_update
 from date_utils import parse_date, update_record_dates, date_str, day_of_year, days_since_epoch
-from docs_support import doc_url
-from family_connections import *
+from docs_support import doc_url, doc_segment_url
 from gluon.utils import web2py_uuid
 from html_utils import clean_html
 from http_utils import json_to_storage
