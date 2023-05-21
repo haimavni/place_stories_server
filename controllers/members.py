@@ -1198,7 +1198,7 @@ def set_story_list_data(story_list):
         topics=rec.keywords,  ###'; '.join(story_topics[rec.id]) if rec.id in story_topics else "",
         doc_url=rec.doc_url,
         audio_path=rec.audio_path,
-        doc_jpg_url=calc_doc_jpg_url(rec.id),
+        doc_jpg_url=calc_doc_jpg_url(rec.id, rec.used_for),
         profile_photo_path=rec.profile_photo_path if rec.used_for==STORY4MEMBER else "",
         used_for=rec.used_for,
         editable_preview=rec.editable_preview,
@@ -1213,10 +1213,10 @@ def set_story_list_data(story_list):
     assign_photos(result)
     return result
 
-def calc_doc_jpg_url(story_id):
-    if rec.used_for == STORY4DOC:
+def calc_doc_jpg_url(story_id, used_for):
+    if used_for == STORY4DOC:
         return doc_jpg_url(story_id)
-    if rec.used_for == STORY4DOCSEGMENT:
+    if used_for == STORY4DOCSEGMENT:
         return doc_segment_jpg_url(story_id)
     return ""
 
