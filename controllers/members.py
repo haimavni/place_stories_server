@@ -1213,11 +1213,11 @@ def set_story_list_data(story_list):
     assign_photos(result)
     return result
 
-def calc_doc_jpg_url(rec):
+def calc_doc_jpg_url(story_id):
     if rec.used_for == STORY4DOC:
-        return doc_jpg_url(rec.id)
+        return doc_jpg_url(story_id)
     if rec.used_for == STORY4DOCSEGMENT:
-        return doc_segment_jpg_url(rec.id)
+        return doc_segment_jpg_url(story_id)
     return ""
 
 

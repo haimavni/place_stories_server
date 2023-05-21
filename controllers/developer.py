@@ -35,7 +35,7 @@ def log_file_data(vars):
 
 @serve_json
 def delete_log_file(vars):
-    filename = logs_path() + '/' + vars.file_name
+    filename = logs_path() + vars.file_name
     import os
     os.remove(filename)
     return dict()
