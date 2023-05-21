@@ -215,7 +215,11 @@ def apply_to_checked_docs(vars):
 @serve_json
 def get_doc_info(vars):
     doc_id = int(vars.doc_id)
-    q = (db.TblDocs.id == doc_id) & (db.TblStories.id == db.TblDocs.story_id)
+    if vars.caller == "stories":
+        q = (db.TblDocs.story_id==doc_id)
+    else:
+        q = (db.TblDocs.id == doc_id)
+    q &= (db.TblStories.id == db.TblDocs.story_id)
     rec = db(q).select().first()
     if not rec:
         raise Exception(f"bad doc_id {doc_id}")
