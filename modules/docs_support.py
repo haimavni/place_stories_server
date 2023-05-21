@@ -11,7 +11,7 @@ from .folders import url_folder, local_folder
 from .pdf_utils import pdf_to_text, save_pdf_jpg
 from time import sleep
 from . import ws_messaging
-from misc_utils import chmod
+from misc_utils import chmod, timestamp
 import array
 
 def create_uploading_doc(file_name, crc, user_id):
@@ -242,8 +242,13 @@ def doc_segment_jpg_url(story_id, rec=None):
         rec = doc_segment_by_story_id(story_id)
     doc_rec = rec.TblDocs
     seg_rec = rec.TblDocSegments
+    path = doc_rec.doc_path.replace(".pdf", f"-{seg_rec.page_num}.jpg")
     folder = docs_folder() + "pdf_jpgs/"
-    return folder + doc_rec.doc_path.replace(".pdf", f"-{seg_rec.page_num}.jpg")
+    local_folder = local_docs_folder() + "pdf_jpgs/"
+    local_path = local_folder + path
+    # ctime = round(os.path.getctime(local_path))
+    # timestamp = f"?d={ctime}" 
+    return folder + path + timestamp(local_path)
 
 def doc_segment_by_story_id(story_id):
     db = inject("db")
