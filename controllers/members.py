@@ -1199,9 +1199,7 @@ def set_story_list_data(story_list):
         doc_url=rec.doc_url,
         audio_path=rec.audio_path,
         # doc_jpg_url=rec.doc_url.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', '.jpg') if rec.doc_url else '',
-        doc_jpg_url=doc_jpg_url(rec.id) if rec.used_for == STORY4DOC \
-            else doc_segment_jpg_url(rec.id) if rec.used_for == STORY4DOCSEGMENT \
-            else ""
+        doc_jpg_url=calc_doc_jpg_url(rec)
         profile_photo_path=rec.profile_photo_path if rec.used_for==STORY4MEMBER else "",
         used_for=rec.used_for,
         editable_preview=rec.editable_preview,
@@ -1215,6 +1213,13 @@ def set_story_list_data(story_list):
         author=rec.source or rec.author) for rec in story_list]
     assign_photos(result)
     return result
+
+def calc_doc_jpg_url(rec):
+    if rec.used_for == STORY4DOC:
+        return doc_jpg_url(rec.id)
+    if rec.used_for == STORY4DOCSEGMENT:
+        return doc_segment_jpg_url(rec.id)
+    return ""
 
 
 def assign_photos(story_list):
