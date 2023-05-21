@@ -131,7 +131,8 @@ def get_member_details(vars):
     elif vars.shift == 'prev':
         mem_id -= 1
     member_stories = get_member_stories(mem_id) + get_member_terms(mem_id) + \
-        get_member_docs(mem_id) + get_member_doc_segments(mem_id) + \
+        get_member_docs(mem_id) + \
+        get_member_doc_segments(mem_id) + \
         get_member_video_stories(mem_id)
     member_info = get_member_rec(mem_id)
     if not member_info:
@@ -1402,7 +1403,7 @@ def get_member_docs(member_id):
 def get_member_doc_segments(member_id):
     q = (db.TblMembersDocSegments.member_id == member_id) & \
         (db.TblMembersDocSegments.doc_segment_id == db.TblDocSegments.id) & \
-        (db.TblDocs.story_id == db.TblStories.id) & \
+        (db.TblDocSegments.story_id == db.TblStories.id) & \
         (db.TblStories.deleted == False)
     result = []
     lst = db(q).select()
