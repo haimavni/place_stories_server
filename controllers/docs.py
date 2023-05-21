@@ -217,6 +217,8 @@ def get_doc_info(vars):
     doc_id = int(vars.doc_id)
     q = (db.TblDocs.id == doc_id) & (db.TblStories.id == db.TblDocs.story_id)
     rec = db(q).select().first()
+    if not rec:
+        raise Exception(f"bad doc_id {doc_id}")
     doc_rec = rec.TblDocs
     #doc_story = rec.TblStories
     doc_src = doc_url(None, doc_rec)
