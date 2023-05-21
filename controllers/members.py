@@ -1400,7 +1400,7 @@ def get_member_docs(member_id):
     return result
 
 def get_member_doc_segments(member_id):
-    q = (db.TblMembersDocs.member_id == member_id) & \
+    q = (db.TblMembersDocSegments.member_id == member_id) & \
         (db.TblMembersDocSegments.doc_segment_id == db.TblDocSegments.id) & \
         (db.TblDocs.story_id == db.TblStories.id) & \
         (db.TblStories.deleted == False)
