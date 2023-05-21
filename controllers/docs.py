@@ -283,7 +283,11 @@ def get_doc_info(vars):
 @serve_json
 def get_doc_segment_info(vars):
     doc_segment_id = int(vars.doc_segment_id)
-    q = (db.TblDocSegments.id==doc_segment_id) & (db.TblDocs.id == db.TblDocSegments.doc_id)
+    if vars.caller == "stories":
+        q = (db.TblDocSegments.story_id==doc_segment_id)
+    else:
+        q = (db.TblDocSegments.id==doc_segment_id)
+    q &= (db.TblDocs.id == db.TblDocSegments.doc_id)
     rec = db(q).select().first()
     doc_segment_rec = rec.TblDocSegments;
     sm = stories_manager.Stories()
