@@ -215,7 +215,7 @@ def apply_to_checked_docs(vars):
 @serve_json
 def get_doc_info(vars):
     doc_id = int(vars.doc_id)
-    if vars.caller == "stories":
+    if vars.caller == "stories" or vars.caller == "member":
         q = (db.TblDocs.story_id==doc_id)
     else:
         q = (db.TblDocs.id == doc_id)
@@ -283,7 +283,7 @@ def get_doc_info(vars):
 @serve_json
 def get_doc_segment_info(vars):
     doc_segment_id = int(vars.doc_segment_id)
-    if vars.caller == "stories":
+    if vars.caller == "stories" or vars.caller == "member":
         q = (db.TblDocSegments.story_id==doc_segment_id)
     else:
         q = (db.TblDocSegments.id==doc_segment_id)
