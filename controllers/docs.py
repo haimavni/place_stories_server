@@ -61,7 +61,7 @@ def get_doc_list(vars):
         story = get_story_by_id(rec.story_id)
         rec.story = story
         rec.doc_url = doc_url(None, rec)
-        rec.doc_jpg_url = doc_jpg_url(rec)
+        rec.doc_jpg_url = doc_jpg_url(None, rec)
         rec.keywords = rec1.TblStories.keywords
         rec.name = rec1.TblStories.name
         rec.doc_date = rec1.TblStories.story_date
@@ -95,7 +95,7 @@ def get_doc_segment_list(vars):
         story = rec1.TblStories
         rec.story = story
         rec.doc_url = doc_segment_url(None, rec1)
-        rec.doc_jpg_url = doc_segment_jpg_url(rec1)
+        rec.doc_jpg_url = doc_segment_jpg_url(None, rec1)
         rec.keywords = rec1.TblStories.keywords
         rec.name = rec1.TblStories.name
         rec.doc_date = rec1.TblStories.story_date
