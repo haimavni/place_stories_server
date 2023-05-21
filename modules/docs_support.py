@@ -246,8 +246,6 @@ def doc_segment_jpg_url(story_id, rec=None):
     folder = docs_folder() + "pdf_jpgs/"
     local_folder = local_docs_folder() + "pdf_jpgs/"
     local_path = local_folder + path
-    # ctime = round(os.path.getctime(local_path))
-    # timestamp = f"?d={ctime}" 
     return folder + path + timestamp(local_path)
 
 def doc_segment_by_story_id(story_id):
