@@ -7,7 +7,7 @@ import ws_messaging
 from audios_support import audio_path
 from dal_utils import insert_or_update
 from date_utils import parse_date, update_record_dates, date_str, day_of_year, days_since_epoch
-from docs_support import doc_url, doc_segment_url
+from docs_support import doc_url, doc_segment_url, doc_jpg_url, doc_segment_jpg_url
 from gluon.utils import web2py_uuid
 from html_utils import clean_html
 from http_utils import json_to_storage
@@ -1198,7 +1198,10 @@ def set_story_list_data(story_list):
         topics=rec.keywords,  ###'; '.join(story_topics[rec.id]) if rec.id in story_topics else "",
         doc_url=rec.doc_url,
         audio_path=rec.audio_path,
-        doc_jpg_url=rec.doc_url.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', '.jpg') if rec.doc_url else '',
+        # doc_jpg_url=rec.doc_url.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', '.jpg') if rec.doc_url else '',
+        doc_jpg_url=doc_jpg_url(rec.id) if rec.used_for == STORY4DOC
+            else doc_segment_jpg_url(rec.id) if rec.used_for == STORY4DOCSEGMENT
+            else ""
         profile_photo_path=rec.profile_photo_path if rec.used_for==STORY4MEMBER else "",
         used_for=rec.used_for,
         editable_preview=rec.editable_preview,

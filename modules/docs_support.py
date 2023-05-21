@@ -222,27 +222,32 @@ def doc_url(story_id, drec=None):
     folder = docs_folder()
     return folder + drec.doc_path
 
-def doc_jpg_url(drec):
+def doc_jpg_url(story_id, drec=None):
+    db = inject("db")
+    if not drec:
+        drec = db(db.TblDocs.story_id==story_id).select().first()
     folder = docs_folder() + "pdf_jpgs/"
     return folder + drec.doc_path.replace(".pdf", ".jpg")
 
 def doc_segment_url(story_id, rec=None):
-    db, comment = inject("db", "comment")
-    boom = "given rec" if rec else "no rec"
     if not rec:
-        q = (db.TblDocSegments.story_id==story_id) & \
-            (db.TblDocs.id==db.TblDocSegments.doc_id)
-        rec = db(q).select().first()
-    if not rec:
-        comment(f"==========story id is {story_id} {boom}")
-        return None
+        rec = doc_segment_by_story_id(story_id)
     doc_rec = rec.TblDocs
     seg_rec = rec.TblDocSegments
     folder = docs_folder()
     return folder + doc_rec.doc_path + f"#page={seg_rec.page_num}"
 
-def doc_segment_jpg_url(rec):
+def doc_segment_jpg_url(story_id, rec=None):
+    if not rec:
+        rec = doc_segment_by_story_id(story_id)
     doc_rec = rec.TblDocs
     seg_rec = rec.TblDocSegments
     folder = docs_folder() + "pdf_jpgs/"
     return folder + doc_rec.doc_path.replace(".pdf", f"-{seg_rec.page_num}.jpg")
+
+def doc_segment_by_story_id(story_id):
+    db = inject("db")
+    q = (db.TblDocSegments.story_id==story_id) & \
+        (db.TblDocs.id==db.TblDocSegments.doc_id)
+    rec = db(q).select().first()
+    return rec
