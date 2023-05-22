@@ -290,6 +290,7 @@ def get_doc_segment_info(vars):
     q &= (db.TblDocs.id == db.TblDocSegments.doc_id)
     rec = db(q).select().first()
     doc_segment_rec = rec.TblDocSegments;
+    doc_segment_id = doc_segment_rec.id #if it was story id!
     sm = stories_manager.Stories()
     doc_segment_story = sm.get_story(doc_segment_rec.story_id)
     story_id = doc_segment_story.story_id
