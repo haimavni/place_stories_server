@@ -295,6 +295,7 @@ def get_doc_segment_info(vars):
     story_id = doc_segment_story.story_id
     chatroom_id = doc_segment_story.chatroom_id
     member_ids = db(db.TblMembersDocSegments.doc_segment_id==doc_segment_id).select()
+    comment(f"========  member ids: {member_ids}")
     member_ids = [m.member_id for m in member_ids]
     members = db(db.TblMembers.id.belongs(member_ids)).select()
     members = [Storage(id=member.id,
