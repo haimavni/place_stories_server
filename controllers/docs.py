@@ -297,7 +297,6 @@ def get_doc_segment_info(vars):
     chatroom_id = doc_segment_story.chatroom_id
     member_ids = db(db.TblMembersDocSegments.doc_segment_id==doc_segment_id).select()
     member_ids = [m.member_id for m in member_ids]
-    comment(f"========seg id: {doc_segment_id}  member ids: {member_ids}")
     members = db(db.TblMembers.id.belongs(member_ids)).select()
     members = [Storage(id=member.id,
                        facePhotoURL=photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png"),
@@ -491,8 +490,6 @@ def upload_thumbnail(vars):
     ptp_key = info.ptp_key
     segment_id = info.segment_id
     keys = info.keys()
-    comment(f"keys in upload thumbnail: {keys}")
-    comment(f"start handling uploaded doc thumbnail file {doc_id}/{segment_id}")
     fil = vars.file
     result = save_uploaded_thumbnail(fil.BINvalue, doc_id, segment_id, ptp_key)
     return dict(upload_result=result)
