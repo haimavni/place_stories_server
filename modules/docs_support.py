@@ -85,7 +85,7 @@ def save_doc_segment_thumbnail(doc_segment_id):
     doc_rec = db(db.TblDocs.id==pdf_seg_rec.doc_id).select().first()
     doc_file_name = local_docs_folder() + doc_rec.doc_path
     #-------
-    pdf_jpg_path = get_pdf_jpg_path(doc_rec.path, pdf_seg_rec.page_num)
+    pdf_jpg_path = get_pdf_jpg_path(doc_rec.doc_path, pdf_seg_rec.page_num)
     # path, file_name = os.path.split(doc_rec.doc_path)
     # pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/' + path + '/'
     # dir_util.mkpath(pdf_jpg_folder)
