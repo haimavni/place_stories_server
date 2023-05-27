@@ -188,28 +188,11 @@ class Stories:
         #if rec.language and rec.language != language:
             #rec = self.find_translation(rec, language)
         now = datetime.datetime.now()
-        preview = ''
-        # if story_info.used_for == STORY4DOC:
-        #     if not story_info.preview:
-        #         story_info.preview = get_reisha(updated_story_text)
-        #     preview = story_info.preview
-        #     data = Storage(last_update_date=now, story_text=updated_story_text)
-        #     if story_info.preview and rec.preview != story_info.preview:
-        #         data.preview = story_info.preview
-        #     else:
-        #         data.preview = rec.preview
-        #     if story_info.name and rec.name != story_info.name:
-        #         data.name = story_info.name
-        #     else:
-        #         data.name = rec.name
-        #     data.source = story_info.source
-        #     rec.update_record(**data)
-        # elif
+        preview = get_reisha(updated_story_text)
         if rec.story != updated_story_text:
             merger = mim.Merger()
             delta = merger.diff_make(rec.story, updated_story_text)
             last_version = db((db.TblStoryVersions.story_id==story_id)&(db.TblStoryVersions.language==rec.language)).count() + 1
-            preview = get_reisha(updated_story_text)
             if imported_from and not rec.imported_from:
                 imported_from = imported_from.upper() #signal import overrides previous content
             data = dict(
@@ -239,6 +222,7 @@ class Stories:
         ###update_story_words_index(story_id)
         author_name = auth.user_name(self.author_id) #name of the mblbhd, not the source
         name = story_info.name
+        #todo: use only story_info.name. other objects need not have name
         if story_info.used_for == STORY4EVENT:
             rec = db(db.TblEvents.story_id==story_id).select().first()
             if rec:
@@ -254,7 +238,8 @@ class Stories:
             audio_rec = db(db.TblAudios.story_id==story_id).select().first()
             audio_rec.update_record(name=name)
         promote_word_indexing()
-        return Storage(story_id=story_id, last_update_date=now, updater_name=author_name, author=story_info.source, language=language, name=name, preview=preview)
+        return Storage(story_id=story_id, last_update_date=now, updater_name=author_name, 
+                       author=story_info.source, language=language, name=name, preview=preview)
     
     def update_story_name(self, story_id, new_name, language=None):
         db = inject('db')
