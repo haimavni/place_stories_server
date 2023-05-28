@@ -76,6 +76,8 @@ def get_env_var(var_name):
     return os.getenv(var_name)
 
 def timestamp(path):
+    if not os.path.exists(path):
+        return ""
     ctime = round(os.path.getctime(path))
     return f"?d={ctime}"
 
