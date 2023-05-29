@@ -16,8 +16,13 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
         return None
     if rec.deleted:
         return None
+    editing_ok = True
     if rec.updater_id:
         rec.updater_name = auth.user_name(rec.updater_id)
+        privileges = auth.get_privileges()
+        if privileges and privileges.RESTRICTED and auth.current_user() != rec.updater_id:
+            editing_ok = False
+    rec.editing_ok = editing_ok
     is_dead = rec.date_of_death != NO_DATE
     dates = get_all_dates(rec)
     rec = Storage(rec.as_dict())
