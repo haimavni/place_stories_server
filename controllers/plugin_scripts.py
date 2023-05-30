@@ -28,7 +28,8 @@ def evaluate_script(vars):
         for v in environment:
             if v not in old_environment or environment[v] != old_environment[v]:
                 x = environment[v]
-                if not callable(x):
+                if is_jsonable(x):
+                #if not callable(x):
                     dic[v] = x
     except Exception as e:
         log_exception('Error in ad-hoc script')
@@ -43,7 +44,13 @@ def evaluate_script(vars):
             db.scripts_table.insert(code=code, last_usage_time=now)
         return dict(results=dic)
 
-
+def is_jsonable(x):
+    try:
+        json.dumps(x)
+        return True
+    except (TypeError, OverflowError):
+        return False
+    
 @serve_json
 def prev_code(vars):
     prev_code, next_code = prev_next_code(vars.code, vars.like)
