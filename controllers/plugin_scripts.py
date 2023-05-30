@@ -29,7 +29,7 @@ def evaluate_script(vars):
             if v not in old_environment or environment[v] != old_environment[v]:
                 x = environment[v]
                 #if is_jsonable(x):
-                if True or not callable(x):
+                if not callable(x):
                     dic[v] = x
     except Exception as e:
         log_exception('Error in ad-hoc script')
