@@ -28,10 +28,8 @@ def evaluate_script(vars):
         for v in environment:
             if v not in old_environment or environment[v] != old_environment[v]:
                 x = environment[v]
-                t = type(x)
-                comment(f"=======type of x: {t}")
                 if not callable(x):
-                    dic[v] = environment[v]
+                    dic[v] = x
     except Exception as e:
         log_exception('Error in ad-hoc script')
         dic = dict(error=str(e))
