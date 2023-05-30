@@ -30,7 +30,8 @@ def evaluate_script(vars):
                 x = environment[v]
                 t = type(x)
                 comment(f"=======type of x: {t}")
-                dic[v] = environment[v]
+                if not callable(x):
+                    dic[v] = environment[v]
     except Exception as e:
         log_exception('Error in ad-hoc script')
         dic = dict(error=str(e))
