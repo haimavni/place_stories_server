@@ -35,7 +35,7 @@ class Stories:
         return rec
 
     def get_story(self, story_id, to_story_version=None, from_story_version=None):
-        db, STORY4DOC = inject('db', 'STORY4DOC')
+        db, auth, RESTRICTED = inject('db', 'auth', 'RESTRICTED')
         rec = db(db.TblStories.id==story_id).select().first()
         if not rec:
             return None
@@ -80,6 +80,7 @@ class Stories:
             preview = rec.preview or get_reisha(story_text)
         else:
             preview = rec.preview or get_reisha(story_text) #todo: after all previews are set, can just use rec.preview
+        editing_ok = rec.updater_id == auth.current_user() or not auth.user_has_privilege(RESTRICTED)
         story_info = Storage(
             story_text=story_text,
             preview=preview,
@@ -102,7 +103,8 @@ class Stories:
             story_date_dateunit=rec.story_date_dateunit,
             story_date_dateend=rec.story_date_dateend,
             story_date_datespan=rec.story_date_datespan,
-            updater_id = rec.updater_id
+            updater_id = rec.updater_id,
+            editing_ok = editing_ok
         )
         return story_info
     

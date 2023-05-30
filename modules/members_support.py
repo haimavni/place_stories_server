@@ -17,11 +17,7 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
     if rec.deleted:
         return None
     editing_ok = True
-    if rec.updater_id:
-        rec.updater_name = auth.user_name(rec.updater_id)
-        privileges = auth.get_privileges()
-        if privileges and privileges.RESTRICTED and auth.current_user() != rec.updater_id:
-            editing_ok = False
+    editing_ok = auth.current_user() == rec.updater_id or not auth.has_membership(RESTRICTED)
     rec.editing_ok = editing_ok
     is_dead = rec.date_of_death != NO_DATE
     dates = get_all_dates(rec)
