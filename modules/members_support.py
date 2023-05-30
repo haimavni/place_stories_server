@@ -4,7 +4,7 @@ from .date_utils import get_all_dates
 
 
 def get_member_rec(member_id, member_rec=None, prepend_path=False):
-    db, auth, comment, NO_DATE = inject('db', 'auth', 'comment', 'NO_DATE')
+    db, auth, comment, NO_DATE, RESTRICTED = inject('db', 'auth', 'comment', 'NO_DATE', 'RESTRICTED')
     is_dead = False
     if member_rec:
         rec = member_rec  # used when initially all members are loaded into the cache
