@@ -29,7 +29,7 @@ def evaluate_script(vars):
             if v not in old_environment or environment[v] != old_environment[v]:
                 x = environment[v]
                 t = type(x)
-                console.log(f"=======type of x: {t}")
+                comment(f"=======type of x: {t}")
                 dic[v] = environment[v]
     except Exception as e:
         log_exception('Error in ad-hoc script')
