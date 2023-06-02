@@ -67,13 +67,15 @@ def get_parent_list(member_id):
         result.append(parents[p])
     return result
 
-def get_siblings(member_id):
+def get_siblings(member_id, hidden_too=False):
     parents = get_parents(member_id)
     if not parents:
         return []
     db, VIS_NEVER = inject('db', 'VIS_NEVER')
     pa, ma = parents.pa, parents.ma
-    q = (db.TblMembers.id != member_id) & (db.TblMembers.visibility != VIS_NEVER) & (db.TblMembers.deleted == False)
+    q = (db.TblMembers.id != member_id) & (db.TblMembers.deleted == False)
+    if not hidden_too:
+        q &= (db.TblMembers.visibility != VIS_NEVER)
     if pa:
         lst1 = db(q & (db.TblMembers.father_id==pa.id)).select(orderby=db.TblMembers.date_of_birth) if pa else []
         lst1 = [r.id for r in lst1]
@@ -153,7 +155,7 @@ def get_family_connections(member_id):
     result = Storage(
         grand_parents=get_grand_parents(member_id),
         parents=parents,
-        siblings=get_siblings(member_id),
+        siblings=get_siblings(member_id, hidden_to=is_admin),
         spouses=get_spouses(member_id),
         children=get_children(member_id, hidden_too=is_admin)
     )
