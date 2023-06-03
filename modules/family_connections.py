@@ -155,7 +155,7 @@ def get_family_connections(member_id):
     result = Storage(
         grand_parents=get_grand_parents(member_id),
         parents=parents,
-        siblings=get_siblings(member_id, hidden_to=is_admin),
+        siblings=get_siblings(member_id, hidden_too=is_admin),
         spouses=get_spouses(member_id),
         children=get_children(member_id, hidden_too=is_admin)
     )
