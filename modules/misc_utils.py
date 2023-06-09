@@ -75,6 +75,12 @@ def get_env_var(var_name):
     load_dotenv('/home/www-data/web2py/.env')
     return os.getenv(var_name)
 
+def timestamp(path):
+    if not os.path.exists(path):
+        return ""
+    ctime = round(os.path.getctime(path))
+    return f"?d={ctime}"
+
 if __name__ == '__main__':
     fname = '/home/haim/aurelia-gbs/server/tol_server/logs/log_all.log'
     fix_log_owner(fname)

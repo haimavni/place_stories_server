@@ -7,8 +7,7 @@ import ws_messaging
 from audios_support import audio_path
 from dal_utils import insert_or_update
 from date_utils import parse_date, update_record_dates, date_str, day_of_year, days_since_epoch
-from docs_support import doc_url
-from family_connections import *
+from docs_support import doc_url, doc_segment_url, doc_jpg_url, doc_segment_jpg_url
 from gluon.utils import web2py_uuid
 from html_utils import clean_html
 from http_utils import json_to_storage
@@ -16,7 +15,7 @@ from members_support import *
 from photos_support import get_slides_from_photo_list, get_video_thumbnails, save_member_face
 from quiz_support import use_quiz
 from words import calc_used_languages, read_words_index, get_all_story_previews, get_reisha
-
+from family_connections import get_family_connections
 
 @serve_json
 def member_list(vars):
@@ -131,7 +130,10 @@ def get_member_details(vars):
         mem_id += 1
     elif vars.shift == 'prev':
         mem_id -= 1
-    member_stories = get_member_stories(mem_id) + get_member_terms(mem_id) + get_member_docs(mem_id) + get_member_video_stories(mem_id)
+    member_stories = get_member_stories(mem_id) + get_member_terms(mem_id) + \
+        get_member_docs(mem_id) + \
+        get_member_doc_segments(mem_id) + \
+        get_member_video_stories(mem_id)
     member_info = get_member_rec(mem_id)
     if not member_info:
         raise User_Error('No one there')
@@ -334,12 +336,7 @@ def get_story_list(vars):
         k = story.used_for
         if k == STORY4DOCAB: #temp. debugging
             continue
-        # if k == STORY4DOC and doc_has_story_about(story_id):
-        #     continue
-        # if k == STORY4DOCAB:
-        #     story.used_for = STORY4DOC
-        #     k = STORY4DOC
-        #     story_id = story_id_of_story_about_id(story_id)
+
         active_result_types |= {k}
         if k not in result_type_counters:
             result_type_counters[k] = 0
@@ -349,7 +346,8 @@ def get_story_list(vars):
         story.editable_preview = False
         if k == STORY4DOC:
             story.doc_url = doc_url(story_id)
-            story.editable_preview = True
+        elif k == STORY4DOCSEGMENT:
+            story.doc_segment_url = doc_segment_url(story_id)
         elif k == STORY4AUDIO:
             story.audio_path = audio_path(story_id)
         elif k == STORY4MEMBER:
@@ -691,11 +689,12 @@ def delete_checked_stories(vars):
     q = db.TblStories.id.belongs(checked_stories)
     n = db(q).update(deleted=deleted)
     tbls = {STORY4MEMBER: db.TblMembers, STORY4EVENT: db.TblEvents, STORY4PHOTO: db.TblPhotos, STORY4TERM: db.TblTerms,
-            STORY4VIDEO: db.TblVideos, STORY4DOC: db.TblDocs, STORY4ARTICLE: db.TblArticles}
+            STORY4VIDEO: db.TblVideos, STORY4DOC: db.TblDocs, STORY4DOCSEGMENT: db.TblDocSegments, 
+            STORY4ARTICLE: db.TblArticles}
 
     # if story is associated with member, photo, video or document, need to skip it or delete the item too
-    for usage in [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4AUDIO,
-                  STORY4ARTICLE]:
+    for usage in [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4DOCSEGMENT,
+                  STORY4AUDIO, STORY4ARTICLE]:
         q1 = q & (db.TblStories.used_for == usage)
         lst = db(q1).select()
         story_ids = [rec.id for rec in lst]
@@ -726,7 +725,7 @@ def delete_story(vars):
 def apply_topics_to_selected_stories(vars):
     used_for = vars.used_for
     if used_for:
-        usage_chars = 'xMEPTxxxVDA'
+        usage_chars = 'xMEPTxxxVDAxxxS'
         usage_char = usage_chars[used_for]
     else:
         usage_char = 'x'
@@ -1202,7 +1201,7 @@ def set_story_list_data(story_list):
         topics=rec.keywords,  ###'; '.join(story_topics[rec.id]) if rec.id in story_topics else "",
         doc_url=rec.doc_url,
         audio_path=rec.audio_path,
-        doc_jpg_url=rec.doc_url.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', '.jpg') if rec.doc_url else '',
+        doc_jpg_url=calc_doc_jpg_url(rec.id, rec.used_for),
         profile_photo_path=rec.profile_photo_path if rec.used_for==STORY4MEMBER else "",
         used_for=rec.used_for,
         editable_preview=rec.editable_preview,
@@ -1216,6 +1215,13 @@ def set_story_list_data(story_list):
         author=rec.source or rec.author) for rec in story_list]
     assign_photos(result)
     return result
+
+def calc_doc_jpg_url(story_id, used_for):
+    if used_for == STORY4DOC:
+        return doc_jpg_url(story_id)
+    if used_for == STORY4DOCSEGMENT:
+        return doc_segment_jpg_url(story_id)
+    return ""
 
 
 def assign_photos(story_list):
@@ -1308,21 +1314,9 @@ def save_story_data(story_info, user_id):
         photo_rec = db(
             (db.TblPhotos.story_id == story_info.story_id) & (db.TblPhotos.deleted != True)).select().first()
         photo_rec.update_record(name=story_info.name)
-    if story_info.used_for == STORY4DOC:  # ugly...
+    if story_info.used_for == STORY4DOC:  # ugly... #todo: use only names in tblstories
         doc_rec = db(db.TblDocs.story_id==story_id).select().first()
-        if doc_rec.story_about_id:
-            story_about_rec = db(db.TblStories.id==doc_rec.story_about_id).select().first()
-            story_about_rec.update_record(name=story_info.name)
-            doc_rec.update_record(name=story_info.name)
-    if story_info.used_for == STORY4DOCAB:  # uglier...
-        doc_rec = db(db.TblDocs.story_about_id == story_id).select().first()
-        if doc_rec:
-            main_story_rec = db(db.TblStories.id == doc_rec.story_id).select().first()
-            main_story_rec.update_record(name=story_info.name)
-            main_story_rec.update_record(preview=main_story_rec.preview)
-            if not main_story_rec.story:
-                main_story_rec.update_record(story=main_story_rec.preview)
-            doc_rec.update_record(name=story_info.name)
+        doc_rec.update_record(name=story_info.name)
 
     key = 'STORY_WAS_SAVED' if old_story else 'NEW_STORY_ADDED'
     ws_messaging.send_message(key=key, group='ALL', story_data=result)
@@ -1393,6 +1387,30 @@ def get_member_docs(member_id):
         story = rec.TblStories
         dic = dict(
             topic=doc.name,
+            name=story.name,
+            story_id=story.id,
+            story_text=story.story,
+            preview=get_reisha(story.preview, 30),
+            ###source = term.SSource,
+            used_for=story.used_for,
+            author_id=story.author_id,
+            creation_date=story.creation_date,
+            last_update_date=story.last_update_date
+        )
+        result.append(dic)
+    return result
+
+def get_member_doc_segments(member_id):
+    q = (db.TblMembersDocSegments.member_id == member_id) & \
+        (db.TblMembersDocSegments.doc_segment_id == db.TblDocSegments.id) & \
+        (db.TblDocSegments.story_id == db.TblStories.id) & \
+        (db.TblStories.deleted == False)
+    result = []
+    lst = db(q).select()
+    for rec in lst:
+        story = rec.TblStories
+        dic = dict(
+            topic=story.name,
             name=story.name,
             story_id=story.id,
             story_text=story.story,
@@ -1642,6 +1660,7 @@ def item_of_story_id(used_for, story_id):
         STORY4FEEDBACK: None,
         STORY4VIDEO: db.TblVideos,
         STORY4DOC: db.TblDocs,
+        STORY4DOCSEGMENT: db.TblDocSegments,
         STORY4AUDIO: db.TblAudios,
         STORY4ARTICLE: db.TblArticles
     }
@@ -1681,6 +1700,13 @@ def copy_story_date_to_object_date(story_rec):
                               doc_date_dateunit=story_rec.story_date_dateunit,
                               doc_date_datespan=story_rec.story_date_datespan,
                               doc_date_dateend=story_rec.story_date_dateend,
+                              )
+    elif story_rec.used_for == STORY4DOCSEGMENT:
+        doc_seg_rec = db(db.TblDocsegments.story_id == story_rec.id).select().first()
+        doc_seg_rec.update_record(doc_seg_date=doc_seg_rec.story_date,
+                              doc_seg_date_dateunit=doc_seg_rec.story_date_dateunit,
+                              doc_seg_date_datespan=doc_seg_rec.story_date_datespan,
+                              doc_seg_date_dateend=doc_seg_rec.story_date_dateend,
                               )
     elif story_rec.used_for == STORY4AUDIO:
         audio_rec = db(db.TblAudios.story_id == story_rec.id).select().first()
@@ -1828,16 +1854,6 @@ def decode_sorting_key(sk):
         return []
     lst = sk.split('-')
     return [int(s) for s in lst]
-
-def story_id_of_story_about_id(story_about_id):
-    doc_rec = db(db.TblDocs.story_about_id==story_about_id).select().first()
-    if doc_rec:
-        return doc_rec.story_id
-    return None
-
-def doc_has_story_about(story_id):
-    doc_rec = db(db.TblDocs.story_id == story_id).select().first()
-    return doc_rec and doc_rec.story_about_id
 
 def marry(member_id, spouse_id, member_gender):
     spouse_rec = get_member_rec(spouse_id)

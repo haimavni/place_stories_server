@@ -157,8 +157,8 @@ def test_pdf2text():
     with open(htmlname, 'w') as tmp_f:
         tmp_f.write(html)
         
-def save_pdf_jpg(pdf_path, jpg_path)        :
-    pages = convert_from_path(pdf_path, dpi=20, last_page=1)
+def save_pdf_jpg(pdf_path, jpg_path, page_num=1):
+    pages = convert_from_path(pdf_path, dpi=20, first_page=page_num, last_page=page_num)
     pages[0].save(jpg_path, 'JPEG')
     
 def test_pdf_jpg():

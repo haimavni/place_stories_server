@@ -4,7 +4,8 @@ from .date_utils import get_all_dates
 
 
 def get_member_rec(member_id, member_rec=None, prepend_path=False):
-    db, auth = inject('db', 'auth')
+    db, auth, comment, NO_DATE, RESTRICTED = inject('db', 'auth', 'comment', 'NO_DATE', 'RESTRICTED')
+    is_dead = False
     if member_rec:
         rec = member_rec  # used when initially all members are loaded into the cache
     elif not member_id:
@@ -15,8 +16,10 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
         return None
     if rec.deleted:
         return None
-    if rec.updater_id:
-        rec.updater_name = auth.user_name(rec.updater_id)
+    editing_ok = True
+    editing_ok = auth.current_user() == rec.updater_id or not auth.has_membership(RESTRICTED)
+    rec.editing_ok = editing_ok
+    is_dead = rec.date_of_death != NO_DATE
     dates = get_all_dates(rec)
     rec = Storage(rec.as_dict())
     for d in dates:
@@ -25,6 +28,10 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
     rec.name = member_display_name(rec, full=False)
     if prepend_path:
         rec.facePhotoURL = photos_folder('profile_photos') + (rec.facePhotoURL or 'dummy_face.png')
+    if is_dead:
+        rec.life_status = "dead"
+    else:
+        rec.life_status = "alive"
     return rec
 
 
@@ -120,10 +127,10 @@ def init_query(tbl, editing=False, is_deleted=False, user_id=None):
         if not is_alive:
             return q
     else:
-        q &= (tbl.story_id == db.TblStories.id) & (tbl.deleted != is_alive)
+        q &= (tbl.story_id == db.TblStories.id) & (db.TblStories.deleted != is_alive)
     if editing and auth.has_membership(RESTRICTED, user_id):
         if tbl == db.TblStories:
-            q &= (tbl.author_id == user_id)
+            q &= (db.TblStories.author_id == user_id)
         elif tbl == db.TblPhotos or tbl == db.TblDocs or tbl == db.TblAudios:
             q &= (tbl.uploader == user_id)
         elif tbl == db.Tbl.Videos:

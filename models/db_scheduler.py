@@ -5,7 +5,6 @@ from help_support import update_help_messages, update_letter_templates
 from create_app import create_pending_apps
 from words import update_word_index_all
 from members_support import set_story_sorting_keys
-from docs_support import calc_doc_stories
 import os
 from topics_support import fix_is_tagged
 from folders import safe_open
@@ -224,21 +223,6 @@ def schedule_set_story_sorting_keys():
         timeout = 600, # will time out if running for 10 minutes
     )
   
-
-def schedule_calc_doc_stories():
-    now = datetime.datetime.now()
-    return db.scheduler_task.insert(
-        status='QUEUED',
-        application_name=request.application,
-        task_name = 'calc doc stories',
-        function_name='calc_doc_stories',
-        start_time=now,
-        stop_time=now + datetime.timedelta(days=1461),
-        repeats=0,
-        period=600,   # every 10 minutes
-        timeout = 500, # will time out if running for 500 seconds
-    )
-
 def schedule_create_pending_apps():
     now = datetime.datetime.now()
     return db.scheduler_task.insert(
@@ -259,7 +243,6 @@ permanent_tasks = dict(
     update_word_index_all=schedule_update_word_index_all,
     set_story_sorting_keys=schedule_set_story_sorting_keys,
     calc_missing_youtube_info=schedule_calc_missing_youtube_info,
-    calc_doc_stories=schedule_calc_doc_stories,
     create_pending_apps=schedule_create_pending_apps,
     update_help_messages=schedule_update_help_messages,
     check_health=schedule_check_health,
@@ -271,7 +254,6 @@ __tasks = dict(
     update_word_index_all=update_word_index_all,
     set_story_sorting_keys=set_story_sorting_keys,
     calc_missing_youtube_info=calc_missing_youtube_info,
-    calc_doc_stories=calc_doc_stories,
     create_pending_apps=create_pending_apps,
     execute_task=execute_task,
     update_help_messages=update_help_messages,

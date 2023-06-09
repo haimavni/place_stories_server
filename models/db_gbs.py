@@ -442,6 +442,7 @@ db.define_table('TblDocs',
 db.define_table('TblDocSegments',
                 Field('doc_id', type=db.TblDocs),
                 Field('page_num', type='integer'),
+                Field('page_part_num', type='integer'),
                 Field('story_id', type=db.TblStories)
 )                
 

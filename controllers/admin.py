@@ -281,6 +281,25 @@ def cover_photo(vars):
         config_rec.update_record(cover_photo=cover_photo, cover_photo_id=vars.cover_photo_id)
     return dict(cover_photo=cover_photo)
 
+@serve_json
+def editing_ok(vars):
+    table = vars.table or "TblStories"
+    id = vars.id
+    user_id = vars.user_id or auth.current_user()
+    privileges = auth.get_privileges(user_id)
+    if not privileges.RESTRICTED:
+        return True
+    if table == "TblMembers":
+        rec = db(db.TblMembers.id==id).select(db.TblMembers.updater_id).first()
+        updater_id = rec.updater_id
+    else:
+        if table != "TblStories":
+            tbl =  db[table]
+            rec = db(tbl.id==id).select().first()
+            id = rec.story_id
+        srec = db(db.TblStories.id==id).select(db.TblStories.updater_id).first()
+        updater_id = srec.updater_id
+    return dict(dict(user_can_edit=updater_id == user_id))
 
 def get_config_rec():
     config_rec = db(db.TblConfiguration).select().first()
