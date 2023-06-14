@@ -344,6 +344,8 @@ class CalcFamilyConnections:
             next_level = []
             for mid in curr_level:
                 tmp = self.dic[mid]
+                if not tmp:
+                    continue
                 tmp = [m for m in tmp if m not in visited]
                 visited |= set(tmp)
                 next_level += tmp
