@@ -396,7 +396,7 @@ db.define_table('TblItemTopics',
 
 db.define_table('TblFamilyConnections',
                 Field('member_id', type=db.TblMembers),
-                Field('relative_id', type=db.Tblembers),
+                Field('relative_id', type=db.TblMembers),
                 Field('relation', type='string') #parent, spouse, child, sibling
                 )
 
