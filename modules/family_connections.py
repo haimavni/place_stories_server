@@ -256,7 +256,7 @@ class BuildFamilyConnections:
         self.visited = set()
         for rec in db(db.TblFamilyConnections).select():
             self.visited |= set([rec.member_id])
-            self.visited |= set([rec.relative_id])
+            #self.visited |= set([rec.relative_id])
 
     def build(self, max_count=9999):
         db = inject("db")
