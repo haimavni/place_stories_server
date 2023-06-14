@@ -191,12 +191,6 @@ db.define_table('TblFamilyConnectionTypes',
                 Field('IIDD', type='integer'),
 )
 
-db.define_table('TblFamilyConnections',
-                Field('member_id', type=db.TblMembers),
-                Field('relative_id', type=db.Tblembers),
-                Field('relation', type='string') #parent, spouse, child, sibling
-                )
-
 db.define_table('TblMemberPhotos',
                 Field('MemberID', type='integer'),
                 Field('Member_id', type='integer'),
@@ -399,6 +393,12 @@ db.define_table('TblItemTopics',
           Field('topic_id', type=db.TblTopics),
           Field('story_id', type=db.TblStories)
 )
+
+db.define_table('TblFamilyConnections',
+                Field('member_id', type=db.TblMembers),
+                Field('relative_id', type=db.Tblembers),
+                Field('relation', type='string') #parent, spouse, child, sibling
+                )
 
 db.define_table('TblVideos',
                 Field('name', type='string'),
