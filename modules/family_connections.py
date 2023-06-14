@@ -3,6 +3,7 @@ from .members_support import get_member_rec
 from gluon.storage import Storage
 from .my_cache import Cache
 import datetime
+from enum import Enum
 
 def get_parents(member_id):
     member_rec = get_member_rec(member_id)
@@ -237,6 +238,12 @@ def _get_all_family_connections(member_id):
 def get_all_family_connections(member_id, refresh=False):
     c = Cache('FAMILY-CONNECTIONS-{}', format(member_id))
     return c(lambda: _get_all_family_connections(member_id), refresh=refresh, time_expire=3600)
+
+class Relation(Enum):
+    PARENT=1
+    SPOUSE=2
+    SIBLING=3
+    CHILD=4
         
 class BuildFamilyConnections:
     
@@ -287,10 +294,10 @@ class BuildFamilyConnections:
             
     def get_all_first_degree_relatives(self, member_id):
         result = Storage()
-        result["parents"] = set([rec.id for rec in get_parent_list(member_id)])
-        result["siblings"] = set([rec.id for rec in get_siblings(member_id)])
-        result["spouses"] = set([rec.id for rec in get_spouses(member_id)])
-        result["children"] = set([rec.id for rec in get_children(member_id)])
+        result[Relation.PARENT.value] = set([rec.id for rec in get_parent_list(member_id)])
+        result[Relation.SIBLING.value] = set([rec.id for rec in get_siblings(member_id)])
+        result[Relation.SPOUSE.value] = set([rec.id for rec in get_spouses(member_id)])
+        result[Relation.CHILD.value] = set([rec.id for rec in get_children(member_id)])
         return result
     
     def get_all_relatives(self):
@@ -339,7 +346,4 @@ class FindFamily_connections:
 
 def build_family_connections(max_count=9999):
     fc = BuildFamilyConnections()
-    fc.build(max_count)
-
-    
-
+    return fc.build(max_count)
