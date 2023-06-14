@@ -294,10 +294,10 @@ class BuildFamilyConnections:
             
     def get_all_first_degree_relatives(self, member_id):
         result = Storage()
-        result[Relation.PARENT.value] = set([rec.id for rec in get_parent_list(member_id)])
-        result[Relation.SIBLING.value] = set([rec.id for rec in get_siblings(member_id)])
-        result[Relation.SPOUSE.value] = set([rec.id for rec in get_spouses(member_id)])
-        result[Relation.CHILD.value] = set([rec.id for rec in get_children(member_id)])
+        result[Relation.PARENT.value] = set([rec.id for rec in get_parent_list(member_id) if rec])
+        result[Relation.SIBLING.value] = set([rec.id for rec in get_siblings(member_id) if rec])
+        result[Relation.SPOUSE.value] = set([rec.id for rec in get_spouses(member_id) if rec])
+        result[Relation.CHILD.value] = set([rec.id for rec in get_children(member_id) if rec])
         return result
     
     def get_all_relatives(self):
