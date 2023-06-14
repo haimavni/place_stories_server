@@ -232,6 +232,8 @@ def doc_jpg_url(story_id, drec=None):
 def doc_segment_url(story_id, rec=None):
     if not rec:
         rec = doc_segment_by_story_id(story_id)
+    if not rec:
+        return None
     doc_rec = rec.TblDocs
     seg_rec = rec.TblDocSegments
     folder = docs_folder()
@@ -240,6 +242,8 @@ def doc_segment_url(story_id, rec=None):
 def doc_segment_jpg_url(story_id, rec=None):
     if not rec:
         rec = doc_segment_by_story_id(story_id)
+    if not rec:
+        return None
     doc_rec = rec.TblDocs
     seg_rec = rec.TblDocSegments
     path = doc_rec.doc_path.replace(".pdf", f"-{seg_rec.page_num}.jpg")

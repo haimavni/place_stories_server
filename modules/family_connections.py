@@ -238,4 +238,108 @@ def get_all_family_connections(member_id, refresh=False):
     c = Cache('FAMILY-CONNECTIONS-{}', format(member_id))
     return c(lambda: _get_all_family_connections(member_id), refresh=refresh, time_expire=3600)
         
+class BuildFamilyConnections:
     
+    def __init__(self):
+        self.levels = []
+        self.init_visited()
+
+    def init_visited(self):
+        db = inject("db")
+        self.visited = set()
+        for rec in db(db.TblFamilyConnections).select():
+            self.visited |= set([rec.member_id])
+            self.visited |= set([rec.relative_id])
+
+    def build(self, max_count=9999):
+        db = inject("db")
+        count = 0
+        for member in db(db.TblMembers.deleted != True).select():
+            if member.id in self.visited:
+                continue
+            relatives = self.get_all_first_degree_relatives(member.id)
+            for relation in relatives:
+                relatives[relation] -= self.visited
+                for mem_id in relatives[relation]:
+                    db.TblFamilyConnections.insert(member_id=member.id, relative_id=mem_id, relation=relation)
+            self.visited |= set([member.id])
+            count += 1
+            if count % 100 == 0:
+                db.commit()
+            if count > max_count:
+                break
+        return count
+
+        
+    def walk(self):
+        this_level = set([])
+        prev = self.levels[-1]
+        for m_id in prev:
+            immediates = self.get_all_first_degree_relatives(m_id)
+            for i in immediates:
+                if i in self.visited:
+                    continue
+                this_level |= set([i]) 
+                self.visited |= set([i])
+        if this_level:
+            self.levels.append(this_level)
+            self.walk()
+            
+    def get_all_first_degree_relatives(self, member_id):
+        result = Storage()
+        result["parents"] = set([rec.id for rec in get_parent_list(member_id)])
+        result["siblings"] = set([rec.id for rec in get_siblings(member_id)])
+        result["spouses"] = set([rec.id for rec in get_spouses(member_id)])
+        result["children"] = set([rec.id for rec in get_children(member_id)])
+        return result
+    
+    def get_all_relatives(self):
+        return self.levels
+    
+    def _find_path(self, other_member_id, origin, level, max_level):
+        if level > max_level:
+            return None
+        fdr = self.get_all_first_degree_relatives(origin)
+        for mid in self.levels[level] & fdr:
+            if mid==other_member_id:
+                return [mid]
+        for mid in self.levels[level] & fdr:
+            path = self._find_path(other_member_id, mid, level + 1, max_level)
+            if path:
+                return [mid] + path
+        return None
+    
+    def find_path(self, other_member_id):
+        max_level = 1000
+        for m, level in enumerate(self.levels):
+            if other_member_id in level:
+                max_level = m;
+                break;
+        if max_level > 100:
+            return None #should never happen
+        return self._find_path(other_member_id, origin=self.member_id, level=1, max_level=max_level)
+    
+class FindFamily_connections:
+
+    def __init__(self) -> None:
+        db = inject("db")
+        self.dic = Storage()
+        for rec in db(db.TblFamilyConnections).select(orderby=db.TblFamilyConnections.relation):
+            if rec.member_id not in self.dic:
+                self.dic[rec.member_id] = []
+            self.dic[rec.member_id].append(rec)
+
+    def build_levels(self, member_id, levels=[]):
+        this_level = self.dic[member_id]
+        next_level = []
+        visited = set()
+        for rec in this_level:
+            level = self.dic[rec.member_id]
+            level_ids = [r.member_id for r in level if r.member_id not in visited]
+
+def build_family_connections(max_count=9999):
+    fc = BuildFamilyConnections()
+    fc.build(max_count)
+
+    
+

@@ -191,6 +191,12 @@ db.define_table('TblFamilyConnectionTypes',
                 Field('IIDD', type='integer'),
 )
 
+db.define_table('TblFamilyConnections',
+                Field('member_id', type=db.TblMembers),
+                Field('relative_id', type=db.Tblembers),
+                Field('relation', type='string') #parent, spouse, child, sibling
+                )
+
 db.define_table('TblMemberPhotos',
                 Field('MemberID', type='integer'),
                 Field('Member_id', type='integer'),
