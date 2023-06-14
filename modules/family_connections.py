@@ -326,7 +326,7 @@ class BuildFamilyConnections:
             return None #should never happen
         return self._find_path(other_member_id, origin=self.member_id, level=1, max_level=max_level)
     
-class FindFamily_connections:
+class CalcFamilyConnections:
 
     def __init__(self) -> None:
         db = inject("db")
@@ -334,16 +334,28 @@ class FindFamily_connections:
         for rec in db(db.TblFamilyConnections).select(orderby=db.TblFamilyConnections.relation):
             if rec.member_id not in self.dic:
                 self.dic[rec.member_id] = []
-            self.dic[rec.member_id].append(rec)
+            self.dic[rec.member_id].append(rec.relative_id)
 
-    def build_levels(self, member_id, levels=[]):
-        this_level = self.dic[member_id]
-        next_level = []
+    def calc_levels(self, member_id):
+        levels = [[member_id]]
         visited = set()
-        for rec in this_level:
-            level = self.dic[rec.member_id]
-            level_ids = [r.member_id for r in level if r.member_id not in visited]
+        for i in range(100):
+            curr_level = levels[-1]
+            next_level = []
+            for mid in curr_level:
+                tmp = self.dic[mid]
+                tmp = [m for m in tmp if m not in visited]
+                visited |= set(tmp)
+                next_level += tmp
+            if not next_level:
+                break
+            levels.append(next_level)
+        return levels
 
 def build_family_connections(max_count=9999):
     fc = BuildFamilyConnections()
     return fc.build(max_count)
+
+def calc_family_connections(member_id):
+    cfc = CalcFamilyConnections()
+    return cfc.calc_levels(member_id)
