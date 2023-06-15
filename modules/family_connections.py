@@ -320,7 +320,7 @@ class CalcFamilyConnections:
         mid = other_member_id
         path = [other_member_id]
         for i in range(n-1, 1, -1):
-            lvl = set(level[i])
+            lvl = set(levels[i])
             relatives = self.dic[mid]
             relatives = [r for r in relatives if r in lvl]
             mid = relatives[0]
