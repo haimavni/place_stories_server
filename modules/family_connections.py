@@ -325,6 +325,8 @@ class CalcFamilyConnections:
             relatives = [r for r in relatives if r in lvl]
             mid = relatives[0]
             path.append(mid)
+        path.append(member_id)
+        path.reverse()
         return path
 
 def build_family_connections(max_count=9999):
