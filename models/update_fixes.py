@@ -101,7 +101,12 @@ def fix_member_names():
     for mrec in db(db.TblMembers.deleted!=True).select():
         mrec.update_record(name=(mrec.first_name + ' ' if mrec.first_name else "") + (mrec.last_name if mrec.last_name else ""))
     return "done"
-            
+
+def fix_family_connection_stored():
+    for mrec in db((db.TblMembers.deleted!=True) & (db.TblMembers.family_connections_stored==None)).select():
+        mrec.update_record(family_connections_stored=False)
+    return 'done'
+
 _fixes = {
     1: init_photo_back_sides,
     2: fix_all_date_ends,
@@ -115,7 +120,8 @@ _fixes = {
     10: fix_no_slide_show,
     11: fix_youtube_info,
     12: fix_feedback_messages,
-    13: fix_member_names
+    13: fix_member_names,
+    14: fix_family_connection_stored
 }
 
 _init_configuration_table()

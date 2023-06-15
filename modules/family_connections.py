@@ -280,7 +280,6 @@ class BuildFamilyConnections:
         db(db.TblMembers.id==member_id).update(family_connections_stored = False)
         #todo: which records of TblFamilyConnections to delete?
 
-
 class CalcFamilyConnections:
 
     def __init__(self) -> None:
@@ -336,3 +335,7 @@ def build_family_connections(max_count=9999):
 def calc_family_connections(member_id):
     cfc = CalcFamilyConnections()
     return cfc.calc_levels(member_id)
+
+def find_family_path(member1, member2):
+    cfc = CalcFamilyConnections()
+    return cfc.find_path(member1, member2)
