@@ -256,7 +256,7 @@ class BuildFamilyConnections:
         count = 0
         for member in db((db.TblMembers.deleted != True) & (db.TblMembers.family_connections_stored != True)).select():
             relatives = self.get_all_first_degree_relatives(member.id)
-            for relation in relatives:
+            for relation in sorted(relatives):
                 for mem_id in relatives[relation]:
                     db.TblFamilyConnections.insert(member_id=member.id, relative_id=mem_id, relation=relation)
             member.update_record(family_connections_stored=True)
@@ -275,6 +275,11 @@ class BuildFamilyConnections:
         result[Relation.SPOUSE.value] = set([rec.id for rec in get_spouses(member_id) if rec])
         result[Relation.CHILD.value] = set([rec.id for rec in get_children(member_id) if rec])
         return result
+    
+    def recalculate_member_connections(self, member_id):
+        db(db.TblMembers.id==member_id).update(family_connections_stored = False)
+        #todo: which records of TblFamilyConnections to delete?
+
 
 class CalcFamilyConnections:
 
