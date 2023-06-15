@@ -3,6 +3,7 @@ from .members_support import get_member_rec
 from gluon.storage import Storage
 from .my_cache import Cache
 import datetime
+from enum import Enum
 
 def get_parents(member_id):
     member_rec = get_member_rec(member_id)
@@ -142,10 +143,6 @@ def get_spouses(member_id):
 
 def get_family_connections(member_id):
     auth, VIS_NEVER = inject('auth', 'VIS_NEVER')
-    ###debugging only! get_all_relatives(member_id)
-    #fc = get_all_family_connections(member_id)
-    #path = fc.find_path(493)
-    
     parents = get_parents(member_id)
     for p in ['pa', 'ma', 'pa2', 'ma2']:
         if parents[p] and parents[p].visibility == VIS_NEVER:
@@ -176,66 +173,106 @@ def get_member_spouse_children(member_id, spouse_id):
         qs = (db.TblMembers.mother_id==spouse_id) | (db.TblMembers.mother2_id==spouse_id)
     return db(qm & qs).select()
 
-class AllFamilyConnections:
-    
-    def __init__(self, member_id):
-        self.member_id = member_id
-        self.visited =  set([member_id])
-        self.levels = [set([member_id])]
-        self.walk()
+
+class Relation(Enum):
+    PARENT=1
+    SIBLING=2
+    SPOUSE=3
+    CHILD=4
         
-    def walk(self):
-        this_level = set([])
-        prev = self.levels[-1]
-        for m_id in prev:
-            immediates = self.get_all_first_degree_relatives(m_id)
-            for i in immediates:
-                if i in self.visited:
-                    continue
-                this_level |= set([i]) 
-                self.visited |= set([i])
-        if this_level:
-            self.levels.append(this_level)
-            self.walk()
-            
+class BuildFamilyConnections:
+    
+    def __init__(self):
+        self.levels = []
+
+    def build(self, max_count=9999):
+        db, comment = inject("db", "comment")
+        comment("started build of family connections")
+        count = 0
+        for member in db((db.TblMembers.deleted != True) & (db.TblMembers.family_connections_stored != True)).select():
+            relatives = self.get_all_first_degree_relatives(member.id)
+            for relation in sorted(relatives):
+                for mem_id in relatives[relation]:
+                    db.TblFamilyConnections.insert(member_id=member.id, relative_id=mem_id, relation=relation)
+            member.update_record(family_connections_stored=True)
+            count += 1
+            if count % 100 == 0:
+                db.commit()
+            if count > max_count:
+                break
+        comment("finished build of family connections")
+        return count
+    
     def get_all_first_degree_relatives(self, member_id):
-        result = set([rec.id for rec in get_parent_list(member_id)])
-        result |= set([rec.id for rec in get_siblings(member_id)])
-        result |= set([rec.id for rec in get_spouses(member_id)])
-        result |= set([rec.id for rec in get_children(member_id)])
+        result = Storage()
+        result[Relation.PARENT.value] = set([rec.id for rec in get_parent_list(member_id) if rec])
+        result[Relation.SIBLING.value] = set([rec.id for rec in get_siblings(member_id) if rec])
+        result[Relation.SPOUSE.value] = set([rec.id for rec in get_spouses(member_id) if rec])
+        result[Relation.CHILD.value] = set([rec.id for rec in get_children(member_id) if rec])
         return result
     
-    def get_all_relatives(self):
-        return self.levels
-    
-    def _find_path(self, other_member_id, origin, level, max_level):
-        if level > max_level:
-            return None
-        fdr = self.get_all_first_degree_relatives(origin)
-        for mid in self.levels[level] & fdr:
-            if mid==other_member_id:
-                return [mid]
-        for mid in self.levels[level] & fdr:
-            path = self._find_path(other_member_id, mid, level + 1, max_level)
-            if path:
-                return [mid] + path
-        return None
-    
-    def find_path(self, other_member_id):
-        max_level = 1000
-        for m, level in enumerate(self.levels):
-            if other_member_id in level:
-                max_level = m;
-                break;
-        if max_level > 100:
-            return None #should never happen
-        return self._find_path(other_member_id, origin=self.member_id, level=1, max_level=max_level)
-    
-def _get_all_family_connections(member_id):
-    return AllFamilyConnections(member_id)
+    def recalculate_member_connections(self, member_id):
+        db(db.TblMembers.id==member_id).update(family_connections_stored = False)
+        #todo: which records of TblFamilyConnections to delete?
 
-def get_all_family_connections(member_id, refresh=False):
-    c = Cache('FAMILY-CONNECTIONS-{}', format(member_id))
-    return c(lambda: _get_all_family_connections(member_id), refresh=refresh, time_expire=3600)
-        
+class CalcFamilyConnections:
+
+    def __init__(self) -> None:
+        db = inject("db")
+        self.dic = Storage()
+        for rec in db(db.TblFamilyConnections).select(orderby=db.TblFamilyConnections.relation):
+            if rec.member_id not in self.dic:
+                self.dic[rec.member_id] = []
+            self.dic[rec.member_id].append(rec.relative_id)
+
+    def calc_levels(self, member_id):
+        levels = [[member_id]]
+        visited = set([member_id])
+        for i in range(100):
+            curr_level = levels[-1]
+            next_level = []
+            for mid in curr_level:
+                tmp = self.dic[mid]
+                if not tmp:
+                    continue
+                tmp = [m for m in tmp if m not in visited]
+                visited |= set(tmp)
+                next_level += tmp
+            if not next_level:
+                break
+            levels.append(next_level)
+        return levels
     
+    def find_path(self, member_id, other_member_id):
+        levels = self.calc_levels(member_id)
+        n = None
+        for j, level in enumerate(levels):
+            if other_member_id in set(level):
+                n = j
+                break
+        if not n:
+            return None
+        mid = other_member_id
+        path = [other_member_id]
+        for i in range(n-1, 0, -1):
+            lvl = set(levels[i])
+            relatives = self.dic[mid]
+            relatives = [r for r in relatives if r in lvl]
+            mid = relatives[0]
+            path.append(mid)
+        path.append(member_id)
+        path.reverse()
+        return path
+
+def build_family_connections(max_count=9999):
+    fc = BuildFamilyConnections()
+    return fc.build(max_count)
+
+def calc_family_connections(member_id):
+    build_family_connections()
+    cfc = CalcFamilyConnections()
+    return cfc.calc_levels(member_id)
+
+def find_family_path(member1, member2):
+    cfc = CalcFamilyConnections()
+    return cfc.find_path(member1, member2)

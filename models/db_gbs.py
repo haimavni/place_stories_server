@@ -281,7 +281,8 @@ fields = [
     Field('update_time', type='datetime'),
     Field('updater_id', type=db.auth_user),
     Field('parents_marital_status', type='integer', default=0, options='dp-normal=0|dp-divorced=1|dp-hide-couple=2'),  #do not show parents as couple
-    Field('approved', type='boolean')    
+    Field('approved', type='boolean'),
+    Field("family_connections_stored", type="boolean")    
 ]
 db.define_table('TblMembers', *fields)
 
@@ -393,6 +394,12 @@ db.define_table('TblItemTopics',
           Field('topic_id', type=db.TblTopics),
           Field('story_id', type=db.TblStories)
 )
+
+db.define_table('TblFamilyConnections',
+                Field('member_id', type=db.TblMembers),
+                Field('relative_id', type=db.TblMembers),
+                Field('relation', type='string') #1=parent, 2=spouse, 3=sibling, 4=child, 
+                )
 
 db.define_table('TblVideos',
                 Field('name', type='string'),
