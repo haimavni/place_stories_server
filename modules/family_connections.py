@@ -249,28 +249,17 @@ class BuildFamilyConnections:
     
     def __init__(self):
         self.levels = []
-        self.init_visited()
-
-    def init_visited(self):
-        db = inject("db")
-        self.visited = set()
-        for rec in db(db.TblFamilyConnections).select():
-            self.visited |= set([rec.member_id])
-            #self.visited |= set([rec.relative_id])
 
     def build(self, max_count=9999):
         db, comment = inject("db", "comment")
         comment("started build of family connections")
         count = 0
-        for member in db(db.TblMembers.deleted != True).select():
-            if member.id in self.visited:
-                continue
+        for member in db((db.TblMembers.deleted != True) & (db.TblMembers.family_connections_stored != True)).select():
             relatives = self.get_all_first_degree_relatives(member.id)
             for relation in relatives:
-                ###relatives[relation] -= self.visited
                 for mem_id in relatives[relation]:
                     db.TblFamilyConnections.insert(member_id=member.id, relative_id=mem_id, relation=relation)
-            self.visited |= set([member.id])
+            member.update_record(family_connections_stored=True)
             count += 1
             if count % 100 == 0:
                 db.commit()
@@ -299,7 +288,7 @@ class CalcFamilyConnections:
 
     def calc_levels(self, member_id):
         levels = [[member_id]]
-        visited = set()
+        visited = set([member_id])
         for i in range(100):
             curr_level = levels[-1]
             next_level = []
