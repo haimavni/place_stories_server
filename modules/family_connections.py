@@ -267,7 +267,7 @@ class BuildFamilyConnections:
                 continue
             relatives = self.get_all_first_degree_relatives(member.id)
             for relation in relatives:
-                relatives[relation] -= self.visited
+                ###relatives[relation] -= self.visited
                 for mem_id in relatives[relation]:
                     db.TblFamilyConnections.insert(member_id=member.id, relative_id=mem_id, relation=relation)
             self.visited |= set([member.id])
