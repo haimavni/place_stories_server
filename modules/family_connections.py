@@ -312,11 +312,12 @@ class CalcFamilyConnections:
         levels = self.calc_levels(member_id)
         n = None
         for j, level in enumerate(levels):
-            if other_member_id in level:
+            if other_member_id in set(level):
                 n = j
                 break
         if not n:
             return None
+        return n
         mid = other_member_id
         path = [other_member_id]
         for i in range(n-1, 1, -1):
