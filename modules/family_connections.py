@@ -334,6 +334,7 @@ def build_family_connections(max_count=9999):
     return fc.build(max_count)
 
 def calc_family_connections(member_id):
+    build_family_connections()
     cfc = CalcFamilyConnections()
     return cfc.calc_levels(member_id)
 
