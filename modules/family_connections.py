@@ -317,13 +317,12 @@ class CalcFamilyConnections:
                 break
         if not n:
             return None
-        return n
         mid = other_member_id
         path = [other_member_id]
         for i in range(n-1, 1, -1):
-            level = set(level[i])
+            lvl = set(level[i])
             relatives = self.dic[mid]
-            relatives = [r for r in relatives]
+            relatives = [r for r in relatives if r in lvl]
             mid = relatives[0]
             path.append(mid)
         path.reverse()
