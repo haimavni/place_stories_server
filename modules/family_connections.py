@@ -319,13 +319,12 @@ class CalcFamilyConnections:
             return None
         mid = other_member_id
         path = [other_member_id]
-        for i in range(n-1, 1, -1):
+        for i in range(n-1, 0, -1):
             lvl = set(levels[i])
             relatives = self.dic[mid]
             relatives = [r for r in relatives if r in lvl]
             mid = relatives[0]
             path.append(mid)
-        path.reverse()
         return path
 
 def build_family_connections(max_count=9999):
