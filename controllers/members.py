@@ -15,7 +15,7 @@ from members_support import *
 from photos_support import get_slides_from_photo_list, get_video_thumbnails, save_member_face
 from quiz_support import use_quiz
 from words import calc_used_languages, read_words_index, get_all_story_previews, get_reisha
-from family_connections import calc_family_connections, find_family_path, get_family_connections #, get_all_family_connections
+from family_connections import calc_family_connections, find_family_path, get_family_connections
 
 @serve_json
 def member_list(vars):
@@ -165,12 +165,6 @@ def get_member_details(vars):
 @serve_json
 def get_all_relatives(vars):
     member_id = vars.member_id
-    # fc = get_all_family_connections(member_id)
-    # levels = fc.levels
-    # relative_list = []
-    # for level in levels:
-    #     lst = [mid for mid in level]
-    #     relative_list.append(lst)
     relative_list=calc_family_connections(member_id)
     return dict(relative_list=relative_list)
 
@@ -179,9 +173,6 @@ def get_all_relatives(vars):
 def get_relatives_path(vars):
     origin_member_id = vars.origin_member_id
     other_member_id = vars.other_member_id
-    # fc = get_all_family_connections(origin_member_id)
-    # path = fc.find_path(other_member_id)
-    # return dict(relatives_path=[origin_member_id] + path)
     relatives_path = find_family_path(origin_member_id, other_member_id)
     return dict(relatives_path=relatives_path)
 

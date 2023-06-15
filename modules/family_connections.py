@@ -143,10 +143,6 @@ def get_spouses(member_id):
 
 def get_family_connections(member_id):
     auth, VIS_NEVER = inject('auth', 'VIS_NEVER')
-    ###debugging only! get_all_relatives(member_id)
-    #fc = get_all_family_connections(member_id)
-    #path = fc.find_path(493)
-    
     parents = get_parents(member_id)
     for p in ['pa', 'ma', 'pa2', 'ma2']:
         if parents[p] and parents[p].visibility == VIS_NEVER:
@@ -177,67 +173,6 @@ def get_member_spouse_children(member_id, spouse_id):
         qs = (db.TblMembers.mother_id==spouse_id) | (db.TblMembers.mother2_id==spouse_id)
     return db(qm & qs).select()
 
-class AllFamilyConnections:
-    
-    def __init__(self, member_id):
-        self.member_id = member_id
-        self.visited =  set([member_id])
-        self.levels = [set([member_id])]
-        self.walk()
-        
-    def walk(self):
-        this_level = set([])
-        prev = self.levels[-1]
-        for m_id in prev:
-            immediates = self.get_all_first_degree_relatives(m_id)
-            for i in immediates:
-                if i in self.visited:
-                    continue
-                this_level |= set([i]) 
-                self.visited |= set([i])
-        if this_level:
-            self.levels.append(this_level)
-            self.walk()
-            
-    def get_all_first_degree_relatives(self, member_id):
-        result = set([rec.id for rec in get_parent_list(member_id)])
-        result |= set([rec.id for rec in get_siblings(member_id)])
-        result |= set([rec.id for rec in get_spouses(member_id)])
-        result |= set([rec.id for rec in get_children(member_id)])
-        return result
-    
-    def get_all_relatives(self):
-        return self.levels
-    
-    def _find_path(self, other_member_id, origin, level, max_level):
-        if level > max_level:
-            return None
-        fdr = self.get_all_first_degree_relatives(origin)
-        for mid in self.levels[level] & fdr:
-            if mid==other_member_id:
-                return [mid]
-        for mid in self.levels[level] & fdr:
-            path = self._find_path(other_member_id, mid, level + 1, max_level)
-            if path:
-                return [mid] + path
-        return None
-    
-    def find_path(self, other_member_id):
-        max_level = 1000
-        for m, level in enumerate(self.levels):
-            if other_member_id in level:
-                max_level = m;
-                break;
-        if max_level > 100:
-            return None #should never happen
-        return self._find_path(other_member_id, origin=self.member_id, level=1, max_level=max_level)
-    
-def _get_all_family_connections(member_id):
-    return AllFamilyConnections(member_id)
-
-def get_all_family_connections(member_id, refresh=False):
-    c = Cache('FAMILY-CONNECTIONS-{}', format(member_id))
-    return c(lambda: _get_all_family_connections(member_id), refresh=refresh, time_expire=3600)
 
 class Relation(Enum):
     PARENT=1
