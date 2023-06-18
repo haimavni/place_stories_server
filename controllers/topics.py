@@ -9,7 +9,7 @@ def get_topic_list(vars):
         usage = vars.usage
     elif vars.params and vars.params.selected_story_types:
         usage = ""
-        topic_chars = 'xMEPTxxxVD'
+        topic_chars = 'xMEPTxxxVDUxAxS'  #see db_gbs.py STORY4... to interpret the mapping. Note - "U" is for audio
         story_types = vars.params.selected_story_types
         story_types = [st.id for st in story_types]
         for t in story_types:
