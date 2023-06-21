@@ -30,6 +30,8 @@ def evaluate_script(vars):
                 continue
             if isfunction(v):
                 continue
+            if v.name == 'source_list':
+                continue
             if v not in old_environment or environment[v] != old_environment[v]:
                 x = environment[v]
                 ### if not callable(x):
