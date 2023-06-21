@@ -128,7 +128,7 @@ def fix_is_tagged(first=0, chunk=100000):
 
 
 def source_list(used_for):
-    db = inject("db)")
+    db = inject("db")
     q = (db.TblStories.used_for == used_for) & (db.TblStories.source != None)
     lst = db(q).select(db.TblStories.source,db.TblStories.source.count(),
                        groupby=db.TblStories.source, orderby=db.TblStories.source)
