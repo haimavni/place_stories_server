@@ -34,6 +34,7 @@ def get_hit_statistics(vars):
         PHOTO=db.TblPhotos,
         TERM=db.TblStories,
         DOC=db.TblDocs,
+        DOCSEG=db.TblDocSegments,
         VIDEO=db.TblVideos
     )
     for what in tables:
