@@ -1,6 +1,6 @@
 # ---script for developer to evaluate python expressions in the environment
 import datetime
-
+from inspect import isfunction
 
 @serve_json
 def load_script(vars):
@@ -27,6 +27,8 @@ def evaluate_script(vars):
         dic = dict()
         for v in environment:
             if callable(v):
+                continue
+            if isfunction(v):
                 continue
             if v not in old_environment or environment[v] != old_environment[v]:
                 x = environment[v]
