@@ -33,6 +33,8 @@ def evaluate_script(vars):
             a = environment[v]
             if callable(a):
                 continue
+            if isinstance(a, object):
+                continue
             if v not in old_environment or environment[v] != old_environment[v]:
                 x = environment[v]
                 ### if not callable(x):
