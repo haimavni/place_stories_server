@@ -26,6 +26,8 @@ def evaluate_script(vars):
         exec(ccode, environment)
         dic = dict()
         for v in environment:
+            if callable(v):
+                continue
             if v not in old_environment or environment[v] != old_environment[v]:
                 x = environment[v]
                 ### if not callable(x):
