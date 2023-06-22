@@ -224,6 +224,7 @@ def get_doc_info(vars):
     if not rec:
         raise Exception(f"bad doc_id {doc_id}")
     doc_rec = rec.TblDocs
+    doc_id = doc_rec.id
     #doc_story = rec.TblStories
     doc_src = doc_url(None, doc_rec)
     doc_topics = get_object_topics(doc_rec.story_id, "D")
@@ -325,6 +326,9 @@ def get_doc_segment_info(vars):
 @serve_json
 def create_segment(vars):
     doc_id = vars.doc_id
+    if vars.caller == "stories":
+        doc_rec = db(db.TblDocs.story_id==doc_id).select().first()
+        doc_id = doc_rec.id
     page_num = vars.page_num
     page_part_num = int(vars.page_part_num)
     untitled = vars.untitled

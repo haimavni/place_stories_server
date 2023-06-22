@@ -1,6 +1,6 @@
 # ---script for developer to evaluate python expressions in the environment
 import datetime
-
+import inspect
 
 @serve_json
 def load_script(vars):
@@ -26,6 +26,11 @@ def evaluate_script(vars):
         exec(ccode, environment)
         dic = dict()
         for v in environment:
+            a = environment[v]
+            if inspect.isfunction(a):
+                continue
+            # if callable(a):
+            #     continue
             if v not in old_environment or environment[v] != old_environment[v]:
                 x = environment[v]
                 ### if not callable(x):
