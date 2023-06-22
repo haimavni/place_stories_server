@@ -224,6 +224,7 @@ def get_doc_info(vars):
     if not rec:
         raise Exception(f"bad doc_id {doc_id}")
     doc_rec = rec.TblDocs
+    doc_id = doc_rec.id
     #doc_story = rec.TblStories
     doc_src = doc_url(None, doc_rec)
     doc_topics = get_object_topics(doc_rec.story_id, "D")
