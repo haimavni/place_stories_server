@@ -325,6 +325,9 @@ def get_doc_segment_info(vars):
 @serve_json
 def create_segment(vars):
     doc_id = vars.doc_id
+    if vars.caller == "stories":
+        doc_rec = db(db.TblDocs.story_id==doc_id).select().first()
+        doc_id = doc_rec.id
     page_num = vars.page_num
     page_part_num = int(vars.page_part_num)
     untitled = vars.untitled
