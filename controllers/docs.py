@@ -138,7 +138,8 @@ def apply_topics_to_doc(vars):
             topic_rec = db(db.TblTopics.id == tag_id).select().first()
             if topic_type not in topic_rec.usage:
                 usage = topic_rec.usage + topic_type
-                topic_rec.update_record(usage=usage, topic_kind=2)  # simple topic
+                topic_rec.update_record(
+                    usage=usage, topic_kind=2)  # simple topic
 
     for tag_id in curr_tag_ids:
         if tag_id not in new_tag_ids:
@@ -178,7 +179,8 @@ def apply_to_checked_docs(vars):
     changes = dict()
     new_topic_was_added = False
     for story_id in sdl:
-        drec = db(db.TblDocs.story_id == story_id).select().first()  # get rid of _term_id_
+        # get rid of _term_id_
+        drec = db(db.TblDocs.story_id == story_id).select().first()
         curr_tag_ids = set(get_tag_ids(story_id, topic_type))
         for tpc in st:
             topic = tpc.option
@@ -186,7 +188,7 @@ def apply_to_checked_docs(vars):
             if topic.sign == "plus" and topic.id not in curr_tag_ids:
                 new_id = db.TblItemTopics.insert(item_type=topic_type, topic_id=topic.id, story_id=story_id)
                 curr_tag_ids |= set([topic.id])
-                ###added.append(item)
+                # added.append(item)
                 topic_rec = db(db.TblTopics.id == topic.id).select().first()
                 if topic_rec.topic_kind == 0:  # never used
                     new_topic_was_added = True
@@ -197,7 +199,7 @@ def apply_to_checked_docs(vars):
                 q = (db.TblItemTopics.item_type == topic_type) & (db.TblItemTopics.story_id == story_id) & (
                             db.TblItemTopics.topic_id == topic.id)  # got rid of _item_id_
                 curr_tag_ids -= set([topic.id])
-                ###deleted.append(item)
+                # deleted.append(item)
                 db(q).delete()
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         keywords = KW_SEP.join(curr_tags)
@@ -207,8 +209,8 @@ def apply_to_checked_docs(vars):
         rec.update_record(keywords=keywords, is_tagged=bool(keywords))
         if dates_info:
             update_record_dates(rec, dates_info)
-    ###changes = [changes[doc_id] for doc_id in sdl]
-    ###ws_messaging.send_message('DOC-TAGS-CHANGED', group='ALL', changes=changes)
+    # changes = [changes[doc_id] for doc_id in sdl]
+    # ws_messaging.send_message('DOC-TAGS-CHANGED', group='ALL', changes=changes)
     return dict(new_topic_was_added=new_topic_was_added)
 
 
@@ -216,7 +218,7 @@ def apply_to_checked_docs(vars):
 def get_doc_info(vars):
     doc_id = int(vars.doc_id)
     if vars.caller == "stories" or vars.caller == "member":
-        q = (db.TblDocs.story_id==doc_id)
+        q = (db.TblDocs.story_id == doc_id)
     else:
         q = (db.TblDocs.id == doc_id)
     q &= (db.TblStories.id == db.TblDocs.story_id)
@@ -225,7 +227,7 @@ def get_doc_info(vars):
         raise Exception(f"bad doc_id {doc_id}")
     doc_rec = rec.TblDocs
     doc_id = doc_rec.id
-    #doc_story = rec.TblStories
+    # doc_story = rec.TblStories
     doc_src = doc_url(None, doc_rec)
     doc_topics = get_object_topics(doc_rec.story_id, "D")
     sm = stories_manager.Stories()
@@ -234,34 +236,37 @@ def get_doc_info(vars):
     all_dates = get_all_dates(doc_story)
     story_id = doc_rec.story_id
     chatroom_id = doc_story.chatroom_id
-    member_ids = db(db.TblMembersDocs.doc_id==doc_id).select()
+    member_ids = db(db.TblMembersDocs.doc_id == doc_id).select()
     member_ids = [m.member_id for m in member_ids]
     members = db(db.TblMembers.id.belongs(member_ids)).select()
     members = [Storage(id=member.id,
-                       facePhotoURL=photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png"),
-                       full_name=member.first_name + ' ' + member.last_name)
+                       facePhotoURL=photos_folder(
+                           'profile_photos') + (member.facePhotoURL or "dummy_face.png"),
+                       full_name=full_member_name(member))
                for member in members]
-    q = (db.TblDocSegments.doc_id==doc_id) & \
-        (db.TblDocSegments.story_id==db.TblStories.id) & \
-        (db.TblStories.deleted!=True)
-    doc_segments1 = db(q).select( \
-        db.TblDocSegments.id, \
-        db.TblDocSegments.page_num, \
-        db.TblDocSegments.page_part_num, \
-        db.TblStories.name, \
-        db.TblStories.id, \
+    q = (db.TblDocSegments.doc_id == doc_id) & \
+        (db.TblDocSegments.story_id == db.TblStories.id) & \
+        (db.TblStories.deleted != True)
+    doc_segments1 = db(q).select(
+        db.TblDocSegments.id,
+        db.TblDocSegments.page_num,
+        db.TblDocSegments.page_part_num,
+        db.TblStories.name,
+        db.TblStories.id,
         orderby=db.TblDocSegments.page_num | db.TblDocSegments.page_part_num)
     doc_segments = []
     for doc_segment in doc_segments1:
-        seg_members = db(db.TblMembersDocSegments.doc_segment_id==db.TblDocSegments.id).select()
-        seg_member_ids = [mem.TblMembersDocSegments.member_id for mem in seg_members]
+        seg_members = db(db.TblMembersDocSegments.doc_segment_id ==
+                         db.TblDocSegments.id).select()
+        seg_member_ids = [
+            mem.TblMembersDocSegments.member_id for mem in seg_members]
         item = dict(
-            segment_id = doc_segment.TblDocSegments.id,
-            page_num = doc_segment.TblDocSegments.page_num,
-            page_part_num = doc_segment.TblDocSegments.page_part_num,
-            story_id = doc_segment.TblStories.id,
-            name = doc_segment.TblStories.name,
-            member_ids = seg_member_ids
+            segment_id=doc_segment.TblDocSegments.id,
+            page_num=doc_segment.TblDocSegments.page_num,
+            page_part_num=doc_segment.TblDocSegments.page_part_num,
+            story_id=doc_segment.TblStories.id,
+            name=doc_segment.TblStories.name,
+            member_ids=seg_member_ids
         )
         doc_segments.append(item)
 
@@ -281,31 +286,34 @@ def get_doc_info(vars):
                 doc_segments=doc_segments
                 )
 
+
 @serve_json
 def get_doc_segment_info(vars):
     doc_segment_id = int(vars.doc_segment_id)
     if vars.caller == "stories" or vars.caller == "member":
-        q = (db.TblDocSegments.story_id==doc_segment_id)
+        q = (db.TblDocSegments.story_id == doc_segment_id)
     else:
-        q = (db.TblDocSegments.id==doc_segment_id)
+        q = (db.TblDocSegments.id == doc_segment_id)
     q &= (db.TblDocs.id == db.TblDocSegments.doc_id)
     rec = db(q).select().first()
     doc_segment_rec = rec.TblDocSegments;
-    doc_segment_id = doc_segment_rec.id #if it was story id!
+    doc_segment_id = doc_segment_rec.id  # if it was story id!
     sm = stories_manager.Stories()
     doc_segment_story = sm.get_story(doc_segment_rec.story_id)
     story_id = doc_segment_story.story_id
     chatroom_id = doc_segment_story.chatroom_id
-    member_ids = db(db.TblMembersDocSegments.doc_segment_id==doc_segment_id).select()
+    member_ids = db(db.TblMembersDocSegments.doc_segment_id ==
+                    doc_segment_id).select()
     member_ids = [m.member_id for m in member_ids]
     members = db(db.TblMembers.id.belongs(member_ids)).select()
     members = [Storage(id=member.id,
-                       facePhotoURL=photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png"),
-                       full_name=member.first_name + ' ' + member.last_name)
+                       facePhotoURL=photos_folder(
+                           'profile_photos') + (member.facePhotoURL or "dummy_face.png"),
+                       full_name=full_member_name(member))
                for member in members]
-    doc_topics = get_object_topics(story_id, "S")
-    all_dates = get_all_dates(doc_segment_story)
-    doc_src = doc_segment_url(None, rec)
+    doc_topics=get_object_topics(story_id, "S")
+    all_dates=get_all_dates(doc_segment_story)
+    doc_src=doc_segment_url(None, rec)
 
     return dict(
         doc_segment=doc_segment_rec,
@@ -323,36 +331,39 @@ def get_doc_segment_info(vars):
         doc_seg_date_datespan=all_dates.story_date.span
     )
 
-@serve_json
+
+@ serve_json
 def create_segment(vars):
-    doc_id = vars.doc_id
+    doc_id=vars.doc_id
     if vars.caller == "stories":
-        doc_rec = db(db.TblDocs.story_id==doc_id).select().first()
-        doc_id = doc_rec.id
-    page_num = vars.page_num
-    page_part_num = int(vars.page_part_num)
-    untitled = vars.untitled
-    ppns = ("/" + str(page_part_num)) if page_part_num else ""
-    story_info = Storage(story_text="---", 
-                         name=f"{untitled} {page_num}{ppns}", 
-                         used_for=STORY4DOCSEGMENT, 
+        doc_rec=db(db.TblDocs.story_id == doc_id).select().first()
+        doc_id=doc_rec.id
+    page_num=vars.page_num
+    page_part_num=int(vars.page_part_num)
+    untitled=vars.untitled
+    ppns=("/" + str(page_part_num)) if page_part_num else ""
+    story_info=Storage(story_text="---",
+                         name=f"{untitled} {page_num}{ppns}",
+                         used_for=STORY4DOCSEGMENT,
                          preview="----")
-    sm = stories_manager.Stories()
-    story_id = sm.add_story(story_info).story_id
-    segment_id = db.TblDocSegments.insert(doc_id=doc_id, page_num=page_num, page_part_num=page_part_num, story_id=story_id)
+    sm=stories_manager.Stories()
+    story_id=sm.add_story(story_info).story_id
+    segment_id=db.TblDocSegments.insert(
+        doc_id=doc_id, page_num=page_num, page_part_num=page_part_num, story_id=story_id)
     save_doc_segment_thumbnail(segment_id)
     return dict(segment_id=segment_id, name=story_info.name)
 
-@serve_json
+@ serve_json
 def add_doc_segment(vars):
-    doc_id = int(vars.doc_id)
-    page_num = int(vars.page_num)
-    sm = stories_manager.stories()
-    story_id = sm.get_empty_story(used_for=STORY4DOCSEGMENT)
-    segment_id = db.TblDocSegments.insert(doc_id=doc_id, page_num=page_num, story_id=story_id)
+    doc_id=int(vars.doc_id)
+    page_num=int(vars.page_num)
+    sm=stories_manager.stories()
+    story_id=sm.get_empty_story(used_for=STORY4DOCSEGMENT)
+    segment_id=db.TblDocSegments.insert(
+        doc_id=doc_id, page_num=page_num, story_id=story_id)
     return dict(segment_id=segment_id)
 
-@serve_json
+@ serve_json
 def update_doc_date(vars):
     # doc_date_str = vars.doc_date_str
     # doc_dates_info = dict(
@@ -360,84 +371,93 @@ def update_doc_date(vars):
     # )
     # rec = db((db.TblDocs.id == int(vars.doc_id)) & (db.TblDocs.deleted != True)).select().first()
     # update_record_dates(rec, doc_dates_info)
-    story_id = int(vars.story_id)
-    story_rec = db(db.TblStories.id==story_id).select().first()
-    dates_info = dict(
+    story_id=int(vars.story_id)
+    story_rec=db(db.TblStories.id == story_id).select().first()
+    dates_info=dict(
         story_date=(vars.doc_date_str, int(vars.doc_date_datespan))
     )
     update_record_dates(story_rec, dates_info)
     return dict()
 
-@serve_json
+
+@ serve_json
 def update_doc_members(vars):
-    doc_id = int(vars.doc_id)
-    old_members = db(db.TblMembersDocs.doc_id==doc_id).select()
-    old_members = [m.member_id for m in old_members]
-    old_members_set = set(old_members)
-    new_members = vars.member_ids
-    new_members_set = set(new_members)
-    deleted_members = [mid for mid in old_members if mid not in new_members_set]
-    q = (db.TblMembersDocs.doc_id==doc_id) & (db.TblMembersDocs.member_id.belongs(deleted_members))
+    doc_id=int(vars.doc_id)
+    old_members=db(db.TblMembersDocs.doc_id == doc_id).select()
+    old_members=[m.member_id for m in old_members]
+    old_members_set=set(old_members)
+    new_members=vars.member_ids
+    new_members_set=set(new_members)
+    deleted_members=[mid for mid in old_members if mid not in new_members_set]
+    q=(db.TblMembersDocs.doc_id == doc_id) & (
+        db.TblMembersDocs.member_id.belongs(deleted_members))
     db(q).delete()
     for mid in new_members:
         if mid not in old_members_set:
             db.TblMembersDocs.insert(doc_id=doc_id, member_id=mid)
-    members = db(db.TblMembers.id.belongs(new_members)).select(db.TblMembers.id, db.TblMembers.facePhotoURL)
+    members=db(db.TblMembers.id.belongs(new_members)).select(
+        db.TblMembers.id, db.TblMembers.facePhotoURL)
     for member in members:
-        member.facePhotoURL = photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png")
+        member.facePhotoURL=photos_folder(
+            'profile_photos') + (member.facePhotoURL or "dummy_face.png")
     return dict(members=members)
 
-@serve_json
+@ serve_json
 def update_doc_segment_members(vars):
-    doc_segment_id = int(vars.doc_segment_id)
-    old_members = db(db.TblMembersDocSegments.doc_segment_id==doc_segment_id).select()
-    old_member_ids = [m.member_id for m in old_members]
-    old_members_set = set(old_member_ids)
-    new_members = vars.member_ids
-    new_members_set = set(new_members)
-    deleted_members = [mid for mid in old_members if mid not in new_members_set]
-    q = (db.TblMembersDocSegments.doc_segment_id==doc_segment_id) & (db.TblMembersDocSegments.member_id.belongs(deleted_members))
+    doc_segment_id=int(vars.doc_segment_id)
+    old_members=db(db.TblMembersDocSegments.doc_segment_id ==
+                   doc_segment_id).select()
+    old_member_ids=[m.member_id for m in old_members]
+    old_members_set=set(old_member_ids)
+    new_members=vars.member_ids
+    new_members_set=set(new_members)
+    deleted_members=[mid for mid in old_members if mid not in new_members_set]
+    q=(db.TblMembersDocSegments.doc_segment_id == doc_segment_id) & (
+        db.TblMembersDocSegments.member_id.belongs(deleted_members))
     db(q).delete()
     for mid in new_members:
         if mid not in old_members_set:
-            db.TblMembersDocSegments.insert(doc_segment_id=doc_segment_id, member_id=mid)
-    members = db(db.TblMembers.id.belongs(new_members)).select(db.TblMembers.id, db.TblMembers.facePhotoURL)
+            db.TblMembersDocSegments.insert(
+                doc_segment_id=doc_segment_id, member_id=mid)
+    members=db(db.TblMembers.id.belongs(new_members)).select(
+        db.TblMembers.id, db.TblMembers.facePhotoURL)
     for member in members:
-        member.facePhotoURL = photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png")
+        member.facePhotoURL=photos_folder(
+            'profile_photos') + (member.facePhotoURL or "dummy_face.png")
     return dict(members=members)
 
-@serve_json
+@ serve_json
 def update_story_preview(vars):
-    story_id = int(vars.story_id)
-    story_rec = db(db.TblStories.id==story_id).select().first()
+    story_id=int(vars.story_id)
+    story_rec=db(db.TblStories.id == story_id).select().first()
     story_rec.update_record(preview=story_rec.preview)
     return dict()
 
-@serve_json
+@ serve_json
 def remove_doc_segment(vars):
-    doc_segment_id = vars.doc_segment_id
-    ds_rec = db(db.TblDocSegments.id==doc_segment_id).select().first()
-    story_deleted = False
+    doc_segment_id=vars.doc_segment_id
+    ds_rec=db(db.TblDocSegments.id == doc_segment_id).select().first()
+    story_deleted=False
     if ds_rec.story_id:
-        db(db.TblStories.id==ds_rec.story_id).update(deleted=True)
-        story_deleted = True
+        db(db.TblStories.id == ds_rec.story_id).update(deleted=True)
+        story_deleted=True
     return dict(story_deleted=story_deleted)
 
 # ----------------support functions-----------------
 
 def make_docs_query(params):
-    q = init_query(db.TblDocs, params.editing)
+    q=init_query(db.TblDocs, params.editing)
     if params.days_since_upload:
-        days = params.days_since_upload.value
+        days=params.days_since_upload.value
         if days:
-            upload_date = datetime.datetime.today() - datetime.timedelta(days=days)
+            upload_date=datetime.datetime.today() - datetime.timedelta(days=days)
             q &= (db.TblDocs.upload_date >= upload_date)
-    opt = params.selected_uploader
+    opt=params.selected_uploader
     if opt == 'mine':
         q &= (db.TblDocs.uploader == params.user_id)
     elif opt == 'users':
         q &= (db.TblDocs.uploader != None)
-    opt = params.selected_dates_option
+    opt=params.selected_dates_option
     if opt == 'selected_dates_option':
         pass
     elif opt == 'dated':
@@ -447,26 +467,27 @@ def make_docs_query(params):
     if params.selected_docs:
         q &= (db.TblDocs.story_id.belongs(params.selected_docs))
     if params.selected_topics:
-        q1 = get_topics_query(params.selected_topics)
+        q1=get_topics_query(params.selected_topics)
         q &= q1
     if params.show_untagged:
-        q &= (db.TblDocs.story_id==db.TblStories.id) & (db.TblStories.is_tagged==False)
+        q &= (db.TblDocs.story_id == db.TblStories.id) & (
+            db.TblStories.is_tagged == False)
     return q
 
 def make_doc_segments_query(params):
-    q = init_query(db.TblDocSegments, params.editing)
+    q=init_query(db.TblDocSegments, params.editing)
     q &= (db.TblDocs.id == db.TblDocSegments.doc_id)
     if params.days_since_upload:
-        days = params.days_since_upload.value
+        days=params.days_since_upload.value
         if days:
-            upload_date = datetime.datetime.today() - datetime.timedelta(days=days)
+            upload_date=datetime.datetime.today() - datetime.timedelta(days=days)
             q &= (db.TblDocs.upload_date >= upload_date)
-    opt = params.selected_uploader
+    opt=params.selected_uploader
     if opt == 'mine':
         q &= (db.TblDocs.uploader == params.user_id)
     elif opt == 'users':
         q &= (db.TblDocs.uploader != None)
-    opt = params.selected_dates_option
+    opt=params.selected_dates_option
     if opt == 'selected_dates_option':
         pass
     elif opt == 'dated':
@@ -476,25 +497,31 @@ def make_doc_segments_query(params):
     if params.selected_doc_segments:
         q &= (db.TblDocSegments.story_id.belongs(params.selected_doc_segments))
     if params.selected_topics:
-        q1 = get_topics_query(params.selected_topics)
+        q1=get_topics_query(params.selected_topics)
         q &= q1
     if params.show_untagged:
-        q &= (db.TblDocSegments.story_id==db.TblStories.id) & (db.TblStories.is_tagged==False)
+        q &= (db.TblDocSegments.story_id == db.TblStories.id) & (
+            db.TblStories.is_tagged == False)
     return q
 
 def get_story_by_id(story_id):
-    sm = stories_manager.Stories()
+    sm=stories_manager.Stories()
     return sm.get_story(story_id)
 
 
-@serve_json
+@ serve_json
 def upload_thumbnail(vars):
-    info = vars.file.info
-    doc_id = info.doc_id
-    ptp_key = info.ptp_key
-    segment_id = info.segment_id
-    keys = info.keys()
-    fil = vars.file
-    result = save_uploaded_thumbnail(fil.BINvalue, doc_id, segment_id, ptp_key)
+    info=vars.file.info
+    doc_id=info.doc_id
+    ptp_key=info.ptp_key
+    segment_id=info.segment_id
+    keys=info.keys()
+    fil=vars.file
+    result=save_uploaded_thumbnail(fil.BINvalue, doc_id, segment_id, ptp_key)
     return dict(upload_result=result)
 
+def full_member_name(member):
+    s = member.first_name or ""
+    if member.last_name:
+        s += " " + member.last_name
+    return s
