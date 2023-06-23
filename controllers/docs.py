@@ -60,6 +60,9 @@ def get_doc_list(vars):
         fix_record_dates_out(rec)
         story = get_story_by_id(rec.story_id)
         rec.story = story
+        # for the filters to work
+        rec.name = story.name
+        rec.source = story.source
         rec.doc_url = doc_url(None, rec)
         rec.doc_jpg_url = doc_jpg_url(None, rec)
         rec.keywords = rec1.TblStories.keywords
@@ -94,10 +97,13 @@ def get_doc_segment_list(vars):
         fix_record_dates_out(story_rec)
         story = rec1.TblStories
         rec.story = story
+        #for the filters to work
+        rec.name = story.name
+        rec.source = story.source
         rec.doc_url = doc_segment_url(None, rec1)
         rec.doc_jpg_url = doc_segment_jpg_url(None, rec1)
         rec.keywords = rec1.TblStories.keywords
-        rec.name = rec1.TblStories.name
+        # rec.name = rec1.TblStories.name
         rec.doc_date = rec1.TblStories.story_date
         doc_segment_list.append(rec)
     return dict(doc_segment_list=doc_segment_list, no_results=not doc_segment_list)
