@@ -227,7 +227,9 @@ def doc_jpg_url(story_id, drec=None):
     if not drec:
         drec = db(db.TblDocs.story_id==story_id).select().first()
     folder = docs_folder() + "pdf_jpgs/"
-    return folder + drec.doc_path.replace(".pdf", ".jpg")
+    jpg_path =  drec.doc_path.replace(".pdf", ".jpg")
+    local_fname = local_docs_folder() + "pdf_jpgs/" + jpg_path
+    return folder + jpg_path + timestamp(local_fname)
 
 def doc_segment_url(story_id, rec=None):
     if not rec:
@@ -237,8 +239,7 @@ def doc_segment_url(story_id, rec=None):
     doc_rec = rec.TblDocs
     seg_rec = rec.TblDocSegments
     folder = docs_folder()
-    local_fname = local_docs_folder() + "pdf_jpgs/" + doc_rec.doc_path
-    return folder + doc_rec.doc_path + timestamp(local_fname)
+    return folder + doc_rec.doc_path
 
 def doc_segment_jpg_url(story_id, rec=None):
     if not rec:
