@@ -237,7 +237,8 @@ def doc_segment_url(story_id, rec=None):
     doc_rec = rec.TblDocs
     seg_rec = rec.TblDocSegments
     folder = docs_folder()
-    return folder + doc_rec.doc_path ### + f"#page={seg_rec.page_num}"
+    local_fname = local_docs_folder() + "pdf_jpgs/" + doc_rec.doc_path
+    return folder + doc_rec.doc_path + timestamp(local_fname)
 
 def doc_segment_jpg_url(story_id, rec=None):
     if not rec:
