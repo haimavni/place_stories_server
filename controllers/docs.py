@@ -418,9 +418,11 @@ def update_doc_segment_members(vars):
     new_members=vars.member_ids
     new_members_set=set(new_members)
     deleted_members=[mid for mid in old_members if mid not in new_members_set]
+    comment(f"----- deleted members: {deleted_members}")
     q=(db.TblMembersDocSegments.doc_segment_id == doc_segment_id) & (
         db.TblMembersDocSegments.member_id.belongs(deleted_members))
-    db(q).delete()
+    ndel = db(q).delete()
+    comment(f"{ndel} members were deleted")
     for mid in new_members:
         if mid not in old_members_set:
             db.TblMembersDocSegments.insert(
