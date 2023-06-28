@@ -414,6 +414,7 @@ def update_doc_segment_members(vars):
     old_members=db(db.TblMembersDocSegments.doc_segment_id ==
                    doc_segment_id).select()
     old_member_ids=[m.member_id for m in old_members]
+    comment(f"======old member ids: {old_member_ids}. new members: {vars.member_ids}")
     old_members_set=set(old_member_ids)
     new_members=vars.member_ids
     new_members_set=set(new_members)
