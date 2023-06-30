@@ -139,7 +139,7 @@ def get_member_details(vars):
         raise User_Error('No one there')
     sm = stories_manager.Stories()
     story_info = sm.get_story(member_info.story_id) or Storage(display_version='New Story', topic="member.life-summary",
-                                                               story_versions=[], story_text='', story_id=None)
+                                                               story_versions=[], story_text='', story_id=None, editing_ok=True)
     story_info.used_for = STORY4MEMBER
     family_connections = get_family_connections(member_info.id)
     slides = get_member_slides(mem_id)
