@@ -34,12 +34,12 @@ def member():
     else:
         bio = ""
     href = calc_href("member-details", member_id)
-    link = A(name, _href=href) + "/*"
+    link = A(name, _href=href)
     return dict(name=name, bio=bio,href=href,link=link)
 
 def calc_href(what, id):
     host = request.env.http_host
     app = request.application
-    return f'https://{host}/{app}/aurelia#/{what}/{id}'
+    return f'https://{host}/{app}/aurelia#/{what}/{id}/*'
 
     
