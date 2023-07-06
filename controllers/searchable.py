@@ -34,7 +34,8 @@ def member():
     else:
         bio = ""
     href = calc_href("member-details", member_id)
-    return dict(name=name, bio=bio,href=href)
+    link = A(name, _href=href)
+    return dict(name=name, bio=bio,href=href,link=link)
 
 def calc_href(what, id):
     host = request.env.http_host
