@@ -8,7 +8,7 @@ def index():
         url_base = 'http://{host}/{app}/static/aurelia/index.html#/'.format(host=host,app=app)
     ubase = f"https://{host}/{app}/"
     
-    m_list = db((db.TblMembers.story_id==db.TblStories.id) & (db.TblStories.deleted!=True)).select(db.TblStories.name, db.TblMembers.id, limitby=(0,20))
+    m_list = db((db.TblMembers.story_id==db.TblStories.id) & (db.TblStories.deleted!=True)).select(db.TblStories.name, db.TblMembers.id)
     # member_list = [A(r.TblStories.name, _href=url_base + "member-details/{}/*".format(r.TblMembers.id)) for r in m_list]
     member_list = [A(r.TblStories.name, _href=ubase + f"searchable/member/{r.TblMembers.id}") for r in m_list]
 
