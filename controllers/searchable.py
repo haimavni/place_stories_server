@@ -7,6 +7,7 @@ def index():
         host = "gbstories.org"
         url_base = 'http://{host}/{app}/static/aurelia/index.html#/'.format(host=host,app=app)
     ubase = f"https://{host}/{app}/"
+    canonical = ubase + "searchable/"
     
     m_list = db((db.TblMembers.story_id==db.TblStories.id) & (db.TblStories.deleted!=True)).select(db.TblStories.name, db.TblMembers.id)
     # member_list = [A(r.TblStories.name, _href=url_base + "member-details/{}/*".format(r.TblMembers.id)) for r in m_list]
@@ -21,7 +22,7 @@ def index():
     t_list = db((db.TblStories.used_for==STORY4TERM) & (db.TblStories.deleted != True)).select(db.TblStories.id, db.TblStories.name, db.TblStories.used_for, limitby=(0,10))    ##story_list = ['<a src="{id}">{name}</a>'.format(name=r.name, id=r.id) for r in story_list]
     term_list = [A(r.name, _href=url_base + "term-detail/{}/*?what=term".format(r.id)) for r in t_list]
     
-    return dict(member_list=member_list, photo_list=photo_list, story_list=story_list, term_list=term_list)
+    return dict(member_list=member_list, photo_list=photo_list, story_list=story_list, term_list=term_list, canonical=canonical)
 
 def member():
     member_id = request.args[0]
