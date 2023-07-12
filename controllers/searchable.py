@@ -41,6 +41,9 @@ def member():
 def calc_href(what, id):
     host = request.env.http_host
     app = request.application
+    r = app.find("__")
+    if r > 0:
+        app = app[:r]
     return f'https://{host}/{app}/aurelia#/{what}/{id}/*'
 
     
