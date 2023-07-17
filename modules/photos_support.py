@@ -341,7 +341,7 @@ def get_video_thumbnails(q):
     for rec in lst:
         dic = dict(
             video_id=rec.id,
-            src=rec.thumbnail_url 
+            src=rec.thumbnail_url, 
             # src=thumbnail_url(rec.src),
             title=rec.name
         )
