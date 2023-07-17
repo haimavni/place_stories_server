@@ -1,3 +1,5 @@
+from words import remove_all_tags
+
 def index():
     host = request.env.http_host
     app = request.application
@@ -32,6 +34,7 @@ def member():
     if story_id:
         story_rec = db(db.TblStories.id==story_id).select().first()
         bio = story_rec.story
+        bio = remove_all_tags(bio)
     else:
         bio = ""
     href = calc_href("member-details", member_id)
