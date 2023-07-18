@@ -1,4 +1,5 @@
 from words import remove_all_tags
+from enable_search import create_sitemap
 
 def index():
     host = request.env.http_host
@@ -48,5 +49,8 @@ def calc_href(what, id):
     if r > 0:
         app = app[:r]
     return f'https://{host}/{app}/aurelia#/{what}/{id}/*'
+
+def sitemap():
+    return create_sitemap()
 
     
