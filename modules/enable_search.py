@@ -24,13 +24,12 @@ def create_sitemap():
     lst = db((db.TblStories.used_for==STORY4MEMBER)&(db.TblStories.id==db.TblMembers.story_id)).select(db.TblMembers.id)
     member_list = [rec.id for rec in lst]
     # comment(f'inside emit bio items: {member_list}')
-    header = '''
-<?xml version="1.0" encoding="UTF-8"?>
+    header = '''<?xml version="1.0" encoding="UTF-8"?>
 <urlset
-      xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
-            http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+    xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 '''
     fname = f'/apps_data/{app}/sitemap.xml'
     # comment(f'writing to {fname}')
