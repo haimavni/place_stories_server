@@ -22,10 +22,10 @@ def create_an_app(rec):
     comment('finished creation of {}. code = {}', rec.app_name, code)
     os.chdir(orig_dir)
     if code == 0:
-        notify_developer(rec, True)
+        notify_developers(rec, True)
         notify_customer(rec)
     else:
-        notify_developer(rec, False)
+        notify_developers(rec, False)
     #command = 'systemctl restart web2py-scheduler'
     with open('/home/www-data/tol_server_test3/private/restart_now', 'w') as f:
         f.write("restart now")
@@ -64,14 +64,16 @@ def notify_customer(rec):
     result = email(receivers=rec.email, message=message, subject='Starting your new site')
     comment('mail sent to customer? {}', result)
 
-def notify_developer(rec, success):
-    mail, comment = inject('mail', 'comment')
+def notify_developers(rec, success):
+    auth, comment, DEVELOPER = inject('auth', 'comment', "DEVELOPER")
     comment('about to nofity me')
+    site_name=rec.app_name
     status = 'was successfuly created ' if success else 'had errors while being created'
-    message = ('', '''
+    message = ('', f'''
     New site {site_name} {status}.
-    '''.format(site_name=rec.app_name, status=status))
-    result = email(receivers='haimavni@gmail.com', message=message, subject='New app')
+    ''')
+    receivers = auth.role_user_list(DEVELOPER)
+    result = email(receivers=receivers, message=message, subject='New app')
     comment('mail sent to developer? {}', result)
 
 def create_pending_apps():

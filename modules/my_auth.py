@@ -189,5 +189,11 @@ class MyAuth(Auth):
                                 email = u.email)
         return result
     
+    def role_user_list(self, role):
+        db = inject('db')
+        lst = db((db.auth_membership.group_id==role)&(db.auth_user.id==db.auth_membership.user_id)&(db.auth_user.id>1)).select(db.auth_user.email)
+        receivers = [r.email for r in lst]
+        return receivers   
+    
         
         

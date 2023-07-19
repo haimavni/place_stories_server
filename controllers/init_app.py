@@ -69,7 +69,7 @@ def request_new_app(vars):
         result = email(receivers=vars.email, subject='Your new site', message=mail_message)
         comment(f"confirmation mail was sent to {vars.email} with result {result}. message: {mail_message}")
         customer_rec = db(db.TblCustomers.id==id).select().first()
-        notify_developer(customer_rec)
+        notify_developers(customer_rec)
     return dict(error_message=error_message)
 
 def confirm_new_app():
@@ -94,15 +94,15 @@ def get_frame_list(vars):
         result.append(dict(url=url))
     return dict(frame_urls=result)
 
-def notify_developer(rec):
-    mail, comment = inject('mail', 'comment')
+def notify_developers(rec):
     comment('about to nofity me about new customer')
     name = rec.first_name + ' ' + rec.last_name
     message = ('', '''
     New site {site_name} was requested by {name} {email}.
     '''.format(site_name=rec.app_name, name=name, email=rec.email))
-    result = email(receivers='haimavni@gmail.com', message=message, subject='New app requested')
-    comment('mail sent to developer? {}', result)
+    receivers = auth.role_user_list(DEVELOPER)
+    result = email(receivers=receivers, message=message, subject='New app requested')
+    comment(f'mail sent to developer? {result}')
 
 #-------------------support functions----------------------
 
