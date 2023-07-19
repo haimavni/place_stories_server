@@ -62,7 +62,7 @@ def notify_customer(rec):
     '''
     message = ('', message_fmt.format(ml=manual_link, link=link))
     result = email(receivers=rec.email, message=message, subject='Starting your new site')
-    comment('mail sent to customer? {}', result)
+    comment(f'mail sent to customer? {result}')
 
 def notify_developers(rec, success):
     auth, comment, DEVELOPER = inject('auth', 'comment', "DEVELOPER")
@@ -72,9 +72,11 @@ def notify_developers(rec, success):
     message = ('', f'''
     New site {site_name} {status}.
     ''')
+    comment(f"----message: {message}")
     receivers = auth.role_user_list(DEVELOPER)
+    comment("f=== receivers: {receivers}")
     result = email(receivers=receivers, message=message, subject='New app')
-    comment('mail sent to developer? {}', result)
+    comment(f'mail sent to developer? {result}')
 
 def create_pending_apps():
     db, log_exception = inject('db', 'log_exception')
