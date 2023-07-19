@@ -69,9 +69,9 @@ def notify_developers(rec, success):
     comment('about to nofity me')
     site_name=rec.app_name
     status = 'was successfuly created ' if success else 'had errors while being created'
-    message = ('', f'''
+    message = f'''
     New site {site_name} {status}.
-    ''')
+    '''
     comment(f"----message: {message}")
     receivers = auth.role_user_list(DEVELOPER)
     comment("f=== receivers: {receivers}")

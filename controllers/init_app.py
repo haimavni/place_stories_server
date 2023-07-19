@@ -99,9 +99,9 @@ def notify_developers(rec):
     name = rec.first_name + ' ' + rec.last_name
     site_name = rec.app_name
     mail = rec.email
-    message = ('', f'''
+    message = f'''
     New site {site_name} was requested by {name} {mail}.
-    ''')
+    '''
     receivers = auth.role_user_list(DEVELOPER)
     comment(f"message is {message}, receivers: {receivers}")
     result = email(receivers=receivers, message=message, subject='New app requested')
