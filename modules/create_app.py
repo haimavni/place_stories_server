@@ -66,17 +66,13 @@ def notify_customer(rec):
 
 def notify_developers(rec, success):
     auth, comment, DEVELOPER = inject('auth', 'comment', "DEVELOPER")
-    comment('about to nofity me')
     site_name=rec.app_name
     status = 'was successfuly created ' if success else 'had errors while being created'
     message = f'''
     New site {site_name} {status}.
     '''
-    comment(f"----message: {message}")
     receivers = auth.role_user_list(DEVELOPER)
-    comment("f=== receivers: {receivers}")
     result = email(receivers=receivers, message=message, subject='New app')
-    comment(f'mail sent to developer? {result}')
 
 def create_pending_apps():
     db, log_exception = inject('db', 'log_exception')
