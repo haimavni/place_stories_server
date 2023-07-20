@@ -228,6 +228,8 @@ def get_stories_index(vars):
 
 @serve_json
 def get_random_member(vars):
+    if db(db.TblMembers.deleted != True).count() == 0:
+        return dict(member_data = None)
     lst = get_members_stats()
     if not lst:
         return dict(member_data=None)
@@ -511,6 +513,8 @@ def set_member_story_id(vars):
 def get_member_names():
     q = (db.TblMembers.deleted != True)
     lst = db(q).select()
+    if not lst:
+        return []
     arr = [Storage(id=rec.id,
                    name=member_display_name(rec, full=True),
                    title='<span dir="rtl">' + member_display_name(rec, full=True) + '</span>',
