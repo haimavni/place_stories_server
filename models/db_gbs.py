@@ -225,7 +225,7 @@ fields = [
     Field('date_of_alia_dateunit', type='string', default='N'),
     Field('date_of_alia_datespan', type='integer', default=0),
     Field('date_of_alia_dateend', type='date', default=NO_DATE),
-    Field('DateOfBirth', type='string'),
+    # Field('DateOfBirth', type='string'),
     Field('date_of_birth', type='date', default=NO_DATE, description='date-of-birth'), 
     Field('date_of_birth_dateunit', type='string', default='N'), 
     Field('date_of_birth_datespan', type='integer', default=0), 

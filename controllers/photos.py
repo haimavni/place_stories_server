@@ -241,6 +241,8 @@ def remove_duplicate_photo_members(): #todo: remove after all sites are fixed
 
 @serve_json
 def get_photo_list(vars):
+    if db(db.TblPhotos).isempty():
+        return dict(photo_list=[], last_photo_id=None, last_photo_date=None, total_photos=0)
     mprl = vars.max_photos_per_line or 8
     MAX_PHOTOS_COUNT = 250 + (mprl - 8) * 250
     selected_order_option = vars.selected_order_option or ""

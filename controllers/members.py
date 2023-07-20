@@ -512,8 +512,7 @@ def set_member_story_id(vars):
 
 def get_member_names():
     q = (db.TblMembers.deleted != True)
-    lst = db(q).select()
-    if not lst:
+    if db(q).isempty():
         return []
     arr = [Storage(id=rec.id,
                    name=member_display_name(rec, full=True),
