@@ -220,7 +220,7 @@ fields = [
     Field('name', default="noname", compute=lambda rec: (rec.first_name + ' ' if rec.first_name else "") + (rec.last_name if rec.last_name else "")),
     Field('former_first_name', type='string'),
     Field('former_last_name', type='string'),
-    # Field('DateOfAlia', type='string'),
+    Field('DateOfAlia', type='string'),
     Field('date_of_alia', type='date', default=NO_DATE, description='date-of-alia'),
     Field('date_of_alia_dateunit', type='string', default='N'),
     Field('date_of_alia_datespan', type='integer', default=0),
