@@ -321,21 +321,21 @@ db.define_table('TblChats',
 )
 
 db.define_table('TblPhotos',
-                Field('ArchiveNum', type='string'),
-                Field('Description', type='text'),
-                Field('DescriptionNoHtml', type='text'),
+                # Field('ArchiveNum', type='string'),
+                # Field('Description', type='text'),
+                # Field('DescriptionNoHtml', type='text'),
                 Field('story_id', type=db.TblStories),
-                Field('IIDD', type='integer'),
-                Field('LocationInDisk', type='string'),
+                # Field('IIDD', type='integer'),
+                # Field('LocationInDisk', type='string'),
                 Field('photo_path', type='string'),
                 Field('webp_photo_path', type='string'),
                 Field('name', type='string'),
                 Field('original_file_name', type='string'),
                 Field('embedded_photo_date', type='datetime'),
-                Field('ObjectID', type='integer'), #obsolete, to be replaced by the following line
+                # Field('ObjectID', type='integer'), #obsolete, to be replaced by the following line
                 Field('Object_id', type='integer'),
                 Field('PageHits', type='integer'),
-                Field('PhotoDate', type='string'),
+                # Field('PhotoDate', type='string'),
                 Field('photo_date', type='date', default=NO_DATE),
                 Field('photo_date_dateunit', type='string', default='Y'), # D, M or Y for day, month, year
                 Field('photo_date_datespan', type='integer', default=1), # how many months or years in the range
