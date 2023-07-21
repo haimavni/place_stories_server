@@ -211,6 +211,7 @@ db.define_table('TblArticlePhotos',
                 Field('who_identified', type=db.auth_user)
 )
 
+#db.define_table('TblMembers')
 fields = [
     Field('title', type='string'),
     Field('first_name', type='string'),
@@ -282,7 +283,7 @@ fields = [
     Field('updater_id', type=db.auth_user),
     Field('parents_marital_status', type='integer', default=0, options='dp-normal=0|dp-divorced=1|dp-hide-couple=2'),  #do not show parents as couple
     Field('approved', type='boolean'),
-    Field("family_connections_stored", type="boolean")    
+    Field('family_connections_stored', type='boolean')    
 ]
 db.define_table('TblMembers', *fields)
 
@@ -321,8 +322,8 @@ db.define_table('TblChats',
 )
 
 db.define_table('TblPhotos',
-                Field('"ArchiveNum"', type='string'),
-                Field('"Description"', type='text'),
+                Field('ArchiveNum', type='string'),
+                Field('Description', type='text'),
                 Field('DescriptionNoHtml', type='text'),
                 Field('story_id', type=db.TblStories),
                 Field('IIDD', type='integer'),
