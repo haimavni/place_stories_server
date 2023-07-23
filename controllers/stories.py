@@ -117,7 +117,7 @@ def add_face(vars):
     face = vars.face
     face.r = face.r or 20
     data = dict(
-        Photo_id=face.photo_id,
+        photo_id=face.photo_id,
         r=face.r,
         x=face.x,
         y=face.y

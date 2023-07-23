@@ -1,7 +1,7 @@
 cmd = """
-    SELECT "TblMemberPhotos"."Member_id", "TblMemberPhotos"."Photo_id", count("TblMemberPhotos"."id")
+    SELECT "TblMemberPhotos"."member_id", "TblMemberPhotos"."photo_id", count("TblMemberPhotos"."id")
     FROM "TblMemberPhotos"
-    GROUP BY "TblMemberPhotos"."Member_id", "TblMemberPhotos"."Photo_id";
+    GROUP BY "TblMemberPhotos"."member_id", "TblMemberPhotos"."photo_id";
 """
 
 lst = db.executesql(cmd)
@@ -20,7 +20,7 @@ lst2 = []
 
 lst3 = []
 for x in lst1[:100]:
-    rec = db((db.TblMemberPhotos.Member_id==x.member) & (db.TblMemberPhotos.Photo_id==x.photo) & (db.TblMemberPhotos.r==None)).select().first()
+    rec = db((db.TblMemberPhotos.member_id==x.member) & (db.TblMemberPhotos.photo_id==x.photo) & (db.TblMemberPhotos.r==None)).select().first()
     if not rec:
         continue
     lst2.append(rec)

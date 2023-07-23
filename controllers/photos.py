@@ -115,7 +115,7 @@ def get_photo_info(vars):
         photographer_rec = Storage()
     result = dict(
         name=rec.name,
-        description=rec.Description,
+        description=rec.description,
         photographer=photographer_rec.name,
         photo_date_str=all_dates.photo_date.date,
         photo_date_datespan=all_dates.photo_date.span
@@ -138,7 +138,7 @@ def save_photo_info(vars):
     pinf.photo_date = date
     pinf.photo_date_dateunit = unit
     del pinf.photographer
-    ###pinf.Recognized = True
+    ###pinf.recognized = True
     photo_rec.update_record(**pinf)
     if photo_date_str:
         dates_info = dict(
@@ -153,22 +153,22 @@ def get_faces(vars):
     get all faces on photo
     '''
     photo_id = vars.photo_id
-    lst = db(db.TblMemberPhotos.Photo_id == photo_id).select()
+    lst = db(db.TblMemberPhotos.photo_id == photo_id).select()
     faces = []
     candidates = []
     for rec in lst:
         if rec.r == None: #found old record which has a member but no location
-            if not rec.Member_id:
+            if not rec.member_id:
                 db(db.TblMemberPhotos.id == rec.id).delete()
                 continue
-            name = member_display_name(member_id=rec.Member_id)
-            candidate = dict(member_id=rec.Member_id, name=name)
+            name = member_display_name(member_id=rec.member_id)
+            candidate = dict(member_id=rec.member_id, name=name)
             candidates.append(candidate)
         else:
-            face = Storage(x=rec.x, y=rec.y, r=rec.r or 20, photo_id=rec.Photo_id)
-            if rec.Member_id:
-                face.member_id = rec.Member_id
-                face.name = member_display_name(member_id=rec.Member_id)
+            face = Storage(x=rec.x, y=rec.y, r=rec.r or 20, photo_id=rec.photo_id)
+            if rec.member_id:
+                face.member_id = rec.member_id
+                face.name = member_display_name(member_id=rec.member_id)
             faces.append(face)
     face_ids = set([face.member_id for face in faces])
     candidates = [c for c in candidates if not c['member_id'] in face_ids]
@@ -205,8 +205,8 @@ def save_article(vars):
 def detach_photo_from_member(vars):
     member_id = int(vars.member_id)
     photo_id = int(vars.photo_id)
-    q = (db.TblMemberPhotos.Photo_id == photo_id) & \
-        (db.TblMemberPhotos.Member_id == member_id)
+    q = (db.TblMemberPhotos.photo_id == photo_id) & \
+        (db.TblMemberPhotos.member_id == member_id)
     good = db(q).delete() == 1
     ws_messaging.send_message(key='MEMBER_PHOTO_LIST_CHANGED', group='ALL', member_id=member_id, photo_id=photo_id)
     return dict(photo_detached=good)
@@ -227,13 +227,13 @@ def detach_photo_from_article(vars):
     return dict(photo_detached=good)
 
 def remove_duplicate_photo_members(): #todo: remove after all sites are fixed
-    lst = db(db.TblMemberPhotos).select(orderby=db.TblMemberPhotos.Member_id | \
-                                        db.TblMemberPhotos.Photo_id | \
+    lst = db(db.TblMemberPhotos).select(orderby=db.TblMemberPhotos.member_id | \
+                                        db.TblMemberPhotos.photo_id | \
                                                 ~db.TblMemberPhotos.id)
     prev_rec = Storage()
     nd = 0
     for rec in lst:
-        if rec.Member_id != prev_rec.Member_id or rec.Photo_id != prev_rec.Photo_id:
+        if rec.member_id != prev_rec.member_id or rec.photo_id != prev_rec.photo_id:
             prev_rec = rec
             continue
         nd += db(db.TblMemberPhotos.id == rec.id).delete()
@@ -475,7 +475,7 @@ def apply_topics_to_photo(vars):
     is_tagged = len(curr_tags) > 0
     srec = db(db.TblStories.id==rec.story_id).select().first()
     srec.update_record(keywords=keywords, is_tagged=is_tagged)
-    # rec.update_record(Recognized=True)
+    # rec.update_record(recognized=True)
     rec.update_record(handled=True)
     
 @serve_json
@@ -506,7 +506,7 @@ def rotate_selected_photos(vars):
 def mark_as_recogized(vars):
     recognized = vars.unrecognize != 'true'
     rec = db(db.TblPhotos.id==int(vars.photo_id)).select().first()
-    rec.update_record(Recognized=recognized)
+    rec.update_record(recognized=recognized)
     db.commit()
     return dict()
 
@@ -551,7 +551,7 @@ def flip_photo(vars):
 
 @serve_json
 def crop_photo(vars):
-    faces = db(db.TblMemberPhotos.Photo_id==vars.photo_id).select()
+    faces = db(db.TblMemberPhotos.photo_id==vars.photo_id).select()
     crop_left = int(vars.crop_left)
     crop_top = int(vars.crop_top)
     crop_width = int(vars.crop_width)
@@ -681,7 +681,7 @@ def replace_photo(pgroup):
     ###data['status'] = 'regular'
     if old_photo.width != new_photo.width:
         ow, nw = old_photo.width, new_photo.width
-        for member_photo_rec in db(db.TblMemberPhotos.Photo_id==old_photo.id).select():
+        for member_photo_rec in db(db.TblMemberPhotos.photo_id==old_photo.id).select():
             if not member_photo_rec.x:
                 continue
             x = int(round(member_photo_rec.x * nw / ow))
@@ -747,9 +747,9 @@ def make_photos_query(vars):
         q &= q1
     if vars.selected_recognition == 'recognized':
         if date_opt != 'undated':
-            q &= ((db.TblPhotos.Recognized == True) | (db.TblPhotos.Recognized == None))
+            q &= ((db.TblPhotos.recognized == True) | (db.TblPhotos.recognized == None))
     elif vars.selected_recognition == 'unrecognized':
-        q &= ((db.TblPhotos.Recognized == False) | (db.TblPhotos.Recognized == None))
+        q &= ((db.TblPhotos.recognized == False) | (db.TblPhotos.recognized == None))
     elif vars.selected_recognition == 'recognized-not-located':
         lst = unlocated_faces()
         q &= (db.TblPhotos.id.belongs(lst))
@@ -764,7 +764,7 @@ def make_photos_query(vars):
 def with_members_query(member_ids):
     result = None
     for mid in member_ids:
-        q = (db.TblPhotos.id == db.TblMemberPhotos.Photo_id) & (db.TblMemberPhotos.Member_id == mid)
+        q = (db.TblPhotos.id == db.TblMemberPhotos.photo_id) & (db.TblMemberPhotos.member_id == mid)
         lst = db(q).select(db.TblPhotos.id)
         lst = [r.id for r in lst]
         if result:
@@ -775,7 +775,7 @@ def with_members_query(member_ids):
 
 
 def unlocated_faces():
-    q = (db.TblPhotos.id == db.TblMemberPhotos.Photo_id) & (db.TblMemberPhotos.x == None)
+    q = (db.TblPhotos.id == db.TblMemberPhotos.photo_id) & (db.TblMemberPhotos.x == None)
     lst = db(q).select(db.TblPhotos.id, db.TblMemberPhotos.id.count(), groupby=[db.TblPhotos.id], limitby=(0,5000))
     lst = [prec.TblPhotos.id for prec in lst]
     return lst
@@ -816,7 +816,7 @@ def process_photo_list(lst, photo_pairs=dict(), webpSupported=False):
         keywords=kws[rec.story_id]
         rec_title='{}: {}'.format(rec.name, keywords)
         dic = Storage(
-            description=rec.Description or "",
+            description=rec.description or "",
             name=rec.name,
             original_file_name=rec.original_file_name,
             keywords=keywords,

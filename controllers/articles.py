@@ -13,18 +13,18 @@ def article_list(vars):
                    name=rec.name,
                    date_start=rec.date_start,
                    date_end=rec.date_end,
-                   has_profile_photo=bool(rec.facePhotoURL), #used in client!
+                   has_profile_photo=bool(rec.facephotourl), #used in client!
                    rnd=random.randint(0, 1000000),
-                   facePhotoURL=face_photo_url(rec, vars.webpSupported)) for rec in lst]
+                   facephotourl=face_photo_url(rec, vars.webpSupported)) for rec in lst]
     arr.sort(key=lambda item: item.rnd)
     return dict(article_list=arr)
 
 def face_photo_url(article_rec, webp_supported):
     folder = photos_folder('profile_photos')
     if webp_supported:
-        path = article_rec.facePhotoURL_webp or article_rec.facePhotoURL
+        path = article_rec.facephotourl_webp or article_rec.facephotourl
     else:
-        path = article_rec.facePhotoURL
+        path = article_rec.facephotourl
     path = path or 'dummy_face.png'
     return folder + path
 
@@ -66,7 +66,7 @@ def create_new_article(vars):
     tmp = save_article_face(params)
     rec.article_info.face_photo_url = tmp.face_photo_url
     article_rec = get_article_rec(article_id)
-    article_rec.facePhotoURL = tmp.face_photo_url
+    article_rec.facephotourl = tmp.face_photo_url
     article_rec = json_to_storage(article_rec)
     ws_messaging.send_message(key='ARTICLE_LISTS_CHANGED', group='ALL', article_rec=article_rec, new_article=True)
     return dict(article_id=article_id, article=rec)
@@ -117,7 +117,7 @@ def get_article_details(vars):
                 story_info=story_info, 
                 slides=slides, #todo: duplicate?
                 article_stories=article_stories,
-                facePhotoURL = photos_folder('profile_photos') + (article_info.facePhotoURL or "dummy_face.png")
+                facephotourl = photos_folder('profile_photos') + (article_info.facephotourl or "dummy_face.png")
                 )
 
 @serve_json
@@ -150,8 +150,8 @@ def add_story_article(vars):
 def save_article_info(vars):
     user_id = vars.user_id
     article_info = vars.article_info
-    if 'facePhotoURL' in article_info:
-        del article_info.facePhotoURL #it is saved separately, not updated in client and can only destroy here
+    if 'facephotourl' in article_info:
+        del article_info.facephotourl #it is saved separately, not updated in client and can only destroy here
     if article_info:
         tbl = db.TblArticles
         for fld in tbl:
@@ -203,7 +203,7 @@ def new_article_rec(name=None):
         story_info = Storage(display_version='New Story', story_versions=[], story_text='', story_id=None),
         slides=[],
         article_stories = [],
-        facePhotoURL = 'dummy_face.png',
+        facephotourl = 'dummy_face.png',
         name=name
     )
     return new_article
@@ -223,7 +223,7 @@ def get_article_rec(article_id, prepend_path=False):
     for d in dates:
         rec[d] = dates[d]
     if prepend_path :
-        rec.facePhotoURL = photos_folder('profile_photos') + (rec.facePhotoURL or 'dummy_face.png')
+        rec.facephotourl = photos_folder('profile_photos') + (rec.facephotourl or 'dummy_face.png')
     return rec
 
 def get_article_slides(article_id):

@@ -27,7 +27,7 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
     rec.full_name = member_display_name(rec, full=True)
     rec.name = member_display_name(rec, full=False)
     if prepend_path:
-        rec.facePhotoURL = photos_folder('profile_photos') + (rec.facePhotoURL or 'dummy_face.png')
+        rec.facephotourl = photos_folder('profile_photos') + (rec.facephotourl or 'dummy_face.png')
     if is_dead:
         rec.life_status = "dead"
     else:
@@ -37,10 +37,10 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
 
 def older_display_name(rec, full):
     s = rec.name or ''
-    if full and rec.FormerName:
-        s += ' ({})'.format(rec.FormerName)
-    if full and rec.NickName:
-        s += ' - {}'.format(rec.NickName)
+    if full and rec.formername:
+        s += ' ({})'.format(rec.formername)
+    if full and rec.nickname:
+        s += ' - {}'.format(rec.nickname)
     return s
 
 
@@ -60,8 +60,8 @@ def member_display_name(rec=None, member_id=None, full=True):
                 s += ' '
             s += rec.former_last_name
         s += ')'
-    if rec.NickName:
-        s += ' - {}'.format(rec.NickName)
+    if rec.nickname:
+        s += ' - {}'.format(rec.nickname)
     return s
 
 
@@ -207,9 +207,9 @@ def pin_story(story_id):
 def member_photos_by_updater(updater_id):
     db = inject('db')
     lst = db((db.TblMembers.deleted != True) & (db.TblMembers.updater_id == updater_id) & \
-             (db.TblMemberPhotos.Member_id == db.TblMembers.id)). \
+             (db.TblMemberPhotos.member_id == db.TblMembers.id)). \
         select(db.TblMembers.id, db.TblMembers.first_name, db.TblMembers.last_name, db.TblMembers.updater_id,
-               db.TblMemberPhotos.Photo_id, orderby=db.TblMembers.id)
+               db.TblMemberPhotos.photo_id, orderby=db.TblMembers.id)
     return lst
 
 
@@ -218,8 +218,8 @@ def profile_photo_path(story_id):
     member_rec = db(db.TblMembers.story_id == story_id).select().first()
     if not member_rec:
         comment(f"story id={story_id} has no member")
-    if member_rec and member_rec.facePhotoURL:
-        fname = member_rec.facePhotoURL
+    if member_rec and member_rec.facephotourl:
+        fname = member_rec.facephotourl
     else:
         fname = "dummy_face.png"
     return photos_folder('profile_photos') + fname

@@ -72,7 +72,7 @@ def fix_deleted_forever():
     db(db.TblStories).update(dead=False)
     
 def fix_photo_recognized():
-    db(db.TblPhotos.Recognized==None).update(Recognized=True)
+    db(db.TblPhotos.recognized==None).update(recognized=True)
 
 def fix_pdf_texts():
     db(db.TblDocs.text_extracted==None).update(text_extracted=False)

@@ -289,7 +289,7 @@ def scan_all_unscanned_photos():
                 failed_crops += 1
             for face in faces:
                 x, y, w, h = face
-                db.TblMemberPhotos.insert(Photo_id=rec.id, x=x, y=y, w=w, h=h) # for older records,
+                db.TblMemberPhotos.insert(photo_id=rec.id, x=x, y=y, w=w, h=h) # for older records,
                                                             # merge with record photo_id-member_id
         db.commit()
         missing = db((db.TblPhotos.photo_missing == True) & \
@@ -386,7 +386,7 @@ def get_slides_from_photo_list(q):
             width=rec.width,
             height=rec.height,
             has_story_text=rec.has_story_text,
-            title=rec.Description or rec.name)
+            title=rec.description or rec.name)
         if rec.id in photo_pairs:
             dic['back'] = photo_pairs[rec.id]
             dic['flipped'] = False
@@ -492,7 +492,7 @@ def resize_photo(photo_id, target_width=1200, target_height=800):
         resized_img = img.resize((width, height), Image.LANCZOS)
         prec.update_record(width=width, height=height)
         resized_img.save(file_name)
-        faces = db(db.TblMemberPhotos.Photo_id == photo_id).select()
+        faces = db(db.TblMemberPhotos.photo_id == photo_id).select()
         for face in faces:
             if not face.x:
                 return
@@ -545,7 +545,7 @@ def dhash_photo(photo_path=None, img=None):
 
 def profile_photo_moved(face):
     db = inject('db')
-    member_profile_photo_path = db(db.TblMembers.id==face.member_id).select().first().facePhotoURL
+    member_profile_photo_path = db(db.TblMembers.id==face.member_id).select().first().facephotourl
     if member_profile_photo_path:
         lst = member_profile_photo_path.split('-')
         photo_id = int(lst[2].split('.')[0])
@@ -555,7 +555,7 @@ def profile_photo_moved(face):
 
 def article_profile_photo_moved(face):
     db = inject('db')
-    article_profile_photo_path = db(db.TblArticles.id==face.article_id).select().first().facePhotoURL
+    article_profile_photo_path = db(db.TblArticles.id==face.article_id).select().first().facephotourl
     lst = article_profile_photo_path.split('-')
     photo_id = int(lst[2].split('.')[0])
     return photo_id == face.photo_id
@@ -569,15 +569,15 @@ def save_member_face(params):
     else:
         face_photo_url = None
     if params.old_member_id and params.old_member_id > 0:
-        q = (db.TblMemberPhotos.Photo_id == face.photo_id) & \
-            (db.TblMemberPhotos.Member_id == params.old_member_id)
+        q = (db.TblMemberPhotos.photo_id == face.photo_id) & \
+            (db.TblMemberPhotos.member_id == params.old_member_id)
     else:
-        q = (db.TblMemberPhotos.Photo_id == face.photo_id) & \
-            (db.TblMemberPhotos.Member_id == face.member_id)
+        q = (db.TblMemberPhotos.photo_id == face.photo_id) & \
+            (db.TblMemberPhotos.member_id == face.member_id)
     who_identified = auth.current_user()
     data = dict(
-        Photo_id=face.photo_id,
-        Member_id=face.member_id,
+        photo_id=face.photo_id,
+        member_id=face.member_id,
         r=face.r,
         x=face.x,
         y=face.y,
@@ -591,7 +591,7 @@ def save_member_face(params):
         if params.old_member_id and params.old_member_id > 0 and params.old_member_id != face.member_id:
             db(q).delete()
     member_name = member_display_name(member_id=face.member_id)
-    db(db.TblPhotos.id==face.photo_id).update(Recognized=True, handled=True)
+    db(db.TblPhotos.id==face.photo_id).update(recognized=True, handled=True)
     ws_messaging.send_message(key='MEMBER_PHOTO_LIST_CHANGED', group='ALL', article_id=face.article_id, photo_id=face.photo_id)
     if face_photo_url:
         face_photo_url = photos_folder("profile_photos") + face_photo_url 
@@ -629,7 +629,7 @@ def save_article_face(params):
             db(q).delete()
     rec = db(db.TblArticles.id==face.article_id).select().first()
     article_name = rec.name
-    db(db.TblPhotos.id==face.photo_id).update(Recognized=True, handled=True)
+    db(db.TblPhotos.id==face.photo_id).update(recognized=True, handled=True)
     ws_messaging.send_message(key='ARTICLE_PHOTO_LIST_CHANGED', group='ALL', article_id=face.article_id, photo_id=face.photo_id)
     if face_photo_url:
         face_photo_url = photos_folder("profile_photos") + face_photo_url
@@ -641,21 +641,21 @@ def save_profile_photo(face, is_article=False):
     input_path = local_photos_folder() + rec.photo_path
     prefix = "AP" if is_article else "PP"
     iid = face.article_id if is_article else face.member_id
-    facePhotoURL = f"{prefix}-{iid}-{face.photo_id}.jpg" #todo: just add ?filedate when used
-    output_path = local_photos_folder("profile_photos") + facePhotoURL
+    facephotourl = f"{prefix}-{iid}-{face.photo_id}.jpg" #todo: just add ?filedate when used
+    output_path = local_photos_folder("profile_photos") + facephotourl
     crop(input_path, output_path, face)
     now = datetime.datetime.now()
     timestamp = int(round(now.timestamp()))
-    facePhotoURL += f"?d={timestamp}"
+    facephotourl += f"?d={timestamp}"
     if is_article:
-        db(db.TblArticles.id == face.article_id).update(facePhotoURL=facePhotoURL)
+        db(db.TblArticles.id == face.article_id).update(facephotourl=facephotourl)
         ws_messaging.send_message('ARTICLE_PROFILE_CHANGED', group='ALL', 
-            article_id=face.article_id, face_photo_url=photos_folder("profile_photos") + facePhotoURL)
+            article_id=face.article_id, face_photo_url=photos_folder("profile_photos") + facephotourl)
     else:
-        db(db.TblMembers.id == face.member_id).update(facePhotoURL=facePhotoURL)
+        db(db.TblMembers.id == face.member_id).update(facephotourl=facephotourl)
         ws_messaging.send_message('PHOTO_PROFILE_CHANGED', group='ALL', 
-            member_id=face.member_id, face_photo_url=photos_folder("profile_photos") + facePhotoURL)
-    return facePhotoURL
+            member_id=face.member_id, face_photo_url=photos_folder("profile_photos") + facephotourl)
+    return facephotourl
 
 def get_photo_rec(photo_id):
     db = inject('db')
@@ -925,11 +925,11 @@ def calculate_geo_info():
 
 def recalculate_recognized():
     db = inject('db')
-    db(db.TblPhotos.Recognized==None).update(Recognized=False)
-    for pm in db(db.TblMemberPhotos).select(db.TblMemberPhotos.Photo_id, db.TblMemberPhotos.Photo_id.count(),groupby=db.TblMemberPhotos.Photo_id):
-        db(db.TblPhotos.id==pm.TblMemberPhotos.Photo_id).update(Recognized=True, handled=True)
+    db(db.TblPhotos.recognized==None).update(recognized=False)
+    for pm in db(db.TblMemberPhotos).select(db.TblMemberPhotos.photo_id, db.TblMemberPhotos.photo_id.count(),groupby=db.TblMemberPhotos.photo_id):
+        db(db.TblPhotos.id==pm.TblMemberPhotos.photo_id).update(recognized=True, handled=True)
     for pm in db(db.TblArticlePhotos).select(db.TblArticlePhotos.photo_id, db.TblArticlePhotos.photo_id.count(), groupby=db.TblArticlePhotos.photo_id):
-        db(db.TblPhotos.id==pm.TblArticlePhotos.photo_id).update(Recognized=True, handled=True)
+        db(db.TblPhotos.id==pm.TblArticlePhotos.photo_id).update(recognized=True, handled=True)
     return "done"
 
 def fix_date_ends():
