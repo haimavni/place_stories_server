@@ -322,9 +322,8 @@ db.define_table('TblChats',
 )
 
 db.define_table('TblPhotos',
-                # Field('ArchiveNum', type='string'),
-                Field('archivenum', type='string'),
-                Field('description', type='text'),
+                Field('ArchiveNum', type='string'),
+                Field('Description', type='text'),
                 Field('DescriptionNoHtml', type='text'),
                 Field('story_id', type=db.TblStories),
                 Field('IIDD', type='integer'),
