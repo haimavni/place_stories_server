@@ -230,7 +230,11 @@ def get_stories_index(vars):
 def get_random_member(vars):
     if db(db.TblMembers.deleted != True).count() == 0:
         return dict(member_data = None)
-    lst = get_members_stats()
+    lst = []
+    try:
+        lst = get_members_stats()
+    except Exception as e:
+        lst = None
     if not lst:
         return dict(member_data=None)
     lst = sorted(lst, key=lambda rec: -rec.num_photos)
