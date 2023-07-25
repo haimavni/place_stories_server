@@ -249,7 +249,7 @@ def get_article_stories(article_id):
             story_id = story.id,
             story_text = story.story,
             preview=get_reisha(story.preview),
-            source = event.SSource,
+            source = event.ssource,
             used_for=story.used_for, 
             author_id=story.author_id,
             creation_date=story.creation_date,
