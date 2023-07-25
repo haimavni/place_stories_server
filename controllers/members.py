@@ -1233,10 +1233,10 @@ def assign_photos(story_list):
         photo_story_list[photo.story_id].photo_src = photo_src
         photo_story_list[photo.story_id].photo_id = photo.id
     video_story_ids = list(video_story_list.keys())
-    lst = db(db.TblVideos.story_id.belongs(video_story_ids)).select(db.TblVideos.story_id, db.TblVideos.src)
+    lst = db(db.TblVideos.story_id.belongs(video_story_ids)).select(db.TblVideos.story_id, db.TblVideos.src, db.TblVideos.thumbnail_url)
     for video in lst:
         video_story_list[video.story_id].video_src = video.src
-
+        video_story_list[video.story_id].thumbnail_url = video.thumbnail_url
 
 def photo_member_ids(photo_id):
     qmp = (db.TblMemberPhotos.Photo_id == photo_id)
