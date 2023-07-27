@@ -1247,7 +1247,6 @@ def assign_photos(story_list):
         video_story_list[video.story_id].thumbnail_url = video.thumbnail_url
 
 
-
 def photo_member_ids(photo_id):
     qmp = (db.TblMemberPhotos.photo_id == photo_id)
     lst = db(qmp).select(db.TblMemberPhotos.member_id)
