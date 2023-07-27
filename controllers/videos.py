@@ -271,7 +271,7 @@ def get_video_info(vars):
     member_ids = [m.member_id for m in member_ids]
     members = db(db.TblMembers.id.belongs(member_ids)).select()
     members = [Storage(id=member.id,
-                       facePhotoURL=photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png"),
+                       facephotourl=photos_folder('profile_photos') + (member.facephotourl or "dummy_face.png"),
                        full_name=get_full_name(member)) for member in members]
     return dict(video_source=video_source,
                 video_story=video_story,
@@ -336,9 +336,9 @@ def update_video_members(vars):
     for mid in new_members:
         if mid not in old_members_set:
             db.TblMembersVideos.insert(video_id=video_id, member_id=mid)
-    members = db(db.TblMembers.id.belongs(new_members)).select(db.TblMembers.id, db.TblMembers.facePhotoURL)
+    members = db(db.TblMembers.id.belongs(new_members)).select(db.TblMembers.id, db.TblMembers.facephotourl)
     for member in members:
-        member.facePhotoURL = photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png")
+        member.facephotourl = photos_folder('profile_photos') + (member.facephotourl or "dummy_face.png")
     return dict(members=members)
 
 @serve_json

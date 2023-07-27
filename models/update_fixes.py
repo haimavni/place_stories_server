@@ -13,7 +13,7 @@ def _init_configuration_table():
     if db(db.TblConfiguration).isempty():
         _delay()
         if db(db.TblConfiguration).isempty():
-            db.TblConfiguration.insert()
+            db.TblConfiguration.insert(fix_level=len(_fixes))
             db.commit()
             
 def __apply_fixes():
@@ -48,6 +48,8 @@ def _apply_fixes():
         f.write('locked')
     try:
         __apply_fixes()
+    except Exception as e:
+        comment(f"apply fixes failed: {e}")
     finally:  
         if os.path.isfile(lock_file_name):
             os.remove(lock_file_name)
@@ -70,7 +72,7 @@ def fix_deleted_forever():
     db(db.TblStories).update(dead=False)
     
 def fix_photo_recognized():
-    db(db.TblPhotos.Recognized==None).update(Recognized=True)
+    db(db.TblPhotos.recognized==None).update(recognized=True)
 
 def fix_pdf_texts():
     db(db.TblDocs.text_extracted==None).update(text_extracted=False)

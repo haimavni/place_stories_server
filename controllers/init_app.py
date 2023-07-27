@@ -95,13 +95,13 @@ def get_frame_list(vars):
     return dict(frame_urls=result)
 
 def notify_developers(rec):
-    comment('about to nofity me about new customer')
+    comment('about to notify me about new customer')
     name = rec.first_name + ' ' + rec.last_name
     site_name = rec.app_name
-    email = rec.email
-    message = ('', f'''
-    New site {site_name} was requested by {name} {email}.
-    ''')
+    mail = rec.email
+    message = f'''
+    New site {site_name} was requested by {name} {mail}.
+    '''
     receivers = auth.role_user_list(DEVELOPER)
     comment(f"message is {message}, receivers: {receivers}")
     result = email(receivers=receivers, message=message, subject='New app requested')

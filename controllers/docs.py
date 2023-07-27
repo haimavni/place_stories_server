@@ -165,7 +165,7 @@ def apply_topics_to_doc(vars):
     srec = db(db.TblStories.id == rec.story_id).select().first()
     srec.update_record(keywords=keywords, is_tagged=is_tagged)
     return dict()
-    # rec.update_record(Recognized=True)
+    # rec.update_record(recognized=True)
     # rec.update_record(handled=True)
 
 @serve_json
@@ -246,8 +246,8 @@ def get_doc_info(vars):
     member_ids = [m.member_id for m in member_ids]
     members = db(db.TblMembers.id.belongs(member_ids)).select()
     members = [Storage(id=member.id,
-                       facePhotoURL=photos_folder(
-                           'profile_photos') + (member.facePhotoURL or "dummy_face.png"),
+                       facephotourl=photos_folder(
+                           'profile_photos') + (member.facephotourl or "dummy_face.png"),
                        full_name=full_member_name(member))
                for member in members]
     q = (db.TblDocSegments.doc_id == doc_id) & \
@@ -313,8 +313,8 @@ def get_doc_segment_info(vars):
     member_ids = [m.member_id for m in member_ids]
     members = db(db.TblMembers.id.belongs(member_ids)).select()
     members = [Storage(id=member.id,
-                       facePhotoURL=photos_folder(
-                           'profile_photos') + (member.facePhotoURL or "dummy_face.png"),
+                       facephotourl=photos_folder(
+                           'profile_photos') + (member.facephotourl or "dummy_face.png"),
                        full_name=full_member_name(member))
                for member in members]
     doc_topics=get_object_topics(story_id, "S")
@@ -402,10 +402,10 @@ def update_doc_members(vars):
         if mid not in old_members_set:
             db.TblMembersDocs.insert(doc_id=doc_id, member_id=mid)
     members=db(db.TblMembers.id.belongs(new_members)).select(
-        db.TblMembers.id, db.TblMembers.facePhotoURL)
+        db.TblMembers.id, db.TblMembers.facephotourl)
     for member in members:
-        member.facePhotoURL=photos_folder(
-            'profile_photos') + (member.facePhotoURL or "dummy_face.png")
+        member.facephotourl=photos_folder(
+            'profile_photos') + (member.facephotourl or "dummy_face.png")
     return dict(members=members)
 
 @ serve_json
@@ -431,10 +431,10 @@ def update_doc_segment_members(vars):
             db.TblMembersDocSegments.insert(
                 doc_segment_id=doc_segment_id, member_id=mid)
     members=db(db.TblMembers.id.belongs(new_members)).select(
-        db.TblMembers.id, db.TblMembers.facePhotoURL)
+        db.TblMembers.id, db.TblMembers.facephotourl)
     for member in members:
-        member.facePhotoURL=photos_folder(
-            'profile_photos') + (member.facePhotoURL or "dummy_face.png")
+        member.facephotourl=photos_folder(
+            'profile_photos') + (member.facephotourl or "dummy_face.png")
     return dict(members=members)
 
 @ serve_json
