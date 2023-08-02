@@ -15,13 +15,14 @@ class PortTL():
     # url="https://ganhaim.localtimeline.com/index.php?lang=he#", level=0):
     def scan(self):
         site_name = self.get_site_name()
+        self.downloader = open(f"/home/haim/download_{site_name}.bash", "w", encoding="utf-8")
         self.plan = open(f"/home/haim/{site_name}.txt", "w", encoding="utf-8")
         soup = self.get_soup(self.url)
         lst = soup.find_all(attrs={"class": "timeline-year"})
         x = len(lst)
         print(f"{x} years")
         n = 0
-        # lst.reverse()
+        lst.reverse()
         # lst = lst[:5] # Temporary!!!!!!!!!!!!!!!!!!!
         for div in lst:
             n += 1
@@ -63,6 +64,16 @@ class PortTL():
         event_full_text = event_full_text_span.get_text().strip()
         # print(f"href: {href}")
         soup = self.get_soup(href)
+        categories = soup.find_all("ul", attrs={"class":"category-list"})
+        cat_names = []
+        if len(categories) > 0:
+            # print(f"categories: {categories}")
+            for cat in categories:
+                cat_lis = cat.find_all("li")
+                cat_names1 = [c.get_text() for c in cat_lis]
+                cat_names.append(cat_names1)
+                # print(cat_names)
+            
         event_name1 = soup.find("span", attrs={"class": "event-name-inner"})
         event_name_span = event_name1.find(
             "span", attrs={"class": "hidden-mobile"})
@@ -87,7 +98,8 @@ class PortTL():
                      event_full_text=event_full_text,
                      read_more_text=read_more_text,
                      credits=credits,
-                     items=[]
+                     items=[],
+                     categories=cat_names
                      )
         self.plan_list.append(event)
         imgs = soup.find_all("img")
@@ -96,12 +108,17 @@ class PortTL():
             # print(img.attrs)
             if "data-src" not in img.attrs:
                 continue
+            src = img.attrs["data-src"]
+            path = f"photos/oversize/uploads/{self.year}"
+            photo_path = path + "/" + self.file_name_of_src(src)
             img_data = dict(
                 year=self.year,
                 kind="image", 
-                src=img.attrs["data-src"], 
+                src=src,
+                photo_path=photo_path, 
                 caption=img.attrs["alt"])
             event["items"].append(img_data)
+            self.downloader.write(f"wget -P ./{path} {src}\n")
         iframes = soup.find_all("iframe")
         num_iframes = len(iframes)
         for ifr in iframes:
@@ -115,8 +132,13 @@ class PortTL():
             else:
                 print("unknown iframe type")
             ifr_data = dict(year=self.year,
-                            kind=kind, 
+                            kind=kind,
                             src=src)
+            if kind == "pdf":
+                path = f"uploads/{self.year}"
+                doc_path = path + "/" + self.file_name_of_src(src)
+                ifr_data["doc_path"] = doc_path
+                self.downloader.write(f"wget -P ./docs/{path} {src}\n")
             # ifr_data.update(event_head)
             event["items"].append(ifr_data)
             # print(ifr.attrs)
@@ -137,7 +159,8 @@ class PortTL():
                 image_caption = image.attrs["alt"]
                 # print(image_src)
                 # print(image_caption)
-                curr_image["image_src"] = image_src
+                curr_image["src"] = image_src
+                self.downloader.write(f"wget -P ./photos/oversize/uploads/{self.year} {image_src}\n")
                 curr_image["image_caption"] = image_caption
                 curr_image.update(event_head)
                 self.plan_list.append(curr_image)
@@ -157,9 +180,15 @@ class PortTL():
                     kind = "video"
                 else:
                     print("unknown iframe type")
-                ifr_data = dict(kind=kind, src=src)
-                ifr_data.update(event_head)
-                self.plan_list.append(ifr_data)
+                if kind == "pdf":
+                    path = f"uploads/{self.year}"
+                    doc_path = path + "/" + self.file_name_of_src(src)
+                    self.downloader.write(f"wget -P ./docs/{path} {src}\n")
+                    ifr_data = dict(kind=kind,
+                                    doc_path=doc_path, 
+                                    src=src)
+                    ifr_data.update(event_head)
+                    self.plan_list.append(ifr_data)
 
     def scan_iframes(self, url):
         soup = self.get_soup(url)
@@ -226,6 +255,10 @@ class PortTL():
         r1 = self.url.find("//") + 2
         r2 = self.url.find(".")
         return self.url[r1:r2]
+    
+    def file_name_of_src(self, src):
+        r = src.rfind("/")
+        return src[r+1:]
 
 
 port_tl = PortTL(url="https://ganhaim.localtimeline.com/index.php?lang=he#")
