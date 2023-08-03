@@ -64,16 +64,7 @@ class PortTL():
         event_full_text = event_full_text_span.get_text().strip()
         # print(f"href: {href}")
         soup = self.get_soup(href)
-        categories = soup.find_all("ul", attrs={"class":"category-list"})
-        cat_names = []
-        if len(categories) > 0:
-            # print(f"categories: {categories}")
-            for cat in categories:
-                cat_lis = cat.find_all("li")
-                cat_names1 = [c.get_text() for c in cat_lis]
-                cat_names.append(cat_names1)
-                # print(cat_names)
-            
+        cat_names = self.get_categories(soup)
         event_name1 = soup.find("span", attrs={"class": "event-name-inner"})
         event_name_span = event_name1.find(
             "span", attrs={"class": "hidden-mobile"})
@@ -147,9 +138,15 @@ class PortTL():
 
     def scan_images(self, url):
         soup = self.get_soup(url)
+        cat_names = self.get_categories(soup)
+        if len(cat_names) > 0:
+            print(f"cat_names in scan images: {cat_names}")
         main_image_items = soup.find_all(self.is_image_item)
         event_head = dict(year=self.year)
         for item in main_image_items:
+            cat_names = self.get_categories(item)
+            if len(cat_names) > 0:
+                print(f"cat names: {cat_names}")
             images = item.find_all('img')
             for image in images:
                 curr_image = dict(year=self.year, kind="image")
@@ -189,6 +186,7 @@ class PortTL():
                                     src=src)
                     ifr_data.update(event_head)
                     self.plan_list.append(ifr_data)
+            categories_list = item.find("ul", attrs={"category-list"})
 
     def scan_iframes(self, url):
         soup = self.get_soup(url)
@@ -259,6 +257,15 @@ class PortTL():
     def file_name_of_src(self, src):
         r = src.rfind("/")
         return src[r+1:]
+    
+    def get_categories(self, soup):
+        categories = soup.find("ul", attrs={"class":"category-list"})
+        # cat_names = []
+        if not categories:
+            return []
+        cat_list = categories.find_all("li")
+        cat_names = [c.get_text() for c in cat_list]
+        return cat_names
 
 
 port_tl = PortTL(url="https://ganhaim.localtimeline.com/index.php?lang=he#")
