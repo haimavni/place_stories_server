@@ -44,6 +44,7 @@ class PortTL():
             links = year_images.find_all('a')
             for link in links:
                 href = link.attrs['href']
+                self.scan_link(href) # will replace the code below
                 self.scan_images(href)
                 self.scan_iframes(href)
                 self.scan_texts(href)
@@ -54,6 +55,34 @@ class PortTL():
         with open(f"/home/haim/migrations/{self.site_name}/all_categories.txt", "w", encoding="utf-8") as f:
             f.write(json_str)
         print("\nDone")
+
+    def scan_link(self, href):
+        soup = self.get_soup(href)
+        gallery = soup.find("div", class_="gallery-main")
+        comments = self.get_comments(soup)
+        read_more_div = gallery.find("div", "read-more-content_inner")
+        if read_more_div:
+            read_more = read_more_div.get_text()
+        else:
+            read_more = ""
+        item_divs = gallery.find_all("div", "main-item-wrapper")
+        for item_div in item_divs:
+            data_type = item_div.attrs["data-type"]
+            data_id = item_div.attrs["data-id"]
+            if data_type == "pdf":
+                iframe = item_div.find("iframe")
+                src = iframe.attrs["src"]
+            elif data_type == "image":
+                img = item_div.find("img")
+                src = img.attrs["data-src"]
+                caption = img.attrs.get("alt", "")
+            elif data_type == "video":
+                iframe = item_div.find("iframe")
+                src = iframe.attrs["data-src"]
+            else:
+                print(f"Unexpected data type {data_type}")
+
+
 
     def scan_texts(self, href):
         soup = self.get_soup(href)
