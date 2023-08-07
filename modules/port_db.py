@@ -4,7 +4,11 @@ from injections import inject
 
 def read_plan():
     request = inject("request")
-    fname = f"/apps_data/{request.application}/plan.txt"
+    app = request.application
+    r = app.find("__")
+    if r > 0:
+        app = app[:r]
+    fname = f"/apps_data/{app}/plan.txt"
     with open(fname, "r", encoding="utf-8") as f:
         data = f.read()
     obj = json.loads(data)
