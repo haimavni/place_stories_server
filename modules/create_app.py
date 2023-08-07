@@ -12,9 +12,11 @@ def create_an_app(rec):
     logs_path = log_path()
     app = rec.app_name
     ###comment('in create app. path: {p}, folder: {f}, request.folder: {rf}', p=path, f=folder, rf=request.folder)
-    comment(f'about to create {app}')
+    comment(f'about to create {app} and run it from {path}')
     orig_dir = os.getcwd()
     os.chdir(path)
+    curr_dir = os.getcwd()
+    comment(f"curr dir is {curr_dir}")
     command = f'bash create_app.bash {app} test {email} {rec.password} {rec.first_name} {rec.last_name}'
     log_file_name = logs_path + f"app-creation-{rec.app_name}.log"
     with open(log_file_name, 'w') as log_file:
