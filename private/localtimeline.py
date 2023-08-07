@@ -38,16 +38,11 @@ class PortTL():
             events = year_events.find_all("a")
             for event in events:
                 self.scan_event(event)
-            # year_images = inner.find(
-            #     "div", attrs={"class": "year-images bg-background-light"})
             year_images = inner.find("div", class_="year-images")
             links = year_images.find_all('a')
             for link in links:
                 href = link.attrs['href']
                 self.scan_link(href) # will replace the code below
-                self.scan_images(href)
-                self.scan_iframes(href)
-                self.scan_texts(href)
         json_str = json.dumps(self.plan_list, ensure_ascii=False, indent=4)
         with open(f"/home/haim/migrations/{self.site_name}/plan.txt", "w", encoding="utf-8") as f:
             f.write(json_str)
@@ -60,85 +55,106 @@ class PortTL():
         soup = self.get_soup(href)
         gallery = soup.find("div", class_="gallery-main")
         comments = self.get_comments(soup)
+        event_name_span = soup.find("span", class_="event-name-inner")
+        span = event_name_span.find("span", class_="hidden-mobile")
+        event_name = span.get_text()
         read_more_div = gallery.find("div", "read-more-content_inner")
         if read_more_div:
-            read_more = read_more_div.get_text()
+            read_more_text = read_more_div.get_text()
         else:
-            read_more = ""
+            read_more_text = ""
+        cat_names = self.get_categories(soup)
+        credits = self.get_link_credits(soup)
+        event = dict(year=self.year,
+                     kind="ievent",
+                     event_name=event_name,
+                     read_more_text=read_more_text,
+                     items=[],
+                     categories=cat_names
+                     )
         item_divs = gallery.find_all("div", "main-item-wrapper")
         for item_div in item_divs:
             data_type = item_div.attrs["data-type"]
             data_id = item_div.attrs["data-id"]
+            item_credit = credits.get(data_id, None)
+            item_rec = dict(year=self.year,
+                            credit=item_credit,
+                            categories=cat_names,
+                            data_type=data_type)
             if data_type == "pdf":
                 iframe = item_div.find("iframe")
-                src = iframe.attrs["src"]
+                src = iframe.attrs["data-src"]
+                src = self.normalize_pdf_url(src)
             elif data_type == "image":
                 img = item_div.find("img")
                 src = img.attrs["data-src"]
                 caption = img.attrs.get("alt", "")
+                item_rec["caption"] = caption
             elif data_type == "video":
                 iframe = item_div.find("iframe")
                 src = iframe.attrs["data-src"]
             else:
                 print(f"Unexpected data type {data_type}")
+            if src in self.urls:
+                item_rec["duplicate"] = True
+            else:
+                item_rec["duplicate"] = False
+                if data_type == "pdf":
+                    path = f"docs/ported/{self.year}"
+                    doc_path = path + "/" + self.file_name_of_src(src)
+                    item_rec["doc_path"] = doc_path
+                    self.downloader.write(f"wget -P ./{path} {src}\n")
+                elif data_type == "image":
+                    path = f"photos/oversize/ported/{self.year}"
+                    photo_path = path + "/" + self.file_name_of_src(src)
+                    item_rec["photo_path"] = photo_path
+                self.urls.add(src)
+                item_comments = comments.get(data_id, [])
+                item_rec["comments"] = item_comments
+                event["items"].append(item_rec)
+        self.plan_list.append(event)
 
-
-
-    def scan_texts(self, href):
-        soup = self.get_soup(href)
-        texts = soup.find_all(attrs={"class": "textLayer"})
-        # print("texts")
+    def get_link_credits(self, soup):
+        result = dict()
+        credit_arr = soup.find_all("div", class_="main-image-credits-wrapper nice-scroll-bar hidden-by-default")
+        for credit_rec in credit_arr:
+            data_id = credit_rec.attrs["data-id"]
+            span = credit_rec.find("span", class_="credits-content")
+            name = span.get_text()
+            result[data_id] = name
+        return result
 
     def scan_event(self, event):
         href = event.attrs["href"]
         event_full_text_span = event.find(self.is_full_text)
         event_full_text = event_full_text_span.get_text().strip()
-        # print(f"href: {href}")
         soup = self.get_soup(href)
         cat_names = self.get_categories(soup)
         event_name1 = soup.find("span", attrs={"class": "event-name-inner"})
         event_name_span = event_name1.find(
             "span", attrs={"class": "hidden-mobile"})
         event_name = event_name_span.get_text().strip()
-        # print(f"event name: {event_name}")
         read_more_content = soup.find(
             "div", attrs={"class": "read-more-content-inner"})
         if read_more_content:
             read_more_text = (read_more_content.get_text().strip())
         else:
             read_more_text = None
-        credits_span = soup.find("span", attrs={"class": "credits-content"})
-        if credits_span:
-            credits = credits_span.get_text().strip()
-        else:
-            credits = None
-        # comments = soup.find_all(self.is_comment_container)
-        # if comments:
-        #     print("found comments!")
         comments = self.get_comments(soup)
         event = dict(year=self.year,
                      kind="event",
                      event_name=event_name,
                      event_full_text=event_full_text,
                      read_more_text=read_more_text,
-                     credits=credits,
                      items=[],
                      categories=cat_names
                      )
         main_items = soup.find_all(self.is_main_item_wrapper)
+        credits_dic = self.get_link_credits(soup)
+
         for item in main_items:
             data_type = item.attrs.get("data-type", "unknown")
             data_id = item.attrs["data-id"]
-            # wait for python 3.10
-            # match data_type:
-            #     case "image":
-            #         print("image")
-            #     case "pdf":
-            #         print("pdf")
-            #     case "video":
-            #         print("video")
-            #     case _:
-            #         print(f"data type is {data_type}")
             if data_type == "pdf":
                 item_data = self.handle_pdf(item)
             elif data_type == "video":
@@ -149,33 +165,10 @@ class PortTL():
                 print(f"Unknown data type {data_type}")
                 continue
             if item_data and item_data != "duplicate":
+                credits = credits_dic.get(data_id, None)
+                item_data["credits"] = credits
                 item_data["comments"] = self.get_item_comments(comments, data_id)
                 event["items"].append(item_data)
-        # iframes = soup.find_all("iframe")
-        # num_iframes = len(iframes)
-        # for ifr in iframes:
-        #     if "data-src" not in ifr.attrs:
-        #         continue
-        #     src = ifr.attrs["data-src"]
-        #     if src in self.urls:
-        #         # print("duplicate iframe")
-        #         continue
-        #     self.urls.add(src)
-        #     if "main-item--iframe-pdf" in ifr.attrs["class"]:
-        #         kind = "pdf"
-        #     elif "main-item--iframe-video" in ifr.attrs["class"]:
-        #         kind = "video"
-        #     else:
-        #         print("unknown iframe type")
-        #     ifr_data = dict(year=self.year,
-        #                     kind=kind,
-        #                     src=src)
-        #     if kind == "pdf":
-        #         path = f"uploads/{self.year}"
-        #         doc_path = path + "/" + self.file_name_of_src(src)
-        #         ifr_data["doc_path"] = doc_path
-        #         self.downloader.write(f"wget -P ./docs/{path} {src}\n")
-        #     event["items"].append(ifr_data)
         if len(event["items"]) > 0:
             self.plan_list.append(event)
 
@@ -190,10 +183,11 @@ class PortTL():
         self.urls.add(src)
         if "main-item--iframe-pdf" not in iframe.attrs["class"]:
             print("---------------not pdf???---------------")
+        src = self.normalize_pdf_url(src)
         ifr_data = dict(year=self.year,
                         kind="pdf",
                         src=src)
-        path = f"uploads/{self.year}"
+        path = f"ported/{self.year}"
         doc_path = path + "/" + self.file_name_of_src(src)
         ifr_data["doc_path"] = doc_path
         self.downloader.write(f"wget -P ./docs/{path} {src}\n")
@@ -211,20 +205,20 @@ class PortTL():
         if "main-item--iframe-video" not in iframe.attrs["class"]:
             print("---------------not video???---------------")
         ifr_data = dict(year=self.year,
-                        kind="pdf",
+                        kind="video",
                         src=src)
         return ifr_data
 
     def handle_image(self, item):
         # print("handle image")            
         img = item.find("img")
-        if "data-src" not in img.attrs:
+        if (not img) or "data-src" not in img.attrs:
             return None
         src = img.attrs["data-src"]
         if src in self.urls:
             return "duplicate"
         self.urls.add(src)
-        path = f"photos/oversize/uploads/{self.year}"
+        path = f"photos/oversize/ported/{self.year}"
         photo_path = path + "/" + self.file_name_of_src(src)
         data_id = item.attrs["data-id"]
         img_data = dict(
@@ -241,75 +235,34 @@ class PortTL():
         # print("get item comments")
         return comments.get(data_id, None)   
 
-    def scan_images(self, url):
-        soup = self.get_soup(url)
-        cat_names = self.get_categories(soup)
-        comments = self.get_comments(soup)
-        event = dict(kind="ievent", 
-                     year=self.year,
-                     categories=cat_names,
-                     items=[])
-        main_image_items = soup.find_all(self.is_image_item)
-        for item in main_image_items:
-            image = item.find("img")
-            curr_image = dict(year=self.year, 
-                              kind="image",
-                              categories=cat_names) # duplicates event but they may be watched in different context e.g. member photos
-            image_src = image.attrs['data-src']
-            if image_src in self.urls:
-                # print("duplicate!")
-                continue
-            self.urls.add(image_src)
-            image_caption = image.attrs["alt"]
-            curr_image["src"] = image_src
-            self.downloader.write(f"wget -P ./photos/oversize/uploads/{self.year} {image_src}\n")
-            curr_image["caption"] = image_caption
-            event["items"].append(curr_image)
-        if len(event["items"]) > 0:
-            self.plan_list.append(event)
-
-    def scan_iframes(self, url):
-        soup = self.get_soup(url)
-        iframes = soup.find_all("iframe")
-        # print(f"{len(iframes)} iframes found")
-        for iframe in iframes:
-            curr_iframe = dict(year=self.year)
-            if "class" in iframe.attrs:
-                if "main-item--iframe-video" in iframe.attrs["class"]:
-                    curr_iframe["kind"] = "video"
-                    data_src = iframe.attrs["data-src"]
-                    curr_iframe["src"] = data_src
-                    if data_src in self.urls:
-                        continue
-                    self.urls.add(data_src)
-                elif "main-item--iframe-pdf" in iframe.attrs["class"]:
-                    curr_iframe["kind"] = "pdf"
-                    data_src = iframe.attrs["data-src"]
-                    curr_iframe["src"] = data_src
-                    if data_src in self.urls:
-                        continue
-                    self.urls.add(data_src)
-                else:
-                    print("Unknown iframe kind")
-
-            self.plan_list.append(curr_iframe)
-            # print(f"iframe: {iframe.attrs}")
-
     def get_soup(self, url):
         response = urlopen(url)
         html = response.read()
         return BeautifulSoup(html, "lxml")
     
+    def normalize_pdf_url(self, src):
+        if "%3A" not in src:
+            return src
+        r = src.rfind("https%3A")
+        s = src[r:]
+        s = s.replace("%3A", ":").replace("%2F", "/")
+        return s
+    
     def get_comments(self, soup):
         comments = soup.find("div", class_="comment-list")
-        result = dict()
+        result = None
         if comments:
+            result = dict()
             comment_list = comments.find_all("div", class_="comment-container")
             for comment in comment_list:
                 data_for = comment.attrs["data-for"]
-                commenter_name = comment.find("div", class_="commenter-name").get_text().strip()
-                comment_content = comment.find("div", "comment-content-full").get_text().strip()
-                result[data_for] = dict(name=commenter_name, content=comment_content)
+                if data_for not in result:
+                    result[data_for] = []
+                comment = dict(
+                    commenter_name = comment.find("div", class_="commenter-name").get_text().strip(),
+                    comment_content = comment.find("div", "comment-content-full").get_text().strip()
+                )
+                result[data_for].append(comment)
         return result
 
 
