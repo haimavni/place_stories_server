@@ -147,12 +147,12 @@ db.define_table('TblEventPhotos',
                 Field('photo_id', type='integer'),
 )
 
-db.defineTable('TblEventDocs',
+db.define_table('TblEventDocs',
                Field('event_id', type='integer'),
                Field('doc_id', type='integer')
                )
 
-db.defineTable('TblEventVideos',
+db.define_table('TblEventVideos',
                Field('event_id', type='integer'),
                Field('video_id', type='integer')
                )
