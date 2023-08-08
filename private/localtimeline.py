@@ -65,6 +65,7 @@ class PortTL():
             read_more_text = ""
         cat_names = self.get_categories(soup)
         credits = self.get_link_credits(soup)
+        titles_dic = self.get_link_titles(soup)
         event = dict(year=self.year,
                      kind="ievent",
                      event_name=event_name,
@@ -77,9 +78,11 @@ class PortTL():
             data_type = item_div.attrs["data-type"]
             data_id = item_div.attrs["data-id"]
             item_credit = credits.get(data_id, None)
+            item_title = titles_dic.get(data_id, None)
             item_rec = dict(year=self.year,
                             credit=item_credit,
                             categories=cat_names,
+                            title=item_title,
                             data_type=data_type)
             if data_type == "pdf":
                 iframe = item_div.find("iframe")
@@ -100,14 +103,17 @@ class PortTL():
             else:
                 item_rec["duplicate"] = False
                 if data_type == "pdf":
-                    path = f"docs/ported/{self.year}"
+                    path = f"ported/{self.year}"
                     doc_path = path + "/" + self.file_name_of_src(src)
                     item_rec["doc_path"] = doc_path
+                    path = "docs/" + path
                     self.downloader.write(f"wget -P ./{path} {src}\n")
                 elif data_type == "image":
-                    path = f"photos/oversize/ported/{self.year}"
+                    path = f"ported/{self.year}"
                     photo_path = path + "/" + self.file_name_of_src(src)
                     item_rec["photo_path"] = photo_path
+                    path = "photos/oversize/" + path
+                    self.downloader.write(f"wget -P ./{path} {src}\n")
                 self.urls.add(src)
                 item_comments = comments.get(data_id, [])
                 item_rec["comments"] = item_comments
@@ -120,8 +126,16 @@ class PortTL():
         for credit_rec in credit_arr:
             data_id = credit_rec.attrs["data-id"]
             span = credit_rec.find("span", class_="credits-content")
-            name = span.get_text()
+            name = span.get_text().strip()
             result[data_id] = name
+        return result
+    
+    def get_link_titles(self, soup):
+        result = dict()
+        title_arr = soup.find_all("span", class_="main-title-text")
+        for title_rec in title_arr:
+            data_id = title_rec.attrs["data-id"]
+            result[data_id] = title_rec.get_text().strip()
         return result
 
     def scan_event(self, event):
@@ -151,6 +165,7 @@ class PortTL():
                      )
         main_items = soup.find_all(self.is_main_item_wrapper)
         credits_dic = self.get_link_credits(soup)
+        titles_dic = self.get_link_titles(soup)
 
         for item in main_items:
             data_type = item.attrs.get("data-type", "unknown")
@@ -168,6 +183,7 @@ class PortTL():
                 credits = credits_dic.get(data_id, None)
                 item_data["credits"] = credits
                 item_data["comments"] = self.get_item_comments(comments, data_id)
+                item_data["title"] = titles_dic.get(data_id, None)
                 event["items"].append(item_data)
         if len(event["items"]) > 0:
             self.plan_list.append(event)
@@ -218,7 +234,7 @@ class PortTL():
         if src in self.urls:
             return "duplicate"
         self.urls.add(src)
-        path = f"photos/oversize/ported/{self.year}"
+        path = f"ported/{self.year}"
         photo_path = path + "/" + self.file_name_of_src(src)
         data_id = item.attrs["data-id"]
         img_data = dict(
@@ -228,6 +244,7 @@ class PortTL():
             photo_path=photo_path, 
             data_id=data_id,
             caption=img.attrs["alt"])
+        path = "photos/oversize/" + path
         self.downloader.write(f"wget -P ./{path} {src}\n")
         return img_data
     
