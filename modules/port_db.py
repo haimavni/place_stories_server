@@ -63,6 +63,8 @@ class Migrate:
 
     def create_item(self, event_categories, story_id, item):
         categories = item.categories or event_categories
+        STORY4PHOTO, STORY4DOC, STORY4VIDEO = inject('STORY4PHOTO', 'STORY4DOC', 'STORY4VIDEO')
+        usage = STORY4PHOTO if item.kind == "photo" else STORY4VIDEO if item.kind == "video" else STORY4DOC
         
     def add_topics(self, category_list, usage):
         db = self.db
