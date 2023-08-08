@@ -43,9 +43,10 @@ class Migrate:
         else:
             return None
         event_categories = event.categories
-        self.add_topics(event_categories, "E")
+        # self.add_topics(event_categories, "E")
         text = event.read_more_text
-        if len(event.items) > 1:
+        story_id = FileNotFoundError
+        if len(event.items) > 1: # if only one item, give it the story
             story_id = self.db.insert(
                 used_for=STORY4EVENT,
                 name=name,
@@ -56,9 +57,12 @@ class Migrate:
                 creation_date=datetime.datetime.now(),
                 story_len=len(text)
             )
-            self.assign_topics(self, story_id, event_categories)
+            self.assign_topics(story_id, event_categories, "E")
         for item in event.items:
-            self.create_item(self, event, item)
+            self.create_item(event_categories, story_id, item)
+
+    def create_item(self, event_categories, story_id, item):
+        categories = item.categories or event_categories
         
     def add_topics(self, category_list, usage):
         db = self.db
@@ -71,6 +75,10 @@ class Migrate:
                 rec = db(db.TblTopics.id==id).select().first()
                 rec.update_record(usage=rec.usage + usage)
                 
-        
+    def assign_topics(self, story_id, categories, usage):
+        self.add_topics(categories, usage) 
+        for cat in categories:
+            topic_id = self.categories[cat] 
+            self.db.TblItemTopics.insert(topic_id=topic_id, story_id=story_id, usage=usage)  
 
 

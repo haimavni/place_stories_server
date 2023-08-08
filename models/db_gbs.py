@@ -140,12 +140,22 @@ db.define_table('TblEventArticles',
 )
 
 db.define_table('TblEventPhotos',
-                Field('eventid', type='integer'),
+                # Field('eventid', type='integer'), # obs
                 Field('event_id', type='integer'),
-                Field('eventphotorank', type='integer'),
-                Field('photoid', type='integer'),
+                # Field('eventphotorank', type='integer'), # obs
+                # Field('photoid', type='integer'), # obs
                 Field('photo_id', type='integer'),
 )
+
+db.defineTable('TblEventDocs',
+               Field('event_id', type='integer'),
+               Field('doc_id', type='integer')
+               )
+
+db.defineTable('TblEventVideos',
+               Field('event_id', type='integer'),
+               Field('video_id', type='integer')
+               )
 
 db.define_table('TblEvents',
                 Field('description', type='text'),
