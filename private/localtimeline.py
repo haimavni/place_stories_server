@@ -33,16 +33,19 @@ class PortTL():
             self.year = year
             print(year, end=" ")
             # year_events = inner.find(self.is_event_list)
-            year_events = inner.find("div", class_="year-event-list")
-
-            events = year_events.find_all("a")
-            for event in events:
-                self.scan_event(event)
+            # -----------------------
             year_images = inner.find("div", class_="year-images")
             links = year_images.find_all('a')
             for link in links:
                 href = link.attrs['href']
                 self.scan_link(href) # will replace the code below
+
+            year_events = inner.find("div", class_="year-event-list")
+            # -----------------------
+            events = year_events.find_all("a")
+            for event in events:
+                self.scan_event(event)
+            # -----------------------
         json_str = json.dumps(self.plan_list, ensure_ascii=False, indent=4)
         with open(f"/home/haim/migrations/{self.site_name}/plan.txt", "w", encoding="utf-8") as f:
             f.write(json_str)
