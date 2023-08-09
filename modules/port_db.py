@@ -2,6 +2,7 @@ from http_utils import json_to_storage
 import json
 from injections import inject
 import datetime
+from video_support import parse_video_url, youtube_info
 
 class Migrate:
 
@@ -61,10 +62,67 @@ class Migrate:
         for item in event.items:
             self.create_item(event_categories, story_id, item)
 
-    def create_item(self, event_categories, story_id, item):
+    def create_item(self, event_categories, event_story_id, item):
         categories = item.categories or event_categories
         STORY4PHOTO, STORY4DOC, STORY4VIDEO = inject('STORY4PHOTO', 'STORY4DOC', 'STORY4VIDEO')
         usage = STORY4PHOTO if item.kind == "photo" else STORY4VIDEO if item.kind == "video" else STORY4DOC
+        db = self.db
+        story_id = self.db.insert(
+            used_for=usage,
+            name=item.title,
+            story="",
+            preview="",
+            story_date = datetime.date(year=item.year, month=1, day=1),
+            source="ltl",
+            creation_date=datetime.datetime.now(),
+            story_len=0
+        )
+        if item.kind == "photo":
+            item_id = db.TblPhotos.insert(
+                story_id=story_id,
+                name=item.title, # todo: use only story name and remove this field
+                photo_path=item.photo_path,
+                photo_date=datetime.date(year=item.year, month=1, day=1),
+            )
+            if event_story_id: # connect photo to owning event
+                db.TblEventPhotos.insert(item_id=item_id, story_id=event_story_id)
+            categories = item.categories or event_categories
+            self.assign_topics(story_id, categories, "P")
+        elif item.kind == "pdf":
+            item_id = db.TblDocs.insert(
+                story_id=story_id,
+                name=item.title, # todo: use only story name and remove this field
+                doc_path=item.doc_path,
+                doc_date=datetime.date(year=item.year, month=1, day=1),
+            )
+            if event_story_id: # connect doc to owning event
+                db.TblEventDocs.insert(item_id=item_id, story_id=event_story_id)
+            categories = item.categories or event_categories
+            self.assign_topics(story_id, categories, "D")
+        elif item.kind == "video":
+            vid_info = parse_video_url(item.src)
+            item_id = db.TblVideos.insert(
+                story_id=story_id,
+                name=item.title, # todo: use only story name and remove this field
+                src=vid_info.src,
+                video_type=vid_info.video_type,
+                video_date=datetime.date(year=item.year, month=1, day=1),
+            )
+            if vid_info.video_type == "youtube":
+                yt_info = youtube_info(item.src)
+                db(db.TblVideos.id==item_id).update(
+                    thumbnail_url=yt_info.thumbnail_url,
+                    description=yt_info.description,
+                    upload_date=yt_info.upload_date,
+                    uploader=yt_info.uploader,
+                    duration=yt_info.duration,
+                    )
+            if event_story_id: # connect video to owning event
+                db.TblEventVideos.insert(item_id=item_id, story_id=event_story_id)
+            categories = item.categories or event_categories
+            self.assign_topics(story_id, categories, "D")
+        else:
+            raise Exception("Unknown item kind")
         
     def add_topics(self, category_list, usage):
         db = self.db

@@ -3,6 +3,7 @@ import stories_manager
 from gluon.storage import Storage
 from injections import inject
 import datetime
+import re
 
 
 def youtube_info(src):
@@ -100,5 +101,25 @@ def update_cuepoints_text(video_id):
     vid_rec.update_record(cuepoints_text=result)
     return result
 
+def parse_video_url(input_url):
+    pats = dict(
+        youtube=r'https://(?:www.youtube.com/watch\?v=|youtu\.be/)(?P<code>[^&]+)',
+        html5=r'(?P<code>.+\.mp4)',
+        vimeo=r'https://vimeo.com/(?P<code>\d+)',
+        google_drive=r'https://drive.google.com/file/d/(?P<code>[^/]+?)/.*',
+        google_photos=r'https://photos.app.goo.gl/(?P<code>[^&]+)'
+    )
+    src = None
+    for t in pats:
+        pat = pats[t]
+        m = re.search(pat, input_url)
+        if m:
+            src = m.groupdict()['code']
+            typ = t
+            break
+    if not src:
+        User_Error = inject("User_Error")
+        raise User_Error('!videos.unknown-video-type')
+    return Storage(src=src, video_type=typ)
 
 

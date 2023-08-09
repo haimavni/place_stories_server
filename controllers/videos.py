@@ -8,7 +8,7 @@ import ws_messaging
 from date_utils import update_record_dates, fix_record_dates_in, fix_record_dates_out
 from folders import url_video_folder
 from members_support import *
-from video_support import upgrade_youtube_info, update_cuepoints_text
+from video_support import upgrade_youtube_info, update_cuepoints_text, parse_video_url
 
 @serve_json
 def save_video(vars):
@@ -17,25 +17,26 @@ def save_video(vars):
     params = vars.params
     date_info = dict(video_date=(params.video_date_datestr, params.video_date_datespan))
     if not params.id:  # creation, not modification
-        pats = dict(
-            youtube=r'https://(?:www.youtube.com/watch\?v=|youtu\.be/)(?P<code>[^&]+)',
-            html5=r'(?P<code>.+\.mp4)',
-            vimeo=r'https://vimeo.com/(?P<code>\d+)',
-            google_drive=r'https://drive.google.com/file/d/(?P<code>[^/]+?)/.*',
-            google_photos=r'https://photos.app.goo.gl/(?P<code>[^&]+)'
-        )
-        src = None
-        for t in pats:
-            pat = pats[t]
-            m = re.search(pat, params.src)
-            if m:
-                src = m.groupdict()['code']
-                typ = t
-                break
-        if not src:
-            raise User_Error('!videos.unknown-video-type')
-        q = (db.TblVideos.src == src) & \
-            (db.TblVideos.video_type == typ) & \
+        vid = parse_video_url(params.src)
+        # pats = dict(
+        #     youtube=r'https://(?:www.youtube.com/watch\?v=|youtu\.be/)(?P<code>[^&]+)',
+        #     html5=r'(?P<code>.+\.mp4)',
+        #     vimeo=r'https://vimeo.com/(?P<code>\d+)',
+        #     google_drive=r'https://drive.google.com/file/d/(?P<code>[^/]+?)/.*',
+        #     google_photos=r'https://photos.app.goo.gl/(?P<code>[^&]+)'
+        # )
+        # src = None
+        # for t in pats:
+        #     pat = pats[t]
+        #     m = re.search(pat, params.src)
+        #     if m:
+        #         src = m.groupdict()['code']
+        #         typ = t
+        #         break
+        # if not src:
+        #     raise User_Error('!videos.unknown-video-type')
+        q = (db.TblVideos.src == vid.src) & \
+            (db.TblVideos.video_type == vid.video_type) & \
             (db.TblVideos.deleted != True)
         if db(q).count() > 0:
             raise User_Error('!videos.duplicate')
