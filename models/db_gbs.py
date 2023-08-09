@@ -430,7 +430,7 @@ db.define_table('TblVideos',
                 Field('uploader', type='string'),
                 Field('title', type='string'),
                 Field('description', type='text'),
-                Field('upload_date', type='datetime'),
+                Field('yt_upload_date', type='datetime'),
                 Field('thumbnail_url', type='string'),
                 Field('duration', type='integer'),
                 Field('cuepoints_text', type='text', default='')

@@ -56,7 +56,7 @@ def save_video(vars):
             description=yt_info.description,
             uploader=yt_info.uploader,
             duration=yt_info.duration,
-            upload_date=yt_info.upload_date
+            yt_upload_date=yt_info.upload_date
         )
         vid = db.TblVideos.insert(**data)
         data.update(id=vid)
