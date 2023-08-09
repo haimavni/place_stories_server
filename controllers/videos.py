@@ -17,7 +17,7 @@ def save_video(vars):
     params = vars.params
     date_info = dict(video_date=(params.video_date_datestr, params.video_date_datespan))
     if not params.id:  # creation, not modification
-        vid = parse_video_url(params.src)
+        vidi = parse_video_url(params.src)
         # pats = dict(
         #     youtube=r'https://(?:www.youtube.com/watch\?v=|youtu\.be/)(?P<code>[^&]+)',
         #     html5=r'(?P<code>.+\.mp4)',
@@ -35,8 +35,8 @@ def save_video(vars):
         #         break
         # if not src:
         #     raise User_Error('!videos.unknown-video-type')
-        q = (db.TblVideos.src == vid.src) & \
-            (db.TblVideos.video_type == vid.video_type) & \
+        q = (db.TblVideos.src == vidi.src) & \
+            (db.TblVideos.video_type == vidi.video_type) & \
             (db.TblVideos.deleted != True)
         if db(q).count() > 0:
             raise User_Error('!videos.duplicate')
@@ -45,9 +45,9 @@ def save_video(vars):
         result = sm.add_story(story_info)
         story_id = result.story_id
         data = dict(
-            video_type=vid.video_type,
+            video_type=vidi.video_type,
             name=params.name,
-            src=src,
+            src=vidi.src,
             story_id=story_id,
             contributor=user_id,
             upload_date=datetime.datetime.now()
