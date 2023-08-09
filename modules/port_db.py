@@ -44,7 +44,6 @@ class Migrate:
         else:
             return None
         event_categories = event.categories
-        # self.add_topics(event_categories, "E")
         text = event.read_more_text
         story_id = FileNotFoundError
         if len(event.items) > 1: # if only one item, give it the story
@@ -105,16 +104,16 @@ class Migrate:
                 story_id=story_id,
                 name=item.title, # todo: use only story name and remove this field
                 src=vid_info.src,
+                upload_date=datetime.datetime.now(),
                 video_type=vid_info.video_type,
                 video_date=datetime.date(year=item.year, month=1, day=1),
             )
             if vid_info.video_type == "youtube":
                 yt_info = youtube_info(item.src)
-                comment(f"----yt_info: {yt_info}")
                 db(db.TblVideos.id==item_id).update(
                     thumbnail_url=yt_info.thumbnail_url,
                     description=yt_info.description,
-                    upload_date=yt_info.upload_date,
+                    yt_upload_date=yt_info.upload_date,
                     uploader=yt_info.uploader,
                     duration=yt_info.duration,
                     )

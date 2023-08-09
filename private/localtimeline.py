@@ -288,16 +288,6 @@ class PortTL():
 
     # ------------selector functions-------------
 
-    def is_comment_container(self, tag):
-        if tag.name != "div":
-            return False
-        if "class" not in tag.attrs:
-            return False
-        if "comment_container" in tag.attrs["class"]:
-            return True
-        return False
-
-
     def is_main_item_wrapper(self, tag):
         if tag.name != "div":
             return False
