@@ -8,7 +8,7 @@ import ws_messaging
 from date_utils import update_record_dates, fix_record_dates_in, fix_record_dates_out
 from folders import url_video_folder
 from members_support import *
-from video_support import upgrade_youtube_info, update_cuepoints_text, parse_video_url
+from video_support import upgrade_youtube_info, update_cuepoints_text, parse_video_url, youtube_info
 
 @serve_json
 def save_video(vars):
@@ -44,13 +44,19 @@ def save_video(vars):
         story_info = sm.get_empty_story(used_for=STORY4VIDEO, story_text="", name=params.name)
         result = sm.add_story(story_info)
         story_id = result.story_id
+        yt_info = youtube_info(vidi.src)
         data = dict(
             video_type=vidi.video_type,
             name=params.name,
             src=vidi.src,
             story_id=story_id,
             contributor=user_id,
-            upload_date=datetime.datetime.now()
+            upload_date=datetime.datetime.now(),
+            thumbnail_url=yt_info.thumbnail_url,
+            description=yt_info.description,
+            uploader=yt_info.uploader,
+            duration=yt_info.duration,
+            upload_date=yt_info.upload_date
         )
         vid = db.TblVideos.insert(**data)
         data.update(id=vid)

@@ -110,6 +110,7 @@ class Migrate:
             )
             if vid_info.video_type == "youtube":
                 yt_info = youtube_info(item.src)
+                comment(f"----yt_info: {yt_info}")
                 db(db.TblVideos.id==item_id).update(
                     thumbnail_url=yt_info.thumbnail_url,
                     description=yt_info.description,
