@@ -45,7 +45,7 @@ def save_video(vars):
         result = sm.add_story(story_info)
         story_id = result.story_id
         data = dict(
-            video_type=typ,
+            video_type=vid.video_type,
             name=params.name,
             src=src,
             story_id=story_id,
