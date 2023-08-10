@@ -15,7 +15,7 @@ from members_support import *
 from photos_support import get_slides_from_photo_list, get_video_thumbnails, save_member_face
 from quiz_support import use_quiz
 from words import calc_used_languages, read_words_index, get_all_story_previews, get_reisha
-from family_connections import calc_family_connections, find_family_path, get_family_connections
+from family_connections import calc_family_connections, find_family_path, get_family_connections, get_member_spouse_children
 
 @serve_json
 def member_list(vars):
