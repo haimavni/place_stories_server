@@ -146,7 +146,7 @@ def retrieve_story_words(story_id):
 
 def update_story_words_index(story_id):
     db, comment = inject('db', 'comment')
-    comment("start indexing story {}", story_id)
+    comment(f"start indexing story {story_id}")
     now = datetime.datetime.now()
     added_words = []
     deleted_words = []

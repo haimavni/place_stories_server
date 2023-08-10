@@ -262,7 +262,7 @@ def scan_all_unscanned_photos():
     db, request, comment = inject('db', 'request', 'comment')
     q = (db.TblPhotos.crc==None) & (db.TblPhotos.photo_missing == False) & (db.TblPhotos.deleted!=True)
     to_scan = db(q).count()
-    comment("{} photos still unscanned", to_scan)
+    comment(f"{to_scan} photos still unscanned")
     failed_crops = 0
     chunk = 100
     folder = local_photos_folder()
@@ -304,7 +304,7 @@ def calc_missing_dhash_values(max_to_hash=20000):
         (db.TblPhotos.photo_missing == False) & \
         (db.TblPhotos.deleted != True)
     to_scan = db(q).count()
-    comment("{} photos still have no dhash value", to_scan)
+    comment(f"{to_scan} photos still have no dhash value")
     chunk = 100
     folder = local_photos_folder()
     done = 0

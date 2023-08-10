@@ -52,7 +52,8 @@ def my_log(s, file_name="log_all"):
 def log_exception_only(p, file_name='exceptions'):
     import traceback
     trace = traceback.format_exc()
-    s = '{ts} Error in {p}: {t}\n'.format(ts=datetime.datetime.now(), p=p, t=trace)
+    ts=datetime.datetime.now()
+    s = f'{ts} Error in {p}: {tace}\n'
     my_log(s, file_name)
 
 
@@ -63,9 +64,6 @@ def log_exception(p):
     # logger.exception(p)
 
 
-def comment(s, *args, **kargs):
-    s = f"-------------args: {args}, kargs: {kargs}"
-    my_log(s)
-    s = s.format(*args, **kargs).replace('\n', '\n    ')
+def comment(s):
     my_log(s)
 

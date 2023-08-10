@@ -57,7 +57,7 @@ class EmailCollector:
             result.sender_email = lst[1][0][1:-1] #get rid of <>
         else:
             s = lst[0][0]
-            comment("sender email {}", s)
+            comment(f"sender email {s}")
             parts = s.split('<')
             if len(parts) == 1:
                 result.sender_email = s
@@ -157,7 +157,7 @@ def collect_mail():
             if msg.images:
                 result = save_uploaded_photo_collection(msg.images, user_id)
                 results.append(result)
-                comment("upload result {result}", result=result)
+                comment(f"upload result {result}")
             emsg = ''
             for fld in sorted(msg):
                 if fld == "images":
@@ -172,7 +172,7 @@ def collect_mail():
             if result:
                 comment("mail was forwarded")
             else:
-                comment("forwarding mail failed: {}", mail.error)
+                comment(f"forwarding mail failed: {mail.error}")
     except Exception as e:
         log_exception('Error collecting mail')
         raise

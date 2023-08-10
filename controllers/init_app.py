@@ -9,7 +9,7 @@ from misc_utils import get_env_var
 
 
 def init_database():
-    comment("init database args: ", str(request.args))
+    comment(f"init database args: {str(request.args)}")
     if len(request.args) < 4:
         return "database initialized without admin"
     email,password,first_name,last_name = request.args

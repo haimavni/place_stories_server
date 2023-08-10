@@ -565,7 +565,7 @@ class RefsFixer:
         if what not in self.counter:
             self.counter[what] = 0
         self.counter[what] += 1
-        comment("ref type {what}", what=what)
+        comment(f"ref type {what}")
         ref_id = m.group(3)
         ref_id = int(ref_id)
         try:
@@ -581,14 +581,14 @@ class RefsFixer:
             self.num_errors += 1
             pass
         #todo: implement the transformation
-        comment("ERROR in story {sid}", sid=self.curr_story_id)
+        comment(f"ERROR in story {self.curr_story_id}")
         return m.group(0)
     
     def fix_old_site_refs(self):
         q = db.TblStories.story.like("%givat-brenner.co.il%") & \
             (db.TblStories.used_for==STORY4EVENT)
         num_stories_to_fix = db(q).count()
-        comment("Start fixing refs. {n} remaining.".format(n=num_stories_to_fix))
+        comment(f"Start fixing refs. {num_stories_to_fix} remaining.")
         lst = db(q).select(limitby=(0, 100))
         pat_str = r'<a href="http://givat-brenner\.co\.il.(\w+)\.asp\?(\w+)=(\d+).*?>'  #should work, but it doesn't. hence next line
         pat_str = r'<a href.*?givat-brenner\.co\.il.(\w+)\.asp\?(\w+)=(\d+).*?>'
@@ -598,7 +598,7 @@ class RefsFixer:
         num_non_refs = 0
         for rec in lst:
             self.curr_story_id = rec.id
-            comment("fixing story {sid}", sid=rec.id)
+            comment(f"fixing story {rec.id}")
             txt = rec.story
             m = pat.search(txt)
             if m:
@@ -611,7 +611,7 @@ class RefsFixer:
                     num_modified += 1
             else:
                 num_non_refs += 1
-                comment("not a real ref in story {sid}", sid=self.curr_story_id)
+                comment(f"not a real ref in story {self.curr_story_id}")
         num_stories_to_fix = db(q).count()
         for what in self.counter:
             comment('{n} refs of type {t}', n=self.counter[what], t=what)

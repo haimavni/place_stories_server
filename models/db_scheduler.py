@@ -13,7 +13,7 @@ from video_support import calc_missing_youtube_info
 from health import check_health
 
 def test_scheduler(msg):
-    comment("test task {}", msg)
+    comment(f"test task {msg}")
 
 class MyScheduler(Scheduler):
     
@@ -40,9 +40,9 @@ class MyScheduler(Scheduler):
         return task_id
 
     def on_update_task_status(self, task_id, data):
-        ##comment("task {} status changed: {} ", task_id, data)
+        ##comment(f"task {task_id} status changed: {data}")
         try:
-            ###comment("task {task_id} status changed {data}", task_id=task_id, data=data)
+            ###comment(f"task {task_id} status changed {data}")
             ws_messaging.send_message(key='task_status_changed', group='TASK_MONITOR', task_id=task_id, data=data)
         except Exception as e:
             log_exception('failed broadcasting update task status')
@@ -280,7 +280,7 @@ def verify_tasks_started():
     for function_name in permanent_tasks:
         ###if db(db.scheduler_task.function_name==function_name).isempty():
         task_id = permanent_tasks[function_name]()
-        comment("start {}, task_id is {}", function_name, task_id)
+        comment(f"start {function_name}, task_id is {task_id}")
         db.commit()
         
 def promote_task(function_name):
