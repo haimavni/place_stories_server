@@ -64,6 +64,8 @@ def log_exception(p):
 
 
 def comment(s, *args, **kargs):
+    s = f"-------------args: {args}, kargs: {kargs}"
+    my_log(s)
     s = s.format(*args, **kargs).replace('\n', '\n    ')
     my_log(s)
 

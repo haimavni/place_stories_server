@@ -45,7 +45,7 @@ class Migrate:
             return None
         event_categories = event.categories
         text = event.read_more_text
-        story_id = FileNotFoundError
+        story_id = None
         if len(event.items) > 1: # if only one item, give it the story
             story_id = self.db.insert(
                 used_for=STORY4EVENT,
