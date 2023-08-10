@@ -4,7 +4,7 @@ from date_utils import date_of_date_str, parse_date, get_all_dates, update_recor
 from folders import photos_folder
 import ws_messaging
 from words import get_reisha
-from photos_support import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
+from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 @serve_json
 def article_list(vars):

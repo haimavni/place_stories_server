@@ -7,7 +7,7 @@ from date_utils import date_of_date_str, parse_date, get_all_dates, update_recor
     fix_record_dates_out
 import stories_manager
 from gluon.storage import Storage
-from photos_support import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
+from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 @serve_json
 def upload_doc(vars):

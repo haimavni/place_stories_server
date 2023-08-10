@@ -7,7 +7,7 @@ import datetime
 import os
 from dal_utils import insert_or_update
 from photos_support import photos_folder, timestamped_photo_path
-from photos_support import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
+from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 def index():
     response.view = 'stories/main.html'

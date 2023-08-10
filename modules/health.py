@@ -2,7 +2,7 @@ from .injections import inject
 from folders import local_photos_folder
 from gluon.storage import Storage
 import os
-from photos_support import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
+from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 def verify_topic_types(typ):
     db = inject('db')

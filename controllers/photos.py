@@ -14,7 +14,7 @@ import re
 from gluon.storage import Storage
 from gluon.utils import web2py_uuid
 import array
-from photos_support import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
+from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 @serve_json
 def get_photo_detail(vars):

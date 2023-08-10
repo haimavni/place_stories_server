@@ -9,7 +9,7 @@ from date_utils import update_record_dates, fix_record_dates_in, fix_record_date
 from folders import url_video_folder
 from members_support import *
 from video_support import upgrade_youtube_info, update_cuepoints_text, parse_video_url, youtube_info
-from photos_support import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
+from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 @serve_json
 def save_video(vars):

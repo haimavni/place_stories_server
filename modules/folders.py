@@ -5,6 +5,10 @@ from sys import platform
 if platform == 'linux':
     import pwd
 
+RESIZED  =        'orig'
+ORIG    =        'oversize'
+SQUARES =        'squares'
+PROFILE_PHOTOS = 'profile_photos'
 
 def url_folder(kind):
     request = inject('request')

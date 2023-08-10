@@ -30,11 +30,6 @@ MAX_WIDTH = 1200
 MAX_HEIGHT = 800
 DHASH_SIZE = 8
 
-RESIZED  =        'orig'
-ORIG    =        'oversize'
-SQUARES =        'squares'
-PROFILE_PHOTOS = 'profile_photos'
-
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 def resized(width, height):

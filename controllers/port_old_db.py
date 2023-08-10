@@ -9,7 +9,7 @@ from words import extract_tokens, guess_language, create_word_index, read_words_
 from html_utils import clean_html
 import os, time
 from stories_manager import Stories
-from photos_support import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
+from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 def port_old_db():
     folder = request.vars.folder or 'gbs-bkp-jun17'

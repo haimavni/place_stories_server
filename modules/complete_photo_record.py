@@ -3,7 +3,7 @@ import binascii
 import crc_calc
 import shutil
 from injections import inject
-from photos_support import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
+from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 def add_photo_info(photo_id):
     comment = inject('comment')

@@ -1,7 +1,7 @@
 from gluon.storage import Storage
 from .folders import *
 from .date_utils import get_all_dates
-from photos_support import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
+from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 
 def get_member_rec(member_id, member_rec=None, prepend_path=False):
