@@ -53,7 +53,7 @@ def log_exception_only(p, file_name='exceptions'):
     import traceback
     trace = traceback.format_exc()
     ts=datetime.datetime.now()
-    s = f'{ts} Error in {p}: {tace}\n'
+    s = f'{ts} Error in {p}: {trace}\n'
     my_log(s, file_name)
 
 
