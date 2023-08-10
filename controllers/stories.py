@@ -94,7 +94,7 @@ def upload(vars):
     today = datetime.date.today()
     month = str(today)[:-3]
 
-    path = local_photos_folder() + month + '/'
+    path = local_photos_folder("orig") + month + '/'
     if not os.path.isdir(path):
         os.makedirs(path)
     for fn in vars:

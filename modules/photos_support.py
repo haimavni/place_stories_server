@@ -96,7 +96,7 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
     month = str(today)[:-3]
     if not sub_folder:
         sub_folder = sub_folder or 'uploads/' + month + '/'
-    path = local_photos_folder() + sub_folder
+    path = local_photos_folder("orig") + sub_folder
     dir_util.mkpath(path)
     latitude = None
     longitude = None
@@ -163,7 +163,7 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
         elif height < MAX_HEIGHT and width < MAX_WIDTH:
             width, height = resized(width, height)
             img = img.resize((width, height), Image.LANCZOS)
-        path = local_photos_folder() + sub_folder
+        path = local_photos_folder("orig") + sub_folder
         ###exif = img.info['exif'] if img.info and 'exif' in img.info e
         img.save(path + file_name, quality=100) ###, exif=img.info['exif'])
         fix_owner(path)
@@ -224,7 +224,7 @@ def get_image_info(image_path):
 
 def fit_size(rec):
     db, log_exception = inject('db', 'log_exception')
-    fname = local_photos_folder() + rec.photo_path
+    fname = local_photos_folder("orig") + rec.photo_path
     try:
         img = Image.open(fname)
         oversize_file_name = local_photos_folder("oversize") + rec.photo_path
@@ -265,7 +265,7 @@ def scan_all_unscanned_photos():
     comment(f"{to_scan} photos still unscanned")
     failed_crops = 0
     chunk = 100
-    folder = local_photos_folder()
+    folder = local_photos_folder("orig")
     while True:
         comment('started scanning chunk of photos')
         lst = db(q).select(limitby=(0, chunk))
@@ -306,7 +306,7 @@ def calc_missing_dhash_values(max_to_hash=20000):
     to_scan = db(q).count()
     comment(f"{to_scan} photos still have no dhash value")
     chunk = 100
-    folder = local_photos_folder()
+    folder = local_photos_folder("orig")
     done = 0
     while True:
         comment('started dhashing chunk of photos')
@@ -638,7 +638,7 @@ def save_article_face(params):
 def save_profile_photo(face, is_article=False):
     db = inject('db')
     rec = get_photo_rec(face.photo_id)
-    input_path = local_photos_folder() + rec.photo_path
+    input_path = local_photos_folder("orig") + rec.photo_path
     prefix = "AP" if is_article else "PP"
     iid = face.article_id if is_article else face.member_id
     facephotourl = f"{prefix}-{iid}-{face.photo_id}.jpg" #todo: just add ?filedate when used
@@ -862,7 +862,7 @@ def jpg_to_webp(file_name):
 def convert_to_webp(photo_id):
     db = inject('db')
     photo_rec = db(db.TblPhotos.id==photo_id).select().first()
-    path = local_photos_folder() + photo_rec.photo_path
+    path = local_photos_folder("orig") + photo_rec.photo_path
     jpg_to_webp(path)
     if photo_rec.oversize:
         path = local_photos_folder('oversize') + photo_rec.photo_path
@@ -895,7 +895,7 @@ def use_embedded_dates():
 
 def calculate_photo_geo_info(prec):
     log_exception = inject('log_exception')
-    folder = local_photos_folder()
+    folder = local_photos_folder("orig")
     fname = folder + prec.photo_path
     if not os.path.exists(fname):
         return
@@ -980,7 +980,7 @@ def get_padded_photo_url(photo_id):
     photo_rec = db(db.TblPhotos.id==photo_id).select().first()
     if not photo_rec:
         raise Exception(f"photo_id: {photo_id} - photo not found!")
-    photo_path = local_photos_folder() + photo_rec.photo_path
+    photo_path = local_photos_folder("orig") + photo_rec.photo_path
     r = photo_path.rfind('.')
     ext = photo_path[r:]
     crc = photo_rec.crc

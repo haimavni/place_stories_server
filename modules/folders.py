@@ -51,7 +51,7 @@ def system_folder():
     return path
 
 
-def photos_folder(what="orig"):
+def photos_folder(what):
     # what may be orig, squares or profile_photos.
     return url_folder('photos') + what + '/'
 
@@ -60,8 +60,9 @@ def images_folder():
     return url_folder('images')
 
 
-def local_photos_folder(what="orig"):
+def local_photos_folder(what):
     # what may be orig, squares,images or profile_photos. (images is for customer-specific images such as logo)
+    # todo: "oversize" is actually the uploaded photo. "orig" is the fitted photo. To be changed carefully
     return local_folder('photos' + '/' + what)
 
 

@@ -16,17 +16,6 @@ from gluon.utils import web2py_uuid
 import array
 
 @serve_json
-def upload_photo(vars):
-    raise Exception("upload fhoto is broken")
-    user_id = vars.user_id or auth.current_user()
-    comment("start handling uploaded files")
-    user_id = int(vars.user_id) if vars.user_id else auth.current_user()
-    fil = vars.file
-    #blob = to_bytes(fil.BINvalue)
-    result = save_uploaded_photo(fil.name, fil.BINvalue, user_id)
-    return dict(upload_result=result)
-
-@serve_json
 def get_photo_detail(vars):
     photo_id = int(vars.photo_id)
     if vars.what == 'story': #This photo is identified by the associated story
@@ -514,7 +503,7 @@ def mark_as_recogized(vars):
 def download_files(vars):
     pl = vars.selected_photo_list
     lst = db(db.TblPhotos.id.belongs(pl)).select()
-    folder = local_photos_folder()
+    folder = local_photos_folder("orig")
     oversize_folder = local_photos_folder("oversize")
     uuid = web2py_uuid()
     zip_name = "photos-" + uuid.split('-')[0]
@@ -865,7 +854,7 @@ def upload_chunk(vars):
     today = datetime.date.today()
     month = str(today)[:-3]
     sub_folder = 'uploads/' + month + '/'
-    path = local_photos_folder() + sub_folder
+    path = local_photos_folder("orig") + sub_folder
     dir_util.mkpath(path)
     if vars.what == 'start':
         comment("starting upload")

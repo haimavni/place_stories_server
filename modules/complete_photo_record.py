@@ -10,7 +10,7 @@ def add_photo_info(photo_id):
     auth, comment, log_exception, db, STORY4PHOTO, NO_DATE = inject('auth', 'comment', 'log_exception', 'db',
                                                                     'STORY4PHOTO', 'NO_DATE')
     prec = db(db.TblPhotos.id==photo_id).select().first()
-    file_name = local_photos_folder() + prec.photo_path
+    file_name = local_photos_folder("orig") + prec.photo_path
     with open(file_name, 'rb') as f:
         blob = f.read()
     crc = zlib.crc32(blob)
@@ -100,7 +100,7 @@ def add_photo_info(photo_id):
         comment(f"after resized-----------width is {width} and height is {height}-------")
         img = img.resize((width, height), Image.LANCZOS)
             #### TEMPORARY???!!!img = img.resize((width, height), Image.LANCZOS)
-        path = local_photos_folder() + sub_folder
+        path = local_photos_folder("orig") + sub_folder
         ###exif = img.info['exif'] if img.info and 'exif' in img.info e
         img.save(file_name, quality=95)  ###, exif=img.info['exif'])
         fix_owner(path)
