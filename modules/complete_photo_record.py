@@ -3,6 +3,7 @@ import binascii
 import crc_calc
 import shutil
 from injections import inject
+from photos_support import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 def add_photo_info(photo_id):
     comment = inject('comment')
@@ -10,7 +11,7 @@ def add_photo_info(photo_id):
     auth, comment, log_exception, db, STORY4PHOTO, NO_DATE = inject('auth', 'comment', 'log_exception', 'db',
                                                                     'STORY4PHOTO', 'NO_DATE')
     prec = db(db.TblPhotos.id==photo_id).select().first()
-    file_name = local_photos_folder("orig") + prec.photo_path
+    file_name = local_photos_folder(RESIZED) + prec.photo_path
     with open(file_name, 'rb') as f:
         blob = f.read()
     crc = zlib.crc32(blob)
@@ -51,7 +52,7 @@ def add_photo_info(photo_id):
                 has_geo_info = longitude != None
                 prec.update_record(has_geo_info=has_geo_info, longitude=longitude, latitude=latitude, zoom=zoom)
                 if prec.oversize:
-                    fname = local_photos_folder("oversize") + prec.photo_path
+                    fname = local_photos_folder(ORIG) + prec.photo_path
                     img.save(fname, quality=95)  ###, exif=img.info['exif'])
         if 'DateTimeDigitized' in exif_data:
             s = exif_data['DateTimeDigitized']
@@ -68,7 +69,7 @@ def add_photo_info(photo_id):
             width, height = (799, 601)
         square_img = crop_to_square(img, width, height, 256)
         if square_img:
-            path = local_photos_folder("squares") + sub_folder
+            path = local_photos_folder(SQUARES) + sub_folder
             dir_util.mkpath(path)
             fname = file_name.replace('/orig/', '/squares/')
             square_img.save(fname)
@@ -77,9 +78,9 @@ def add_photo_info(photo_id):
             got_square = True
         else:
             got_square = False
-        # change: all originals are saved in "oversize" which should be renamed "orig". orig needs to be changed to "resized"
+        # change: all originals are saved in ORIG which should be renamed RESIZED. orig needs to be changed to "resized"
         oversize = False
-        oversize_path = local_photos_folder("oversize") + sub_folder
+        oversize_path = local_photos_folder(ORIG) + sub_folder
         dir_util.mkpath(oversize_path)
         oversize_fname = file_name.replace('/orig/', '/oversize/')
         shutil.copyfile(file_name, oversize_fname)
@@ -87,7 +88,7 @@ def add_photo_info(photo_id):
         fix_owner(oversize_fname)
         if height > MAX_HEIGHT or width > MAX_WIDTH:
             oversize = True
-        #     path = local_photos_folder("oversize") + sub_folder
+        #     path = local_photos_folder(ORIG) + sub_folder
         #     dir_util.mkpath(path)
         #     fname = file_name.replace('/orig/', '/oversize/')
         #     img.save(fname, quality=95)  ###, exif=img.info['exif'])
@@ -100,7 +101,7 @@ def add_photo_info(photo_id):
         comment(f"after resized-----------width is {width} and height is {height}-------")
         img = img.resize((width, height), Image.LANCZOS)
             #### TEMPORARY???!!!img = img.resize((width, height), Image.LANCZOS)
-        path = local_photos_folder("orig") + sub_folder
+        path = local_photos_folder(RESIZED) + sub_folder
         ###exif = img.info['exif'] if img.info and 'exif' in img.info e
         img.save(file_name, quality=95)  ###, exif=img.info['exif'])
         fix_owner(path)

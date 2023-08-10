@@ -61,8 +61,6 @@ def images_folder():
 
 
 def local_photos_folder(what):
-    # what may be orig, squares,images or profile_photos. (images is for customer-specific images such as logo)
-    # todo: "oversize" is actually the uploaded photo. "orig" is the fitted photo. To be changed carefully
     return local_folder('photos' + '/' + what)
 
 

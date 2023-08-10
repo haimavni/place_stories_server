@@ -1,6 +1,7 @@
 from gluon.storage import Storage
 from .folders import *
 from .date_utils import get_all_dates
+from photos_support import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 
 def get_member_rec(member_id, member_rec=None, prepend_path=False):
@@ -27,7 +28,7 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
     rec.full_name = member_display_name(rec, full=True)
     rec.name = member_display_name(rec, full=False)
     if prepend_path:
-        rec.facephotourl = photos_folder('profile_photos') + (rec.facephotourl or 'dummy_face.png')
+        rec.facephotourl = photos_folder(PROFILE_PHOTOS) + (rec.facephotourl or 'dummy_face.png')
     if is_dead:
         rec.life_status = "dead"
     else:
@@ -222,7 +223,7 @@ def profile_photo_path(story_id):
         fname = member_rec.facephotourl
     else:
         fname = "dummy_face.png"
-    return photos_folder('profile_photos') + fname
+    return photos_folder(PROFILE_PHOTOS) + fname
 
 def check_dups():
     db = inject('db')

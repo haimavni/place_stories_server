@@ -9,6 +9,7 @@ from words import extract_tokens, guess_language, create_word_index, read_words_
 from html_utils import clean_html
 import os, time
 from stories_manager import Stories
+from photos_support import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 def port_old_db():
     folder = request.vars.folder or 'gbs-bkp-jun17'
@@ -618,7 +619,7 @@ class RefsFixer:
         return num_modified, num_failed, num_non_refs, num_stories_to_fix
     
 def recover_uploaded_photo_dates():
-    src_folder = local_photos_folder("squares")
+    src_folder = local_photos_folder(SQUARES)
     nh = len(src_folder)
     src_folder += 'uploads/'
     cnt = 0

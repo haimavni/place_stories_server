@@ -16,6 +16,7 @@ from photos_support import get_slides_from_photo_list, get_video_thumbnails, sav
 from quiz_support import use_quiz
 from words import calc_used_languages, read_words_index, get_all_story_previews, get_reisha
 from family_connections import calc_family_connections, find_family_path, get_family_connections, get_member_spouse_children, get_spouses
+from photos_support import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 @serve_json
 def member_list(vars):
@@ -38,7 +39,7 @@ def create_parent(vars):
     rec.member_info.date_of_death = NO_DATE
     parent_id = db.TblMembers.insert(**rec.member_info)
     rec.member_info.id = parent_id
-    rec.face_url = photos_folder("profile_photos") + rec.facephotourl
+    rec.face_url = photos_folder(PROFILE_PHOTOS) + rec.facephotourl
     child_id = int(vars.child_id)
     if gender == 'M':
         db(db.TblMembers.id == child_id).update(father_id=parent_id)
@@ -87,7 +88,7 @@ def create_new_member(vars):
 def create_spouse(vars):
     member_id, rec = create_member(vars)
     member_rec = get_member_rec(member_id)
-    member_rec.facephotourl = photos_folder('profile_photos') + "dummy_face.png"
+    member_rec.facephotourl = photos_folder(PROFILE_PHOTOS) + "dummy_face.png"
     member_rec = json_to_storage(member_rec)
     ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL', member_rec=member_rec, new_member=True)
     return dict(member_id=member_id, member=rec)
@@ -108,7 +109,7 @@ def create_member(vars):
     rec.member_info.facephotourl="dummy_face.png"
     member_id = db.TblMembers.insert(**rec.member_info)
     rec.member_info.id = member_id
-    rec.member_info.facephotourl = photos_folder('profile_photos') + "dummy_face.png"
+    rec.member_info.facephotourl = photos_folder(PROFILE_PHOTOS) + "dummy_face.png"
     return member_id, rec
 
 @serve_json
@@ -158,7 +159,7 @@ def get_member_details(vars):
                 slides=slides,  # todo: duplicate?
                 spouses=spouses,  # this is just the key for translation
                 member_stories=member_stories,
-                facephotourl=photos_folder('profile_photos') + (member_info.facephotourl or "dummy_face.png")
+                facephotourl=photos_folder(PROFILE_PHOTOS) + (member_info.facephotourl or "dummy_face.png")
                 )
 
 
@@ -246,7 +247,7 @@ def get_random_member(vars):
             break
     if not member_data:
         return dict(member_data=None)
-    member_data.face_photo_url = photos_folder('profile_photos') + member_data.facephotourl
+    member_data.face_photo_url = photos_folder(PROFILE_PHOTOS) + member_data.facephotourl
     member_data.short_name = (member_data.title + ' ' if member_data.title else '') + member_data.first_name
     return dict(member_data=member_data)
 
@@ -495,7 +496,7 @@ def save_member_info(vars):
         member_id = result
         member_rec = get_member_rec(member_id)
         if new_member:
-            member_rec.facephotourl = photos_folder('profile_photos') + "dummy_face.png"
+            member_rec.facephotourl = photos_folder(PROFILE_PHOTOS) + "dummy_face.png"
         member_rec = json_to_storage(member_rec)
         ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL', member_rec=member_rec, new_member=new_member)
     result = Storage(info=member_info)
@@ -535,7 +536,7 @@ def get_member_names():
                    approved=rec.approved,
                    has_profile_photo=bool(rec.facephotourl),  # used in client!
                    rnd=random.randint(0, 1000000),
-                   facephotourl=photos_folder('profile_photos') + (rec.facephotourl or "dummy_face.png")) for rec in
+                   facephotourl=photos_folder(PROFILE_PHOTOS) + (rec.facephotourl or "dummy_face.png")) for rec in
            lst]
     arr.sort(key=lambda item: item.rnd)
     return arr
@@ -564,7 +565,7 @@ def _get_deceased_members():
         death_day_of_year=day_of_year(rec.TblMembers.date_of_death),
         death_day_of_year_relative=day_of_year(rec.TblMembers.date_of_death, relative=True),
         death_day_since_epoch=days_since_epoch(rec.TblMembers.date_of_death),
-        facephotourl=photos_folder('profile_photos') + (rec.TblMembers.facephotourl or "dummy_face.png"),
+        facephotourl=photos_folder(PROFILE_PHOTOS) + (rec.TblMembers.facephotourl or "dummy_face.png"),
         bio_preview=rec.TblStories.preview
     ) for rec in lst]
     return arr
@@ -910,7 +911,7 @@ def save_photo_group(vars):
     photos = db(db.TblPhotos.id.belongs(photo_ids)).select(db.TblPhotos.id, db.TblPhotos.photo_path)
     photos = [p.as_dict() for p in photos]
     for p in photos:
-        p['photo_path'] = photos_folder("orig") + p['photo_path']
+        p['photo_path'] = photos_folder(RESIZED) + p['photo_path']
     return dict(photos=photos)
 
 
@@ -1783,7 +1784,7 @@ def get_story_members(event):
 
     photos = [p.as_dict() for p in photos]
     for p in photos:
-        p['photo_path'] = photos_folder("orig") + p['photo_path']
+        p['photo_path'] = photos_folder(RESIZED) + p['photo_path']
     member_fields = [db.TblMembers.id, db.TblMembers.first_name, db.TblMembers.last_name, db.TblMembers.facephotourl]
     # -----------------members-------------------
     qm = (db.TblEventMembers.event_id == event.id) & (db.TblMembers.id == db.TblEventMembers.member_id) & (
@@ -1803,7 +1804,7 @@ def get_term_members(term):
 
     photos = [p.as_dict() for p in photos]
     for p in photos:
-        p['photo_path'] = photos_folder("orig") + p['photo_path']
+        p['photo_path'] = photos_folder(RESIZED) + p['photo_path']
     # -----------------members-------------------
     qm = (db.TblTermMembers.term_id == term.id) & (db.TblMembers.id == db.TblTermMembers.member_id)
     qa = (db.TblTermArticles.term_id == term.id) & (db.TblArticles.id == db.TblTermArticles.article_id)
@@ -1835,11 +1836,11 @@ def _info_from_qm(qm, qa, member_fields, photo_member_set, photo_article_set, ph
             m['full_name'] = (m['first_name'] or '') + ' ' + (m['last_name'] or '')
             if not m['facephotourl']:
                 m['facephotourl'] = "dummy_face.png"
-            m['facephotourl'] = photos_folder("profile_photos") + m['facephotourl']
+            m['facephotourl'] = photos_folder(PROFILE_PHOTOS) + m['facephotourl']
     lst = [articles, article_candidates]
     for arr in lst:
         for a in arr:
-            a['facephotourl'] = photos_folder("profile_photos") + a['facephotourl']
+            a['facephotourl'] = photos_folder(PROFILE_PHOTOS) + a['facephotourl']
     return photos, members, candidates, articles, article_candidates
 
 

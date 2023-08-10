@@ -9,6 +9,7 @@ from date_utils import update_record_dates, fix_record_dates_in, fix_record_date
 from folders import url_video_folder
 from members_support import *
 from video_support import upgrade_youtube_info, update_cuepoints_text, parse_video_url, youtube_info
+from photos_support import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 @serve_json
 def save_video(vars):
@@ -278,7 +279,7 @@ def get_video_info(vars):
     member_ids = [m.member_id for m in member_ids]
     members = db(db.TblMembers.id.belongs(member_ids)).select()
     members = [Storage(id=member.id,
-                       facephotourl=photos_folder('profile_photos') + (member.facephotourl or "dummy_face.png"),
+                       facephotourl=photos_folder(PROFILE_PHOTOS) + (member.facephotourl or "dummy_face.png"),
                        full_name=get_full_name(member)) for member in members]
     return dict(video_source=video_source,
                 video_story=video_story,
@@ -345,7 +346,7 @@ def update_video_members(vars):
             db.TblMembersVideos.insert(video_id=video_id, member_id=mid)
     members = db(db.TblMembers.id.belongs(new_members)).select(db.TblMembers.id, db.TblMembers.facephotourl)
     for member in members:
-        member.facephotourl = photos_folder('profile_photos') + (member.facephotourl or "dummy_face.png")
+        member.facephotourl = photos_folder(PROFILE_PHOTOS) + (member.facephotourl or "dummy_face.png")
     return dict(members=members)
 
 @serve_json

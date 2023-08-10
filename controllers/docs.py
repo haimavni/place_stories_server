@@ -7,7 +7,7 @@ from date_utils import date_of_date_str, parse_date, get_all_dates, update_recor
     fix_record_dates_out
 import stories_manager
 from gluon.storage import Storage
-
+from photos_support import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 @serve_json
 def upload_doc(vars):
@@ -247,7 +247,7 @@ def get_doc_info(vars):
     members = db(db.TblMembers.id.belongs(member_ids)).select()
     members = [Storage(id=member.id,
                        facephotourl=photos_folder(
-                           'profile_photos') + (member.facephotourl or "dummy_face.png"),
+                           PROFILE_PHOTOS) + (member.facephotourl or "dummy_face.png"),
                        full_name=full_member_name(member))
                for member in members]
     q = (db.TblDocSegments.doc_id == doc_id) & \
@@ -314,7 +314,7 @@ def get_doc_segment_info(vars):
     members = db(db.TblMembers.id.belongs(member_ids)).select()
     members = [Storage(id=member.id,
                        facephotourl=photos_folder(
-                           'profile_photos') + (member.facephotourl or "dummy_face.png"),
+                           PROFILE_PHOTOS) + (member.facephotourl or "dummy_face.png"),
                        full_name=full_member_name(member))
                for member in members]
     doc_topics=get_object_topics(story_id, "S")
@@ -405,7 +405,7 @@ def update_doc_members(vars):
         db.TblMembers.id, db.TblMembers.facephotourl)
     for member in members:
         member.facephotourl=photos_folder(
-            'profile_photos') + (member.facephotourl or "dummy_face.png")
+            PROFILE_PHOTOS) + (member.facephotourl or "dummy_face.png")
     return dict(members=members)
 
 @ serve_json
@@ -434,7 +434,7 @@ def update_doc_segment_members(vars):
         db.TblMembers.id, db.TblMembers.facephotourl)
     for member in members:
         member.facephotourl=photos_folder(
-            'profile_photos') + (member.facephotourl or "dummy_face.png")
+            PROFILE_PHOTOS) + (member.facephotourl or "dummy_face.png")
     return dict(members=members)
 
 @ serve_json
