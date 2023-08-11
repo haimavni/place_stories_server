@@ -1,129 +1,90 @@
 from photos_support import *
-import binascii
-import crc_calc
 import shutil
 from injections import inject
 from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
+import os
 
 class ProcessPortedPhotos:
+    def __init__(self):
+        self.db = inject("db")
+
+    def log_it(self, s):
+        my_log = inject("my_log")
+        my_log(s, file_name="process_photos.log")
 
     def process_photo(self, photo_id):
-        comment = inject('comment')
-        comment(f"enter process_photo {photo_id}")
-        auth, comment, log_exception, db, STORY4PHOTO, NO_DATE = inject('auth', 'comment', 'log_exception', 'db',
-                                                                        'STORY4PHOTO', 'NO_DATE')
-        prec = db(db.TblPhotos.id==photo_id).select().first()
-        file_name = local_photos_folder(ORIG) + prec.photo_path
-        with open(file_name, 'rb') as f:
+        log_exception, db, NO_DATE = inject('log_exception', 'db', 'NO_DATE')
+        self.log_it(f"enter process_photo {photo_id}")
+        photo_rec = db(db.TblPhotos.id==photo_id).select().first()
+        orig_file_name = local_photos_folder(ORIG) + photo_rec.photo_path
+        square_file_name = orig_file_name.replace(f"/{ORIG}/", f"/{SQUARES}/")
+        resized_file_name = orig_file_name.replace(f"/{ORIG}/", f"/{RESIZED}/")
+        with open(orig_file_name, 'rb') as f:
             blob = f.read()
         crc = zlib.crc32(blob)
-        today = datetime.date.today()
-        month = str(today)[:-3]
-        sub_folder = 'ported/' + month + '/'
-        latitude = None
-        longitude = None
-        zoom = None
-        embedded_photo_date = None
+        photo_rec.update_record(crc=crc)
+        stream = BytesIO(blob)
+        img = Image.open(stream)
         try:
-            ###blob = array.array('B', [x for x in map(ord, s)]).tobytes()
-            stream = BytesIO(blob)
-            img = Image.open(stream)
-            exif_data = get_exif_data(img)
-            if 'GPSInfo' in exif_data:
-                try:
-                    gps_info = exif_data['GPSInfo']
-                    lng = gps_info['GPSLongitude']
-                    lat = gps_info['GPSLatitude']
-                    longitude = degrees_to_float(lng)
-                    latitude = degrees_to_float(lat)
-                    if gps_info['GPSLatitudeRef'] == 'S':
-                        latitude = -latitude
-                    if gps_info['GPSLongitudeRef'] == 'W':
-                        longitude = -longitude
-                    zoom = 13
-                except Exception as e:
-                    log_exception("getting photo geo data failed")
-                if prec:
-                    has_geo_info = longitude != None
-                    prec.update_record(has_geo_info=has_geo_info, longitude=longitude, latitude=latitude, zoom=zoom)
-                    if prec.oversize:
-                        fname = local_photos_folder(ORIG) + prec.photo_path
-                        img.save(fname, quality=95)  ###, exif=img.info['exif'])
-            if 'DateTimeDigitized' in exif_data:
-                s = exif_data['DateTimeDigitized']
-                try:
-                    comment(f"embedded date is {s}")
-                    embedded_photo_date = datetime.datetime.strptime(s, '%Y:%m:%d %H:%M:%S')
-                except Exception as e:
-                    log_exception('getting photo embedded date failed')
-
+            exif_data = self.use_exif_data(img)
+        except Exception as e:
+            exif_data = None
+            log_exception("exif data could not be obtained")
+        if exif_data:
+            photo_rec.update_record(
+                       latitude=exif_data.latitude,
+                       longitude=exif_data.longitude,
+                       zoom=exif_data.zoom,
+                       has_geo_info=exif_data.longitude!=None,
+                       embedded_photo_date=exif_data.embedded_photo_date)
+            photo_date = photo_rec.photo_date
+            if exif_data.embedded_photo_date:
+                if (not photo_date) or \
+                    (photo_date == NO_DATE) or \
+                    (photo_rec.photo_date.year == exif_data.embedde_photo_date.year):
+                    photo_date = exif_data.embedded_photo_date.date()
+                    photo_date_dateend = photo_date + datetime.timedelta(days=1)
+                    photo_rec.update_record(photo_date=photo_date, 
+                                            photo_date_dateend=photo_date_dateend,
+                                            photo_date_dateunit = 'D',
+                                            photo_date_datespan = 1
+                                            )
+        try:
             width, height = img.size
-            comment(f"-----------width is {width} and height is {height}-------")
+            self.log_it(f"-----------width is {width} and height is {height}-------")
             if not width:
-                comment("==================img size is zero=========")
+                self.log_it("==================img size is zero=========")
                 width, height = (799, 601)
             square_img = crop_to_square(img, width, height, 256)
             if square_img:
-                path = local_photos_folder(SQUARES) + sub_folder
+                path, fn = os.path.split(square_file_name)
                 dir_util.mkpath(path)
-                fname = file_name.replace('/oversize/', '/squares/')
-                square_img.save(fname)
+                square_img.save(square_file_name)
                 fix_owner(path)
-                fix_owner(fname)
-                got_square = True
-            else:
-                got_square = False
-            # change: all originals are saved in ORIG which should be renamed RESIZED. orig needs to be changed to "resized"
-            oversize = False
-            oversize_path = local_photos_folder(ORIG) + sub_folder
-            dir_util.mkpath(oversize_path)
-            oversize_fname = file_name.replace('/orig/', '/oversize/')
-            shutil.copyfile(file_name, oversize_fname)
-            fix_owner(oversize_path)
-            fix_owner(oversize_fname)
+                fix_owner(square_file_name)
+            path, fn = os.path.split(orig_file_name)
+            fix_owner(path)
+            fix_owner(orig_file_name)
             if height > MAX_HEIGHT or width > MAX_WIDTH:
                 oversize = True
+            else:
+                oversize = False
             width, height = resized(width, height)
-            comment(f"after resized-----------width is {width} and height is {height}-------")
+            self.log_it(f"after resized-----------width is {width} and height is {height}-------")
             img = img.resize((width, height), Image.LANCZOS)
-            path = local_photos_folder(RESIZED) + sub_folder
-            img.save(file_name, quality=95)  ###, exif=img.info['exif'])
+            img.save(resized_file_name, quality=95)  ###, exif=img.info['exif'])
+            path, fn = os.path.split(resized_file_name)
             fix_owner(path)
-            fix_owner(file_name)
+            fix_owner(resized_file_name)
             dhash_value = dhash_photo(img=img)
         except Exception as e:
-            log_exception("saving photo {} failed".format(prec.original_file_name))
+            log_exception(f"saving photo {photo_rec.original_file_name} failed")
             return Storage(failed=1)
-        # sm = Stories()
-        # story_info = sm.get_empty_story(used_for=STORY4PHOTO, story_text="", name=prec.original_file_name)
-        # result = sm.add_story(story_info)
-        # story_id = result.story_id
-
-        if embedded_photo_date:
-            photo_date = embedded_photo_date.date()
-            photo_date_dateend = photo_date + datetime.timedelta(days=1)
-            photo_date_dateunit = 'D'
-            photo_date_datespan = 1
-        else:
-            photo_date = NO_DATE
-            photo_date_dateend = NO_DATE
-            photo_date_dateunit = 'Y'
-            photo_date_datespan = 1
-        has_geo_info = longitude is not None
-        comment(f"just before update record. {width}x{height}")
-        prec.update_record(
-            embedded_photo_date=embedded_photo_date,
+        self.log_it(f"just before update record. {width}x{height}")
+        photo_rec.update_record(
             upload_date=datetime.datetime.now(),
-            photo_date=photo_date,
-            photo_date_dateend=photo_date_dateend,
-            photo_date_dateunit=photo_date_dateunit,
-            photo_date_datespan=photo_date_datespan,
             width=width,
             height=height,
-            latitude=latitude,
-            longitude=longitude,
-            has_geo_info=has_geo_info,
-            zoom=13,
             dhash=dhash_value,
             oversize=oversize,
             photo_missing=False,
@@ -132,4 +93,44 @@ class ProcessPortedPhotos:
         )
         db.commit()
         return Storage(photo_id=photo_id)
+    
+    def process_all_unprocessed_photos(self):
+        lst = db(db.TblPhotos.width==0).select(db.TblPhotos.id)
+        for prec in lst:
+            self.process_photo(prec.id)
+
+    
+    def use_exif_data(self, img):
+        log_exception = inject("log_exception")
+        latitude = None
+        longitude = None
+        zoom = None
+        embedded_photo_date = None
+        exif_data = get_exif_data(img)
+        if 'GPSInfo' in exif_data:
+            try:
+                gps_info = exif_data['GPSInfo']
+                lng = gps_info['GPSLongitude']
+                lat = gps_info['GPSLatitude']
+                longitude = degrees_to_float(lng)
+                latitude = degrees_to_float(lat)
+                if gps_info['GPSLatitudeRef'] == 'S':
+                    latitude = -latitude
+                if gps_info['GPSLongitudeRef'] == 'W':
+                    longitude = -longitude
+                zoom = 13
+            except Exception as e:
+                log_exception("getting photo geo data failed")
+            s = exif_data['DateTimeDigitized']
+            try:
+                self.log_it(f"embedded date is {s}")
+                embedded_photo_date = datetime.datetime.strptime(s, '%Y:%m:%d %H:%M:%S')
+            except Exception as e:
+                log_exception('getting photo embedded date failed')
+        return Storage(img=img,
+                       latitude=latitude,
+                       longitude=longitude,
+                       zoom=zoom,
+                       embedded_photo_date=embedded_photo_date)
+
 
