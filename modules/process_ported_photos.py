@@ -19,8 +19,13 @@ class ProcessPortedPhotos:
         orig_file_name = local_photos_folder(ORIG) + photo_rec.photo_path
         square_file_name = orig_file_name.replace(f"/{ORIG}/", f"/{SQUARES}/")
         resized_file_name = orig_file_name.replace(f"/{ORIG}/", f"/{RESIZED}/")
-        with open(orig_file_name, 'rb') as f:
-            blob = f.read()
+        try:
+            with open(orig_file_name, 'rb') as f:
+                blob = f.read()
+        except Exception as e:
+            photo_rec.update_record(photo_missing=True)
+            self.log_it(f"file {orig_file_name} could not be opened")
+            return
         crc = zlib.crc32(blob)
         photo_rec.update_record(crc=crc)
         stream = BytesIO(blob)
@@ -100,7 +105,7 @@ class ProcessPortedPhotos:
         limit = limit or 99999
         db = self.db
         left_to_process = db(db.TblPhotos.width==0).count()
-        lst = db(db.TblPhotos.width==0).select(db.TblPhotos.id, limitby=(0, limit))
+        lst = db((db.TblPhotos.width==0)|(db.TblPhotos.photo_missing==True)).select(db.TblPhotos.id, limitby=(0, limit))
         for prec in lst:
             self.process_photo(prec.id)
         return dict(left_to_process=left_to_process, done=len(lst))        
