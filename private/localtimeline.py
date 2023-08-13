@@ -22,7 +22,7 @@ class PortTL():
         x = len(lst)
         print(f"{x} years")
         n = 0
-        # lst.reverse()
+        lst.reverse()
         # lst = lst[:5] # Temporary!!!!!!!!!!!!!!!!!!!
         for div in lst:
             n += 1
@@ -73,7 +73,7 @@ class PortTL():
                      kind="ievent",
                      event_name=event_name,
                      read_more_text=read_more_text,
-                     items=[],
+                     event_items=[],
                      categories=cat_names
                      )
         item_divs = gallery.find_all("div", "main-item-wrapper")
@@ -120,7 +120,7 @@ class PortTL():
                 self.urls.add(src)
                 item_comments = comments.get(data_id, [])
                 item_rec["comments"] = item_comments
-                event["items"].append(item_rec)
+                event["event_items"].append(item_rec)
         self.plan_list.append(event)
 
     def get_link_credits(self, soup):
@@ -163,7 +163,7 @@ class PortTL():
                      event_name=event_name,
                      event_full_text=event_full_text,
                      read_more_text=read_more_text,
-                     items=[],
+                     event_items=[],
                      categories=cat_names
                      )
         main_items = soup.find_all(self.is_main_item_wrapper)
@@ -187,8 +187,8 @@ class PortTL():
                 item_data["credits"] = credits
                 item_data["comments"] = self.get_item_comments(comments, data_id)
                 item_data["title"] = titles_dic.get(data_id, None)
-                event["items"].append(item_data)
-        if len(event["items"]) > 0:
+                event["event_items"].append(item_data)
+        if len(event["event_items"]) > 0:
             self.plan_list.append(event)
 
     def handle_pdf(self, item):

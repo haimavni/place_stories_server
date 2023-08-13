@@ -30,15 +30,15 @@ class Migrate:
     def execute_plan(self):
         self.log_it("started to execute plan")
         plan = self.read_plan()
-        plan_length = plan.__class__
+        plan_length = len(plan)
         self.log_it(f"{plan_length} events to port")
         count = 0
         for event in plan:
-            if not event.items:
-                continue #all items were duplicates
+            if not event.event_items:
+                continue #all event_items were duplicates
             self.create_event(event)
             count += 1
-            # if len(event.items) > 1:
+            # if len(event.event_items) > 1:
             #     story_id = self.create_story(event)
             # else:
             #     story_id = None
@@ -56,7 +56,7 @@ class Migrate:
         event_categories = event.categories
         text = event.read_more_text
         story_id = None
-        if len(event.items) > 1: # if only one item, give it the story
+        if len(event.event_items) > 1: # if only one item, give it the story
             story_id = self.db.insert(
                 used_for=STORY4EVENT,
                 name=name,
@@ -68,7 +68,7 @@ class Migrate:
                 story_len=len(text)
             )
             self.assign_topics(story_id, event_categories, "E")
-        for item in event.items:
+        for item in event.event_items:
             self.create_item(event_categories, story_id, item)
 
     def create_item(self, event_categories, event_story_id, item):
