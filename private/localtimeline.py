@@ -101,6 +101,7 @@ class PortTL():
                 src = iframe.attrs["data-src"]
             else:
                 print(f"Unexpected data type {data_type}")
+            item_rec["src"] = src
             if src in self.urls:
                 item_rec["duplicate"] = True
             else:
