@@ -27,11 +27,14 @@ class Migrate:
         result = json_to_storage(obj)
         return result
 
-    def execute_plan(self):
+    def execute_plan(self, first=0, limit=1000):
         self.log_it("started to execute plan")
         plan = self.read_plan()
         plan_length = len(plan)
+        plan = plan[first:first+limit]
+        last = first + limit
         self.log_it(f"{plan_length} events to port")
+        self.log_it(f"events between {first} and {last}")
         count = 0
         for event in plan:
             n = len(event.event_items)
@@ -155,6 +158,17 @@ class Migrate:
         self.add_topics(categories, usage) 
         for cat in categories:
             topic_id = self.categories[cat] 
-            self.db.TblItemTopics.insert(topic_id=topic_id, story_id=story_id, usage=usage)  
-
+            self.db.TblItemTopics.insert(topic_id=topic_id, story_id=story_id, usage=usage)
+            
+    def start_from_scratch(self):
+        db = self.db
+        db.TblTopics.truncate('RESTART IDENTITY CASCADE')
+        db.TblItemTopics.truncate('RESTART IDENTITY CASCADE')
+        db.TblStories.truncate('RESTART IDENTITY CASCADE')
+        db.TblPhotos.truncate('RESTART IDENTITY CASCADE')
+        db.TblEventPhotos.truncate('RESTART IDENTITY CASCADE')
+        db.TblDocs.truncate('RESTART IDENTITY CASCADE')
+        db.TblEventDocs.truncate('RESTART IDENTITY CASCADE')
+        db.TblVideos.truncate('RESTART IDENTITY CASCADE')
+        db.TblEventVideos.truncate('RESTART IDENTITY CASCADE')
 
