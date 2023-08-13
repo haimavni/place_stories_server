@@ -64,7 +64,7 @@ class Migrate:
                 name=name,
                 story=text,
                 preview=text,
-                story_date = datetime.date(year=event.year, month=1, day=1),
+                story_date = datetime.date(year=int(event.year), month=1, day=1),
                 source="ltl",
                 creation_date=datetime.datetime.now(),
                 story_len=len(text)
