@@ -1,6 +1,5 @@
-from docs_support import save_pdf_jpg
+from docs_support import save_pdf_jpg, local_docs_folder 
 from injections import inject
-from folders import local_docs_folder
 from distutils import dir_util
 import zlib
 import os
