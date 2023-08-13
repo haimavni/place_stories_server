@@ -84,7 +84,7 @@ class Migrate:
             name=item.title,
             story="",
             preview="",
-            story_date = datetime.date(year=item.year, month=1, day=1),
+            story_date = datetime.date(year=int(item.year), month=1, day=1),
             source="ltl",
             creation_date=datetime.datetime.now(),
             story_len=0
@@ -95,7 +95,7 @@ class Migrate:
                 story_id=story_id,
                 name=item.title, # todo: use only story name and remove this field
                 photo_path=item.photo_path,
-                photo_date=datetime.date(year=item.year, month=1, day=1),
+                photo_date=datetime.date(year=int(item.year), month=1, day=1),
             )
             if event_story_id: # connect photo to owning event
                 db.TblEventPhotos.insert(item_id=item_id, story_id=event_story_id)
@@ -106,7 +106,7 @@ class Migrate:
                 story_id=story_id,
                 name=item.title, # todo: use only story name and remove this field
                 doc_path=item.doc_path,
-                doc_date=datetime.date(year=item.year, month=1, day=1),
+                doc_date=datetime.date(year=int(item.year), month=1, day=1),
             )
             if event_story_id: # connect doc to owning event
                 db.TblEventDocs.insert(item_id=item_id, story_id=event_story_id)
@@ -120,7 +120,7 @@ class Migrate:
                 src=vid_info.src,
                 upload_date=datetime.datetime.now(),
                 video_type=vid_info.video_type,
-                video_date=datetime.date(year=item.year, month=1, day=1),
+                video_date=datetime.date(year=int(item.year), month=1, day=1),
             )
             if vid_info.video_type == "youtube":
                 yt_info = youtube_info(item.src)
