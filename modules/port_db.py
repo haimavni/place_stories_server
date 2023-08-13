@@ -144,16 +144,17 @@ class Migrate:
         for cat in category_list:
             if cat not in self.categories:
                 id = self.db.TblTopics.insert(name=cat, description="", usage=usage)
-                self.categories[cat] = (id, usage)
-            elif usage not in self.categories[cat][1]:
-                id = self.categories[cat][0]
+                self.categories[cat] = id
+            else #usage not in self.categories[cat][1]:
+                id = self.categories[cat]
                 rec = db(db.TblTopics.id==id).select().first()
-                rec.update_record(usage=rec.usage + usage)
+                if usage not in rec.usage:
+                    rec.update_record(usage=rec.usage + usage)
                 
     def assign_topics(self, story_id, categories, usage):
         self.add_topics(categories, usage) 
         for cat in categories:
-            topic_id, usage = self.categories[cat] 
+            topic_id = self.categories[cat] 
             self.db.TblItemTopics.insert(topic_id=topic_id, story_id=story_id, usage=usage)  
 
 
