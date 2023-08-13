@@ -2,6 +2,7 @@ from photos_support import *
 from injections import inject
 from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 import os
+from distutils import dir_util
 
 class ProcessPortedPhotos:
     def __init__(self):
@@ -71,6 +72,8 @@ class ProcessPortedPhotos:
             width, height = resized(width, height)
             self.log_it(f"after resized-----------width is {width} and height is {height}-------")
             img = img.resize((width, height), Image.LANCZOS)
+            path, fn = os.path.split(resized_file_name)
+            dir_util.mkpath(path)
             img.save(resized_file_name, quality=95)  ###, exif=img.info['exif'])
             path, fn = os.path.split(resized_file_name)
             fix_owner(path)
