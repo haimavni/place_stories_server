@@ -86,7 +86,7 @@ class PortTL():
                             credit=item_credit,
                             categories=cat_names,
                             title=item_title,
-                            data_type=data_type)
+                            kind=data_type)
             if data_type == "pdf":
                 iframe = item_div.find("iframe")
                 src = iframe.attrs["data-src"]
