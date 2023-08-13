@@ -5,7 +5,7 @@ from distutils import dir_util
 import zlib
 import os
 
-class ProcessPortedPhotos:
+class ProcessPortedDocs:
     def __init__(self):
         self.db, self.log_exception = inject("db", "log_exception")
 
@@ -29,4 +29,12 @@ class ProcessPortedPhotos:
         save_pdf_jpg(fname, pdf_jpg_path)
         db.commit()
         return doc_id
+    
+    def process_unprocessed_docs(self):
+        db = self.db
+        lst = db(db.TblDocs.crc == None).select(db.TblDocs.id)
+        lst = [rec.id for rec in lst]
+        for doc_id in lst:
+            self.process_ported_doc(doc_id)
+    
 

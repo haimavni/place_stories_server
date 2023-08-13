@@ -8,7 +8,6 @@ class Migrate:
 
     def __init__(self):
         self.db = inject("db")
-        self.categories = dict()
 
     def log_it(self, s):
         my_log = inject("my_log")
@@ -145,19 +144,18 @@ class Migrate:
     def add_topics(self, category_list, usage):
         db = self.db
         for cat in category_list:
-            if cat not in self.categories:
-                id = self.db.TblTopics.insert(name=cat, description="", usage=usage)
-                self.categories[cat] = id
-            else:
-                id = self.categories[cat]
-                rec = db(db.TblTopics.id==id).select().first()
+            rec = db(db.TblTopics.name==cat).select().first()
+            if rec:
                 if usage not in rec.usage:
                     rec.update_record(usage=rec.usage + usage)
-                
+            else:
+                self.db.TblTopics.insert(name=cat, description="", usage=usage)
+
     def assign_topics(self, story_id, categories, usage):
+        db = self.db
         self.add_topics(categories, usage) 
         for cat in categories:
-            topic_id = self.categories[cat] 
+            topic_id = db(db.TblTopics.name==cat).select().first().id
             self.db.TblItemTopics.insert(topic_id=topic_id, story_id=story_id, usage=usage)
             
     def start_from_scratch(self):
