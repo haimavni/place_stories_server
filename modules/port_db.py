@@ -25,15 +25,18 @@ class Migrate:
 
     def execute_plan(self):
         plan = self.read_plan()
+        count = 0
         for event in plan:
             if not event.items:
                 continue #all items were duplicates
             self.create_event(event)
+            count += 1
             # if len(event.items) > 1:
             #     story_id = self.create_story(event)
             # else:
             #     story_id = None
             # event_categories = event.categories
+        return f"{count} events were processed."
 
     def create_event(self, event):
         STORY4EVENT = inject("STORY4EVENT")
