@@ -145,7 +145,7 @@ class Migrate:
             if cat not in self.categories:
                 id = self.db.TblTopics.insert(name=cat, description="", usage=usage)
                 self.categories[cat] = id
-            else #usage not in self.categories[cat][1]:
+            else:
                 id = self.categories[cat]
                 rec = db(db.TblTopics.id==id).select().first()
                 if usage not in rec.usage:
