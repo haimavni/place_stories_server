@@ -34,6 +34,8 @@ class Migrate:
         self.log_it(f"{plan_length} events to port")
         count = 0
         for event in plan:
+            n = len(event.event_items)
+            self.log_it(f"{n} items in event {count}")
             if not event.event_items:
                 continue #all event_items were duplicates
             self.create_event(event)
