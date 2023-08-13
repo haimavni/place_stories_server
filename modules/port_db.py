@@ -152,7 +152,7 @@ class Migrate:
     def assign_topics(self, story_id, categories, usage):
         self.add_topics(categories, usage) 
         for cat in categories:
-            topic_id = self.categories[cat] 
+            topic_id, usage = self.categories[cat] 
             self.db.TblItemTopics.insert(topic_id=topic_id, story_id=story_id, usage=usage)  
 
 
