@@ -124,7 +124,7 @@ class Migrate:
                 video_date=datetime.date(year=int(item.year), month=1, day=1),
             )
             if vid_info.video_type == "youtube":
-                yt_info = youtube_info(item.src)
+                yt_info = youtube_info(vid_info.src)
                 db(db.TblVideos.id==item_id).update(
                     thumbnail_url=yt_info.thumbnail_url,
                     description=yt_info.description,
