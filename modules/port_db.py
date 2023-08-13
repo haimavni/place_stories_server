@@ -10,6 +10,10 @@ class Migrate:
         self.db = inject("db")
         self.categories = dict()
 
+    def log_it(self, s):
+        my_log = inject("my_log")
+        my_log(s, file_name="port_db.log")
+
     def read_plan(self):
         request = inject("request")
         app = request.application
@@ -24,7 +28,9 @@ class Migrate:
         return result
 
     def execute_plan(self):
+        self.log_it("started to execute plan")
         plan = self.read_plan()
+        self.log_it(f"{len(plan)} events to port")
         count = 0
         for event in plan:
             if not event.items:
