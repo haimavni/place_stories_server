@@ -57,7 +57,7 @@ class Migrate:
         text = event.read_more_text
         story_id = None
         if len(event.event_items) > 1: # if only one item, give it the story
-            story_id = self.db.insert(
+            story_id = self.db.TblStories(
                 used_for=STORY4EVENT,
                 name=name,
                 story=text,
@@ -77,7 +77,7 @@ class Migrate:
         usage = STORY4PHOTO if item.kind == "photo" else STORY4VIDEO if item.kind == "video" else STORY4DOC
         self.log_it("create item")
         db = self.db
-        story_id = self.db.insert(
+        story_id = self.db.TblStories.insert(
             used_for=usage,
             name=item.title,
             story="",
