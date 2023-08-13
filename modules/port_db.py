@@ -30,7 +30,7 @@ class Migrate:
     def execute_plan(self):
         self.log_it("started to execute plan")
         plan = self.read_plan()
-        plan_length = len(plan)
+        plan_length = plan.__class__
         self.log_it(f"{plan_length} events to port")
         count = 0
         for event in plan:
