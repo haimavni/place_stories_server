@@ -76,7 +76,7 @@ class Migrate:
     def create_item(self, event_categories, event_story_id, item):
         categories = item.categories or event_categories
         STORY4PHOTO, STORY4DOC, STORY4VIDEO = inject('STORY4PHOTO', 'STORY4DOC', 'STORY4VIDEO')
-        usage = STORY4PHOTO if item.kind == "photo" else STORY4VIDEO if item.kind == "video" else STORY4DOC
+        usage = STORY4PHOTO if item.kind == "image" else STORY4VIDEO if item.kind == "video" else STORY4DOC
         self.log_it("create item")
         db = self.db
         story_id = self.db.TblStories.insert(
@@ -90,7 +90,7 @@ class Migrate:
             story_len=0
         )
         self.log_it(f"new story {story_id} {item.kind}")
-        if item.kind == "photo":
+        if item.kind == "image":
             item_id = db.TblPhotos.insert(
                 story_id=story_id,
                 name=item.title, # todo: use only story name and remove this field
