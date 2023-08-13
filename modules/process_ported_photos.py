@@ -1,5 +1,4 @@
 from photos_support import *
-import shutil
 from injections import inject
 from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 import os
@@ -94,12 +93,13 @@ class ProcessPortedPhotos:
         db.commit()
         return Storage(photo_id=photo_id)
     
-    def process_all_unprocessed_photos(self):
-        lst = db(db.TblPhotos.width==0).select(db.TblPhotos.id)
+    def process_all_unprocessed_photos(self, limit=None):
+        limit = limit or 99999
+        db = self.db
+        lst = db(db.TblPhotos.width==0).select(db.TblPhotos.id, limitby=(0, limit))
         for prec in lst:
             self.process_photo(prec.id)
 
-    
     def use_exif_data(self, img):
         log_exception = inject("log_exception")
         latitude = None
