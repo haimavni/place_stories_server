@@ -6,7 +6,7 @@ from video_support import parse_video_url, youtube_info
 
 class Migrate:
 
-    def __init(self):
+    def __init__(self):
         self.db = inject("db")
         self.categories = dict()
 
@@ -75,6 +75,7 @@ class Migrate:
         categories = item.categories or event_categories
         STORY4PHOTO, STORY4DOC, STORY4VIDEO = inject('STORY4PHOTO', 'STORY4DOC', 'STORY4VIDEO')
         usage = STORY4PHOTO if item.kind == "photo" else STORY4VIDEO if item.kind == "video" else STORY4DOC
+        self.log_it("create item")
         db = self.db
         story_id = self.db.insert(
             used_for=usage,
@@ -86,6 +87,7 @@ class Migrate:
             creation_date=datetime.datetime.now(),
             story_len=0
         )
+        self.log_it(f"new story {story_id} {item.kind}")
         if item.kind == "photo":
             item_id = db.TblPhotos.insert(
                 story_id=story_id,
