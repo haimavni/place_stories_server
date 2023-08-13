@@ -136,7 +136,7 @@ class Migrate:
             categories = item.categories or event_categories
             self.assign_topics(story_id, categories, "D")
         else:
-            raise Exception("Unknown item kind")
+            raise Exception(f"Unknown item kind {item.kind}")
         
     def add_topics(self, category_list, usage):
         db = self.db
