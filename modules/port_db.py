@@ -113,6 +113,7 @@ class Migrate:
             categories = item.categories or event_categories
             self.assign_topics(story_id, categories, "D")
         elif item.kind == "video":
+            self.log_it(f" video src is {item.src}")
             vid_info = parse_video_url(item.src)
             item_id = db.TblVideos.insert(
                 story_id=story_id,
