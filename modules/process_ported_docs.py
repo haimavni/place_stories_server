@@ -20,7 +20,7 @@ class ProcessPortedDocs:
             with open(fname, 'rb') as f:
                 blob = f.read()
         except Exception as e:
-            self.my_log(f"file {fname} was not found!")
+            self.log_it(f"file {fname} was not found!")
             return
         crc = zlib.crc32(blob)
         doc_rec.update_record(
