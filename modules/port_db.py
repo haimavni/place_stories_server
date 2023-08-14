@@ -61,12 +61,13 @@ class Migrate:
         text = event.read_more_text
         story_id = None
         if len(event.event_items) > 1: # if only one item, give it the story
-            story_id = self.db.TblStories(
+            story_id = self.db.TblStories.insert(
                 used_for=STORY4EVENT,
                 name=name,
                 story=text,
                 preview=text,
-                story_date = datetime.date(year=int(event.year), month=1, day=1),
+                story_date=datetime.date(year=int(event.year), month=1, day=1),
+                story_date_dateend=datetime.date(year=int(event.year), month=1, day=1)
                 source="ltl",
                 creation_date=datetime.datetime.now(),
                 story_len=len(text)
@@ -87,6 +88,7 @@ class Migrate:
             story="",
             preview="",
             story_date = datetime.date(year=int(item.year), month=1, day=1),
+            story_date_dateend = datetime.date(year=int(item.year), month=1, day=1),
             source="ltl",
             creation_date=datetime.datetime.now(),
             story_len=0
@@ -98,9 +100,10 @@ class Migrate:
                 name=item.title, # todo: use only story name and remove this field
                 photo_path=item.photo_path,
                 photo_date=datetime.date(year=int(item.year), month=1, day=1),
+                photo_date_dateend=datetime.date(year=int(item.year), month=1, day=1)
             )
             if event_story_id: # connect photo to owning event
-                db.TblEventPhotos.insert(item_id=item_id, story_id=event_story_id)
+                db.TblEventPhotos.insert(item_id=item_id, story_id=event_story_id, recognized=True)
             categories = item.categories or event_categories
             self.assign_topics(story_id, categories, "P")
         elif item.kind == "pdf":
@@ -109,6 +112,8 @@ class Migrate:
                 name=item.title, # todo: use only story name and remove this field
                 doc_path=item.doc_path,
                 doc_date=datetime.date(year=int(item.year), month=1, day=1),
+                doc_date_dateend=datetime.date(year=int(item.year), month=1, day=1)
+                
             )
             if event_story_id: # connect doc to owning event
                 db.TblEventDocs.insert(item_id=item_id, story_id=event_story_id)
@@ -124,6 +129,7 @@ class Migrate:
                 upload_date=datetime.datetime.now(),
                 video_type=vid_info.video_type,
                 video_date=datetime.date(year=int(item.year), month=1, day=1),
+                video_date_dateend=datetime.date(year=int(item.year), month=1, day=1)
             )
             if vid_info.video_type == "youtube":
                 yt_info = youtube_info(vid_info.src)
@@ -149,7 +155,7 @@ class Migrate:
                 if usage not in rec.usage:
                     rec.update_record(usage=rec.usage + usage)
             else:
-                self.db.TblTopics.insert(name=cat, description="", usage=usage)
+                self.db.TblTopics.insert(name=cat, description="", usage=usage, topic_kind=2)
 
     def assign_topics(self, story_id, categories, usage):
         db = self.db
