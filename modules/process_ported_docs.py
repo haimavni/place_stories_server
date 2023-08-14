@@ -16,8 +16,12 @@ class ProcessPortedDocs:
         db = self.db
         doc_rec = db(db.TblDocs.id==doc_id).select().first()
         fname = local_docs_folder() + doc_rec.doc_path
-        with open(fname, 'rb') as f:
-            blob = f.read()
+        try:
+            with open(fname, 'rb') as f:
+                blob = f.read()
+        except Exception as e:
+            self.my_log(f"file {fname} was not found!")
+            return
         crc = zlib.crc32(blob)
         doc_rec.update_record(
             crc=crc
