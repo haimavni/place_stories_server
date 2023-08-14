@@ -748,6 +748,7 @@ def make_photos_query(vars):
     if vars.selected_topics:
         q1 = get_topics_query(vars.selected_topics)
         q &= q1
+    comment(f"============== {db(q).count()} photos from query")
     return q 
 
 
