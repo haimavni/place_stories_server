@@ -60,6 +60,7 @@ class Migrate:
         event_categories = event.categories
         text = event.read_more_text
         story_id = None
+        self.log_it(f"-----------number of items: {len(event.event_items)}")
         if len(event.event_items) > 1: # if only one item, give it the story
             story_id = self.db.TblStories.insert(
                 used_for=STORY4EVENT,
@@ -67,12 +68,14 @@ class Migrate:
                 story=text,
                 preview=text,
                 story_date=datetime.date(year=int(event.year), month=1, day=1),
-                story_date_dateend=datetime.date(year=int(event.year), month=1, day=1)
+                story_date_dateend=datetime.date(year=int(event.year), month=1, day=1),
                 source="ltl",
                 creation_date=datetime.datetime.now(),
                 story_len=len(text)
             )
+            self.log_it("story id is: {story_id}")
             self.assign_topics(story_id, event_categories, "E")
+        return
         for item in event.event_items:
             self.create_item(event_categories, story_id, item)
 
