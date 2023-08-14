@@ -739,11 +739,16 @@ def make_photos_query(vars):
     if member_ids:
         q1 = with_members_query(member_ids)
         q &= q1
+    comment(f"4.1============== {db(q).count()} photos from query")
     if vars.selected_recognition == 'recognized':
         if date_opt != 'undated':
             q &= ((db.TblPhotos.recognized == True) | (db.TblPhotos.recognized == None))
+            comment(f"4.2============== {db(q).count()} photos from query")
+
     elif vars.selected_recognition == 'unrecognized':
         q &= ((db.TblPhotos.recognized == False) | (db.TblPhotos.recognized == None))
+        comment(f"4.3============== {db(q).count()} photos from query")
+
     elif vars.selected_recognition == 'recognized-not-located':
         lst = unlocated_faces()
         q &= (db.TblPhotos.id.belongs(lst))
