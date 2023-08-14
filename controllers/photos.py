@@ -682,8 +682,10 @@ def replace_photo(pgroup):
 
 def make_photos_query(vars):
     q = init_query(db.TblPhotos, editing=vars.editing, is_deleted=vars.deleted, user_id=vars.user_id)
+    comment(f"1============== {db(q).count()} photos from query")
     q &= (db.TblPhotos.width > 0) & \
         (db.TblPhotos.is_back_side != True)
+    comment(f"2============== {db(q).count()} photos from query")
     if vars.photo_ids:
         q &= (db.TblPhotos.id.belongs(vars.photo_ids))
     if vars.no_slide_show:
@@ -702,6 +704,7 @@ def make_photos_query(vars):
         if vars.selected_photographers else []
     if len(photographer_list) > 0:
         q &= db.TblPhotos.photographer_id.belongs(photographer_list)
+    comment(f"3============== {db(q).count()} photos from query")
     if first_year:
         from_date = datetime.date(year=first_year, month=1, day=1)
         q &= (db.TblPhotos.photo_date_dateend >= from_date)
@@ -728,6 +731,7 @@ def make_photos_query(vars):
     elif date_opt == 'undated':
         q &= (db.TblPhotos.photo_date == NO_DATE)
     member_ids = None
+    comment(f"4============== {db(q).count()} photos from query")
     if vars.selected_member_id:
         member_ids = [vars.selected_member_id]
     elif vars.selected_member_ids:
@@ -743,12 +747,13 @@ def make_photos_query(vars):
     elif vars.selected_recognition == 'recognized-not-located':
         lst = unlocated_faces()
         q &= (db.TblPhotos.id.belongs(lst))
+    comment(f"5============== {db(q).count()} photos from query")
     if vars.show_untagged:
         q &= (db.TblPhotos.story_id==db.TblStories.id) & (db.TblStories.is_tagged==False)
     if vars.selected_topics:
         q1 = get_topics_query(vars.selected_topics)
         q &= q1
-    comment(f"============== {db(q).count()} photos from query")
+    comment(f"6============== {db(q).count()} photos from query")
     return q 
 
 
