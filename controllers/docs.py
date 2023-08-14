@@ -483,6 +483,7 @@ def make_docs_query(params):
     if params.show_untagged:
         q &= (db.TblDocs.story_id == db.TblStories.id) & (
             db.TblStories.is_tagged == False)
+    q &= (db.TblDocs.crc != None)
     return q
 
 def make_doc_segments_query(params):
