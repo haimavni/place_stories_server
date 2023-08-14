@@ -22,10 +22,11 @@ class ProcessPortedDocs:
         doc_rec.update_record(
             crc=crc
         )
-        pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/' + doc_rec.doc_path
+        pdf_jpg_file_name = local_docs_folder() + 'pdf_jpgs/' + doc_rec.doc_path
+        pdf_jpg_file_name = pdf_jpg_file_name.replace(".pdf", ".jpg")
+        pdf_jpg_folder, fn = os.path.split(pdf_jpg_file_name)
         dir_util.mkpath(pdf_jpg_folder)
-        pdf_jpg_path = pdf_jpg_folder + fname.replace('.pdf', '.jpg')
-        save_pdf_jpg(fname, pdf_jpg_path)
+        save_pdf_jpg(fname, pdf_jpg_file_name)
         db.commit()
         return doc_id
     

@@ -82,8 +82,8 @@ class Migrate:
             self.log_it(f"story id is: {story_id}")
             self.assign_topics(story_id, event_categories, "E")
         for item in event.event_items:
-            # self.create_item(event_categories, story_id, item)  #temporary to fix previous issue
-            self.connect_item(event_id, item)
+            self.create_item(event_categories, event_id, item)
+            #self.connect_item(event_id, item) # was used to fix previous issue
             
     def connect_item(self, event_id, item):
         db = self.db
