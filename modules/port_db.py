@@ -73,7 +73,7 @@ class Migrate:
                 creation_date=datetime.datetime.now(),
                 story_len=len(text)
             )
-            self.log_it("story id is: {story_id}")
+            self.log_it(f"story id is: {story_id}")
             self.assign_topics(story_id, event_categories, "E")
         return
         for item in event.event_items:
