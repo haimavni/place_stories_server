@@ -60,6 +60,7 @@ class Migrate:
         event_categories = event.categories
         text = event.read_more_text
         story_id = None
+        event_id = None
         self.log_it(f"-----------number of items: {len(event.event_items)}")
         if len(event.event_items) > 1: # if only one item, give it the story
             story_id = self.db.TblStories.insert(
@@ -73,13 +74,34 @@ class Migrate:
                 creation_date=datetime.datetime.now(),
                 story_len=len(text)
             )
+            event_id = self.db.TblEvents.insert(
+                story_id=story_id,
+                event_date=datetime.date(year=int(event.year), month=1, day=1),
+                event_date_dateend=datetime.date(year=int(event.year), month=1, day=1)
+            )
             self.log_it(f"story id is: {story_id}")
             self.assign_topics(story_id, event_categories, "E")
-        return
         for item in event.event_items:
-            self.create_item(event_categories, story_id, item)
+            # self.create_item(event_categories, story_id, item)  #temporary to fix previous issue
+            self.connect_item(event_id, item)
+            
+    def connect_item(self, event_id, item):
+        db = self.db
+        if not event_id:
+            return
+        if item.kind == "image":
+            photo_id = db(db.TblPhotos.photo_path==item.photo_path).select().first().id
+            db.TblEventPhotos.insert(photo_id=photo_id, event_id=event_id)
+        elif item.kind == "pdf":
+            doc_id = db(db.TblDocs.doc_path==item.doc_path).select().first().id
+            db.TblEventDocs.insert(doc_id=doc_id, event_id=event_id)
+        elif item.kind == "video":
+            vid_info = parse_video_url(item.src)
+            video_id = db(db.TblVideos.src==vid_info.src).select().first().id
+            db.TblEventVideos.insert(video_id=video_id, event_id=event_id)
+        
 
-    def create_item(self, event_categories, event_story_id, item):
+    def create_item(self, event_categories, event_id, item):
         categories = item.categories or event_categories
         STORY4PHOTO, STORY4DOC, STORY4VIDEO = inject('STORY4PHOTO', 'STORY4DOC', 'STORY4VIDEO')
         usage = STORY4PHOTO if item.kind == "image" else STORY4VIDEO if item.kind == "video" else STORY4DOC
@@ -98,19 +120,19 @@ class Migrate:
         )
         self.log_it(f"new story {story_id} {item.kind}")
         if item.kind == "image":
-            item_id = db.TblPhotos.insert(
+            photo_id = db.TblPhotos.insert(
                 story_id=story_id,
                 name=item.title, # todo: use only story name and remove this field
                 photo_path=item.photo_path,
                 photo_date=datetime.date(year=int(item.year), month=1, day=1),
                 photo_date_dateend=datetime.date(year=int(item.year), month=1, day=1)
             )
-            if event_story_id: # connect photo to owning event
-                db.TblEventPhotos.insert(item_id=item_id, story_id=event_story_id, recognized=True)
+            if event_id: # connect photo to owning event
+                db.TblEventPhotos.insert(photo_id=photo_id, event_id=event_id)
             categories = item.categories or event_categories
             self.assign_topics(story_id, categories, "P")
         elif item.kind == "pdf":
-            item_id = db.TblDocs.insert(
+            doc_id = db.TblDocs.insert(
                 story_id=story_id,
                 name=item.title, # todo: use only story name and remove this field
                 doc_path=item.doc_path,
@@ -118,14 +140,14 @@ class Migrate:
                 doc_date_dateend=datetime.date(year=int(item.year), month=1, day=1)
                 
             )
-            if event_story_id: # connect doc to owning event
-                db.TblEventDocs.insert(item_id=item_id, story_id=event_story_id)
+            if event_id: # connect doc to owning event
+                db.TblEventDocs.insert(doc_id=doc_id, event_id=event_id)
             categories = item.categories or event_categories
             self.assign_topics(story_id, categories, "D")
         elif item.kind == "video":
             self.log_it(f" video src is {item.src}")
             vid_info = parse_video_url(item.src)
-            item_id = db.TblVideos.insert(
+            video_id = db.TblVideos.insert(
                 story_id=story_id,
                 name=item.title, # todo: use only story name and remove this field
                 src=vid_info.src,
@@ -136,15 +158,15 @@ class Migrate:
             )
             if vid_info.video_type == "youtube":
                 yt_info = youtube_info(vid_info.src)
-                db(db.TblVideos.id==item_id).update(
+                db(db.TblVideos.id==video_id).update(
                     thumbnail_url=yt_info.thumbnail_url,
                     description=yt_info.description,
                     yt_upload_date=yt_info.upload_date,
                     uploader=yt_info.uploader,
                     duration=yt_info.duration,
                     )
-            if event_story_id: # connect video to owning event
-                db.TblEventVideos.insert(item_id=item_id, story_id=event_story_id)
+            if event_id: # connect video to owning event
+                db.TblEventVideos.insert(video_id=video_id, event_id=event_id)
             categories = item.categories or event_categories
             self.assign_topics(story_id, categories, "D")
         else:

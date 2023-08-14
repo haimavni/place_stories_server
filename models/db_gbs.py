@@ -140,10 +140,7 @@ db.define_table('TblEventArticles',
 )
 
 db.define_table('TblEventPhotos',
-                # Field('eventid', type='integer'), # obs
                 Field('event_id', type='integer'),
-                # Field('eventphotorank', type='integer'), # obs
-                # Field('photoid', type='integer'), # obs
                 Field('photo_id', type='integer'),
 )
 
@@ -161,12 +158,12 @@ db.define_table('TblEvents',
                 Field('description', type='text'),
                 # Field('descriptionnohtml', type='text'),
                 Field('story_id', type=db.TblStories),
-                Field('eventdate', type='string'),
+                # Field('eventdate', type='string'),
                 Field('event_date', type='date', default=NO_DATE),
                 Field('event_date_dateunit', type='string', default='Y'),
                 Field('event_date_datespan', type='integer', default=1),
                 Field('event_date_dateend', type='date', default=NO_DATE),
-                Field('eventrank', type='integer'),
+                # Field('eventrank', type='integer'),
                 # Field('iidd', type='integer'),
                 Field('name', type='string'),
                 # Field('objectid', type='integer'),
