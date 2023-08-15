@@ -386,7 +386,7 @@ def get_shortcut(vars):
     else:
         key = create_key() #if paranoid, ensure key is not in use yet
         if db(db.TblShortcuts.key==key).count() > 0:
-            comment(f"duplicate key found in get shortcut")
+            comment(f"duplicate key {key} found in get shortcut")
             raise Exception('Non unique key')
         db.TblShortcuts.insert(url=url, key=key)
     shortcut = '/' + request.application + '?key='  + key

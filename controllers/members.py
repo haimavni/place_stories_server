@@ -1238,7 +1238,7 @@ def assign_photos(story_list):
     q = db.TblPhotos.story_id.belongs(photo_story_ids) & (db.TblPhotos.deleted != True)
     lst = db(q).select(db.TblPhotos.story_id, db.TblPhotos.photo_path, db.TblPhotos.id)
     for photo in lst:
-        photo_src = photos_folder('squares') + photo.photo_path
+        photo_src = photos_folder(SQUARES) + photo.photo_path
         photo_story_list[photo.story_id].photo_src = photo_src
         photo_story_list[photo.story_id].photo_id = photo.id
     video_story_ids = list(video_story_list.keys())
@@ -1503,7 +1503,6 @@ def make_stories_query(params, exact, cuepoints=False):
             q = cuepoints_text_query(q, keywords_str, exact)
         else:
             q = keywords_query(q, keywords_str, exact)
-    comment(f"1=============== count={db(q).count()}")
     if selected_stories:
         q &= (db.TblStories.id.belongs(selected_stories))
     if params.days_since_update and params.days_since_update.value:
@@ -1514,7 +1513,6 @@ def make_stories_query(params, exact, cuepoints=False):
             q &= (db.TblStories.last_version > db.TblStories.approved_version)
         if params.approval_state.id == 3:
             q &= (db.TblStories.last_version == db.TblStories.approved_version)
-    comment(f"2=============== count={db(q).count()}")
     first_year, last_year = calc_years_range(params)
     if first_year:
         from_date = datetime.date(year=first_year, month=1, day=1)
@@ -1522,16 +1520,13 @@ def make_stories_query(params, exact, cuepoints=False):
     if last_year:
         to_date = datetime.date(year=last_year, month=1, day=1)
         q &= (db.TblStories.story_date < to_date)
-    comment(f"3=============== count={db(q).count()}")
     if params.show_untagged:
         q &= (db.TblStories.is_tagged == False)
-    comment(f"4=============== count={db(q).count()}")
     if params.start_name:
         q &= (db.TblStories.name >= params.start_name)
     if params.selected_topics:
         q1 = get_topics_query(params.selected_topics)
         q &= q1
-    comment(f"5=============== count={db(q).count()}")
     return q
 
 

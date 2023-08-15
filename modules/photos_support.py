@@ -426,7 +426,7 @@ def crop_square(img_src, width, height, side_size):
         x1 = width
     input_path = img_src
     path, fname = os.path.split(input_path)
-    path = path.replace(RESIZED, 'squares')
+    path = path.replace(RESIZED, SQUARES)
     dir_util.mkpath(path)
     output_path = path  + '/' +fname
     img = Image.open(input_path)
@@ -442,12 +442,12 @@ def crop_square(img_src, width, height, side_size):
 def rotate_photo(photo_id, rotate_clockwise=False):
     db = inject('db')
     photo_rec = db((db.TblPhotos.id == photo_id) & (db.TblPhotos.deleted != True)).select().first()
-    lst = [RESIZED, 'squares']
-    if photo_rec.oversize:
-        lst += [ORIG]
+    lst = [RESIZED, SQUARES, ORIG]
     for what in lst:
         path = local_photos_folder(what)
         file_name = path + photo_rec.photo_path
+        if not os.path.exists(file_name):
+            continue
         img = Image.open(file_name)
         angle = Image.ROTATE_270 if rotate_clockwise else Image.ROTATE_90
         img = img.transpose(angle)
@@ -679,7 +679,7 @@ def get_photo_pairs(photo_list):
     for rec in lst:
         result[rec.TblPhotoPairs.front_id] = dict(
             src=photos_folder(RESIZED) + rec.TblPhotos.photo_path,
-            square_src=photos_folder('squares') + rec.TblPhotos.photo_path,
+            square_src=photos_folder(SQUARES) + rec.TblPhotos.photo_path,
             photo_id=rec.TblPhotoPairs.back_id,
             width=rec.TblPhotos.width,
             height=rec.TblPhotos.height
@@ -867,7 +867,7 @@ def convert_to_webp(photo_id):
     if photo_rec.oversize:
         path = local_photos_folder(ORIG) + photo_rec.photo_path
         jpg_to_webp(path)
-    path = local_photos_folder('squares') + photo_rec.photo_path
+    path = local_photos_folder(SQUARES) + photo_rec.photo_path
     jpg_to_webp(path)
     r = photo_rec.photo_path.rfind('.')
     webp_photo_path = photo_rec.photo_path[:r] + '.webp'

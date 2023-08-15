@@ -820,14 +820,14 @@ def process_photo_list(lst, photo_pairs=dict(), webpSupported=False):
             side='front',
             photo_id=rec.id,
             src=tpp,
-            square_src=timestamped_photo_path(rec, what='squares', webp_supported=webpSupported),
+            square_src=timestamped_photo_path(rec, what=SQUARES, webp_supported=webpSupported),
             width=rec.width,
             height=rec.height,
             has_story_text=rec.has_story_text,
             front=Storage(
                 photo_id=rec.id,
                 src=tpp,
-                square_src=timestamped_photo_path(rec, what='squares', webp_supported=webpSupported),
+                square_src=timestamped_photo_path(rec, what=SQUARES, webp_supported=webpSupported),
                 width=rec.width,
                 height=rec.height,
             )

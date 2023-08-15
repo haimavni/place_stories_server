@@ -19,23 +19,6 @@ def save_video(vars):
     date_info = dict(video_date=(params.video_date_datestr, params.video_date_datespan))
     if not params.id:  # creation, not modification
         vidi = parse_video_url(params.src)
-        # pats = dict(
-        #     youtube=r'https://(?:www.youtube.com/watch\?v=|youtu\.be/)(?P<code>[^&]+)',
-        #     html5=r'(?P<code>.+\.mp4)',
-        #     vimeo=r'https://vimeo.com/(?P<code>\d+)',
-        #     google_drive=r'https://drive.google.com/file/d/(?P<code>[^/]+?)/.*',
-        #     google_photos=r'https://photos.app.goo.gl/(?P<code>[^&]+)'
-        # )
-        # src = None
-        # for t in pats:
-        #     pat = pats[t]
-        #     m = re.search(pat, params.src)
-        #     if m:
-        #         src = m.groupdict()['code']
-        #         typ = t
-        #         break
-        # if not src:
-        #     raise User_Error('!videos.unknown-video-type')
         q = (db.TblVideos.src == vidi.src) & \
             (db.TblVideos.video_type == vidi.video_type) & \
             (db.TblVideos.deleted != True)
@@ -80,12 +63,6 @@ def save_video(vars):
         old_rec = db(db.TblVideos.id == params.id).select().first()
         vid = old_rec.id
         del params['src']  #
-        # data = dict()
-        # for fld in old_rec:
-        # if fld in ('src', 'update_record', 'delete_record'):
-        # continue
-        # if old_rec[fld] != params[fld]:
-        # data[fld] = params[fld]
         data = params
         if data:
             data_in = fix_record_dates_in(old_rec, data)
