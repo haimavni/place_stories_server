@@ -95,6 +95,7 @@ def create_app(customer_id):
     db, log_exception = inject('db', 'log_exception')
     rec = db(db.TblCustomers.id==customer_id).select().first()
     msg = "ok"
+    result = "about to start"
     try:
         result = create_an_app(rec)
     except Exception as e:
