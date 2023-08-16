@@ -17,7 +17,10 @@ def create_an_app(rec):
     os.chdir(path)
     curr_dir = os.getcwd()
     comment(f"curr dir is {curr_dir}")
+    exists = os.path.exists("create_app.bash")
+    comment(f"script exists? {exists}")
     command = f'bash create_app.bash {app} test {email} {rec.password} {rec.first_name} {rec.last_name}'
+    comment(f"command is {command}")
     log_file_name = logs_path + f"app-creation-{rec.app_name}.log"
     with open(log_file_name, 'w') as log_file:
         code = subprocess.call(command, stdout=log_file, stderr=log_file, shell=True)
@@ -35,7 +38,7 @@ def create_an_app(rec):
         #log_file.write('before systemctl restart')
         #code = subprocess.call(command, stdout=log_file, stderr=log_file, shell=True)
         #log_file.write('after systemctl restart')                       
-    return code
+    return dict(code=code, command=command)
 
 def notify_customer(rec):
     mail, comment, request = inject('mail', 'comment', 'request')
@@ -83,7 +86,7 @@ def create_pending_apps():
         for rec in lst:
             rec.update_record(created=True)
             db.commit()
-            code = create_an_app(rec)
+            create_an_app(rec)
     except Exception as e:
         log_exception('Error creating apps')
         raise
@@ -91,13 +94,12 @@ def create_pending_apps():
 def create_app(customer_id):
     db, log_exception = inject('db', 'log_exception')
     rec = db(db.TblCustomers.id==customer_id).select().first()
-    code = 0
     msg = "ok"
     try:
-        code = create_an_app(rec)
+        result = create_an_app(rec)
     except Exception as e:
         msg = str(e)
         log_exception(f'Error creating apps')
-    return dict(msg=msg, code=code)
+    return dict(msg=msg, result=result)
         
     
