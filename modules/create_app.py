@@ -19,11 +19,11 @@ def create_an_app(rec):
     comment(f"curr dir is {curr_dir}")
     exists = os.path.exists("create_app.bash")
     comment(f"script exists? {exists}")
-    command = f'bash create_app.bash {app} test {email} {rec.password} {rec.first_name} {rec.last_name}'
+    command = f'bash create_app.bash {app} master {email} {rec.password} {rec.first_name} {rec.last_name}'
     comment(f"command is {command}")
     log_file_name = logs_path + f"app-creation-{rec.app_name}.log"
     with open(log_file_name, 'w') as log_file:
-        code = subprocess.call(command, stdout=log_file, stderr=log_file, shell=True)
+        code = subprocess.run(command, stdout=log_file, stderr=log_file, shell=True)
     comment(f'finished creation of {rec.app_name}. code = {code}')
     os.chdir(orig_dir)
     if code == 0:
