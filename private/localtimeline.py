@@ -2,6 +2,8 @@ from bs4 import BeautifulSoup
 from urllib.request import urlopen
 import json
 import datetime
+import sys
+import os
 
 
 class PortTL():
@@ -16,7 +18,9 @@ class PortTL():
 
     def scan(self):
         self.site_name = self.get_site_name()
-        self.downloader = open(f"/home/haim/migrations/{self.site_name}/downloader.bash", "w", encoding="utf-8")
+        path = f"/home/haim/migrations/{self.site_name}"
+        os.makedirs(path, exist_ok=True)
+        self.downloader = open(f"{path}/downloader.bash", "w", encoding="utf-8")
         soup = self.get_soup(self.url)
         lst = soup.find_all(attrs={"class": "timeline-year"})
         x = len(lst)
@@ -100,7 +104,7 @@ class PortTL():
                 iframe = item_div.find("iframe")
                 src = iframe.attrs["data-src"]
             else:
-                print(f"Unexpected data type {data_type}")
+                raise Exception(f"Unexpected data type {data_type}")
             item_rec["src"] = src
             if src in self.urls:
                 item_rec["duplicate"] = True
@@ -355,11 +359,19 @@ class PortTL():
                 self.categories[cn] = 0
             self.categories[cn] += 1
         return cat_names
-
-
-port_tl = PortTL(url="https://ganhaim.localtimeline.com/index.php?lang=he#")
-t0 = datetime.datetime.now()
-port_tl.scan()
-t1 = datetime.datetime.now()
-elapsed_time = t1 - t0
-print(f"Elapsed time: {elapsed_time}")
+    
+def main():
+    if len(sys.argv) < 2:
+        print(f"Usage: python  {sys.argv[0]} <URL>")
+        return
+    url = sys.argv[1]
+    # url = "https://ganhaim.localtimeline.com/index.php?lang=he#"
+    # url = "https://keilot.localtimeline.com/index.php?lang=he#"
+    port_tl = PortTL(url=url)
+    t0 = datetime.datetime.now()
+    port_tl.scan()
+    t1 = datetime.datetime.now()
+    elapsed_time = t1 - t0
+    print(f"Elapsed time: {elapsed_time}")
+    
+main()
