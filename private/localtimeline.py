@@ -117,7 +117,7 @@ class PortTL():
                     photo_path = path + "/" + self.file_name_of_src(src)
                     item_rec["photo_path"] = photo_path
                     path = "photos/oversize/" + path
-                    self.downloader.write(f"wget -P ./{path} {src}\n")
+                    self.downloader.write(f"wget -nc -P ./{path} {src}\n")
                 self.urls.add(src)
                 item_comments = comments.get(data_id, [])
                 item_rec["comments"] = item_comments
@@ -197,13 +197,13 @@ class PortTL():
         if "data-src" not in iframe.attrs:
             return None
         src = iframe.attrs["data-src"]
+        src = self.normalize_pdf_url(src)
         if src in self.urls:
             # print("duplicate iframe")
             return "duplicate"
         self.urls.add(src)
         if "main-item--iframe-pdf" not in iframe.attrs["class"]:
             print("---------------not pdf???---------------")
-        src = self.normalize_pdf_url(src)
         ifr_data = dict(year=self.year,
                         kind="pdf",
                         src=src)

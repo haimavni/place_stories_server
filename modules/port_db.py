@@ -72,7 +72,8 @@ class Migrate:
                 story_date_dateend=datetime.date(year=int(event.year), month=1, day=1),
                 source="ltl",
                 creation_date=datetime.datetime.now(),
-                story_len=len(text)
+                story_len=len(text),
+                visibility=1
             )
             event_id = self.db.TblEvents.insert(
                 story_id=story_id,
@@ -116,7 +117,8 @@ class Migrate:
             story_date_dateend = datetime.date(year=int(item.year), month=1, day=1),
             source="ltl",
             creation_date=datetime.datetime.now(),
-            story_len=0
+            story_len=0,
+            visibility=1
         )
         self.log_it(f"new story {story_id} {item.kind}")
         if item.kind == "image":
@@ -168,7 +170,7 @@ class Migrate:
             if event_id: # connect video to owning event
                 db.TblEventVideos.insert(video_id=video_id, event_id=event_id)
             categories = item.categories or event_categories
-            self.assign_topics(story_id, categories, "D")
+            self.assign_topics(story_id, categories, "V")
         else:
             raise Exception(f"Unknown item kind {item.kind}")
         
