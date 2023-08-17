@@ -29,7 +29,7 @@ def create_an_app(rec):
     # with open(log_file_name, 'w') as log_file:
     #     result = subprocess.run(command, stdout=log_file, stderr=log_file, shell=True)
     # code = result.returncode
-    comment(f'finished creation of {rec.app_name}. result = {result}')
+    comment(f'finished creation of {rec.app_name}. code = {code}')
     os.chdir(orig_dir)
     if code == 0:
         notify_developers(rec, True)
