@@ -17,7 +17,7 @@ def create_an_app(rec):
     # os.chdir(path)
     # curr_dir = os.getcwd()
     # comment(f"curr dir is {curr_dir}")
-    exists = os.path.exists(bash_name``)
+    exists = os.path.exists(bash_name)
     comment(f"script exists? {exists}")
     command = f'bash {bash_name} {app} master {rec.email} {rec.password} {rec.first_name} {rec.last_name}'
     log_file_name = logs_path + f"app-creation-{rec.app_name}.log"
