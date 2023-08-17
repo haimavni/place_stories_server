@@ -8,10 +8,10 @@ from send_email import email
 def create_an_app(rec):
     request, comment, log_path = inject('request', 'comment', 'log_path')
     folder = os.path.abspath(request.folder)
-    path = folder + '/private/deploy'
+    path = folder + '/private/'
     logs_path = log_path()
     app = rec.app_name
-    comment(f'about to create {app} and run it from {path}')
+    comment(f'about to create {app}')
     bash_name = path + "create_app.bash"
     # orig_dir = os.getcwd()
     # os.chdir(path)
