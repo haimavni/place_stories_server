@@ -11,7 +11,6 @@ def create_an_app(rec):
     path = folder + '/private'
     logs_path = log_path()
     app = rec.app_name
-    ###comment('in create app. path: {p}, folder: {f}, request.folder: {rf}', p=path, f=folder, rf=request.folder)
     comment(f'about to create {app} and run it from {path}')
     orig_dir = os.getcwd()
     os.chdir(path)
@@ -22,15 +21,12 @@ def create_an_app(rec):
     command = f'bash create_app.bash {app} master {rec.email} {rec.password} {rec.first_name} {rec.last_name}'
     log_file_name = logs_path + f"app-creation-{rec.app_name}.log"
     comment(f"log file name is {log_file_name}")
-    code = os.system(f"ls *.bash >& {log_file_name}")
-    #code = os.system(f"cd {curr_dir}; {command} >& {log_file_name}")
     # command = command.split()
-    # comment(f"command is {command}")
+    comment(f"command is {command}")
     
-    # with open(log_file_name, 'w') as log_file:
-    #     result = subprocess.run(command, stdout=log_file, stderr=log_file, shell=True)
-    # code = result.returncode
-    comment(f'finished creation of {rec.app_name}. code = {code}')
+    result = subprocess.run(command, stdout=open(f"log_file_name", "w"), stderr=open(f"log_file_name" + ".err", "w"), shell=True)
+    code = result.returncode
+    comment(f'finished creation of {rec.app_name}. result = {result}')
     os.chdir(orig_dir)
     if code == 0:
         notify_developers(rec, True)
