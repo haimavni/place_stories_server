@@ -8,17 +8,18 @@ from send_email import email
 def create_an_app(rec):
     request, comment, log_path = inject('request', 'comment', 'log_path')
     folder = os.path.abspath(request.folder)
-    path = folder + '/private'
+    path = folder + '/private/deploy'
     logs_path = log_path()
     app = rec.app_name
     comment(f'about to create {app} and run it from {path}')
-    orig_dir = os.getcwd()
-    os.chdir(path)
-    curr_dir = os.getcwd()
-    comment(f"curr dir is {curr_dir}")
-    exists = os.path.exists("create_app.bash")
+    bash_name = path + "create_app.bash"
+    # orig_dir = os.getcwd()
+    # os.chdir(path)
+    # curr_dir = os.getcwd()
+    # comment(f"curr dir is {curr_dir}")
+    exists = os.path.exists(bash_name``)
     comment(f"script exists? {exists}")
-    command = f'bash ./create_app.bash {app} master {rec.email} {rec.password} {rec.first_name} {rec.last_name}'
+    command = f'bash {bash_name} {app} master {rec.email} {rec.password} {rec.first_name} {rec.last_name}'
     log_file_name = logs_path + f"app-creation-{rec.app_name}.log"
     comment(f"log file name is {log_file_name}")
     command = command.split()
@@ -27,7 +28,7 @@ def create_an_app(rec):
     result = subprocess.run(command, stdout=open(f"{log_file_name}", "w"), stderr=open(f"{log_file_name}" + ".err", "w"), shell=True)
     code = result.returncode
     comment(f'finished creation of {rec.app_name}. result = {result}')
-    os.chdir(orig_dir)
+    # os.chdir(orig_dir)
     if code == 0:
         notify_developers(rec, True)
         notify_customer(rec)
