@@ -24,7 +24,7 @@ def create_an_app(rec):
     command = command.split()
     comment(f"command is {command}")
     
-    result = subprocess.run(command, stdout=open(f"log_file_name", "w"), stderr=open(f"log_file_name" + ".err", "w"), shell=True)
+    result = subprocess.run(command, stdout=open(f"{log_file_name}", "w"), stderr=open(f"{log_file_name}" + ".err", "w"), shell=True)
     code = result.returncode
     comment(f'finished creation of {rec.app_name}. result = {result}')
     os.chdir(orig_dir)
