@@ -18,7 +18,7 @@ def create_an_app(rec):
     comment(f"curr dir is {curr_dir}")
     exists = os.path.exists("create_app.bash")
     comment(f"script exists? {exists}")
-    command = f'bash create_app.bash {app} master {rec.email} {rec.password} {rec.first_name} {rec.last_name}'
+    command = f'bash ./create_app.bash {app} master {rec.email} {rec.password} {rec.first_name} {rec.last_name}'
     log_file_name = logs_path + f"app-creation-{rec.app_name}.log"
     comment(f"log file name is {log_file_name}")
     command = command.split()
@@ -40,7 +40,7 @@ def create_an_app(rec):
         #log_file.write('before systemctl restart')
         #code = subprocess.call(command, stdout=log_file, stderr=log_file, shell=True)
         #log_file.write('after systemctl restart')                       
-    return dict(code=code, command=command)
+    return dict(code=code, command=command, command_line=" ".join(command))
 
 def notify_customer(rec):
     mail, comment, request = inject('mail', 'comment', 'request')
