@@ -49,25 +49,24 @@ def notify_customer(rec):
     host = rec.host
     link = 'https://' + host + '/' + rec.app_name
     if rec.locale == 'he':
-        message_fmt = '''<div dir="rtl">
+        message = f'''<div dir="rtl">
         אתר הסיפורים החדש שלך מוכן!<br><br>
 
         הקלק {link} כדי להיכנס לאתר.<br><br>
 
         להדרכה בנושא התאמת האתר ועריכת תוכנו הקלק על הקישור הבא:<br>
-        {ml}
+        {manual_link}
         </div>
         '''
     else:
-        message_fmt = '''
+        message = f'''
     Welcome to your new stories site!<br><br>
     
     Click {link} to visit.<br><br>
 
     You can read some useful information in the link below<br>
-    {ml}
+    {manual_link}
     '''
-    message = ('', message_fmt.format(ml=manual_link, link=link))
     result = email(receivers=rec.email, message=message, subject='Starting your new site')
     comment(f'mail sent to customer? {result}')
 
