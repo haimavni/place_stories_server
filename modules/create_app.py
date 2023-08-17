@@ -20,6 +20,7 @@ def create_an_app(rec):
     exists = os.path.exists("create_app.bash")
     comment(f"script exists? {exists}")
     command = f'bash create_app.bash {app} master {email} {rec.password} {rec.first_name} {rec.last_name}'
+    command = command.split()
     comment(f"command is {command}")
     log_file_name = logs_path + f"app-creation-{rec.app_name}.log"
     with open(log_file_name, 'w') as log_file:
