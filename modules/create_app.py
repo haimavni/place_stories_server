@@ -11,14 +11,14 @@ def create_an_app(rec):
     path = folder + '/private/'
     logs_path = log_path()
     app = rec.app_name
-    comment(f'about to create {app}')
     bash_name = path + "create_app.bash"
+    comment(f'about to create {app}. bash name is {bash_name}')
     # orig_dir = os.getcwd()
     # os.chdir(path)
     # curr_dir = os.getcwd()
     # comment(f"curr dir is {curr_dir}")
     exists = os.path.exists(bash_name)
-    comment(f"script exists? {exists}")
+    comment(f"script  {bash_name} exists? {exists}")
     command = f'bash {bash_name} {app} master {rec.email} {rec.password} {rec.first_name} {rec.last_name}'
     log_file_name = logs_path + f"app-creation-{rec.app_name}.log"
     comment(f"log file name is {log_file_name}")
