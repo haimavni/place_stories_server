@@ -19,8 +19,9 @@ def create_an_app(rec):
     comment(f"curr dir is {curr_dir}")
     exists = os.path.exists("create_app.bash")
     comment(f"script exists? {exists}")
-    command = f'bash create_app.bash {app} master {email} {rec.password} {rec.first_name} {rec.last_name}'
+    command = f'bash create_app.bash {app} master {rec.email} {rec.password} {rec.first_name} {rec.last_name}'
     log_file_name = logs_path + f"app-creation-{rec.app_name}.log"
+    comment(f"log file name is {log_file_name}")
     code = os.system(f"ls *.bash >& {log_file_name}")
     #code = os.system(f"cd {curr_dir}; {command} >& {log_file_name}")
     # command = command.split()
