@@ -20,12 +20,15 @@ def create_an_app(rec):
     exists = os.path.exists("create_app.bash")
     comment(f"script exists? {exists}")
     command = f'bash create_app.bash {app} master {email} {rec.password} {rec.first_name} {rec.last_name}'
-    command = command.split()
-    comment(f"command is {command}")
     log_file_name = logs_path + f"app-creation-{rec.app_name}.log"
-    with open(log_file_name, 'w') as log_file:
-        code = subprocess.run(command, stdout=log_file, stderr=log_file, shell=True)
-    comment(f'finished creation of {rec.app_name}. code = {code}')
+    code = os.system(f"{command} >& {log_file_name}")
+    # command = command.split()
+    # comment(f"command is {command}")
+    
+    # with open(log_file_name, 'w') as log_file:
+    #     result = subprocess.run(command, stdout=log_file, stderr=log_file, shell=True)
+    # code = result.returncode
+    comment(f'finished creation of {rec.app_name}. result = {result}')
     os.chdir(orig_dir)
     if code == 0:
         notify_developers(rec, True)
