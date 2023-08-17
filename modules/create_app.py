@@ -21,7 +21,7 @@ def create_an_app(rec):
     command = f'bash create_app.bash {app} master {rec.email} {rec.password} {rec.first_name} {rec.last_name}'
     log_file_name = logs_path + f"app-creation-{rec.app_name}.log"
     comment(f"log file name is {log_file_name}")
-    # command = command.split()
+    command = command.split()
     comment(f"command is {command}")
     
     result = subprocess.run(command, stdout=open(f"log_file_name", "w"), stderr=open(f"log_file_name" + ".err", "w"), shell=True)
