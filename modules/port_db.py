@@ -160,13 +160,16 @@ class Migrate:
             )
             if vid_info.video_type == "youtube":
                 yt_info = youtube_info(vid_info.src)
-                db(db.TblVideos.id==video_id).update(
-                    thumbnail_url=yt_info.thumbnail_url,
-                    description=yt_info.description,
-                    yt_upload_date=yt_info.upload_date,
-                    uploader=yt_info.uploader,
-                    duration=yt_info.duration,
-                    )
+                if yt_info:
+                    db(db.TblVideos.id==video_id).update(
+                        thumbnail_url=yt_info.thumbnail_url,
+                        description=yt_info.description,
+                        yt_upload_date=yt_info.upload_date,
+                        uploader=yt_info.uploader,
+                        duration=yt_info.duration,
+                        )
+                else:
+                    self.log_it(f"No yt info for video id {video_id}")
             if event_id: # connect video to owning event
                 db.TblEventVideos.insert(video_id=video_id, event_id=event_id)
             categories = item.categories or event_categories
