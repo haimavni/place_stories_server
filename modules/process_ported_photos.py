@@ -67,6 +67,8 @@ class ProcessPortedPhotos:
                 square_img.save(square_file_name)
                 fix_owner(path)
                 fix_owner(square_file_name)
+            else:
+                self.log_it(f"Could not create square for photo {photo_id}")
             path, fn = os.path.split(orig_file_name)
             fix_owner(path)
             fix_owner(orig_file_name)
@@ -101,7 +103,7 @@ class ProcessPortedPhotos:
         db.commit()
         return Storage(photo_id=photo_id)
     
-    def process_all_unprocessed_photos(self, limit=100):
+    def process_all_unprocessed_photos(self, limit=None):
         limit = limit or 99999
         db = self.db
         
