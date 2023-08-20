@@ -104,11 +104,12 @@ class ProcessPortedPhotos:
     def process_all_unprocessed_photos(self, limit=100):
         limit = limit or 99999
         db = self.db
-        left_to_process = db(db.TblPhotos.width==0).count()
+        
         lst = db((db.TblPhotos.width==0)|(db.TblPhotos.photo_missing==True)).select(db.TblPhotos.id, limitby=(0, limit))
         for prec in lst:
             self.process_photo(prec.id)
-        return dict(left_to_process=left_to_process, done=len(lst))        
+        left_to_process = db(db.TblPhotos.width==0).count()
+        return f"{left_to_process} documents remain to be processed"
 
     def use_exif_data(self, img):
         log_exception = inject("log_exception")

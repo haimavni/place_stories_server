@@ -40,5 +40,7 @@ class ProcessPortedDocs:
         lst = [rec.id for rec in lst]
         for doc_id in lst:
             self.process_ported_doc(doc_id)
+        remaining = db(db.TblDocs.crc == None).count()
+        return f"{remaining} photos still unprocessed"
     
 
