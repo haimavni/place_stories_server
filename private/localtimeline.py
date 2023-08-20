@@ -18,6 +18,7 @@ class PortTL():
 
     def scan(self):
         self.site_name = self.get_site_name()
+        self.write_command_file()
         path = f"/home/haim/migrations/{self.site_name}"
         os.makedirs(path, exist_ok=True)
         self.downloader = open(f"{path}/downloader.bash", "w", encoding="utf-8")
@@ -36,6 +37,7 @@ class PortTL():
             year = span.string.strip()
             self.year = year
             print(year, end=" ")
+            sys.stdout.flush()
             # year_events = inner.find(self.is_event_list)
             # -----------------------
             year_images = inner.find("div", class_="year-images")
@@ -360,13 +362,51 @@ class PortTL():
             self.categories[cn] += 1
         return cat_names
     
+    def write_command_file(self):
+        app = self.site_name
+        web2py_path = "/home/www-data/py38env/web2py/web2py.py"
+        with open(f"/home/haim/migrations/{app}/sftp_cmds.batch", "w", encoding="utf-8") as f:
+            f.write(f"lcd /home/haim/migrations/{app}\n")
+            f.write(f"cd /apps_data/{app}\n")
+            f.write(f"put plan.txt\n")
+            f.write(f"put downloader.bash\n")
+        confirm = '''
+read -p "Continue? " yn   
+if [[ ! $yn =~ ^[Yy]$ ]]         
+then
+    exit 1
+fi
+'''    
+        cmd1 = f"ssh  root@68.183.216.149 bash /home/www-data/tol_master/private/create_app.bash {app} master haimavni@gmail.com 0522433248 Haim Avni"
+        cmd2 = f"ssh  root@68.183.216.149 bash /apps_data/{app}/downloader.bash"
+        with open(f"/home/haim/migrations/{app}/doit.bash", "w", encoding="utf-8") as f:
+            f.write(f"echo Starting new app {app}\n")
+            f.write(cmd1 + '\n')
+            f.write(confirm)
+            f.write(f"sftp -b sftp_cmds.batch root@68.183.216.149\n")
+            f.write(confirm)
+            f.write(cmd2 + '\n')
+            f.write("echo About to build database\n")
+            f.write(confirm)
+            f.write("ssh root@68.183.216.149 source /home/www-data/py38env/bin/activate\n")
+            f.write(f"ssh root@68.183.216.149 python {web2py_path} -S {app}/migrate/build_database\n")
+            f.write("echo About to process ported photos\n")
+            f.write(confirm)
+            f.write(f"ssh root@68.183.216.149 python {web2py_path} -S {app}/migrate/process_ported_photos\n")
+            f.write("echo About to process ported docs\n")
+            f.write(confirm)
+            f.write(f"ssh root@68.183.216.149 python {web2py_path} -S {app}/migrate/process_ported_docs\n")
+            f.write(f"ssh root@68.183.216.149 cd /apps_data/{app}; chown -R www-data:www-data .\n")
+            f.write("echo Done\n")
+    
 def main():
     if len(sys.argv) < 2:
         print(f"Usage: python  {sys.argv[0]} <URL>")
-        return
-    url = sys.argv[1]
+        # return
+    # url = sys.argv[1]
     # url = "https://ganhaim.localtimeline.com/index.php?lang=he#"
     # url = "https://keilot.localtimeline.com/index.php?lang=he#"
+    url = "https://naan.localtimeline.com/index.php?lang=he"
     port_tl = PortTL(url=url)
     t0 = datetime.datetime.now()
     port_tl.scan()

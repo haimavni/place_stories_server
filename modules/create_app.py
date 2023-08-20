@@ -22,6 +22,7 @@ def create_an_app(rec):
     command = f'bash {bash_name} {app} master {rec.email} {rec.password} {rec.first_name} {rec.last_name}'
     log_file_name = logs_path + f"app-creation-{rec.app_name}.log"
     comment(f"log file name is {log_file_name}")
+    command_line = command
     command = command.split()
     comment(f"command is {command}")
     
@@ -30,10 +31,10 @@ def create_an_app(rec):
     comment(f'finished creation of {rec.app_name}. result = {result}')
     # os.chdir(orig_dir)
     if code == 0:
-        notify_developers(rec, True)
+        notify_developers(rec, True, command_line)
         notify_customer(rec)
     else:
-        notify_developers(rec, False)
+        notify_developers(rec, False, command_line)
     #command = 'systemctl restart web2py-scheduler'
     with open('/home/www-data/tol_test/private/restart_now', 'w') as f:
         f.write("restart now")
@@ -41,7 +42,7 @@ def create_an_app(rec):
         #log_file.write('before systemctl restart')
         #code = subprocess.call(command, stdout=log_file, stderr=log_file, shell=True)
         #log_file.write('after systemctl restart')                       
-    return dict(code=code, command=command, command_line=" ".join(command))
+    return dict(code=code, command=command, command_line=command_line)
 
 def notify_customer(rec):
     mail, comment, request = inject('mail', 'comment', 'request')
@@ -71,12 +72,13 @@ def notify_customer(rec):
     result = email(receivers=rec.email, message=message, subject='Starting your new site')
     comment(f'mail sent to customer? {result}')
 
-def notify_developers(rec, success):
+def notify_developers(rec, success, command_line):
     auth, comment, DEVELOPER = inject('auth', 'comment', "DEVELOPER")
     site_name=rec.app_name
     status = 'was successfuly created ' if success else 'had errors while being created'
     message = f'''
     New site {site_name} {status}.
+    command is {command_line}
     '''
     receivers = auth.role_user_list(DEVELOPER)
     result = email(receivers=receivers, message=message, subject='New app')
