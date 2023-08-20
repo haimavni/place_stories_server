@@ -109,7 +109,7 @@ class ProcessPortedPhotos:
         for prec in lst:
             self.process_photo(prec.id)
         left_to_process = db(db.TblPhotos.width==0).count()
-        return f"{left_to_process} documents remain to be processed"
+        return f"{left_to_process} photos remain to be processed"
 
     def use_exif_data(self, img):
         log_exception = inject("log_exception")
