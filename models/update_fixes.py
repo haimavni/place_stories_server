@@ -86,7 +86,7 @@ def fix_no_slide_show():
 def fix_youtube_info():
     result = upgrade_youtube_info(chunk=10)
     db.commit()
-    if result.total > 0:
+    if result.get("total", 0):
         return "to-be-continued" # to avoid timeout it has to be repeated
     else:
         return "done"
