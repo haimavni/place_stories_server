@@ -58,7 +58,7 @@ def calc_youtube_info(video_id):
 def calc_missing_youtube_info(count=10):
     db = inject('db')
     lst = db((db.TblVideos.video_type == 'youtube') & (db.TblVideos.deleted != True) & (
-            db.TblVideos.description == None)).select(db.TblVideos.id)
+            db.TblVideos.thumbnail_url == None)).select(db.TblVideos.id)
     cnt = 0
     for vrec in lst[:count]:
         if calc_youtube_info(vrec.id):
