@@ -4,8 +4,12 @@ import os
 def index():
     app = request.application
     lang = 'he'
-    app_name_rec = db(
-        (db.TblLocaleCustomizations.lang == lang) & (db.TblLocaleCustomizations.key == 'app-title')).select().first()
+    app_name_rec = None
+    try:
+        app_name_rec = db(
+            (db.TblLocaleCustomizations.lang == lang) & (db.TblLocaleCustomizations.key == 'app-title')).select().first()
+    except Exception as e:
+        comment("Failed to load locale customizations")
     app_name = app_name_rec.value if app_name_rec else 'Noname' 
     folder = f'applications/{app}/static/aurelia/scripts'
     #return f'folder is {folder}. app_name is {app_name}'
