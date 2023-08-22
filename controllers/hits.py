@@ -60,7 +60,7 @@ def get_hit_statistics(vars):
             if "deleted" in tbl:
                 q &= (tbl.deleted != True)
             precs = db(q).select(db.TblPageHits.item_id, tbl.name, db.TblPageHits.count.sum(),
-                                 groupby=[db.TblPageHits.item_id, tbl.name],
+                                 groupby=[db.TblPageHits.item_id],
                                  orderby=~db.TblPageHits.count.sum())
             detailed[period] = [parse(prec, tbl) for prec in precs]
         result[what] = dict(totals=totals, detailed=detailed)
