@@ -57,7 +57,8 @@ def get_hit_statistics(vars):
             if not tbl:
                 continue
             q &= (db.TblPageHits.item_id == tbl.id)
-            q &= (tbl.deleted != True)
+            if "deleted" in tbl:
+                q &= (tbl.deleted != True)
             precs = db(q).select(db.TblPageHits.item_id, tbl.name, db.TblPageHits.count.sum(),
                                  groupby=[db.TblPageHits.item_id, tbl.name],
                                  orderby=~db.TblPageHits.count.sum())
