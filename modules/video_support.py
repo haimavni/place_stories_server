@@ -9,7 +9,7 @@ import re
 def youtube_info(src):
     url = "https://www.youtube.com/embed/" + src + "?wmode=opaque"
     log_exception = inject('log_exception')
-    thumbnail_url=f"https://img.youtube.com/vi/{src}/0.jpg"
+    thumbnail_url=f"https://i.ytimg.com/vi/{src}/mq2.jpg"
     now = datetime.datetime.now()
     timestamp = int(round(now.timestamp()))
     thumbnail_url += f"?d={timestamp}" #so user will not see cached thumnail
@@ -45,9 +45,7 @@ def calc_youtube_info(video_id):
                              name=video_story.name or vrec.name or vrec.title)
         sm.update_story(vrec.story_id, story_info)
         return True
-    vrec.update_record(thumbnail_url=f"https://img.youtube.com/vi/{vrec.src}/0.jpg")
     return False
-
 
 def calc_missing_youtube_info(count=10):
     db = inject('db')
