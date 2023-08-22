@@ -63,13 +63,13 @@ def get_hit_statistics(vars):
             precs = db(q).select(db.TblPageHits.item_id, db.TblStories.name, db.TblPageHits.count.sum(),
                                  groupby=[db.TblPageHits.item_id, db.TblStories.name],
                                  orderby=~db.TblPageHits.count.sum())
-            detailed[period] = [parse(prec, tbl) for prec in precs]
+            detailed[period] = [parse(prec) for prec in precs]
         result[what] = dict(totals=totals, detailed=detailed)
     return result
 
 
-def parse(prec, tbl_name):
+def parse(prec):
     return dict(count=prec._extra['SUM("TblPageHits"."count")'],
-                name=prec[tbl_name].name,
+                name=prec.TblStories.name,
                 item_id=prec.TblPageHits.item_id
                 )
