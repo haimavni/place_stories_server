@@ -60,7 +60,7 @@ def get_hit_statistics(vars):
                 q &= (tbl.story_id==db.TblStories.id)
             q &= (db.TblPageHits.item_id == tbl.id)
             q &= (db.TblStories.deleted != True)
-            precs = db(q).select(db.TblPageHits.item_id, tbl.name, db.TblPageHits.count.sum(),
+            precs = db(q).select(db.TblPageHits.item_id, db.TblStories.name, db.TblPageHits.count.sum(),
                                  groupby=[db.TblPageHits.item_id, db.TblStories.name],
                                  orderby=~db.TblPageHits.count.sum())
             detailed[period] = [parse(prec, tbl) for prec in precs]
