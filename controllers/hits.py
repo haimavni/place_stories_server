@@ -29,7 +29,7 @@ def get_hit_statistics(vars):
     # whats = [w.what for w in whats]
     tables = dict(
         APP=None,
-        MEMBER=db.TblMembers,
+        # MEMBER=db.TblMembers,
         EVENT=db.TblEvents,
         PHOTO=db.TblPhotos,
         TERM=db.TblTerms,
