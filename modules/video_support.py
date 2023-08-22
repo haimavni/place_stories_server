@@ -8,31 +8,24 @@ import re
 
 def youtube_info(src):
     url = "https://www.youtube.com/embed/" + src + "?wmode=opaque"
-    comment, log_exception = inject('comment', 'log_exception')
+    log_exception = inject('log_exception')
+    thumbnail_url=f"https://img.youtube.com/vi/{src}/0.jpg"
+    now = datetime.datetime.now()
+    timestamp = int(round(now.timestamp()))
+    thumbnail_url += f"?d={timestamp}" #so user will not see cached thumnail
+    result = Storage(thumbnail_url=thumbnail_url)
     ydl = YoutubeDL()
     try:
         yt = ydl.extract_info(url, download=False)
     except Exception as e:
-        comment(f"ydl extract info of {url} got exception {e}")
-        return None
-    try:
-        thumbnails = yt['thumbnails']
-        try:
-            thumbnail_url = thumbnails[3]['url']
-        except Exception as e:
-            log_exception('thumbnail url')
-        now = datetime.datetime.now()
-        timestamp = int(round(now.timestamp()))
-        thumbnail_url += f"?d={timestamp}" #so user will not see cached thumnail
-        result = Storage(title=yt['title'],
-                         description=yt['description'],
-                         uploader=yt['uploader'],
-                         duration=yt['duration'],
-                         thumbnail_url=thumbnail_url,
-                         upload_date=yt['upload_date'])
-    except Exception as e:
-        log_exception('youtube info')
-        return None
+        log_exception(f"ydl extract info of {url} got exception")
+        return result
+    result = Storage(title=yt['title'],
+                     description=yt['description'],
+                     uploader=yt['uploader'],
+                     duration=yt['duration'],
+                     thumbnail_url=thumbnail_url,
+                     upload_date=yt['upload_date'])
     return result
 
 
@@ -52,6 +45,7 @@ def calc_youtube_info(video_id):
                              name=video_story.name or vrec.name or vrec.title)
         sm.update_story(vrec.story_id, story_info)
         return True
+    vrec.update_record(thumbnail_url=f"https://img.youtube.com/vi/{vrec.src}/0.jpg")
     return False
 
 
