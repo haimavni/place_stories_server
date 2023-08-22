@@ -30,9 +30,9 @@ def get_hit_statistics(vars):
     tables = dict(
         APP=None,
         MEMBER=db.TblMembers,
-        EVENT=db.TblStories,
+        EVENT=db.TblEvents,
         PHOTO=db.TblPhotos,
-        TERM=db.TblStories,
+        TERM=db.TblTerms,
         DOC=db.TblDocs,
         DOCSEG=db.TblDocSegments,
         VIDEO=db.TblVideos
@@ -56,11 +56,12 @@ def get_hit_statistics(vars):
             totals[period] = prec._extra['SUM("TblPageHits"."count")']
             if not tbl:
                 continue
+            if tbl:
+                q &= (tbl.story_id==db.TblStories.id)
             q &= (db.TblPageHits.item_id == tbl.id)
-            if "deleted" in tbl:
-                q &= (tbl.deleted != True)
+            q &= (db.TblStories.deleted != True)
             precs = db(q).select(db.TblPageHits.item_id, tbl.name, db.TblPageHits.count.sum(),
-                                 groupby=[db.TblPageHits.item_id],
+                                 groupby=[db.TblPageHits.item_id, db.TblStories.name],
                                  orderby=~db.TblPageHits.count.sum())
             detailed[period] = [parse(prec, tbl) for prec in precs]
         result[what] = dict(totals=totals, detailed=detailed)
