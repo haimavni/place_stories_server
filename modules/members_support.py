@@ -20,7 +20,7 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
     editing_ok = True
     editing_ok = auth.current_user() == rec.updater_id or not auth.has_membership(RESTRICTED)
     rec.editing_ok = editing_ok
-    is_dead = rec.date_of_death != NO_DATE
+    is_dead = (rec.date_of_death != NO_DATE) & (rec.date_of_death != None)
     dates = get_all_dates(rec)
     rec = Storage(rec.as_dict())
     for d in dates:
