@@ -69,7 +69,8 @@ def get_doc_list(vars):
         rec.name = rec1.TblStories.name
         rec.doc_date = rec1.TblStories.story_date
         doc_list.append(rec)
-    return dict(doc_list=doc_list, no_results=not doc_list)
+    active_doc_segments = db(db.TblDocSegments).count() > 0
+    return dict(doc_list=doc_list, no_results=not doc_list, active_doc_segments=active_doc_segments)
 
 
 @serve_json
