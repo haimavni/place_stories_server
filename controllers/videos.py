@@ -367,6 +367,13 @@ def video_cue_points(vars):
     cue_points = calc_cue_points(vars.video_id)
     return dict(cue_points=cue_points)
 
+@serve_json
+def replace_thumbnail_url(vars):
+    video_id = int(vars.video_id)
+    video_rec = db(db.TblVideos.id==video_id).select().first()
+    video_rec.update_record(thumbnail_url=vars.thumbnail_url)
+    return dict()
+
 def calc_cue_members(video_id, cue_id):
     q = (db.TblMembersVideoCuePoints.cue_point_id == db.TblVideoCuePoints.id) & \
         (db.TblVideoCuePoints.video_id == video_id) & \

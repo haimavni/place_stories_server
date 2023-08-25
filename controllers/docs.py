@@ -455,6 +455,13 @@ def remove_doc_segment(vars):
         story_deleted=True
     return dict(story_deleted=story_deleted)
 
+@ serve_json
+def replace_doc_jpg_url(vars):
+    doc_id = int(vars.doc_id)
+    doc_rec = db(db.TblDocs.id==doc_id).select().first()
+    doc_rec.update_record(doc_jpg_url=vars.doc_jpg_url)
+    return dict()
+
 # ----------------support functions-----------------
 
 def make_docs_query(params):
