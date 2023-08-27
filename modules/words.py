@@ -193,7 +193,7 @@ def update_word_index_all():
                 break
             n = db(q).count()
             if n > 0:
-                comment('Reindex words. {} stories left to reindex.', n)
+                comment(f'Reindex words. {n} stories left to reindex.')
             else:
                 comment('No more stories to index at this time.')
                 break
