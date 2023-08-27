@@ -13,10 +13,6 @@ def create_an_app(rec):
     app = rec.app_name
     bash_name = path + "create_app.bash"
     comment(f'about to create {app}. bash name is {bash_name}')
-    # orig_dir = os.getcwd()
-    # os.chdir(path)
-    # curr_dir = os.getcwd()
-    # comment(f"curr dir is {curr_dir}")
     exists = os.path.exists(bash_name)
     comment(f"script  {bash_name} exists? {exists}")
     command = f'bash {bash_name} {app} master {rec.email} {rec.password} {rec.first_name} {rec.last_name}'
@@ -29,25 +25,18 @@ def create_an_app(rec):
     result = subprocess.run(command, stdout=open(f"{log_file_name}", "w"), stderr=open(f"{log_file_name}" + ".err", "w"), shell=True)
     code = result.returncode
     comment(f'finished creation of {rec.app_name}. result = {result}')
-    # os.chdir(orig_dir)
     if code == 0:
         notify_developers(rec, True, command_line)
         notify_customer(rec)
     else:
         notify_developers(rec, False, command_line)
-    #command = 'systemctl restart web2py-scheduler'
     with open('/home/www-data/tol_test/private/restart_now', 'w') as f:
         f.write("restart now")
-    #with open(log_file_name, 'a') as log_file:
-        #log_file.write('before systemctl restart')
-        #code = subprocess.call(command, stdout=log_file, stderr=log_file, shell=True)
-        #log_file.write('after systemctl restart')                       
     return dict(code=code, command=command, command_line=command_line)
 
 def notify_customer(rec):
     mail, comment, request = inject('mail', 'comment', 'request')
     manual_link = 'https://docs.google.com/document/d/1IoE3xIN3QZvqk-YZZH55PLzMnASVHsxs0_HuSjYRySc/edit?usp=sharing'
-    ####host=request.env.http_host.split(':')[0]
     host = rec.host
     link = 'https://' + host + '/' + rec.app_name
     if rec.locale == 'he':

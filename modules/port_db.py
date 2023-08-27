@@ -42,11 +42,6 @@ class Migrate:
                 continue #all event_items were duplicates
             self.create_event(event)
             count += 1
-            # if len(event.event_items) > 1:
-            #     story_id = self.create_story(event)
-            # else:
-            #     story_id = None
-            # event_categories = event.categories
         return f"{count} events were processed."
 
     def create_event(self, event):

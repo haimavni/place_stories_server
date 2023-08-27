@@ -88,19 +88,9 @@ def add_photo_info(photo_id):
         fix_owner(oversize_fname)
         if height > MAX_HEIGHT or width > MAX_WIDTH:
             oversize = True
-        #     path = local_photos_folder(ORIG) + sub_folder
-        #     dir_util.mkpath(path)
-        #     fname = file_name.replace('/orig/', '/oversize/')
-        #     img.save(fname, quality=95)  ###, exif=img.info['exif'])
-        #     fix_owner(path)
-        #     fix_owner(fname)
-        #     width, height = resized(width, height)
-        #     img = img.resize((width, height), Image.LANCZOS)
-        # elif height < MAX_HEIGHT and width < MAX_WIDTH:
         width, height = resized(width, height)
         comment(f"after resized-----------width is {width} and height is {height}-------")
         img = img.resize((width, height), Image.LANCZOS)
-            #### TEMPORARY???!!!img = img.resize((width, height), Image.LANCZOS)
         path = local_photos_folder(RESIZED) + sub_folder
         ###exif = img.info['exif'] if img.info and 'exif' in img.info e
         img.save(file_name, quality=95)  ###, exif=img.info['exif'])
@@ -110,10 +100,6 @@ def add_photo_info(photo_id):
     except Exception as e:
         log_exception("saving photo {} failed".format(prec.original_file_name))
         return Storage(failed=1)
-    # sm = Stories()
-    # story_info = sm.get_empty_story(used_for=STORY4PHOTO, story_text="", name=prec.original_file_name)
-    # result = sm.add_story(story_info)
-    # story_id = result.story_id
 
     if embedded_photo_date:
         photo_date = embedded_photo_date.date()
