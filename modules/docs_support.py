@@ -119,7 +119,7 @@ def save_uploaded_doc_thumbnail(data, doc_id, ptp_key):
     with open(pdf_jpg_path, "bw") as f:
         f.write(blob)
     chmod(pdf_jpg_path, 0o777)
-    ws_messaging.send_message(key='DOC-THUMB-UPLOADED', group=ptp_key, good=True)
+    ws_messaging.send_message(key='DOC-THUMBNAIL-UPLOADED', group=ptp_key, good=True)
     return True
 
 def get_pdf_jpg_path(doc_path, page_num=None):    
