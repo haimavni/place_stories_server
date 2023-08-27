@@ -543,6 +543,7 @@ def upload_doc_segment_thumbnail(vars):
 
 @ serve_json
 def upload_doc_thumbnail(vars):
+    comment("-----------------enter upload doc thumbnail.")
     info=vars.file.info
     doc_id=info.doc_id
     ptp_key=info.ptp_key
