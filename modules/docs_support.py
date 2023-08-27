@@ -86,16 +86,11 @@ def save_doc_segment_thumbnail(doc_segment_id):
     doc_file_name = local_docs_folder() + doc_rec.doc_path
     #-------
     pdf_jpg_path = get_pdf_jpg_path(doc_rec.doc_path, pdf_seg_rec.page_num)
-    # path, file_name = os.path.split(doc_rec.doc_path)
-    # pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/' + path + '/'
-    # dir_util.mkpath(pdf_jpg_folder)
-    # s = f"-{pdf_seg_rec.page_num}.jpg"
-    # pdf_jpg_path = pdf_jpg_folder + file_name.replace('.pdf', s)
     comment(f"-----save doc seg thumb {doc_file_name} at {pdf_jpg_path} ")
     save_pdf_jpg(doc_file_name, pdf_jpg_path, pdf_seg_rec.page_num)
     chmod(pdf_jpg_path, 0o777)
 
-def save_uploaded_thumbnail(data, doc_id, segment_id, ptp_key):
+def save_uploaded_doc_seg_thumbnail(data, doc_id, segment_id, ptp_key):
     #sometimes the above function silently fails to create file
     db, comment = inject('db', 'comment')
     comment(f"------------ save uploaded thumbail {doc_id} / {segment_id}")
@@ -111,6 +106,20 @@ def save_uploaded_thumbnail(data, doc_id, segment_id, ptp_key):
         f.write(blob)
     chmod(pdf_jpg_path, 0o777)
     ws_messaging.send_message(key='DOC-SEG-THUMB-UPLOADED', group=ptp_key, good=True)
+    return True
+
+def save_uploaded_doc_thumbnail(data, doc_id, ptp_key):
+    #sometimes the above function silently fails to create file
+    db, comment = inject('db', 'comment')
+    comment(f"------------ save uploaded doc thumbail {doc_id}")
+    blob = array.array('B', [x for x in map(ord, data)]).tobytes()
+    doc_rec = db(db.TblDocs.id==doc_id).select().first()
+    pdf_jpg_path = get_pdf_jpg_path(doc_rec.doc_path, page_num)
+    comment(f"pdf_jpg_path: , {pdf_jpg_path}")
+    with open(pdf_jpg_path, "bw") as f:
+        f.write(blob)
+    chmod(pdf_jpg_path, 0o777)
+    ws_messaging.send_message(key='DOC-THUMB-UPLOADED', group=ptp_key, good=True)
     return True
 
 def get_pdf_jpg_path(doc_path, page_num=None):    
