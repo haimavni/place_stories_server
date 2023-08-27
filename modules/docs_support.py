@@ -106,7 +106,7 @@ def save_uploaded_doc_seg_thumbnail(data, doc_id, segment_id, ptp_key):
         f.write(blob)
     chmod(pdf_jpg_path, 0o777)
     # ws_messaging.send_message(key='DOC-SEG-THUMB-UPLOADED', group=ptp_key, good=True)
-    ws_messaging.send_message(key='DOC-SEG-THUMB-UPLOADED', group="ALL", good=True)
+    # ws_messaging.send_message(key='DOC-SEG-THUMB-UPLOADED', group="ALL", good=True)
     return True
 
 def save_uploaded_doc_thumbnail(data, doc_id, ptp_key):
@@ -121,7 +121,7 @@ def save_uploaded_doc_thumbnail(data, doc_id, ptp_key):
         f.write(blob)
     chmod(pdf_jpg_path, 0o777)
     # ws_messaging.send_message(key='DOC-THUMBNAIL-UPLOADED', group=ptp_key, good=True)
-    ws_messaging.send_message(key='DOC-THUMBNAIL-UPLOADED', group='ALL', good=True)
+    # ws_messaging.send_message(key='DOC-THUMBNAIL-UPLOADED', group='ALL', good=True)
     return True
 
 def get_pdf_jpg_path(doc_path, page_num=None):    

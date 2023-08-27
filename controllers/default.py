@@ -351,7 +351,7 @@ def get_locale_overrides(vars):
 @serve_json
 def notify_new_files(vars):
     uploaded_file_ids = vars.uploaded_file_ids
-    send_message(key=vars.what +'_WERE_UPLOADED', group='ALL', uploaded_file_ids=uploaded_file_ids)
+    send_message(key=vars.what +'-UPLOADED', group='ALL', uploaded_file_ids=uploaded_file_ids)
     return dict()
 
 @serve_json
