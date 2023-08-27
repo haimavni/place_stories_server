@@ -457,6 +457,7 @@ def remove_doc_segment(vars):
 
 @ serve_json
 def replace_doc_jpg_url(vars):
+    #todo: unlike videos, need to upload, not replace url
     doc_id = int(vars.doc_id)
     doc_rec = db(db.TblDocs.id==doc_id).select().first()
     doc_rec.update_record(doc_jpg_url=vars.doc_jpg_url)

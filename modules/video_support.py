@@ -95,7 +95,7 @@ def update_cuepoints_text(video_id):
 
 def parse_video_url(input_url):
     pats = dict(
-        youtube=r'https://(?:www.youtube.com/(?:watch\?v=|embed/)|youtu\.be/)(?P<code>[^&]+)',
+        youtube=r'https://(?:www.youtube.com/(?:watch\?v=|embed/)|youtu\.be/)(?P<code>[^&?]+).*',
         html5=r'(?P<code>.+\.mp4)',
         vimeo=r'https://vimeo.com/(?P<code>\d+)',
         google_drive=r'https://drive.google.com/file/d/(?P<code>[^/]+?)/.*',
