@@ -114,7 +114,7 @@ def save_uploaded_doc_thumbnail(data, doc_id, ptp_key):
     comment(f"------------ save uploaded doc thumbail {doc_id}")
     blob = array.array('B', [x for x in map(ord, data)]).tobytes()
     doc_rec = db(db.TblDocs.id==doc_id).select().first()
-    pdf_jpg_path = get_pdf_jpg_path(doc_rec.doc_path, page_num)
+    pdf_jpg_path = get_pdf_jpg_path(doc_rec.doc_path)
     comment(f"pdf_jpg_path: , {pdf_jpg_path}")
     with open(pdf_jpg_path, "bw") as f:
         f.write(blob)
