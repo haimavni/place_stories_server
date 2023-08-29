@@ -105,8 +105,6 @@ def save_uploaded_doc_seg_thumbnail(data, doc_id, segment_id, ptp_key):
     with open(pdf_jpg_path, "bw") as f:
         f.write(blob)
     chmod(pdf_jpg_path, 0o777)
-    # ws_messaging.send_message(key='DOC-SEG-THUMB-UPLOADED', group=ptp_key, good=True)
-    # ws_messaging.send_message(key='DOC-SEG-THUMB-UPLOADED', group="ALL", good=True)
     return True
 
 def save_uploaded_doc_thumbnail(data, doc_id, ptp_key):
@@ -114,15 +112,35 @@ def save_uploaded_doc_thumbnail(data, doc_id, ptp_key):
     db, comment = inject('db', 'comment')
     comment(f"------------ save uploaded doc thumbail {doc_id} ptp key: {ptp_key}")
     blob = array.array('B', [x for x in map(ord, data)]).tobytes()
-    doc_rec = db(db.TblDocs.id==doc_id).select().first()
-    pdf_jpg_path = get_pdf_jpg_path(doc_rec.doc_path)
+    # doc_rec = db(db.TblDocs.id==doc_id).select().first()
+    pdf_jpg_path = calc_doc_jpg_path(doc_id)
     comment(f"pdf_jpg_path: , {pdf_jpg_path}")
+    if os.path.exists(pdf_jpg_path):
+        os.rename(pdf_jpg_path, pdf_jpg_path + ".bak")
     with open(pdf_jpg_path, "bw") as f:
         f.write(blob)
     chmod(pdf_jpg_path, 0o777)
-    # ws_messaging.send_message(key='DOC-THUMBNAIL-UPLOADED', group=ptp_key, good=True)
-    # ws_messaging.send_message(key='DOC-THUMBNAIL-UPLOADED', group='ALL', good=True)
     return True
+
+def restore_doc_thumbnail(doc_id):
+    db, comment = inject('db', 'comment')
+    pdf_jpg_path = calc_doc_jpg_path(doc_id)
+    bak_path = pdf_jpg_path + ".bak"
+    if os.path.exists(bak_path):
+        os.remove(pdf_jpg_path)
+        os.rename(bak_path, pdf_jpg_path)
+    
+def confirm_doc_thumbnail(doc_id):
+    db, comment = inject('db', 'comment')
+    pdf_jpg_path = calc_doc_jpg_path(doc_id)
+    bak_path = pdf_jpg_path + ".bak"
+    if os.path.exists(bak_path):
+        os.remove(bak_path)
+
+def calc_doc_jpg_path(doc_id):
+    db, comment = inject('db', 'comment')
+    doc_rec = db(db.TblDocs.id==doc_id).select().first()
+    return get_pdf_jpg_path(doc_rec.doc_path)
 
 def get_pdf_jpg_path(doc_path, page_num=None):    
     path, file_name = os.path.split(doc_path)
