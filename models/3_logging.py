@@ -32,19 +32,23 @@ def roll_over(base_name, max_number):
 
 def my_log(s, file_name="log_all"):
     size_limit = 400000
-    fname = '{p}{n}[{a}].log'.format(p=log_path(), n=file_name, a=request.application)
+    path = log_path()
+    fn = file_name
+    app = request.application
+    fname = f'{path}{fn}[{app}].log'
     file_size = os.path.getsize(fname) if os.path.exists(fname) else 0
-    need_fixing = file_size == 0
+    # need_fixing = file_size == 0
     if file_size + len(s) > size_limit:
         roll_over(fname, 10)
-    s1 = "{ts}: {s}\n\n".format(ts=datetime.datetime.now(), s=s)
+    ts = datetime.datetime.now()
+    s1 = f"{ts}: {s}\n\n"
     try:
         with safe_open(fname, 'a') as f:
             f.write(s1)
         # if need_fixing:
             # fix_log_owner(fname)
     except:
-        fname = '{p}{n}[{a}].log'.format(p=log_path(), n=file_name.upper(), a=request.application)
+        fname = f'{path}{fn.upper()}[{app}].log'
         with open(fname, 'a') as f:
             f.write(s1)
 
@@ -52,7 +56,8 @@ def my_log(s, file_name="log_all"):
 def log_exception_only(p, file_name='exceptions'):
     import traceback
     trace = traceback.format_exc()
-    s = '{ts} Error in {p}: {t}\n'.format(ts=datetime.datetime.now(), p=p, t=trace)
+    ts=datetime.datetime.now()
+    s = f'{ts} Error in {p}: {trace}\n'
     my_log(s, file_name)
 
 
@@ -63,7 +68,6 @@ def log_exception(p):
     # logger.exception(p)
 
 
-def comment(s, *args, **kargs):
-    s = s.format(*args, **kargs).replace('\n', '\n    ')
+def comment(s):
     my_log(s)
 

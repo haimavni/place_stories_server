@@ -4,6 +4,7 @@ from date_utils import date_of_date_str, parse_date, get_all_dates, update_recor
 from folders import photos_folder
 import ws_messaging
 from words import get_reisha
+from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 @serve_json
 def article_list(vars):
@@ -20,7 +21,7 @@ def article_list(vars):
     return dict(article_list=arr)
 
 def face_photo_url(article_rec, webp_supported):
-    folder = photos_folder('profile_photos')
+    folder = photos_folder(PROFILE_PHOTOS)
     if webp_supported:
         path = article_rec.facephotourl_webp or article_rec.facephotourl
     else:
@@ -117,7 +118,7 @@ def get_article_details(vars):
                 story_info=story_info, 
                 slides=slides, #todo: duplicate?
                 article_stories=article_stories,
-                facephotourl = photos_folder('profile_photos') + (article_info.facephotourl or "dummy_face.png")
+                facephotourl = photos_folder(PROFILE_PHOTOS) + (article_info.facephotourl or "dummy_face.png")
                 )
 
 @serve_json
@@ -223,7 +224,7 @@ def get_article_rec(article_id, prepend_path=False):
     for d in dates:
         rec[d] = dates[d]
     if prepend_path :
-        rec.facephotourl = photos_folder('profile_photos') + (rec.facephotourl or 'dummy_face.png')
+        rec.facephotourl = photos_folder(PROFILE_PHOTOS) + (rec.facephotourl or 'dummy_face.png')
     return rec
 
 def get_article_slides(article_id):

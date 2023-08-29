@@ -154,7 +154,7 @@ def verify_email():
 def check_if_logged_in(vars):
     is_logged_in = auth.is_logged_in()
     user_id=auth.current_user()
-    comment("is logged in? {}, user_id: {}", is_logged_in, user_id)
+    comment(f"is logged in? {is_logged_in} user_id: {user_id}")
     return dict(is_logged_in=is_logged_in, user_id=user_id)
 
 @serve_json
@@ -351,7 +351,7 @@ def get_locale_overrides(vars):
 @serve_json
 def notify_new_files(vars):
     uploaded_file_ids = vars.uploaded_file_ids
-    send_message(key=vars.what +'_WERE_UPLOADED', group='ALL', uploaded_file_ids=uploaded_file_ids)
+    send_message(key=vars.what +'-UPLOADED', group='ALL', uploaded_file_ids=uploaded_file_ids)
     return dict()
 
 @serve_json
@@ -386,7 +386,7 @@ def get_shortcut(vars):
     else:
         key = create_key() #if paranoid, ensure key is not in use yet
         if db(db.TblShortcuts.key==key).count() > 0:
-            comment("duplicate key found in get shortcut")
+            comment(f"duplicate key {key} found in get shortcut")
             raise Exception('Non unique key')
         db.TblShortcuts.insert(url=url, key=key)
     shortcut = '/' + request.application + '?key='  + key

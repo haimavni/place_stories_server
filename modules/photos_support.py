@@ -96,7 +96,7 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
     month = str(today)[:-3]
     if not sub_folder:
         sub_folder = sub_folder or 'uploads/' + month + '/'
-    path = local_photos_folder() + sub_folder
+    path = local_photos_folder(RESIZED) + sub_folder
     dir_util.mkpath(path)
     latitude = None
     longitude = None
@@ -125,7 +125,7 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
                 has_geo_info = longitude != None
                 prec.update_record(has_geo_info=has_geo_info, longitude=longitude, latitude=latitude, zoom=zoom)
                 if prec.oversize:
-                    fname = local_photos_folder("oversize") + prec.photo_path
+                    fname = local_photos_folder(ORIG) + prec.photo_path
                     img.save(fname, quality=95)  ###, exif=img.info['exif'])
         if prec:
             return Storage(duplicate=prec.id)
@@ -142,7 +142,7 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
             comment("!!!!!!!!!!!!!!!!!!!!!!! bad width/height !!!!!!!!!!!!!!!!!!")
         square_img = crop_to_square(img, width, height, 256)
         if square_img:
-            path = local_photos_folder("squares") + sub_folder
+            path = local_photos_folder(SQUARES) + sub_folder
             dir_util.mkpath(path)
             square_img.save(path + file_name)
             fix_owner(path)
@@ -153,7 +153,7 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
         oversize = False
         if height > MAX_HEIGHT or width > MAX_WIDTH:
             oversize = True
-            path = local_photos_folder("oversize") + sub_folder
+            path = local_photos_folder(ORIG) + sub_folder
             dir_util.mkpath(path)
             img.save(path + file_name, quality=95) ###, exif=img.info['exif'])
             fix_owner(path)
@@ -163,7 +163,7 @@ def save_uploaded_photo(file_name, s, user_id, sub_folder=None):
         elif height < MAX_HEIGHT and width < MAX_WIDTH:
             width, height = resized(width, height)
             img = img.resize((width, height), Image.LANCZOS)
-        path = local_photos_folder() + sub_folder
+        path = local_photos_folder(RESIZED) + sub_folder
         ###exif = img.info['exif'] if img.info and 'exif' in img.info e
         img.save(path + file_name, quality=100) ###, exif=img.info['exif'])
         fix_owner(path)
@@ -224,10 +224,10 @@ def get_image_info(image_path):
 
 def fit_size(rec):
     db, log_exception = inject('db', 'log_exception')
-    fname = local_photos_folder() + rec.photo_path
+    fname = local_photos_folder(RESIZED) + rec.photo_path
     try:
         img = Image.open(fname)
-        oversize_file_name = local_photos_folder("oversize") + rec.photo_path
+        oversize_file_name = local_photos_folder(ORIG) + rec.photo_path
         oversize_path, f = os.path.split(oversize_file_name)
         dir_util.mkpath(oversize_path)
         img.save(oversize_file_name)
@@ -262,10 +262,10 @@ def scan_all_unscanned_photos():
     db, request, comment = inject('db', 'request', 'comment')
     q = (db.TblPhotos.crc==None) & (db.TblPhotos.photo_missing == False) & (db.TblPhotos.deleted!=True)
     to_scan = db(q).count()
-    comment("{} photos still unscanned", to_scan)
+    comment(f"{to_scan} photos still unscanned")
     failed_crops = 0
     chunk = 100
-    folder = local_photos_folder()
+    folder = local_photos_folder(RESIZED)
     while True:
         comment('started scanning chunk of photos')
         lst = db(q).select(limitby=(0, chunk))
@@ -304,9 +304,9 @@ def calc_missing_dhash_values(max_to_hash=20000):
         (db.TblPhotos.photo_missing == False) & \
         (db.TblPhotos.deleted != True)
     to_scan = db(q).count()
-    comment("{} photos still have no dhash value", to_scan)
+    comment(f"{to_scan} photos still have no dhash value")
     chunk = 100
-    folder = local_photos_folder()
+    folder = local_photos_folder(RESIZED)
     done = 0
     while True:
         comment('started dhashing chunk of photos')
@@ -426,7 +426,7 @@ def crop_square(img_src, width, height, side_size):
         x1 = width
     input_path = img_src
     path, fname = os.path.split(input_path)
-    path = path.replace('orig', 'squares')
+    path = path.replace(RESIZED, SQUARES)
     dir_util.mkpath(path)
     output_path = path  + '/' +fname
     img = Image.open(input_path)
@@ -442,16 +442,16 @@ def crop_square(img_src, width, height, side_size):
 def rotate_photo(photo_id, rotate_clockwise=False):
     db = inject('db')
     photo_rec = db((db.TblPhotos.id == photo_id) & (db.TblPhotos.deleted != True)).select().first()
-    lst = ['orig', 'squares']
-    if photo_rec.oversize:
-        lst += ['oversize']
+    lst = [RESIZED, SQUARES, ORIG]
     for what in lst:
         path = local_photos_folder(what)
         file_name = path + photo_rec.photo_path
+        if not os.path.exists(file_name):
+            continue
         img = Image.open(file_name)
         angle = Image.ROTATE_270 if rotate_clockwise else Image.ROTATE_90
         img = img.transpose(angle)
-        if what == 'orig':
+        if what == RESIZED:
             img.save(file_name)
             with open(file_name, 'rb') as f:
                 blob = f.read()
@@ -473,13 +473,13 @@ def rotate_photo(photo_id, rotate_clockwise=False):
 def resize_photo(photo_id, target_width=1200, target_height=800):
     db = inject('db')
     prec = db(db.TblPhotos.id==photo_id).select().first()
-    what = 'oversize' if prec.oversize else 'orig'
+    what = ORIG if prec.oversize else RESIZED
     path = local_photos_folder(what)
     input_file_name = path + prec.photo_path
     if not os.path.exists(input_file_name):
         return
     img = Image.open(input_file_name)
-    path = local_photos_folder('orig')
+    path = local_photos_folder(RESIZED)
     file_name = path + prec.photo_path
     image_width, image_height = img.size
     rw = 1.0 * target_width / image_width
@@ -512,7 +512,7 @@ def resize_photos(count, target_width=1200, target_height=800):
     return dict(num_to_resize=n)
 
 def add_photos_from_drive(sub_folder):
-    folder = local_photos_folder("orig")
+    folder = local_photos_folder(RESIZED)
     root_folder = folder + sub_folder
     for root, dirs, files in os.walk(root_folder, topdown=True):
         for file_name in files:
@@ -594,7 +594,7 @@ def save_member_face(params):
     db(db.TblPhotos.id==face.photo_id).update(recognized=True, handled=True)
     ws_messaging.send_message(key='MEMBER_PHOTO_LIST_CHANGED', group='ALL', article_id=face.article_id, photo_id=face.photo_id)
     if face_photo_url:
-        face_photo_url = photos_folder("profile_photos") + face_photo_url 
+        face_photo_url = photos_folder(PROFILE_PHOTOS) + face_photo_url 
     return Storage(member_name=member_name, face_photo_url=face_photo_url)
 
 def save_article_face(params):
@@ -632,17 +632,17 @@ def save_article_face(params):
     db(db.TblPhotos.id==face.photo_id).update(recognized=True, handled=True)
     ws_messaging.send_message(key='ARTICLE_PHOTO_LIST_CHANGED', group='ALL', article_id=face.article_id, photo_id=face.photo_id)
     if face_photo_url:
-        face_photo_url = photos_folder("profile_photos") + face_photo_url
+        face_photo_url = photos_folder(PROFILE_PHOTOS) + face_photo_url
     return Storage(article_name=article_name, face_photo_url=face_photo_url)
 
 def save_profile_photo(face, is_article=False):
     db = inject('db')
     rec = get_photo_rec(face.photo_id)
-    input_path = local_photos_folder() + rec.photo_path
+    input_path = local_photos_folder(RESIZED) + rec.photo_path
     prefix = "AP" if is_article else "PP"
     iid = face.article_id if is_article else face.member_id
     facephotourl = f"{prefix}-{iid}-{face.photo_id}.jpg" #todo: just add ?filedate when used
-    output_path = local_photos_folder("profile_photos") + facephotourl
+    output_path = local_photos_folder(PROFILE_PHOTOS) + facephotourl
     crop(input_path, output_path, face)
     now = datetime.datetime.now()
     timestamp = int(round(now.timestamp()))
@@ -650,11 +650,11 @@ def save_profile_photo(face, is_article=False):
     if is_article:
         db(db.TblArticles.id == face.article_id).update(facephotourl=facephotourl)
         ws_messaging.send_message('ARTICLE_PROFILE_CHANGED', group='ALL', 
-            article_id=face.article_id, face_photo_url=photos_folder("profile_photos") + facephotourl)
+            article_id=face.article_id, face_photo_url=photos_folder(PROFILE_PHOTOS) + facephotourl)
     else:
         db(db.TblMembers.id == face.member_id).update(facephotourl=facephotourl)
         ws_messaging.send_message('PHOTO_PROFILE_CHANGED', group='ALL', 
-            member_id=face.member_id, face_photo_url=photos_folder("profile_photos") + facephotourl)
+            member_id=face.member_id, face_photo_url=photos_folder(PROFILE_PHOTOS) + facephotourl)
     return facephotourl
 
 def get_photo_rec(photo_id):
@@ -678,8 +678,8 @@ def get_photo_pairs(photo_list):
     result = dict()
     for rec in lst:
         result[rec.TblPhotoPairs.front_id] = dict(
-            src=photos_folder('orig') + rec.TblPhotos.photo_path,
-            square_src=photos_folder('squares') + rec.TblPhotos.photo_path,
+            src=photos_folder(RESIZED) + rec.TblPhotos.photo_path,
+            square_src=photos_folder(SQUARES) + rec.TblPhotos.photo_path,
             photo_id=rec.TblPhotoPairs.back_id,
             width=rec.TblPhotos.width,
             height=rec.TblPhotos.height
@@ -776,7 +776,7 @@ def find_similar_photos(photo_list=None, time_budget=60):
     result = multisort(result, (('dup_group', False), ('id', True)))
     return result, candidates
 
-def timestamped_photo_path(photo_rec, webp_supported=True, what='orig'):
+def timestamped_photo_path(photo_rec, webp_supported=True, what=RESIZED):
     #todo: if file for type of webp support is missing, create it?
     folder = photos_folder(what)
     result = folder + (photo_rec.photo_path_webp if webp_supported and photo_rec.webp_photo_path else photo_rec.photo_path)
@@ -798,10 +798,10 @@ def find_missing_files(init=False):
         if len(lst) == 0:
             break
         for rec in lst:
-            fname = local_photos_folder('orig') + rec.photo_path
+            fname = local_photos_folder(RESIZED) + rec.photo_path
             lost = not os.path.exists(fname)
             if lost:
-                fname = local_photos_folder('oversize') + rec.photo_path
+                fname = local_photos_folder(ORIG) + rec.photo_path
                 if os.path.exists(fname):
                     recoverable += 1
             rec.update_record(photo_missing=lost)
@@ -862,12 +862,12 @@ def jpg_to_webp(file_name):
 def convert_to_webp(photo_id):
     db = inject('db')
     photo_rec = db(db.TblPhotos.id==photo_id).select().first()
-    path = local_photos_folder() + photo_rec.photo_path
+    path = local_photos_folder(RESIZED) + photo_rec.photo_path
     jpg_to_webp(path)
     if photo_rec.oversize:
-        path = local_photos_folder('oversize') + photo_rec.photo_path
+        path = local_photos_folder(ORIG) + photo_rec.photo_path
         jpg_to_webp(path)
-    path = local_photos_folder('squares') + photo_rec.photo_path
+    path = local_photos_folder(SQUARES) + photo_rec.photo_path
     jpg_to_webp(path)
     r = photo_rec.photo_path.rfind('.')
     webp_photo_path = photo_rec.photo_path[:r] + '.webp'
@@ -895,7 +895,7 @@ def use_embedded_dates():
 
 def calculate_photo_geo_info(prec):
     log_exception = inject('log_exception')
-    folder = local_photos_folder()
+    folder = local_photos_folder(RESIZED)
     fname = folder + prec.photo_path
     if not os.path.exists(fname):
         return
@@ -980,7 +980,7 @@ def get_padded_photo_url(photo_id):
     photo_rec = db(db.TblPhotos.id==photo_id).select().first()
     if not photo_rec:
         raise Exception(f"photo_id: {photo_id} - photo not found!")
-    photo_path = local_photos_folder() + photo_rec.photo_path
+    photo_path = local_photos_folder(RESIZED) + photo_rec.photo_path
     r = photo_path.rfind('.')
     ext = photo_path[r:]
     crc = photo_rec.crc
@@ -997,7 +997,7 @@ def save_qr_photo(data):
     photo_rec = db(db.TblPhotos.id==photo_id).select().first()
     if not photo_rec:
         raise Exception(f"photo_id: {photo_id} - photo not found!")
-    photo_path = local_photos_folder('oversize') + photo_rec.photo_path
+    photo_path = local_photos_folder(ORIG) + photo_rec.photo_path
     im = Image.open(photo_path)
     if data.width:
         ppcm = im.width / int(data.width)

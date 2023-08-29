@@ -25,6 +25,7 @@ def send_message(key, user=None, group=None, **data):
         data=data
     )
     group = messaging_group(user, group)
+    comment(f"-------------------sending message. key is {key}")
     try:
         send_data(group, obj, key)
     except Exception as e:

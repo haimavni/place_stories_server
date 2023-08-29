@@ -233,7 +233,7 @@ def save_photo_info(vars):
 def mail_contacts(vars):
     group_id = vars.group_id
     from_name = vars.from_name or 'Test'
-    comment("enter mail contacts, from: {}, group {}", from_name, group_id)
+    comment(f"enter mail contacts, from: {from_name}, group {group_id}")
     recipients = db((db.TblGroupContacts.group_id==group_id) & (db.TblGroupContacts.deleted != True)).select()
     receivers = [gc.email for gc in recipients]
     grec = db(db.TblGroups.id==group_id).select().first()

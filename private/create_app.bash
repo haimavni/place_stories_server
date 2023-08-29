@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo CREATE NEW APP
+echo CREATE NEW APP > /apps_data/new_app_started.log
 
 app_name=$1
 ver=$2

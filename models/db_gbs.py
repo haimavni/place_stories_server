@@ -106,29 +106,6 @@ db.define_table('TblWordStories',
                 Field('word_count', type='integer')
 )
 
-db.define_table('TblDefaults',
-                Field('adminhrefinitialaddress', type='string'),
-                Field('adminmaxresultsinpage', type='integer'),
-                Field('adminthumbnailphotoheight', type='integer'),
-                Field('commentsemailaddress', type='string'),
-                Field('commentsemailname', type='string'),
-                Field('iidd', type='integer'),
-                Field('identifyemailaddress', type='string'),
-                Field('identifyemailname', type='string'),
-                Field('mailfromaddress', type='string'),
-                Field('mailfromname', type='string'),
-                Field('mailhost', type='string'),
-                Field('mailport', type='integer'),
-                Field('normalphotowidth', type='integer'),
-                Field('pagehitscountingstatus', type='integer'),
-                Field('photosinevent', type='integer'),
-                Field('photosinmember', type='integer'),
-                Field('thumbnailphotowidth', type='integer'),
-                Field('usermaxphotosinunidentifiedpage', type='integer'),
-                Field('usermaxrandomeventsinmainpage', type='integer'),
-                Field('usermaxresultsinpage', type='integer'),
-)
-
 db.define_table('TblEventMembers',
                 Field('event_id', type='integer'),
                 Field('member_id', type='integer'),
@@ -140,34 +117,31 @@ db.define_table('TblEventArticles',
 )
 
 db.define_table('TblEventPhotos',
-                Field('eventid', type='integer'),
                 Field('event_id', type='integer'),
-                Field('eventphotorank', type='integer'),
-                Field('photoid', type='integer'),
                 Field('photo_id', type='integer'),
 )
 
+db.define_table('TblEventDocs',
+               Field('event_id', type='integer'),
+               Field('doc_id', type='integer')
+               )
+
+db.define_table('TblEventVideos',
+               Field('event_id', type='integer'),
+               Field('video_id', type='integer')
+               )
+
 db.define_table('TblEvents',
                 Field('description', type='text'),
-                Field('descriptionnohtml', type='text'),
                 Field('story_id', type=db.TblStories),
-                Field('eventdate', type='string'),
                 Field('event_date', type='date', default=NO_DATE),
                 Field('event_date_dateunit', type='string', default='Y'),
                 Field('event_date_datespan', type='integer', default=1),
                 Field('event_date_dateend', type='date', default=NO_DATE),
-                Field('eventrank', type='integer'),
-                Field('iidd', type='integer'),
                 Field('name', type='string'),
-                Field('objectid', type='integer'),
-                Field('object_id', type='integer'),
                 Field('pagehits', type='integer'),
                 Field('place', type='string'),
                 Field('ssource', type='string'),
-                Field('statusid', type='integer'),
-                Field('status_id', type='integer'),
-                Field('typeid', type='integer'),
-                Field('type_id', type='integer'),
                 Field('deleted', type='boolean', default=False)
 )
 
@@ -221,12 +195,10 @@ fields = [
     Field('name', default="noname", compute=lambda rec: (rec.first_name + ' ' if rec.first_name else "") + (rec.last_name if rec.last_name else "")),
     Field('former_first_name', type='string'),
     Field('former_last_name', type='string'),
-    Field('dateofalia', type='string'),
     Field('date_of_alia', type='date', default=NO_DATE, description='date-of-alia'),
     Field('date_of_alia_dateunit', type='string', default='N'),
     Field('date_of_alia_datespan', type='integer', default=0),
     Field('date_of_alia_dateend', type='date', default=NO_DATE),
-    Field('dateofbirth', type='string'),
     Field('date_of_birth', type='date', default=NO_DATE, description='date-of-birth'), 
     Field('date_of_birth_dateunit', type='string', default='N'), 
     Field('date_of_birth_datespan', type='integer', default=0), 
@@ -236,7 +208,6 @@ fields = [
     Field('date_of_death_datespan', type='integer', default=0),
     Field('date_of_death_dateend', type='date', default=NO_DATE),
     Field('cause_of_death', type='integer', default=0, description='cause-of-death', options='died=0|fell=1|killed=3|murdered=3'),
-    Field('dateofmember', type='string'),
     Field('date_of_member', type='date', default=NO_DATE),
     Field('date_of_member_dateunit', type='string', default='N'),
     Field('date_of_member_datespan', type='integer', default=0),
@@ -254,7 +225,6 @@ fields = [
     Field('education', type='string'),
     Field('formername', type='string'),
     Field('gender', type='string', description='gender', options="male='M'|female='F'"), #F, M and also FM and MF for transgenders...
-    Field('iidd', type='integer'),
     Field('father_id', type='integer'), #all family relations can be derived from these 2 fields.
     Field('mother_id', type='integer'), #virtual child can define childless married couple etc.
     Field('father2_id', type='integer'),#to enable same sex couples
@@ -268,14 +238,9 @@ fields = [
     Field('story_id', type=db.TblStories),
     Field('name', type='string'),
     Field('nickname', type='string'),
-    Field('objectid', type='integer'),
-    Field('object_id', type='integer'),
-    Field('pagehits', type='integer'),
     Field('placeofbirth', type='string'),
     Field('place_of_death', type='string', default=""),
     Field('professions', type='string'),
-    Field('statusid', type='integer'),
-    Field('status_id', type='integer'),
     Field('facephotourl', type='string'),
     Field('facephotourl_webp', type='string'),
     Field('deleted', type='boolean', default=False),
@@ -322,21 +287,13 @@ db.define_table('TblChats',
 )
 
 db.define_table('TblPhotos',
-                Field('archivenum', type='string'),
                 Field('description', type='text'),
-                Field('descriptionnohtml', type='text'),
                 Field('story_id', type=db.TblStories),
-                Field('iidd', type='integer'),
-                Field('locationindisk', type='string'),
                 Field('photo_path', type='string'),
                 Field('webp_photo_path', type='string'),
                 Field('name', type='string'),
                 Field('original_file_name', type='string'),
                 Field('embedded_photo_date', type='datetime'),
-                Field('objectid', type='integer'), #obsolete, to be replaced by the following line
-                Field('object_id', type='integer'),
-                Field('pagehits', type='integer'),
-                Field('photodate', type='string'),
                 Field('photo_date', type='date', default=NO_DATE),
                 Field('photo_date_dateunit', type='string', default='Y'), # D, M or Y for day, month, year
                 Field('photo_date_datespan', type='integer', default=1), # how many months or years in the range
@@ -345,13 +302,10 @@ db.define_table('TblPhotos',
                 Field('longitude', type='float'),
                 Field('has_geo_info', type='boolean'),
                 Field('zoom', type='integer', default=12),
-                Field('photorank', type='integer'),
                 Field('photographer', type='string'), #obsolete
                 Field('photographer_id', type='integer'),
-                Field('recognized', type='boolean'),
+                Field('recognized', type='boolean', default=False),
                 Field('handled', type='boolean'), #show photo where recognition is still pending
-                Field('statusid', type='integer'),
-                Field('status_id', type='integer'),
                 Field('width', type='integer', default=0),
                 Field('height', type='integer', default=0),
                 Field('uploader', type=db.auth_user),
@@ -420,7 +374,7 @@ db.define_table('TblVideos',
                 Field('uploader', type='string'),
                 Field('title', type='string'),
                 Field('description', type='text'),
-                Field('upload_date', type='datetime'),
+                Field('yt_upload_date', type='datetime'),
                 Field('thumbnail_url', type='string'),
                 Field('duration', type='integer'),
                 Field('cuepoints_text', type='text', default='')
@@ -475,18 +429,8 @@ db.define_table('TblAudios',
 
 db.define_table('TblTerms',
                 Field('background', type='text'),
-                Field('backgroundnohtml', type='text'),
                 Field('story_id', type=db.TblStories),
-                Field('iidd', type='integer'),
-                Field('inventedby', type='string'),
-                Field('inventedbymemberid', type='integer'),
-                Field('inventedbymember_id', type='integer'),
                 Field('name', type='string'),
-                Field('objectid', type='integer'),
-                Field('object_id', type='integer'),
-                Field('pagehits', type='integer'),
-                Field('statusid', type='integer'),
-                Field('status_id', type='integer'),
                 Field('termtranslation', type='string'),
                 Field('deleted', type='boolean', default=False)
 )

@@ -8,68 +8,66 @@ from send_email import email
 def create_an_app(rec):
     request, comment, log_path = inject('request', 'comment', 'log_path')
     folder = os.path.abspath(request.folder)
-    path = folder + '/private'
+    path = folder + '/private/'
     logs_path = log_path()
     app = rec.app_name
-    ###comment('in create app. path: {p}, folder: {f}, request.folder: {rf}', p=path, f=folder, rf=request.folder)
-    comment(f'about to create {app}')
-    orig_dir = os.getcwd()
-    os.chdir(path)
-    command = f'bash create_app.bash {app} test {email} {rec.password} {rec.first_name} {rec.last_name}'
+    bash_name = path + "create_app.bash"
+    comment(f'about to create {app}. bash name is {bash_name}')
+    exists = os.path.exists(bash_name)
+    comment(f"script  {bash_name} exists? {exists}")
+    command = f'bash {bash_name} {app} master {rec.email} {rec.password} {rec.first_name} {rec.last_name}'
     log_file_name = logs_path + f"app-creation-{rec.app_name}.log"
-    with open(log_file_name, 'w') as log_file:
-        code = subprocess.call(command, stdout=log_file, stderr=log_file, shell=True)
-    comment('finished creation of {}. code = {}', rec.app_name, code)
-    os.chdir(orig_dir)
+    comment(f"log file name is {log_file_name}")
+    command_line = command
+    command = command.split()
+    comment(f"command is {command}")
+    
+    result = subprocess.run(command, stdout=open(f"{log_file_name}", "w"), stderr=open(f"{log_file_name}" + ".err", "w"), shell=True)
+    code = result.returncode
+    comment(f'finished creation of {rec.app_name}. result = {result}')
     if code == 0:
-        notify_developers(rec, True)
+        notify_developers(rec, True, command_line)
         notify_customer(rec)
     else:
-        notify_developers(rec, False)
-    #command = 'systemctl restart web2py-scheduler'
+        notify_developers(rec, False, command_line)
     with open('/home/www-data/tol_test/private/restart_now', 'w') as f:
         f.write("restart now")
-    #with open(log_file_name, 'a') as log_file:
-        #log_file.write('before systemctl restart')
-        #code = subprocess.call(command, stdout=log_file, stderr=log_file, shell=True)
-        #log_file.write('after systemctl restart')                       
-    return code
+    return dict(code=code, command=command, command_line=command_line)
 
 def notify_customer(rec):
     mail, comment, request = inject('mail', 'comment', 'request')
     manual_link = 'https://docs.google.com/document/d/1IoE3xIN3QZvqk-YZZH55PLzMnASVHsxs0_HuSjYRySc/edit?usp=sharing'
-    ####host=request.env.http_host.split(':')[0]
     host = rec.host
     link = 'https://' + host + '/' + rec.app_name
     if rec.locale == 'he':
-        message_fmt = '''<div dir="rtl">
+        message = f'''<div dir="rtl">
         אתר הסיפורים החדש שלך מוכן!<br><br>
 
         הקלק {link} כדי להיכנס לאתר.<br><br>
 
         להדרכה בנושא התאמת האתר ועריכת תוכנו הקלק על הקישור הבא:<br>
-        {ml}
+        {manual_link}
         </div>
         '''
     else:
-        message_fmt = '''
+        message = f'''
     Welcome to your new stories site!<br><br>
     
     Click {link} to visit.<br><br>
 
     You can read some useful information in the link below<br>
-    {ml}
+    {manual_link}
     '''
-    message = ('', message_fmt.format(ml=manual_link, link=link))
     result = email(receivers=rec.email, message=message, subject='Starting your new site')
     comment(f'mail sent to customer? {result}')
 
-def notify_developers(rec, success):
+def notify_developers(rec, success, command_line):
     auth, comment, DEVELOPER = inject('auth', 'comment', "DEVELOPER")
     site_name=rec.app_name
     status = 'was successfuly created ' if success else 'had errors while being created'
     message = f'''
     New site {site_name} {status}.
+    command is {command_line}
     '''
     receivers = auth.role_user_list(DEVELOPER)
     result = email(receivers=receivers, message=message, subject='New app')
@@ -81,7 +79,21 @@ def create_pending_apps():
         for rec in lst:
             rec.update_record(created=True)
             db.commit()
-            code = create_an_app(rec)
+            create_an_app(rec)
     except Exception as e:
         log_exception('Error creating apps')
         raise
+    
+def create_app(customer_id):
+    db, log_exception = inject('db', 'log_exception')
+    rec = db(db.TblCustomers.id==customer_id).select().first()
+    msg = "ok"
+    result = "about to start"
+    try:
+        result = create_an_app(rec)
+    except Exception as e:
+        msg = str(e)
+        log_exception(f'Error creating apps')
+    return dict(msg=msg, result=result)
+        
+    

@@ -8,7 +8,8 @@ import ws_messaging
 from date_utils import update_record_dates, fix_record_dates_in, fix_record_dates_out
 from folders import url_video_folder
 from members_support import *
-from video_support import upgrade_youtube_info, update_cuepoints_text
+from video_support import upgrade_youtube_info, update_cuepoints_text, parse_video_url, youtube_info
+from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 @serve_json
 def save_video(vars):
@@ -17,25 +18,9 @@ def save_video(vars):
     params = vars.params
     date_info = dict(video_date=(params.video_date_datestr, params.video_date_datespan))
     if not params.id:  # creation, not modification
-        pats = dict(
-            youtube=r'https://(?:www.youtube.com/watch\?v=|youtu\.be/)(?P<code>[^&]+)',
-            html5=r'(?P<code>.+\.mp4)',
-            vimeo=r'https://vimeo.com/(?P<code>\d+)',
-            google_drive=r'https://drive.google.com/file/d/(?P<code>[^/]+?)/.*',
-            google_photos=r'https://photos.app.goo.gl/(?P<code>[^&]+)'
-        )
-        src = None
-        for t in pats:
-            pat = pats[t]
-            m = re.search(pat, params.src)
-            if m:
-                src = m.groupdict()['code']
-                typ = t
-                break
-        if not src:
-            raise User_Error('!videos.unknown-video-type')
-        q = (db.TblVideos.src == src) & \
-            (db.TblVideos.video_type == typ) & \
+        vidi = parse_video_url(params.src)
+        q = (db.TblVideos.src == vidi.src) & \
+            (db.TblVideos.video_type == vidi.video_type) & \
             (db.TblVideos.deleted != True)
         if db(q).count() > 0:
             raise User_Error('!videos.duplicate')
@@ -43,13 +28,19 @@ def save_video(vars):
         story_info = sm.get_empty_story(used_for=STORY4VIDEO, story_text="", name=params.name)
         result = sm.add_story(story_info)
         story_id = result.story_id
+        yt_info = youtube_info(vidi.src)
         data = dict(
-            video_type=typ,
+            video_type=vidi.video_type,
             name=params.name,
-            src=src,
+            src=vidi.src,
             story_id=story_id,
             contributor=user_id,
-            upload_date=datetime.datetime.now()
+            upload_date=datetime.datetime.now(),
+            thumbnail_url=yt_info.thumbnail_url,
+            description=yt_info.description,
+            uploader=yt_info.uploader,
+            duration=yt_info.duration,
+            yt_upload_date=yt_info.upload_date
         )
         vid = db.TblVideos.insert(**data)
         data.update(id=vid)
@@ -72,12 +63,6 @@ def save_video(vars):
         old_rec = db(db.TblVideos.id == params.id).select().first()
         vid = old_rec.id
         del params['src']  #
-        # data = dict()
-        # for fld in old_rec:
-        # if fld in ('src', 'update_record', 'delete_record'):
-        # continue
-        # if old_rec[fld] != params[fld]:
-        # data[fld] = params[fld]
         data = params
         if data:
             data_in = fix_record_dates_in(old_rec, data)
@@ -271,7 +256,7 @@ def get_video_info(vars):
     member_ids = [m.member_id for m in member_ids]
     members = db(db.TblMembers.id.belongs(member_ids)).select()
     members = [Storage(id=member.id,
-                       facephotourl=photos_folder('profile_photos') + (member.facephotourl or "dummy_face.png"),
+                       facephotourl=photos_folder(PROFILE_PHOTOS) + (member.facephotourl or "dummy_face.png"),
                        full_name=get_full_name(member)) for member in members]
     return dict(video_source=video_source,
                 video_story=video_story,
@@ -338,7 +323,7 @@ def update_video_members(vars):
             db.TblMembersVideos.insert(video_id=video_id, member_id=mid)
     members = db(db.TblMembers.id.belongs(new_members)).select(db.TblMembers.id, db.TblMembers.facephotourl)
     for member in members:
-        member.facephotourl = photos_folder('profile_photos') + (member.facephotourl or "dummy_face.png")
+        member.facephotourl = photos_folder(PROFILE_PHOTOS) + (member.facephotourl or "dummy_face.png")
     return dict(members=members)
 
 @serve_json
@@ -381,6 +366,13 @@ def update_cue_members(vars):
 def video_cue_points(vars):
     cue_points = calc_cue_points(vars.video_id)
     return dict(cue_points=cue_points)
+
+@serve_json
+def replace_thumbnail_url(vars):
+    video_id = int(vars.video_id)
+    video_rec = db(db.TblVideos.id==video_id).select().first()
+    video_rec.update_record(thumbnail_url=vars.thumbnail_url)
+    return dict()
 
 def calc_cue_members(video_id, cue_id):
     q = (db.TblMembersVideoCuePoints.cue_point_id == db.TblVideoCuePoints.id) & \

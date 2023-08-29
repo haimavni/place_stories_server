@@ -1,6 +1,7 @@
 from gluon.storage import Storage
 from .folders import *
 from .date_utils import get_all_dates
+from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 
 def get_member_rec(member_id, member_rec=None, prepend_path=False):
@@ -19,7 +20,7 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
     editing_ok = True
     editing_ok = auth.current_user() == rec.updater_id or not auth.has_membership(RESTRICTED)
     rec.editing_ok = editing_ok
-    is_dead = rec.date_of_death != NO_DATE
+    is_dead = (rec.date_of_death != NO_DATE) & (rec.date_of_death != None)
     dates = get_all_dates(rec)
     rec = Storage(rec.as_dict())
     for d in dates:
@@ -27,7 +28,7 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
     rec.full_name = member_display_name(rec, full=True)
     rec.name = member_display_name(rec, full=False)
     if prepend_path:
-        rec.facephotourl = photos_folder('profile_photos') + (rec.facephotourl or 'dummy_face.png')
+        rec.facephotourl = photos_folder(PROFILE_PHOTOS) + (rec.facephotourl or 'dummy_face.png')
     if is_dead:
         rec.life_status = "dead"
     else:
@@ -222,7 +223,7 @@ def profile_photo_path(story_id):
         fname = member_rec.facephotourl
     else:
         fname = "dummy_face.png"
-    return photos_folder('profile_photos') + fname
+    return photos_folder(PROFILE_PHOTOS) + fname
 
 def check_dups():
     db = inject('db')

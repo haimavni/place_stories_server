@@ -14,17 +14,7 @@ import re
 from gluon.storage import Storage
 from gluon.utils import web2py_uuid
 import array
-
-@serve_json
-def upload_photo(vars):
-    raise Exception("upload fhoto is broken")
-    user_id = vars.user_id or auth.current_user()
-    comment("start handling uploaded files")
-    user_id = int(vars.user_id) if vars.user_id else auth.current_user()
-    fil = vars.file
-    #blob = to_bytes(fil.BINvalue)
-    result = save_uploaded_photo(fil.name, fil.BINvalue, user_id)
-    return dict(upload_result=result)
+from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 @serve_json
 def get_photo_detail(vars):
@@ -514,8 +504,8 @@ def mark_as_recogized(vars):
 def download_files(vars):
     pl = vars.selected_photo_list
     lst = db(db.TblPhotos.id.belongs(pl)).select()
-    folder = local_photos_folder()
-    oversize_folder = local_photos_folder("oversize")
+    folder = local_photos_folder(RESIZED)
+    oversize_folder = local_photos_folder(ORIG)
     uuid = web2py_uuid()
     zip_name = "photos-" + uuid.split('-')[0]
     photo_list = []
@@ -560,7 +550,7 @@ def crop_photo(vars):
         if face.x:
             face.update_record(x=face.x - crop_left, y=face.y - crop_top)
     rec = db(db.TblPhotos.id==vars.photo_id).select().first()
-    path = local_photos_folder("orig") + rec.photo_path
+    path = local_photos_folder(RESIZED) + rec.photo_path
     curr_dhash = crop_a_photo(path, path, crop_left, crop_top, crop_width, crop_height)
     last_mod_time = request.now
     rec.update_record(width=crop_width, height=crop_height, last_mod_time=last_mod_time, curr_dhash=curr_dhash)
@@ -748,8 +738,10 @@ def make_photos_query(vars):
     if vars.selected_recognition == 'recognized':
         if date_opt != 'undated':
             q &= ((db.TblPhotos.recognized == True) | (db.TblPhotos.recognized == None))
+
     elif vars.selected_recognition == 'unrecognized':
         q &= ((db.TblPhotos.recognized == False) | (db.TblPhotos.recognized == None))
+
     elif vars.selected_recognition == 'recognized-not-located':
         lst = unlocated_faces()
         q &= (db.TblPhotos.id.belongs(lst))
@@ -828,14 +820,14 @@ def process_photo_list(lst, photo_pairs=dict(), webpSupported=False):
             side='front',
             photo_id=rec.id,
             src=tpp,
-            square_src=timestamped_photo_path(rec, what='squares', webp_supported=webpSupported),
+            square_src=timestamped_photo_path(rec, what=SQUARES, webp_supported=webpSupported),
             width=rec.width,
             height=rec.height,
             has_story_text=rec.has_story_text,
             front=Storage(
                 photo_id=rec.id,
                 src=tpp,
-                square_src=timestamped_photo_path(rec, what='squares', webp_supported=webpSupported),
+                square_src=timestamped_photo_path(rec, what=SQUARES, webp_supported=webpSupported),
                 width=rec.width,
                 height=rec.height,
             )
@@ -865,7 +857,7 @@ def upload_chunk(vars):
     today = datetime.date.today()
     month = str(today)[:-3]
     sub_folder = 'uploads/' + month + '/'
-    path = local_photos_folder() + sub_folder
+    path = local_photos_folder(RESIZED) + sub_folder
     dir_util.mkpath(path)
     if vars.what == 'start':
         comment("starting upload")
@@ -938,7 +930,7 @@ def get_padded_photo_url(vars):
     cards_folder = local_cards_folder() + 'padded_images/'
     dir_util.mkpath(cards_folder)
     target_photo_path = cards_folder + file_name
-    photo_path = local_photos_folder('orig') + photo_rec.photo_path
+    photo_path = local_photos_folder(RESIZED) + photo_rec.photo_path
     padded_photo_url = save_padded_photo(photo_path, target_photo_path)
     return dict(padded_photo_url=padded_photo_url)
 

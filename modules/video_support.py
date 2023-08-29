@@ -3,35 +3,29 @@ import stories_manager
 from gluon.storage import Storage
 from injections import inject
 import datetime
+import re
 
 
 def youtube_info(src):
     url = "https://www.youtube.com/embed/" + src + "?wmode=opaque"
-    comment, log_exception = inject('comment', 'log_exception')
+    log_exception = inject('log_exception')
+    thumbnail_url=f"https://i.ytimg.com/vi/{src}/mq2.jpg"
+    now = datetime.datetime.now()
+    timestamp = int(round(now.timestamp()))
+    thumbnail_url += f"?d={timestamp}" #so user will not see cached thumnail
+    result = Storage(thumbnail_url=thumbnail_url)
     ydl = YoutubeDL()
     try:
         yt = ydl.extract_info(url, download=False)
     except Exception as e:
-        comment(f"ydl extract info of {url} got exception {e}")
-        return None
-    try:
-        thumbnails = yt['thumbnails']
-        try:
-            thumbnail_url = thumbnails[3]['url']
-        except Exception as e:
-            log_exception('thumbnail url')
-        now = datetime.datetime.now()
-        timestamp = int(round(now.timestamp()))
-        thumbnail_url += f"?d={timestamp}" #so user will not see cached thumnail
-        result = Storage(title=yt['title'],
-                         description=yt['description'],
-                         uploader=yt['uploader'],
-                         duration=yt['duration'],
-                         thumbnail_url=thumbnail_url,
-                         upload_date=yt['upload_date'])
-    except Exception as e:
-        log_exception('youtube info')
-        return None
+        log_exception(f"ydl extract info of {url} got exception")
+        return result
+    result = Storage(title=yt['title'],
+                     description=yt['description'],
+                     uploader=yt['uploader'],
+                     duration=yt['duration'],
+                     thumbnail_url=thumbnail_url,
+                     upload_date=yt['upload_date'])
     return result
 
 
@@ -53,11 +47,10 @@ def calc_youtube_info(video_id):
         return True
     return False
 
-
 def calc_missing_youtube_info(count=10):
     db = inject('db')
     lst = db((db.TblVideos.video_type == 'youtube') & (db.TblVideos.deleted != True) & (
-            db.TblVideos.description == None)).select(db.TblVideos.id)
+            db.TblVideos.thumbnail_url == None)).select(db.TblVideos.id)
     cnt = 0
     for vrec in lst[:count]:
         if calc_youtube_info(vrec.id):
@@ -100,5 +93,25 @@ def update_cuepoints_text(video_id):
     vid_rec.update_record(cuepoints_text=result)
     return result
 
+def parse_video_url(input_url):
+    pats = dict(
+        youtube=r'https://(?:www.youtube.com/(?:watch\?v=|embed/)|youtu\.be/)(?P<code>[^&?]+).*',
+        html5=r'(?P<code>.+\.mp4)',
+        vimeo=r'https://vimeo.com/(?P<code>\d+)',
+        google_drive=r'https://drive.google.com/file/d/(?P<code>[^/]+?)/.*',
+        google_photos=r'https://photos.app.goo.gl/(?P<code>[^&]+)'
+    )
+    src = None
+    for t in pats:
+        pat = pats[t]
+        m = re.search(pat, input_url)
+        if m:
+            src = m.groupdict()['code']
+            typ = t
+            break
+    if not src:
+        User_Error = inject("User_Error")
+        raise User_Error('!videos.unknown-video-type')
+    return Storage(src=src, video_type=typ)
 
 

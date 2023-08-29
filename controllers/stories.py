@@ -7,6 +7,7 @@ import datetime
 import os
 from dal_utils import insert_or_update
 from photos_support import photos_folder, timestamped_photo_path
+from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 def index():
     response.view = 'stories/main.html'
@@ -94,7 +95,7 @@ def upload(vars):
     today = datetime.date.today()
     month = str(today)[:-3]
 
-    path = local_photos_folder() + month + '/'
+    path = local_photos_folder(RESIZED) + month + '/'
     if not os.path.isdir(path):
         os.makedirs(path)
     for fn in vars:

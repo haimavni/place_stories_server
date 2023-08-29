@@ -2,7 +2,7 @@ from .injections import inject
 from folders import local_photos_folder
 from gluon.storage import Storage
 import os
-
+from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 def verify_topic_types(typ):
     db = inject('db')
@@ -50,10 +50,10 @@ def check_missing_photos():
     db = inject('db')
     missing = []
     for prec in db(db.TblPhotos.deleted!=True).select():
-        photo_path = local_photos_folder("orig") + prec.photo_path
+        photo_path = local_photos_folder(RESIZED) + prec.photo_path
         if not os.path.exists(photo_path):
             item = Storage(pid=prec.id)
-            over_path = local_photos_folder("oversize") + prec.photo_path
+            over_path = local_photos_folder(ORIG) + prec.photo_path
             if os.path.exists(over_path):
                 item.has_copy = True
             missing.append(item)

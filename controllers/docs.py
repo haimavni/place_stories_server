@@ -1,13 +1,13 @@
 import datetime
 from docs_support import save_uploaded_doc, doc_url, doc_jpg_url, \
     doc_segment_url, doc_segment_jpg_url, create_uploading_doc, save_uploading_chunk, \
-    handle_loaded_doc, save_doc_segment_thumbnail, save_uploaded_thumbnail
+    handle_loaded_doc, save_doc_segment_thumbnail, save_uploaded_doc_seg_thumbnail, save_uploaded_doc_thumbnail
 from members_support import calc_grouped_selected_options, calc_all_tags, get_tag_ids, init_query, get_topics_query, get_object_topics, photos_folder
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, \
     fix_record_dates_out
 import stories_manager
 from gluon.storage import Storage
-
+from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 @serve_json
 def upload_doc(vars):
@@ -69,7 +69,8 @@ def get_doc_list(vars):
         rec.name = rec1.TblStories.name
         rec.doc_date = rec1.TblStories.story_date
         doc_list.append(rec)
-    return dict(doc_list=doc_list, no_results=not doc_list)
+    active_doc_segments = db(db.TblDocSegments).count() > 0
+    return dict(doc_list=doc_list, no_results=not doc_list, active_doc_segments=active_doc_segments)
 
 
 @serve_json
@@ -247,7 +248,7 @@ def get_doc_info(vars):
     members = db(db.TblMembers.id.belongs(member_ids)).select()
     members = [Storage(id=member.id,
                        facephotourl=photos_folder(
-                           'profile_photos') + (member.facephotourl or "dummy_face.png"),
+                           PROFILE_PHOTOS) + (member.facephotourl or "dummy_face.png"),
                        full_name=full_member_name(member))
                for member in members]
     q = (db.TblDocSegments.doc_id == doc_id) & \
@@ -314,7 +315,7 @@ def get_doc_segment_info(vars):
     members = db(db.TblMembers.id.belongs(member_ids)).select()
     members = [Storage(id=member.id,
                        facephotourl=photos_folder(
-                           'profile_photos') + (member.facephotourl or "dummy_face.png"),
+                           PROFILE_PHOTOS) + (member.facephotourl or "dummy_face.png"),
                        full_name=full_member_name(member))
                for member in members]
     doc_topics=get_object_topics(story_id, "S")
@@ -405,7 +406,7 @@ def update_doc_members(vars):
         db.TblMembers.id, db.TblMembers.facephotourl)
     for member in members:
         member.facephotourl=photos_folder(
-            'profile_photos') + (member.facephotourl or "dummy_face.png")
+            PROFILE_PHOTOS) + (member.facephotourl or "dummy_face.png")
     return dict(members=members)
 
 @ serve_json
@@ -434,7 +435,7 @@ def update_doc_segment_members(vars):
         db.TblMembers.id, db.TblMembers.facephotourl)
     for member in members:
         member.facephotourl=photos_folder(
-            'profile_photos') + (member.facephotourl or "dummy_face.png")
+            PROFILE_PHOTOS) + (member.facephotourl or "dummy_face.png")
     return dict(members=members)
 
 @ serve_json
@@ -453,6 +454,14 @@ def remove_doc_segment(vars):
         db(db.TblStories.id == ds_rec.story_id).update(deleted=True)
         story_deleted=True
     return dict(story_deleted=story_deleted)
+
+@ serve_json
+def replace_doc_jpg_url(vars):
+    #todo: unlike videos, need to upload, not replace url
+    doc_id = int(vars.doc_id)
+    doc_rec = db(db.TblDocs.id==doc_id).select().first()
+    doc_rec.update_record(doc_jpg_url=vars.doc_jpg_url)
+    return dict()
 
 # ----------------support functions-----------------
 
@@ -483,6 +492,7 @@ def make_docs_query(params):
     if params.show_untagged:
         q &= (db.TblDocs.story_id == db.TblStories.id) & (
             db.TblStories.is_tagged == False)
+    q &= (db.TblDocs.crc != None)
     return q
 
 def make_doc_segments_query(params):
@@ -521,14 +531,24 @@ def get_story_by_id(story_id):
 
 
 @ serve_json
-def upload_thumbnail(vars):
+def upload_doc_segment_thumbnail(vars):
     info=vars.file.info
     doc_id=info.doc_id
     ptp_key=info.ptp_key
     segment_id=info.segment_id
     keys=info.keys()
     fil=vars.file
-    result=save_uploaded_thumbnail(fil.BINvalue, doc_id, segment_id, ptp_key)
+    result=save_uploaded_doc_seg_thumbnail(fil.BINvalue, doc_id, segment_id, ptp_key)
+    return dict(upload_result=result)
+
+@ serve_json
+def upload_doc_thumbnail(vars):
+    comment("-----------------enter upload doc thumbnail.")
+    info=vars.file.info
+    doc_id=info.doc_id
+    ptp_key=info.ptp_key
+    fil=vars.file
+    result=save_uploaded_doc_thumbnail(fil.BINvalue, doc_id, ptp_key)
     return dict(upload_result=result)
 
 def full_member_name(member):

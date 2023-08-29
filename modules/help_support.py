@@ -98,11 +98,11 @@ def get_records(csv_name):
 
 def _update_system_stories(used_for=None):
     db, NO_TIME, comment, log_exception = inject('db', 'NO_TIME', 'comment', 'log_exception')
-    ###comment("Enter updating system stories {}", used_for)
+    ###comment(f"Enter updating system stories {used_for}")
     try:
         filename = system_folder() + _system_stories_file_name(used_for) + '.csv'
         if not os.path.exists(filename):
-            comment("{} not found ", filename)
+            comment(f"{filename} not found ")
             return "No source for update"
         ctime = round(os.path.getctime(filename))
         dt = datetime.datetime.fromtimestamp(ctime)
@@ -110,12 +110,12 @@ def _update_system_stories(used_for=None):
         field_name = _system_stories_file_name(used_for) + '_upload_time'
         last_update = crec[field_name] or NO_TIME
         if dt > last_update: #need to update
-            comment("Updating system stories {}", used_for)
+            comment(f"Updating system stories {used_for}")
             _load_system_stories_from_csv(used_for)
             data = {field_name: dt}
             crec.update_record(**data)
             return 'updated'
-        ###comment("Exit updating system stories {}", used_for)
+        ###comment(f"Exit updating system stories {used_for}")
     except Exception as e:
         log_exception("Update system stories failed")
     return 'No updates'

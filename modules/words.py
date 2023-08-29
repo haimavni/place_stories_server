@@ -146,7 +146,7 @@ def retrieve_story_words(story_id):
 
 def update_story_words_index(story_id):
     db, comment = inject('db', 'comment')
-    comment("start indexing story {}", story_id)
+    comment(f"start indexing story {story_id}")
     now = datetime.datetime.now()
     added_words = []
     deleted_words = []
@@ -193,7 +193,7 @@ def update_word_index_all():
                 break
             n = db(q).count()
             if n > 0:
-                comment('Reindex words. {} stories left to reindex.', n)
+                comment(f'Reindex words. {n} stories left to reindex.')
             else:
                 comment('No more stories to index at this time.')
                 break
