@@ -742,7 +742,7 @@ def find_similar_photos(photo_list=None, time_budget=60):
         if photo_rec.curr_dhash:
             lst += tree.find(int(photo_rec.curr_dhash, 16), threshold)
         if len(lst) > 1:
-            lst1 = [(itm[0], f"{itm[1]:x}") for itm in lst]
+            lst1 = [(itm[0], f"{itm[1]:032x}") for itm in lst]
             comment(f".......................dups lst: {lst1}")
             cnt += 1
             for itm in lst:
@@ -758,6 +758,7 @@ def find_similar_photos(photo_list=None, time_budget=60):
                                           (db.TblPhotos.deleted != True)).select(db.TblPhotos.id, orderby=db.TblPhotos.id)
             curr_duplicate_photo_ids = [p.id for p in curr_duplicate_photo_ids]
             duplicate_photo_ids += curr_duplicate_photo_ids
+            comment(f"----curr duplicate photo ids: {curr_duplicate_photo_ids}")
             if duplicate_photo_ids[0] in dic:
                 continue #this group already visited
             for pid in duplicate_photo_ids:
