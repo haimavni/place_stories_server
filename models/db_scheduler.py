@@ -97,7 +97,7 @@ def execute_task(*args, **vars):
     try:
         name = vars['name']
         command = vars['command']
-        comment(f'Started task {name}: {command}'))
+        comment(f'Started task {name}: {command}')
         function = scheduler.one_time_tasks[command]
     except Exception as e:
         log_exception('error enter execute task ')
