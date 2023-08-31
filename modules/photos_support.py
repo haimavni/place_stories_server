@@ -701,7 +701,7 @@ def fix_missing_story_ids():
 
 def find_similar_photos(photo_list=None, time_budget=60):
     threshold = 15
-    db = inject('db')
+    db, comment = inject('db', 'comment')
     tree = BKTree(hamming_distance)
     cnt = 0
     for photo_rec in db(db.TblPhotos.deleted != True).select(db.TblPhotos.dhash, db.TblPhotos.curr_dhash):
@@ -742,6 +742,7 @@ def find_similar_photos(photo_list=None, time_budget=60):
         if photo_rec.curr_dhash:
             lst += tree.find(int(photo_rec.curr_dhash, 16), threshold)
         if len(lst) > 1:
+            comment(f".......................dups lst: {lst}")
             cnt += 1
             for itm in lst:
                 visited.add(itm[1])
