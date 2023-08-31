@@ -25,7 +25,7 @@ class EmailCollector:
     def collect(self):
         maildir_new = self.maildir + '/new'
         comment = inject('comment')
-        comment('maildir new: {}', maildir_new)
+        comment(f'maildir new: {maildir_new}')
         msg_list = [join(maildir_new, f) for f in listdir(maildir_new) if isfile(join(maildir_new, f))]
         for msg_file in msg_list:
             result = self.handle_msg(msg_file)
@@ -152,8 +152,10 @@ def collect_mail():
                 continue
             ###user_id = user_id or 1 #todo: if we decide not to create new user
             text = msg.html_content or msg.plain_content
-            comment('New email: subject: {subject}, images: {image_names} sent by {sender}', 
-                    subject=msg.subject, image_names=list(msg.images.keys()), sender=msg.sender_email)
+            subject = msg.subject
+            image_names = list(msg.images.keys())
+            sender = msg.sender_email
+            comment(f'New email: subject: {subject}, images: {image_names} sent by {sender}')
             if msg.images:
                 result = save_uploaded_photo_collection(msg.images, user_id)
                 results.append(result)

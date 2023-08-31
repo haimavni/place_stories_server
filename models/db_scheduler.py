@@ -84,7 +84,8 @@ def watchdog():
     '''.format(tsks=tsks_str, app=request.application, status=tsk.status)
     email(sender="admin", to="haimavni@gmail.com", subject = "A task failed", message=message)
     for tsk in db(q).select():
-        comment('Task {t} failed', t=tsk.function_name)
+        tfn = tsk.function_name
+        comment(f'Task {tfn} failed')
     db(q).update(status='QUEUED')
     db.commit()
     
@@ -96,7 +97,7 @@ def execute_task(*args, **vars):
     try:
         name = vars['name']
         command = vars['command']
-        comment('Started task {}: {}'.format(name, command))
+        comment(f'Started task {name}: {command}'))
         function = scheduler.one_time_tasks[command]
     except Exception as e:
         log_exception('error enter execute task ')
@@ -107,7 +108,7 @@ def execute_task(*args, **vars):
     except Exception as e:
         log_exception('Error executing ' + name)
     else:
-        comment('Finished task {}. Returned {}.'.format(name, result))
+        comment(f'Finished task {name}. Returned {result}.')
         db.commit()
 
 def schedule_background_task(name, command, period=None, timeout=None):

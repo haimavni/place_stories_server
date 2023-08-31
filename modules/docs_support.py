@@ -50,21 +50,17 @@ def create_uploading_doc(file_name, crc, user_id):
 
 def save_uploading_chunk(record_id, start, blob):
     db, comment = inject('db', 'comment')
-    comment(f"save_uploading_chunk. record id: {record_id}, start: {start}")
+    # comment(f"save_uploading_chunk. record id: {record_id}, start: {start}")
     drec = db(db.TblDocs.id==record_id).select().first()
     if not drec:
         raise Exception(f'record_id {record_id} not found')
     file_name = local_docs_folder() + drec.doc_path
-    comment(f"save_uploading_chunk. file_name: {file_name}, record id: {record_id}, start: {start}")
+    # comment(f"save_uploading_chunk. file_name: {file_name}, record id: {record_id}, start: {start}")
     with open(file_name, 'ab') as f:
         f.seek(start, 0)
-        comment('before tell')
         f.tell()
-        comment('before blob')
         f.write(blob)
-        comment('before flush')
         f.flush()
-        comment('after flush')
 
 
 def handle_loaded_doc(record_id):
@@ -93,7 +89,7 @@ def save_doc_segment_thumbnail(doc_segment_id):
 def save_uploaded_doc_seg_thumbnail(data, doc_id, segment_id, ptp_key):
     #sometimes the above function silently fails to create file
     db, comment = inject('db', 'comment')
-    comment(f"------------ save uploaded thumbail {doc_id} / {segment_id}")
+    # comment(f"------------ save uploaded thumbail {doc_id} / {segment_id}")
     blob = array.array('B', [x for x in map(ord, data)]).tobytes()
     doc_rec = db(db.TblDocs.id==doc_id).select().first()
     page_num = None
@@ -101,7 +97,7 @@ def save_uploaded_doc_seg_thumbnail(data, doc_id, segment_id, ptp_key):
         doc_seg_rec = db(db.TblDocSegments.id==segment_id).select().first()
         page_num = doc_seg_rec.page_num
     pdf_jpg_path = get_pdf_jpg_path(doc_rec.doc_path, page_num)
-    comment(f"pdf_jpg_path: , {pdf_jpg_path}")
+    # comment(f"pdf_jpg_path: {pdf_jpg_path}")
     with open(pdf_jpg_path, "bw") as f:
         f.write(blob)
     chmod(pdf_jpg_path, 0o777)
@@ -110,11 +106,11 @@ def save_uploaded_doc_seg_thumbnail(data, doc_id, segment_id, ptp_key):
 def save_uploaded_doc_thumbnail(data, doc_id, ptp_key):
     #sometimes the above function silently fails to create file
     db, comment = inject('db', 'comment')
-    comment(f"------------ save uploaded doc thumbail {doc_id} ptp key: {ptp_key}")
+    # comment(f"------------ save uploaded doc thumbail {doc_id} ptp key: {ptp_key}")
     blob = array.array('B', [x for x in map(ord, data)]).tobytes()
     # doc_rec = db(db.TblDocs.id==doc_id).select().first()
     pdf_jpg_path = calc_doc_jpg_path(doc_id)
-    comment(f"pdf_jpg_path: , {pdf_jpg_path}")
+    # comment(f"pdf_jpg_path: {pdf_jpg_path}")
     if os.path.exists(pdf_jpg_path):
         os.rename(pdf_jpg_path, pdf_jpg_path + ".bak")
     with open(pdf_jpg_path, "bw") as f:

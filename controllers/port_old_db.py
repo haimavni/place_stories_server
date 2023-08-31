@@ -615,7 +615,8 @@ class RefsFixer:
                 comment(f"not a real ref in story {self.curr_story_id}")
         num_stories_to_fix = db(q).count()
         for what in self.counter:
-            comment('{n} refs of type {t}', n=self.counter[what], t=what)
+            n = self.counter[what]
+            comment(f'{n} refs of type {what}')
         return num_modified, num_failed, num_non_refs, num_stories_to_fix
     
 def recover_uploaded_photo_dates():
