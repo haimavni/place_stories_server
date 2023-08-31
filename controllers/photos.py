@@ -845,7 +845,7 @@ def delete_photos(photo_list):
     a = db(db.TblPhotos.id.belongs(photo_list))
     a.update(deleted=True)
     story_ids = [rec.story_id for rec in a.select()]
-    comment(f"story ids to delete ", story_ids)
+    comment(f"story ids to delete {story_ids}")
     db(db.TblStories.id.belongs(story_ids)).update(deleted=True)
 
 
