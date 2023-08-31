@@ -742,7 +742,8 @@ def find_similar_photos(photo_list=None, time_budget=60):
         if photo_rec.curr_dhash:
             lst += tree.find(int(photo_rec.curr_dhash, 16), threshold)
         if len(lst) > 1:
-            comment(f".......................dups lst: {lst}")
+            lst1 = [(itm[0], f"{itm[1]:x}") for itm in lst]
+            comment(f".......................dups lst: {lst1}")
             cnt += 1
             for itm in lst:
                 visited.add(itm[1])
