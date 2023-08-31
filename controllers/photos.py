@@ -614,6 +614,7 @@ def replace_duplicate_photos(vars):
     patch = handle_dup_group(group, photos_to_keep_set)
     if patch:
         photo_patches.append(patch)
+    comment(f"phtos to keep: {vars.photos_to_keep}")
     delete_photos(vars.photos_to_keep) #the image data was copied to the old photo which has more extra info
     return dict(photo_patches=photo_patches)
 
