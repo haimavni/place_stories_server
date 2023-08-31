@@ -631,9 +631,7 @@ def handle_dup_group(group, photos_to_keep_set):
         return None
     group = group[:2] #there should be no triplets but just in case...
     new_photo, old_photo = group
-    comment(f"=========new photo: {new_photo}. old_photo: {old_photo}")
     if new_photo.id not in photos_to_keep_set:
-        comment("order reversed")
         group = [old_photo, new_photo]
     data = replace_photo(group)
     #db(db.TblPhotos.id==new_photo.id).update(deleted=True) #todo: maybe just delete it...
