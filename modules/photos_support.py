@@ -758,6 +758,9 @@ def find_similar_photos(photo_list=None, time_budget=60):
                                           (db.TblPhotos.deleted != True)).select(db.TblPhotos.id, orderby=db.TblPhotos.id)
             curr_duplicate_photo_ids = [p.id for p in curr_duplicate_photo_ids]
             duplicate_photo_ids += curr_duplicate_photo_ids
+            dup_set = set(duplicate_photo_ids)
+            if len(dup_set) == 1:
+                continue
             comment(f"----duplicate ids: {duplicate_photo_ids}, curr duplicate photo ids: {curr_duplicate_photo_ids}")
             if duplicate_photo_ids[0] in dic:
                 continue #this group already visited
