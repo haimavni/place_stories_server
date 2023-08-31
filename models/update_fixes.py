@@ -42,17 +42,20 @@ def __apply_fixes():
     
 def _apply_fixes(): 
     lock_file_name = '{p}apply-fixes[{a}].lock'.format(p=log_path(), a=request.application)
-    if os.path.isfile(lock_file_name):
+    if os.path.exists(lock_file_name):
         return
     with open(lock_file_name, 'w') as f:
         f.write('locked')
     try:
         __apply_fixes()
     except Exception as e:
-        comment(f"apply fixes failed: {e}")
+        log_exception(f"apply fixes failed: {e}")
     finally:  
-        if os.path.isfile(lock_file_name):
-            os.remove(lock_file_name)
+        if os.path.exists(lock_file_name):
+            try:
+                os.remove(lock_file_name)
+            except Exception as e:
+                log_exception(f"Remove lock file failed {e}!!!")
 
 def init_photo_back_sides():
     db(db.TblPhotos.is_back_side==None).update(is_back_side=False)
