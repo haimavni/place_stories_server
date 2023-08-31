@@ -631,7 +631,9 @@ def handle_dup_group(group, photos_to_keep_set):
         return None
     group = group[:2] #there should be no triplets but just in case...
     new_photo, old_photo = group
+    comment(f"=========new photo: {new_photo}. old_photo: {old_photo}")
     if new_photo.id not in photos_to_keep_set:
+        comment("order reversed")
         group = [old_photo, new_photo]
     data = replace_photo(group)
     #db(db.TblPhotos.id==new_photo.id).update(deleted=True) #todo: maybe just delete it...
@@ -654,6 +656,7 @@ def replace_photo(pgroup):
         oversize=new_photo.oversize,
         crc=new_photo.crc,
         dhash=new_photo.dhash,
+        curr_dhash=new_photo.curr_dhash
     )
     db(db.TblPhotos.id==old_photo.id).update(**data)
     db(db.TblPhotos.id==new_photo.id).update( #make the change undoable
@@ -667,7 +670,8 @@ def replace_photo(pgroup):
         last_mod_time=request.now,
         oversize=old_photo.oversize,
         crc=old_photo.crc,
-    dhash=old_photo.dhash,
+        dhash=old_photo.dhash,
+        curr_dhash=old_photo.curr_dhash
     )
     ###data['status'] = 'regular'
     if old_photo.width != new_photo.width:
