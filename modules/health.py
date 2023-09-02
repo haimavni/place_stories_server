@@ -53,7 +53,7 @@ def check_missing_photos():
     for prec in db(db.TblPhotos.deleted!=True).select():
         photo_path = local_photos_folder(RESIZED) + prec.photo_path
         if not os.path.exists(photo_path):
-            item = Storage(pid=prec.id)
+            item = Storage(pid=prec.id, photo_path=photo_path)
             over_path = local_photos_folder(ORIG) + prec.photo_path
             if os.path.exists(over_path):
                 item.has_copy = True
