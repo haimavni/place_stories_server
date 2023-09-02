@@ -49,6 +49,7 @@ def check_detached_member_stories():
 def check_missing_photos():
     db = inject('db')
     missing = []
+    good = 0
     for prec in db(db.TblPhotos.deleted!=True).select():
         photo_path = local_photos_folder(RESIZED) + prec.photo_path
         if not os.path.exists(photo_path):
@@ -57,7 +58,9 @@ def check_missing_photos():
             if os.path.exists(over_path):
                 item.has_copy = True
             missing.append(item)
-    return missing
+        else:
+            good += 1
+    return dict(missing=missing, good=good)
 
 def check_health():
     n1 = verify_all_topic_types()
