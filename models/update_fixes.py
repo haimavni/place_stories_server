@@ -134,7 +134,3 @@ _fixes = {
 
 _init_configuration_table()
 _apply_fixes()
-
-
-
-    
