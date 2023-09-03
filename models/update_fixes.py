@@ -23,6 +23,7 @@ def __apply_fixes():
     last_fix = sorted(_fixes)[-1]
     last_applied_fix = db(db.TblConfiguration.id==1).select().first().fix_level or 0
     comment(f"last fix is {last_fix}, last applied fix is {last_applied_fix}")
+    last_applied_fix = 14 # remove soon
     if last_applied_fix >= last_fix:
         return
     _delay()
@@ -50,9 +51,8 @@ def _apply_fixes():
         return
     with open(lock_file_name, 'w') as f:
         f.write('locked')
+    
     try:
-        debug = db(db.TblConfiguration).select().first()
-        debug.update_record(last_applied_fix=14)
         __apply_fixes()
     except Exception as e:
         log_exception(f"apply fixes failed: {e}")
