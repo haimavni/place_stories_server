@@ -85,7 +85,7 @@ def upgrade_youtube_info(chunk=50, video_list=None):
     return Storage(total=total, bad=bad, good=good)
 
 def update_video_thumbnails():
-    db, comment = inject('db', comment)
+    db, comment = inject('db', 'comment')
     comment("-----------started update video thumbnails")
     q = (db.TblVideos.video_type == 'youtube') & (db.TblVideos.deleted != True)
     q &= (db.TblVideos.thumbnail_url==None) | (db.TblVideos.thumbnail_url=="")
