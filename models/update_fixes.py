@@ -23,15 +23,15 @@ def __apply_fixes():
     last_fix = sorted(_fixes)[-1]
     last_applied_fix = db(db.TblConfiguration.id==1).select().first().fix_level or 0
     comment(f"last fix is {last_fix}, last applied fix is {last_applied_fix}")
-    last_applied_fix = 14 # remove soon
+    # last_applied_fix = 14 # remove soon
     if last_applied_fix >= last_fix:
         return
     _delay()
     last_applied_fix = db(db.TblConfiguration.id==1).select().first().fix_level or 0
-    if last_applied_fix >= last_fix:
-        return
+    # if last_applied_fix >= last_fix:
+    #     return
     for f in sorted(_fixes):
-        if f > last_applied_fix:
+        if f >= last_applied_fix:
             comment(f"applying fix {f}")
             try:
                 result = _fixes[f]()
