@@ -30,23 +30,23 @@ def verify_topic_types(typ):
 
 
 def verify_all_topic_types():
-    n = 0
+    bad_topics = []
     for typ in 'EPTVDAS':
         result = verify_topic_types(typ)
         if result['bad_topics']:
-            n += 1
-    return n
+            bad_topics.append(result)
+    return bad_topics
 
 
 def check_detached_member_stories():
     db = inject('db')
-    n = 0
+    detached_member_stories = []
     for srec in db((db.TblStories.used_for == 1) & (db.TblStories.deleted != True)).select(db.TblStories.id):
         mrec = db(db.TblMembers.story_id == srec.id).select().first()
         if (not mrec) or mrec.deleted:
+            detached_member_stories.append(dict(story_id=srec.id, story_name=srec.name))
             srec.update_record(deleted=True)
-            n += 1
-    return n
+    return detached_member_stories
 
 
 def check_missing_photos():
@@ -67,10 +67,10 @@ def check_missing_photos():
 
 
 def check_health():
-    n1 = verify_all_topic_types()
-    n2 = check_detached_member_stories()
+    bad_topics = verify_all_topic_types()
+    detached_member_stories = check_detached_member_stories()
     missing = check_missing_photos()
-    return dict(num_topic_issues=n1,
-                num_detached_member_stories=n2,
+    return dict(topic_issues=bad_topics,
+                detached_member_stories=detached_member_stories,
                 missing_photos=missing
                 )
