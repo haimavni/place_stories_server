@@ -24,14 +24,12 @@ def __apply_fixes():
     last_fix = sorted(_fixes)[-1]
     last_applied_fix = db(db.TblConfiguration.id==1).select().first().fix_level or 0
     comment(f"last fix is {last_fix}, last applied fix is {last_applied_fix}")
-    # last_applied_fix = 14 # remove soon
     if last_applied_fix >= last_fix:
         return
     _delay()
     last_applied_fix = db(db.TblConfiguration.id==1).select().first().fix_level or 0
-    # if last_applied_fix >= last_fix:
-    #     return
-    # last_applied_fix = 14
+    if last_applied_fix >= last_fix:
+        return
     
     for f in sorted(_fixes):
         if f > last_applied_fix:
@@ -135,11 +133,6 @@ _fixes = {
 }
 
 _init_configuration_table()
-p = log_path()
-a = request.application
-lock_file_name = f'{p}apply-fixes[{a}].lock'
-if not os.path.exists(lock_file_name):
-    update_video_thumbnails()
 _apply_fixes()
 
 
