@@ -4,6 +4,7 @@ from gluon.storage import Storage
 import os
 from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
+
 def verify_topic_types(typ):
     db = inject('db')
     usage_of_char = {'E': 2, 'P': 3, 'T': 4, 'V': 8, 'D': 9, 'A': 10, 'S': 14}
@@ -17,7 +18,8 @@ def verify_topic_types(typ):
 
     topic_set = set([a.topic_id for a in topic_ids])
 
-    bad_topics = [top for top in vtopics if top.topic_kind == 2 and top.id not in topic_set]
+    bad_topics = [top for top in vtopics \
+                  if top.topic_kind ==  2 and top.id not in topic_set]
 
     result = []
     for trec in db(db.TblTopics.id.belongs(bad_topics)).select():
@@ -29,7 +31,7 @@ def verify_topic_types(typ):
 
 def verify_all_topic_types():
     n = 0
-    for typ in 'EPTVDA':
+    for typ in 'EPTVDAS':
         result = verify_topic_types(typ)
         if result['bad_topics']:
             n += 1
@@ -46,11 +48,12 @@ def check_detached_member_stories():
             n += 1
     return n
 
+
 def check_missing_photos():
     db = inject('db')
     missing = []
     good = 0
-    for prec in db(db.TblPhotos.deleted!=True).select():
+    for prec in db(db.TblPhotos.deleted != True).select():
         photo_path = local_photos_folder(RESIZED) + prec.photo_path
         if not os.path.exists(photo_path):
             item = Storage(pid=prec.id, photo_path=photo_path)
@@ -62,7 +65,12 @@ def check_missing_photos():
             good += 1
     return dict(missing=missing, good=good)
 
+
 def check_health():
     n1 = verify_all_topic_types()
     n2 = check_detached_member_stories()
-    return dict(result=f"{n1} topic/type issues. {n2} detached member stories.")
+    missing = check_missing_photos()
+    return dict(num_topic_issues=n1,
+                num_detached_member_stories=n2,
+                missing_photos=missing
+                )

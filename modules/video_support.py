@@ -84,6 +84,15 @@ def upgrade_youtube_info(chunk=50, video_list=None):
             bad += 1
     return Storage(total=total, bad=bad, good=good)
 
+def update_video_thumbnails():
+    db = inject('db')
+    q = (db.TblVideos.video_type == 'youtube') & (db.TblVideos.deleted != True)
+    q &= (db.TblVideos.thumbnail_url==None) | (db.TblVideos.thumbnail_url=="")
+    for vrec in db(q).select():
+        vrec.update_record(thumbnail_url=f"https://i.ytimg.com/vi/{vrec.src}/mq2.jpg")
+    return "done"
+        
+
 def update_cuepoints_text(video_id):
     db = inject('db')
     vid_rec = db(db.TblVideos.id==video_id).select().first()

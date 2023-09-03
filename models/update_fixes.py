@@ -1,7 +1,8 @@
 import random
 import time
 from date_utils import fix_all_date_ends, init_story_dates
-from video_support import upgrade_youtube_info
+from video_support import upgrade_youtube_info, update_video_thumbnails
+
 #from topics_support import fix_is_tagged
 
 def _delay():
@@ -50,12 +51,7 @@ def _apply_fixes():
         __apply_fixes()
     except Exception as e:
         log_exception(f"apply fixes failed: {e}")
-    finally:  
-        if os.path.exists(lock_file_name):
-            try:
-                os.remove(lock_file_name)
-            except Exception as e:
-                log_exception(f"Remove lock file failed {e}!!!")
+    # lock file is deleted as part of version update
 
 def init_photo_back_sides():
     db(db.TblPhotos.is_back_side==None).update(is_back_side=False)
@@ -126,7 +122,8 @@ _fixes = {
     11: fix_youtube_info,
     12: fix_feedback_messages,
     13: fix_member_names,
-    14: fix_family_connection_stored
+    14: fix_family_connection_stored,
+    15: update_video_thumbnails 
 }
 
 _init_configuration_table()
