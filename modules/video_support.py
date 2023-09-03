@@ -85,9 +85,12 @@ def upgrade_youtube_info(chunk=50, video_list=None):
     return Storage(total=total, bad=bad, good=good)
 
 def update_video_thumbnails():
-    db = inject('db')
+    db, comment = inject('db', comment)
+    comment("-----------started update video thumbnails")
     q = (db.TblVideos.video_type == 'youtube') & (db.TblVideos.deleted != True)
     q &= (db.TblVideos.thumbnail_url==None) | (db.TblVideos.thumbnail_url=="")
+    n = db(q).count()
+    comment(f"{n} videos need fix")
     for vrec in db(q).select():
         vrec.update_record(thumbnail_url=f"https://i.ytimg.com/vi/{vrec.src}/mq2.jpg")
     return "done"
