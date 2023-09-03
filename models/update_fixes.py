@@ -30,8 +30,10 @@ def __apply_fixes():
     last_applied_fix = db(db.TblConfiguration.id==1).select().first().fix_level or 0
     # if last_applied_fix >= last_fix:
     #     return
+    last_applied_fix = 14
+    
     for f in sorted(_fixes):
-        if f >= last_applied_fix:
+        if f > last_applied_fix:
             comment(f"applying fix {f}")
             try:
                 result = _fixes[f]()
