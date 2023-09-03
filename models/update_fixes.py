@@ -51,6 +51,8 @@ def _apply_fixes():
     with open(lock_file_name, 'w') as f:
         f.write('locked')
     try:
+        debug = db(db.TblConfiguration).select().first()
+        debug.update_record(last_applied_fix=14)
         __apply_fixes()
     except Exception as e:
         log_exception(f"apply fixes failed: {e}")
