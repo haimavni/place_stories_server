@@ -2,6 +2,7 @@ import random
 import time
 from date_utils import fix_all_date_ends, init_story_dates
 from video_support import upgrade_youtube_info, update_video_thumbnails
+import os
 
 #from topics_support import fix_is_tagged
 
@@ -30,7 +31,7 @@ def __apply_fixes():
     last_applied_fix = db(db.TblConfiguration.id==1).select().first().fix_level or 0
     # if last_applied_fix >= last_fix:
     #     return
-    last_applied_fix = 14
+    # last_applied_fix = 14
     
     for f in sorted(_fixes):
         if f > last_applied_fix:
@@ -134,7 +135,13 @@ _fixes = {
 }
 
 _init_configuration_table()
+p = log_path()
+a = request.application
+lock_file_name = f'{p}apply-fixes[{a}].lock'
+if not os.path.exists(lock_file_name):
+    update_video_thumbnails()
 _apply_fixes()
-update_video_thumbnails()
+
+
 
     
