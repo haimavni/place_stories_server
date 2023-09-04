@@ -402,26 +402,26 @@ then
     exit 1
 fi
 '''    
-        cmd1 = f"ssh  root@68.183.216.149 bash /home/www-data/tol_master/private/create_app.bash {app} master haimavni@gmail.com 0522433248 Haim Avni"
-        cmd2 = f"ssh  root@68.183.216.149 bash /apps_data/{app}/downloader.bash"
+        cmd1 = f"ssh  root@lifestone.net bash /home/www-data/tol_master/private/create_app.bash {app} master haimavni@gmail.com 0522433248 Haim Avni"
+        cmd2 = f"ssh  root@lifestone.net bash /apps_data/{app}/downloader.bash"
         with open(f"/home/haim/migrations/{app}/doit.bash", "w", encoding="utf-8") as f:
             f.write(f"echo Starting new app {app}\n")
             f.write(cmd1 + '\n')
             f.write(confirm)
-            f.write(f"sftp -b sftp_cmds.batch root@68.183.216.149\n")
+            f.write(f"sftp -b sftp_cmds.batch root@lifestone.net\n")
             f.write(confirm)
             f.write(cmd2 + '\n')
             f.write("echo About to build database\n")
             f.write(confirm)
-            f.write("ssh root@68.183.216.149 source /home/www-data/py38env/bin/activate\n")
-            f.write(f"ssh root@68.183.216.149 python {web2py_path} -S {app}/migrate/build_database\n")
+            f.write("ssh root@lifestone.net source /home/www-data/py38env/bin/activate\n")
+            f.write(f"ssh root@lifestone.net python {web2py_path} -S {app}/migrate/build_database\n")
             f.write("echo About to process ported photos\n")
             f.write(confirm)
-            f.write(f"ssh root@68.183.216.149 python {web2py_path} -S {app}/migrate/process_ported_photos\n")
+            f.write(f"ssh root@lifestone.net python {web2py_path} -S {app}/migrate/process_ported_photos\n")
             f.write("echo About to process ported docs\n")
             f.write(confirm)
-            f.write(f"ssh root@68.183.216.149 python {web2py_path} -S {app}/migrate/process_ported_docs\n")
-            f.write(f"ssh root@68.183.216.149 cd /apps_data/{app}; chown -R www-data:www-data .\n")
+            f.write(f"ssh root@lifestone.net python {web2py_path} -S {app}/migrate/process_ported_docs\n")
+            f.write(f"ssh root@lifestone.net cd /apps_data/{app}; chown -R www-data:www-data .\n")
             f.write("echo Done\n")
     
 def main():
