@@ -3,6 +3,7 @@ import json
 from injections import inject
 import datetime
 from video_support import parse_video_url, youtube_info
+from words import get_reisha
 
 class Migrate:
 
@@ -99,20 +100,26 @@ class Migrate:
 
     def create_item(self, event_categories, event_id, item):
         categories = item.categories or event_categories
-        STORY4PHOTO, STORY4DOC, STORY4VIDEO = inject('STORY4PHOTO', 'STORY4DOC', 'STORY4VIDEO')
-        usage = STORY4PHOTO if item.kind == "image" else STORY4VIDEO if item.kind == "video" else STORY4DOC
+        STORY4PHOTO, STORY4DOC, STORY4VIDEO, STORY4EVENT = inject('STORY4PHOTO', 'STORY4DOC', 'STORY4VIDEO', 'STORY4EVENT')
+        usage = STORY4PHOTO if item.kind == "image" else STORY4VIDEO if item.kind == "video" else STORY4DOC if item.kind == "pdf" else STORY4EVENT
         self.log_it("create item")
+        if item.kind == "text":
+            story_text = item["html"]
+            preview = get_reisha(story_text)
+        else:
+            story_text = ""
+            preview = ""
         db = self.db
         story_id = self.db.TblStories.insert(
             used_for=usage,
             name=item.title,
-            story="",
-            preview="",
+            story=story_text,
+            preview=preview,
             story_date = datetime.date(year=int(item.year), month=1, day=1),
             story_date_dateend = datetime.date(year=int(item.year), month=1, day=1),
             source="ltl",
             creation_date=datetime.datetime.now(),
-            story_len=0,
+            story_len=len(story_text),
             visibility=1
         )
         self.log_it(f"new story {story_id} {item.kind}")
@@ -169,6 +176,11 @@ class Migrate:
                 db.TblEventVideos.insert(video_id=video_id, event_id=event_id)
             categories = item.categories or event_categories
             self.assign_topics(story_id, categories, "V")
+        elif item.kind == "text":
+            db.TblEvents.insert(story_id=story_id,
+                                name=item.title)
+            categories = item.categories or event_categories
+            self.assign_topics(story_id, categories, "E")
         else:
             raise Exception(f"Unknown item kind {item.kind}")
         

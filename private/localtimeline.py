@@ -15,6 +15,7 @@ class PortTL():
         self.year = None
         self.categories = dict()
         self.urls = set()
+        self.data_ids = set()
 
     def scan(self):
         self.site_name = self.get_site_name()
@@ -28,7 +29,7 @@ class PortTL():
         print(f"{x} years")
         n = 0
         lst.reverse()
-        # lst = lst[:5] # Temporary!!!!!!!!!!!!!!!!!!!
+        # lst = lst[9:12] # Temporary!!!!!!!!!!!!!!!!!!!
         for div in lst:
             n += 1
             inner = div.find("div", attrs={"class": "year-inner"})
@@ -88,10 +89,12 @@ class PortTL():
             data_id = item_div.attrs["data-id"]
             item_credit = credits.get(data_id, None)
             item_title = titles_dic.get(data_id, None)
+            item_comments = comments.get(data_id, [])
             item_rec = dict(year=self.year,
                             credit=item_credit,
                             categories=cat_names,
                             title=item_title,
+                            comments=item_comments,
                             kind=data_type)
             if data_type == "pdf":
                 iframe = item_div.find("iframe")
@@ -105,6 +108,15 @@ class PortTL():
             elif data_type == "video":
                 iframe = item_div.find("iframe")
                 src = iframe.attrs["data-src"]
+            elif data_type == "text":
+                data_id = item_div.attrs["data-id"]
+                if data_id in self.data_ids:
+                    continue
+                self.data_ids.add(data_id)
+                html = self.handle_text(item_div)
+                item_rec["html"] = html
+                event["event_items"].append(item_rec)
+                continue
             else:
                 raise Exception(f"Unexpected data type {data_type}")
             item_rec["src"] = src
@@ -125,10 +137,15 @@ class PortTL():
                     path = "photos/oversize/" + path
                     self.downloader.write(f"wget -nc -P ./{path} {src}\n")
                 self.urls.add(src)
-                item_comments = comments.get(data_id, [])
-                item_rec["comments"] = item_comments
+                # item_comments = comments.get(data_id, [])
+                # item_rec["comments"] = item_comments
                 event["event_items"].append(item_rec)
         self.plan_list.append(event)
+        
+    def handle_text(self, item_div):
+        html = item_div.find("div", class_="nice-scroll-bar")
+        html = str(html)
+        return html
 
     def get_link_credits(self, soup):
         result = dict()
@@ -186,6 +203,12 @@ class PortTL():
                 item_data = self.handle_video(item)
             elif data_type == "image":
                 item_data = self.handle_image(item)
+            elif data_type == "text":
+                data_id = item.attrs["data-id"]
+                if data_id in self.data_ids:
+                    continue
+                else:
+                    print("handle text in scan event not ready yet")
             else:
                 print(f"Unknown data type {data_type}")
                 continue
@@ -365,7 +388,9 @@ class PortTL():
     def write_command_file(self):
         app = self.site_name
         web2py_path = "/home/www-data/py38env/web2py/web2py.py"
-        with open(f"/home/haim/migrations/{app}/sftp_cmds.batch", "w", encoding="utf-8") as f:
+        path = f"/home/haim/migrations/{app}"
+        os.makedirs(path, exist_ok=True)
+        with open(f"{path}/sftp_cmds.batch", "w", encoding="utf-8") as f:
             f.write(f"lcd /home/haim/migrations/{app}\n")
             f.write(f"cd /apps_data/{app}\n")
             f.write(f"put plan.txt\n")
@@ -400,13 +425,10 @@ fi
             f.write("echo Done\n")
     
 def main():
-    if len(sys.argv) < 2:
-        print(f"Usage: python  {sys.argv[0]} <URL>")
-        # return
-    # url = sys.argv[1]
-    # url = "https://ganhaim.localtimeline.com/index.php?lang=he#"
-    # url = "https://keilot.localtimeline.com/index.php?lang=he#"
-    url = "https://naan.localtimeline.com/index.php?lang=he"
+    if len(sys.argv) > 1:
+        url = sys.argv[1]
+    else:
+        url = "https://yiron.localtimeline.com/index.php?lang=he"
     port_tl = PortTL(url=url)
     t0 = datetime.datetime.now()
     port_tl.scan()
