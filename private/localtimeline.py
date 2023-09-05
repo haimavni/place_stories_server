@@ -129,7 +129,7 @@ class PortTL():
                     doc_path = path + "/" + self.file_name_of_src(src)
                     item_rec["doc_path"] = doc_path
                     path = "docs/" + path
-                    self.downloader.write(f"wget -P ./{path} {src}\n")
+                    self.downloader.write(f"wget -nc -P ./{path} {src}\n")
                 elif data_type == "image":
                     path = f"ported/{self.year}"
                     photo_path = path + "/" + self.file_name_of_src(src)
@@ -239,7 +239,7 @@ class PortTL():
         path = f"ported/{self.year}"
         doc_path = path + "/" + self.file_name_of_src(src)
         ifr_data["doc_path"] = doc_path
-        self.downloader.write(f"wget -P ./docs/{path} {src}\n")
+        self.downloader.write(f"wget -nc -P ./docs/{path} {src}\n")
         return ifr_data
 
     def handle_video(self, item):
@@ -278,7 +278,7 @@ class PortTL():
             data_id=data_id,
             caption=img.attrs["alt"])
         path = "photos/oversize/" + path
-        self.downloader.write(f"wget -P ./{path} {src}\n")
+        self.downloader.write(f"wget -nc -P ./{path} {src}\n")
         return img_data
     
     def get_item_comments(self, comments, data_id):
@@ -423,6 +423,56 @@ fi
             f.write(f"ssh root@lifestone.net python {web2py_path} -S {app}/migrate/process_ported_docs\n")
             f.write(f"ssh root@lifestone.net cd /apps_data/{app}; chown -R www-data:www-data .\n")
             f.write("echo Done\n")
+            
+    def write_command(self, f, title, content):
+        if isinstance(content, list):
+            content = [content[0]] + ["    " + cmd for cmd in content[1:]]
+            content = '\n'.join(content)
+        # else:
+        #     content = content + "\n"
+        f.write(f"echo {title}")
+        confirm = f'''
+read -p "Continue (default), Skip or eXit? " answer   
+if [[ $answer =~ ^[xX]$ ]]         
+then
+    exit 1
+fi
+if [[ ! $answer =~ ^[sS]$ ]]
+then
+    {content}
+fi
+'''
+        f.write(confirm)
+
+    def write_command_file(self):
+        app = self.site_name
+        web2py_path = "/home/www-data/py38env/web2py/web2py.py"
+        path = f"/home/haim/migrations/{app}"
+        os.makedirs(path, exist_ok=True)
+        cmd1 = f"ssh  root@lifestone.net bash /home/www-data/tol_master/private/create_app.bash {app} master haimavni@gmail.com 0522433248 Haim Avni"
+        cmd2 = f"sftp -b sftp_cmds.batch root@lifestone.net"
+        cmd3 = f"ssh  root@lifestone.net bash /apps_data/{app}/downloader.bash"
+        cmd4 = ["ssh root@lifestone.net source /home/www-data/py38env/bin/activate",
+                f"ssh root@lifestone.net python {web2py_path} -S {app}/migrate/build_database"]
+        cmd5 = f"ssh root@lifestone.net python {web2py_path} -S {app}/migrate/process_ported_photos"
+        cmd6 = f"ssh root@lifestone.net python {web2py_path} -S {app}/migrate/process_ported_docs"
+        cmd7 = f"echo ssh root@lifestone.net cd /apps_data/{app}; chown -R www-data:www-data ."
+        with open(f"{path}/sftp_cmds.batch", "w", encoding="utf-8") as f:
+            f.write(f"lcd /home/haim/migrations/{app}\n")
+            f.write(f"cd /apps_data/{app}\n")
+            f.write(f"put plan.txt\n")
+            f.write(f"put downloader.bash\n")
+            f.write(f"echo Starting new app {app}\n")
+        with open(f"/home/haim/migrations/{app}/doit.bash", "w", encoding="utf-8") as f:
+            f.write(f"echo Starting new app {app}\n")
+            self.write_command(f, "Create the app", cmd1)
+            self.write_command(f, "Upload plan and data", cmd2)
+            self.write_command(f, "Download photos and docs", cmd3)
+            self.write_command(f, "Create the database", cmd4)
+            self.write_command(f, "Process ported photos", cmd5)
+            self.write_command(f, "Process ported docs", cmd6)
+            self.write_command(f, "Set media ownership", cmd7)
+            f.write("echo Done\n")  
     
 def main():
     if len(sys.argv) > 1:

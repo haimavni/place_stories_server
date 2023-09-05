@@ -13,7 +13,7 @@ def build_database():
 
 def process_ported_photos():
     ppp = ProcessPortedPhotos()
-    return  ppp.process_all_unprocessed_photos()
+    return ppp.process_all_unprocessed_photos()
 
 def process_ported_docs():
     ppd = ProcessPortedDocs()

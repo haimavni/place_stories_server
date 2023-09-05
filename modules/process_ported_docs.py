@@ -41,6 +41,7 @@ class ProcessPortedDocs:
         for doc_id in lst:
             self.process_ported_doc(doc_id)
         remaining = db(db.TblDocs.crc == None).count()
+        db.commit()
         return f"{remaining} documents still unprocessed"
     
 

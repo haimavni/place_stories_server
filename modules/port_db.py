@@ -28,6 +28,7 @@ class Migrate:
         return result
 
     def execute_plan(self, first=0, limit=1000):
+        db = inject("db")
         self.log_it("started to execute plan")
         plan = self.read_plan()
         plan_length = len(plan)
@@ -43,6 +44,7 @@ class Migrate:
                 continue #all event_items were duplicates
             self.create_event(event)
             count += 1
+        db.commit()
         return f"{count} events were processed."
 
     def create_event(self, event):
