@@ -542,6 +542,7 @@ def get_member_names():
     return arr
 
 def _get_deceased_members():
+    # have bio
     q = (db.TblMembers.deleted!=True)&(db.TblMembers.date_of_death!=NO_DATE)&(db.TblMembers.story_id==db.TblStories.id)
     lst = db(q).select(
         db.TblMembers.id,
@@ -568,7 +569,33 @@ def _get_deceased_members():
         facephotourl=photos_folder(PROFILE_PHOTOS) + (rec.TblMembers.facephotourl or "dummy_face.png"),
         bio_preview=rec.TblStories.preview
     ) for rec in lst]
-    return arr
+    # do not have bio
+    q = (db.TblMembers.deleted!=True)&(db.TblMembers.date_of_death!=NO_DATE)&(db.TblMembers.story_id==None)
+    lst = db(q).select(
+        db.TblMembers.id,
+        db.TblMembers.first_name,
+        db.TblMembers.last_name,
+        db.TblMembers.nickname,
+        db.TblMembers.date_of_birth,
+        db.TblMembers.date_of_birth_dateunit,
+        db.TblMembers.date_of_death,
+        db.TblMembers.date_of_death_dateunit,
+        db.TblMembers.gender,
+        db.TblMembers.facephotourl
+        )
+    arr1 = [Storage(
+        id=rec.TblMembers.id,
+        last_name=rec.TblMembers.last_name,
+        full_name=(rec.TblMembers.first_name or "") + ' ' + (rec.TblMembers.last_name or ""),
+        birth_date=date_str(rec.TblMembers.date_of_birth, rec.TblMembers.date_of_birth_dateunit),
+        death_date=date_str(rec.TblMembers.date_of_death, rec.TblMembers.date_of_death_dateunit),
+        death_day_of_year=day_of_year(rec.TblMembers.date_of_death),
+        death_day_of_year_relative=day_of_year(rec.TblMembers.date_of_death, relative=True),
+        death_day_since_epoch=days_since_epoch(rec.TblMembers.date_of_death),
+        facephotourl=photos_folder(PROFILE_PHOTOS) + (rec.TblMembers.facephotourl or "dummy_face.png"),
+        bio_preview=""
+    ) for rec in lst]
+    return arr + arr1
 
 def get_parent_ids(member_rec):
     result = []

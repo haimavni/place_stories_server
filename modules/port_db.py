@@ -128,7 +128,9 @@ class Migrate:
         if item.kind == "image":
             photo_id = db.TblPhotos.insert(
                 story_id=story_id,
-                name=item.title, # todo: use only story name and remove this field
+                name=item.title, 
+                recognized=True,
+                # todo: use only story name and remove this field
                 photo_path=item.photo_path,
                 photo_date=datetime.date(year=int(item.year), month=1, day=1),
                 photo_date_dateend=datetime.date(year=int(item.year), month=1, day=1)
