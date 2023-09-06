@@ -584,15 +584,15 @@ def _get_deceased_members():
         db.TblMembers.facephotourl
         )
     arr1 = [Storage(
-        id=rec.TblMembers.id,
-        last_name=rec.TblMembers.last_name,
-        full_name=(rec.TblMembers.first_name or "") + ' ' + (rec.TblMembers.last_name or ""),
-        birth_date=date_str(rec.TblMembers.date_of_birth, rec.TblMembers.date_of_birth_dateunit),
-        death_date=date_str(rec.TblMembers.date_of_death, rec.TblMembers.date_of_death_dateunit),
-        death_day_of_year=day_of_year(rec.TblMembers.date_of_death),
-        death_day_of_year_relative=day_of_year(rec.TblMembers.date_of_death, relative=True),
-        death_day_since_epoch=days_since_epoch(rec.TblMembers.date_of_death),
-        facephotourl=photos_folder(PROFILE_PHOTOS) + (rec.TblMembers.facephotourl or "dummy_face.png"),
+        id=rec.id,
+        last_name=rec.last_name,
+        full_name=(rec.first_name or "") + ' ' + (rec.last_name or ""),
+        birth_date=date_str(rec.date_of_birth, rec.date_of_birth_dateunit),
+        death_date=date_str(rec.date_of_death, rec.date_of_death_dateunit),
+        death_day_of_year=day_of_year(rec.date_of_death),
+        death_day_of_year_relative=day_of_year(rec.date_of_death, relative=True),
+        death_day_since_epoch=days_since_epoch(rec.date_of_death),
+        facephotourl=photos_folder(PROFILE_PHOTOS) + (rec.facephotourl or "dummy_face.png"),
         bio_preview=""
     ) for rec in lst]
     return arr + arr1
