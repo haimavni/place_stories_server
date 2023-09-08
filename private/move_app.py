@@ -52,7 +52,7 @@ def move_app(cp_or_mv, app=None, new_app=None, src=None, dst=None):
     if not file_list:
         print(f"app {app} not found in {path}!")
         exit()
-    with open(f"/home/haim/fixes/move_app_{new_app}.bash", "w") as out:
+    with open(f"/home/haim/fixes/move_app_{target_app}.bash", "w") as out:
         out.write(f"rm -f {dst}/databases/*{target_app_id}*\n")
         for src in file_list:
             if target_app:
