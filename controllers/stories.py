@@ -7,6 +7,7 @@ import datetime
 import os
 from dal_utils import insert_or_update
 from photos_support import photos_folder, timestamped_photo_path
+from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 def index():
     response.view = 'stories/main.html'
@@ -86,7 +87,7 @@ def get_photo_info(vars):
     rec.photo_url = timestamped_photo_path(rec)
     sm = stories_manager.Stories()
     story_info = sm.get_story(rec.story_id)
-    rec.name = rec.Name or story_info.name
+    rec.name = rec.name or story_info.name
     return dict(photo_info=rec, story_info=story_info)
 
 @serve_json
@@ -94,7 +95,7 @@ def upload(vars):
     today = datetime.date.today()
     month = str(today)[:-3]
 
-    path = local_photos_folder() + month + '/'
+    path = local_photos_folder(RESIZED) + month + '/'
     if not os.path.isdir(path):
         os.makedirs(path)
     for fn in vars:
@@ -117,7 +118,7 @@ def add_face(vars):
     face = vars.face
     face.r = face.r or 20
     data = dict(
-        Photo_id=face.photo_id,
+        photo_id=face.photo_id,
         r=face.r,
         x=face.x,
         y=face.y
@@ -134,21 +135,21 @@ def get_story_names():
     return arr
 
 def get_term_names():
-    q = (db.TblTerms.id > 0) & (db.TblTerms.Name != None)  # & story usage
-    lst = db(q).select(db.TblTerms.id, db.TblTerms.Name, orderby=db.TblTerms.Name)
-    arr = [Storage(id=rec.id, name=rec.Name) for rec in lst]
+    q = (db.TblTerms.id > 0) & (db.TblTerms.name != None)  # & story usage
+    lst = db(q).select(db.TblTerms.id, db.TblTerms.name, orderby=db.TblTerms.name)
+    arr = [Storage(id=rec.id, name=rec.name) for rec in lst]
     return arr
 
 def get_event_names():
-    q = (db.TblEvents.id > 0) & (db.TblEvents.Name != None)  # & story usage
-    lst = db(q).select(db.TblEvents.id, db.TblEvents.Name, orderby=db.TblEvents.Name)
-    arr = [Storage(id=rec.id, name=rec.Name) for rec in lst]
+    q = (db.TblEvents.id > 0) & (db.TblEvents.name != None)  # & story usage
+    lst = db(q).select(db.TblEvents.id, db.TblEvents.name, orderby=db.TblEvents.name)
+    arr = [Storage(id=rec.id, name=rec.name) for rec in lst]
     return arr
 
 def get_photo_names():
-    q = (db.TblPhotos.id > 0) & (db.TblPhotos.Name != None) & (db.TblPhotos.deleted!=True)
-    lst = db(q).select(orderby=db.TblPhotos.Name)
-    arr = [Storage(id=rec.id, name=rec.Name) for rec in lst]
+    q = (db.TblPhotos.id > 0) & (db.TblPhotos.name != None) & (db.TblPhotos.deleted!=True)
+    lst = db(q).select(orderby=db.TblPhotos.name)
+    arr = [Storage(id=rec.id, name=rec.name) for rec in lst]
     return arr
 
 def test_stories():

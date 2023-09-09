@@ -9,6 +9,7 @@ from send_email import email
 import create_card
 from gluon.storage import Storage
 from misc_utils import make_qr_code
+import datetime
 
 #########################################################################
 ## This is a sample controller
@@ -153,7 +154,7 @@ def verify_email():
 def check_if_logged_in(vars):
     is_logged_in = auth.is_logged_in()
     user_id=auth.current_user()
-    comment("is logged in? {}, user_id: {}", is_logged_in, user_id)
+    comment(f"is logged in? {is_logged_in} user_id: {user_id}")
     return dict(is_logged_in=is_logged_in, user_id=user_id)
 
 @serve_json
@@ -216,34 +217,34 @@ def get_curr_version(vars):
 
 @serve_json
 def get_interested_contact(vars):
-    name = vars.contact_name
-    host = request.env.http_host
-    message = '''
+    msg = vars.contact_message
+    message = f'''
     <html>
-    <div direction="{rtltr}">
+    <div direction="{vars.rtltr}">
     <p>
-    {name} contacted.<br/>
-    Mail: {email}<br/>
-    mobile: {mobile} 
+    {vars.contact_first_name} {vars.contact_last_name} contacted.<br/>
+    Mail: {vars.contact_email}<br/>
+    mobile: {vars.contact_mobile} 
     </p>
     <p>
     Message is:
     </p>
     <p>
-    {message}
+    {msg}
     </p>
     </div>
     </html>
-    '''.format(rtltr=vars.rtltr, name=vars.contact_name, email=vars.contact_email, mobile=vars.contact_mobile, message=vars.contact_message)
+    '''
     result = email(sender="admin", receivers="haimavni@gmail.com", subject = "New Tol.Life prospect", message=message)
-    error = "" if result else mail.error
+    error = "" if result else "error sending email"
     return dict(result=result, error=error)
 
 @serve_json
 def save_feedback(vars):
+    today = datetime.date.today()
     db.TblFeedback.insert(
-        fb_bad_message=vars.feedback_bad_message,
-        fb_good_message=vars.feedback_good_message,
+        fb_date=today,
+        fb_message=vars.feedback_message,
         fb_code_version=vars.code_version,
         fb_email=vars.feedback_email,
         fb_name=vars.feedback_name,
@@ -257,13 +258,19 @@ def save_feedback(vars):
 def get_feedbacks(vars):
     lst = db(db.TblFeedback).select(limitby=(0,200), orderby=~db.TblFeedback.id)
     feedbacks = [dict(name=r.fb_name,
+                      date=fb_date_str(r)  ,
                       email=r.fb_email,
-                      bad=r.fb_bad_message,
-                      good=r.fb_good_message,
+                      message=r.fb_message,
                       version=r.fb_code_version,
                       device_type=r.fb_device_type,
                       device_details=r.fb_device_details) for r in lst]
     return dict(feedbacks=feedbacks)
+
+def fb_date_str(fb_rec):
+    date = fb_rec.fb_date
+    if not date:
+        return fb_rec.fb_code_version
+    return date.strftime('%d.%m.%Y')
 
 def test_collect_mail():
     from collect_emails import collect_mail
@@ -271,7 +278,8 @@ def test_collect_mail():
 
 @serve_json
 def get_hit_statistics(vars):
-    total_count = db(db.TblPageHits.what=='APP').select().first().count
+    crec = db(db.TblPageHits.what=='APP').select().first()
+    total_count = crec.count if crec else 0
     tables = dict(
         MEMBER=db.TblMembers,
         EVENT=db.TblStories,
@@ -284,7 +292,6 @@ def get_hit_statistics(vars):
     else:
         fld = db.TblPageHits.count
     for what in tables:
-        name = 'name' if what in ['EVENT', 'TERM'] else 'full_name' if what == 'MEMBER' else 'Name'
         tbl = tables[what]
         lst = db((db.TblPageHits.what==what)&(db.TblPageHits.item_id==tbl.id)& (tbl.deleted != True) & (fld!=None)). \
             select(limitby=(0,2000), orderby=~fld)
@@ -312,7 +319,6 @@ def set_locale_override(vars):
     rec = db((db.TblLocaleCustomizations.lang==vars.lang) & (db.TblLocaleCustomizations.key==vars.key)).select().first()
     if rec:
         if vars.value == '---':
-            comment('about to delete lang override')
             n = db((db.TblLocaleCustomizations.lang==vars.lang) & (db.TblLocaleCustomizations.key==vars.key)).delete()
             if n != 1:
                 raise Exception('Locale override was not deleted')
@@ -345,7 +351,7 @@ def get_locale_overrides(vars):
 @serve_json
 def notify_new_files(vars):
     uploaded_file_ids = vars.uploaded_file_ids
-    send_message(key=vars.what +'_WERE_UPLOADED', group='ALL', uploaded_file_ids=uploaded_file_ids)
+    send_message(key=vars.what +'-UPLOADED', group='ALL', uploaded_file_ids=uploaded_file_ids)
     return dict()
 
 @serve_json
@@ -358,13 +364,12 @@ def reset_password(vars):
     confirmation_url = '/{app}/default/confirm_password_reset?app_name={app_name}&registration_key={registration_key}&email={email}'. \
         format(app=request.application, app_name=app_name, registration_key=registration_key, email=vars.email)
     confirmation_link = 'http://{host}{confirmation_url}'.format(host=host, confirmation_url=confirmation_url)
-    mail_message_fmt = '''
-    Hi {first_name} {last_name},<br><br>
+    mail_message = f'''
+    Hi {user_rec.first_name} {user_rec.last_name},<br><br>
 
-    Click {link} to confirm your new password.<br><br>
+    Click {confirmation_link} to confirm your new password.<br><br>
 
     '''
-    mail_message = ('', mail_message_fmt.format(first_name=user_rec.first_name, last_name=user_rec.last_name, link=confirmation_link))
     result = email(receivers=vars.email, subject='New password', message=mail_message)
     if not result:
         error_message = mail.error.strerror
@@ -381,11 +386,10 @@ def get_shortcut(vars):
     else:
         key = create_key() #if paranoid, ensure key is not in use yet
         if db(db.TblShortcuts.key==key).count() > 0:
-            comment("duplicate key found in get shortcut")
+            comment(f"duplicate key {key} found in get shortcut")
             raise Exception('Non unique key')
         db.TblShortcuts.insert(url=url, key=key)
     shortcut = '/' + request.application + '?key='  + key
-    comment(f"get shortcut: {shortcut}")
     return dict(shortcut=shortcut)
 
 def create_key():
@@ -413,12 +417,12 @@ def notify_new_feedback():
     receivers = [r.email for r in lst]
     app = request.application
     host = request.env.http_origin
-    message = ('', '''
+    message = f'''
     New feedback has been received.
 
 
     Click <a href="{host}/{app}/static/aurelia/index.html#/feedbacks">here</a> to view.
-    '''.format(host=host,app=app).replace('\n', '<br>'))
+    '''.replace('\n', '<br>')
     email(receivers=receivers, subject='New Stories Feedback', message=message)
 
 @serve_json

@@ -89,7 +89,7 @@ def apply_to_checked_audios(vars):
             drec.update_record(recorder_id=recorder_id)
             
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
-        keywords = "; ".join(curr_tags)
+        keywords = KW_SEP.join(curr_tags)
         changes[audio_id] = dict(keywords=keywords, audio_id=audio_id)
         db(db.TblStories.id==story_id).update(keywords=keywords, is_tagged=bool(keywords))
         if dates_info:

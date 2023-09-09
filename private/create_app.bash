@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo CREATE NEW APP
+echo CREATE NEW APP > /apps_data/new_app_started.log
 
 app_name=$1
 ver=$2
@@ -27,14 +27,6 @@ else
     args="/$email/$password/$first/$last"
     server="tol_$ver"
 fi
-###----------------------temporary. for local only!-------------------
-###server="gbs__www"
-###cd /home/haim/aurelia-gbs/server/web2py
-###python web2py.py -S $app_name/init_app/init_database$args
-###exit
-###-------------------------------end local---------------------------
-#uncomment below when ready
-#server="tol_server_www"
 
 #create database
 sudo -u postgres createdb $app_name
@@ -43,8 +35,8 @@ cp -a /apps_data/tolbase /apps_data/$app_name
 chown -R www-data:www-data /apps_data/$app_name
 
 #create link to make the app accessible
-cd /home/www-data/web2py/applications
-ln --symbolic -T ../../$server $app_name
+cd /home/www-data/py38env/web2py/applications
+ln --symbolic -T ../../../$server $app_name
 cd ..
 
 #init the database. create owners account with all privileges

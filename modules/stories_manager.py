@@ -35,7 +35,7 @@ class Stories:
         return rec
 
     def get_story(self, story_id, to_story_version=None, from_story_version=None):
-        db, STORY4DOC = inject('db', 'STORY4DOC')
+        db, auth, RESTRICTED = inject('db', 'auth', 'RESTRICTED')
         rec = db(db.TblStories.id==story_id).select().first()
         if not rec:
             return None
@@ -75,11 +75,12 @@ class Stories:
             merger = mim.Merger()
             story_text = merger.diff_apply_bulk(story, diffs, reverse=reverse)
             display_version = story_versions[to_story_version].display_version
-        editable_preview = rec.used_for == STORY4DOC  #todo: better pass as parameter?
+        editable_preview = False ###rec.used_for == STORY4DOC  #todo: better pass as parameter?
         if editable_preview:
             preview = rec.preview or get_reisha(story_text)
         else:
             preview = rec.preview or get_reisha(story_text) #todo: after all previews are set, can just use rec.preview
+        editing_ok = rec.updater_id == auth.current_user() or not auth.user_has_privilege(RESTRICTED)
         story_info = Storage(
             story_text=story_text,
             preview=preview,
@@ -98,7 +99,12 @@ class Stories:
             approved_version=rec.approved_version,
             last_version=rec.last_version,
             last_update_date = rec.last_update_date,
-            updater_id = rec.updater_id
+            story_date=rec.story_date,
+            story_date_dateunit=rec.story_date_dateunit,
+            story_date_dateend=rec.story_date_dateend,
+            story_date_datespan=rec.story_date_datespan,
+            updater_id = rec.updater_id,
+            editing_ok = editing_ok
         )
         return story_info
     
@@ -145,18 +151,19 @@ class Stories:
         if story_info.used_for == STORY4EVENT:
             db.TblEvents.insert(
                 story_id=story_id,
-                Name=name,
+                name=name,
             )
         elif story_info.used_for == STORY4TERM:    
             db.TblTerms.insert(
                 story_id=story_id,
-                Name=name,
+                name=name,
             )
         elif story_info.used_for == STORY4PHOTO:
             pass
         
         ###update_story_words_index(story_id)
         promote_word_indexing()
+        promote_set_story_sorting_keys()
         return Storage(story_id=story_id, creation_date=now, author=source, story_text=story_text, 
             last_update_date=now, preview=preview, name=name, new_story=True, used_for=story_info.used_for or STORY4EVENT)
 
@@ -183,27 +190,11 @@ class Stories:
         #if rec.language and rec.language != language:
             #rec = self.find_translation(rec, language)
         now = datetime.datetime.now()
-        preview = ''
-        if story_info.used_for == STORY4DOC:
-            if not story_info.preview:
-                story_info.preview = get_reisha(updated_story_text)
-            preview = story_info.preview
-            data = Storage(last_update_date=now, story_text=updated_story_text)
-            if story_info.preview and rec.preview != story_info.preview:
-                data.preview = story_info.preview
-            else:
-                data.preview = rec.preview
-            if story_info.name and rec.name != story_info.name:
-                data.name = story_info.name
-            else:
-                data.name = rec.name
-            data.source = story_info.source
-            rec.update_record(**data)
-        elif rec.story != updated_story_text:
+        preview = get_reisha(updated_story_text)
+        if rec.story != updated_story_text:
             merger = mim.Merger()
             delta = merger.diff_make(rec.story, updated_story_text)
             last_version = db((db.TblStoryVersions.story_id==story_id)&(db.TblStoryVersions.language==rec.language)).count() + 1
-            preview = get_reisha(updated_story_text)
             if imported_from and not rec.imported_from:
                 imported_from = imported_from.upper() #signal import overrides previous content
             data = dict(
@@ -233,22 +224,24 @@ class Stories:
         ###update_story_words_index(story_id)
         author_name = auth.user_name(self.author_id) #name of the mblbhd, not the source
         name = story_info.name
+        #todo: use only story_info.name. other objects need not have name
         if story_info.used_for == STORY4EVENT:
             rec = db(db.TblEvents.story_id==story_id).select().first()
             if rec:
-                rec.update_record(Name=name)
+                rec.update_record(name=name)
         elif story_info.used_for == STORY4TERM:    
             rec = db(db.TblTerms.story_id==story_id).select().first()
             if rec:
-                rec.update_record(Name=name)
+                rec.update_record(name=name)
         elif story_info.used_for == STORY4PHOTO:
             photo_rec = db(db.TblPhotos.story_id==story_id).select().first()
-            photo_rec.update_record(Name=name)
+            photo_rec.update_record(name=name, has_story_text=len(updated_story_text) > 20)
         elif story_info.used_for == STORY4AUDIO:
             audio_rec = db(db.TblAudios.story_id==story_id).select().first()
             audio_rec.update_record(name=name)
         promote_word_indexing()
-        return Storage(story_id=story_id, last_update_date=now, updater_name=author_name, author=story_info.source, language=language, name=name, preview=preview)
+        return Storage(story_id=story_id, last_update_date=now, updater_name=author_name, 
+                       author=story_info.source, language=language, name=name, preview=preview)
     
     def update_story_name(self, story_id, new_name, language=None):
         db = inject('db')
@@ -299,6 +292,10 @@ class Stories:
 def promote_word_indexing():
     promote_task = inject('promote_task')
     promote_task('update_word_index_all')
+
+def promote_set_story_sorting_keys():
+    promote_task = inject('promote_task')
+    promote_task('set_story_sorting_keys')
     
 def mark_diffs(txt1, txt2):
     txt1 = handle_html_tags(txt1)
@@ -387,3 +384,14 @@ def mark_marked_rows(lst):
         result += '</span>'
     return result
     
+
+    def recalculate_previews():
+        lst = db(db.TblStories.used_for==STORY4DOC).select()
+        n = 0
+        for rec in lst:
+            story_text = rec.story
+            preview = get_reisha(story_text)
+            if preview != rec.preview:
+                n += 1
+                rec.update_record(preview=preview)
+        return f"{n} previews recalculated"

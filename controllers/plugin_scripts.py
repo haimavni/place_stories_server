@@ -1,6 +1,6 @@
 # ---script for developer to evaluate python expressions in the environment
 import datetime
-
+import inspect
 
 @serve_json
 def load_script(vars):
@@ -26,8 +26,15 @@ def evaluate_script(vars):
         exec(ccode, environment)
         dic = dict()
         for v in environment:
+            a = environment[v]
+            if inspect.isfunction(a):
+                continue
+            # if callable(a):
+            #     continue
             if v not in old_environment or environment[v] != old_environment[v]:
-                dic[v] = environment[v]
+                x = environment[v]
+                ### if not callable(x):
+                dic[v] = x
     except Exception as e:
         log_exception('Error in ad-hoc script')
         dic = dict(error=str(e))
@@ -40,8 +47,7 @@ def evaluate_script(vars):
         else:
             db.scripts_table.insert(code=code, last_usage_time=now)
         return dict(results=dic)
-
-
+    
 @serve_json
 def prev_code(vars):
     prev_code, next_code = prev_next_code(vars.code, vars.like)

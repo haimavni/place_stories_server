@@ -31,7 +31,7 @@ def apply_to_checked_terms(vars):
                 ###deleted.append(item)
                 db(q).delete()
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
-        keywords = "; ".join(curr_tags)
+        keywords = KW_SEP.join(curr_tags)
         rec = db(db.TblStories.id==trec.story_id).select().first()
         rec.update_record(keywords=keywords, is_tagged=bool(keywords))
     return dict(new_topic_was_added=new_topic_was_added)
@@ -51,7 +51,7 @@ def get_term_list(vars):
     lst = db(q).select(orderby=~db.TblTerms.id)
     lst = [r for r in lst]
     lst = [rec for rec in lst if rec.TblTerms.story_id not in params.checked_term_list]
-    lst = sorted(lst, key=lambda term: term.TblTerms.Name)
+    lst = sorted(lst, key=lambda term: term.TblTerms.name)
     lst = lst0 + lst
     term_list = []
     for rec1 in lst:

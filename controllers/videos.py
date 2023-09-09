@@ -8,7 +8,8 @@ import ws_messaging
 from date_utils import update_record_dates, fix_record_dates_in, fix_record_dates_out
 from folders import url_video_folder
 from members_support import *
-
+from video_support import upgrade_youtube_info, update_cuepoints_text, parse_video_url, youtube_info
+from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 @serve_json
 def save_video(vars):
@@ -17,25 +18,9 @@ def save_video(vars):
     params = vars.params
     date_info = dict(video_date=(params.video_date_datestr, params.video_date_datespan))
     if not params.id:  # creation, not modification
-        pats = dict(
-            youtube=r'https://(?:www.youtube.com/watch\?v=|youtu\.be/)(?P<code>[^&]+)',
-            html5=r'(?P<code>.+\.mp4)',
-            vimeo=r'https://vimeo.com/(?P<code>\d+)',
-            google_drive=r'https://drive.google.com/file/d/(?P<code>[^/]+?)/.*',
-            google_photos=r'https://photos.app.goo.gl/(?P<code>[^&]+)'
-        )
-        src = None
-        for t in pats:
-            pat = pats[t]
-            m = re.search(pat, params.src)
-            if m:
-                src = m.groupdict()['code']
-                typ = t
-                break
-        if not src:
-            raise User_Error('!videos.unknown-video-type')
-        q = (db.TblVideos.src == src) & \
-            (db.TblVideos.video_type == typ) & \
+        vidi = parse_video_url(params.src)
+        q = (db.TblVideos.src == vidi.src) & \
+            (db.TblVideos.video_type == vidi.video_type) & \
             (db.TblVideos.deleted != True)
         if db(q).count() > 0:
             raise User_Error('!videos.duplicate')
@@ -43,13 +28,19 @@ def save_video(vars):
         story_info = sm.get_empty_story(used_for=STORY4VIDEO, story_text="", name=params.name)
         result = sm.add_story(story_info)
         story_id = result.story_id
+        yt_info = youtube_info(vidi.src)
         data = dict(
-            video_type=typ,
+            video_type=vidi.video_type,
             name=params.name,
-            src=src,
+            src=vidi.src,
             story_id=story_id,
             contributor=user_id,
-            upload_date=datetime.datetime.now()
+            upload_date=datetime.datetime.now(),
+            thumbnail_url=yt_info.thumbnail_url,
+            description=yt_info.description,
+            uploader=yt_info.uploader,
+            duration=yt_info.duration,
+            yt_upload_date=yt_info.upload_date
         )
         vid = db.TblVideos.insert(**data)
         data.update(id=vid)
@@ -72,12 +63,6 @@ def save_video(vars):
         old_rec = db(db.TblVideos.id == params.id).select().first()
         vid = old_rec.id
         del params['src']  #
-        # data = dict()
-        # for fld in old_rec:
-        # if fld in ('src', 'update_record', 'delete_record'):
-        # continue
-        # if old_rec[fld] != params[fld]:
-        # data[fld] = params[fld]
         data = params
         if data:
             data_in = fix_record_dates_in(old_rec, data)
@@ -104,14 +89,17 @@ def delete_videos(vars):
     db(db.TblVideos.id.belongs(selected_videos)).update(deleted=True)
     return dict()
 
+@serve_json
+def refresh_video_thumbnails(vars):
+    selected_videos = vars.selected_videos
+    result = upgrade_youtube_info(video_list=selected_videos)
+    return result
 
 @serve_json
 def get_video_list(vars):
-    selected_topics = vars.selected_topics or []
     q = make_videos_query(vars)
     lst = db(q).select()
     selected_video_list = vars.selected_video_list
-    result = []
     q = (db.TblVideos.id.belongs(selected_video_list)) & (db.TblStories.id == db.TblVideos.story_id)
     if selected_video_list:
         lst1 = db(q).select()
@@ -184,7 +172,7 @@ def apply_to_selected_videos(vars):
                 deleted.append(item)
                 db(q).delete()
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
-        keywords = "; ".join(curr_tags)
+        keywords = KW_SEP.join(curr_tags)
         changes[vid] = dict(keywords=keywords, video_id=vid)
         rec = db(db.TblVideos.id == vid).select().first()
         rec1 = db(db.TblStories.id == rec.story_id).select().first()
@@ -225,10 +213,10 @@ def get_video_sample(vars):
     q = (db.TblVideos.deleted == False)
     q1 = q & (db.TblVideos.touch_time != NO_DATE)
     lst1 = db(q1).select(limitby=(0, 10), orderby=~db.TblVideos.touch_time)
-    lst1 = [dict(src=rec.src,video_id=rec.id, name=rec.name) for rec in lst1]
+    lst1 = [dict(src=rec.src,video_id=rec.id, name=rec.name, thumbnail_url=rec.thumbnail_url) for rec in lst1]
     q2 = q & (db.TblVideos.touch_time == NO_DATE)
     lst2 = db(q2).select(limitby=(0, 200))
-    lst2 = [dict(src=rec.src,video_id=rec.id, name=rec.name) for rec in lst2]
+    lst2 = [dict(src=rec.src,video_id=rec.id, name=rec.name, thumbnail_url=rec.thumbnail_url) for rec in lst2]
     if len(lst2) > 10:
         lst2 = random.sample(lst2, 10)
     lst = lst1 + lst2
@@ -268,8 +256,8 @@ def get_video_info(vars):
     member_ids = [m.member_id for m in member_ids]
     members = db(db.TblMembers.id.belongs(member_ids)).select()
     members = [Storage(id=member.id,
-                       facePhotoURL=photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png"),
-                       full_name=member.first_name + ' ' + member.last_name) for member in members]
+                       facephotourl=photos_folder(PROFILE_PHOTOS) + (member.facephotourl or "dummy_face.png"),
+                       full_name=get_full_name(member)) for member in members]
     return dict(video_source=video_source,
                 video_story=video_story,
                 video_id=video_id,
@@ -281,24 +269,43 @@ def get_video_info(vars):
                 members=members,
                 cue_points=cue_points)
 
+def get_full_name(member):
+    result = ""
+    if member.first_name:
+        result += member.first_name
+    if member.last_name:
+        if result:
+            result += " "
+        result += member.last_name
+    return result
+
 @serve_json
 def update_video_cue_points(vars):
     video_id = int(vars.video_id)
     old_cp = db(db.TblVideoCuePoints.video_id==video_id).select()
-    old_cp_set = set([cp.time for cp in old_cp])
-    new_cp_set = set([cp.time for cp in vars.cue_points])
+    old_cp_set = set([cp.id for cp in old_cp])
+    new_cp_set = set([cp.cue_id for cp in vars.cue_points])
+    added_cue_points = dict()
+    new_id = None
     dic = dict()
     for cp in vars.cue_points:
-        dic[cp.time] = cp.description
-    for t in old_cp_set:
-        if t not in new_cp_set:
-            db((db.TblVideoCuePoints.video_id == video_id)&(db.TblVideoCuePoints.time == t)).delete()
-    for t in new_cp_set:
-        if t in old_cp_set:
-            db((db.TblVideoCuePoints.video_id == video_id) & (db.TblVideoCuePoints.time == t)).update(description=dic[t])
+        dic[cp.cue_id] = [cp.time, cp.description]
+    for cid in old_cp_set:
+        if cid not in new_cp_set:
+            db((db.TblVideoCuePoints.video_id == video_id)&(db.TblVideoCuePoints.id == cid)).delete()
+    for cid in new_cp_set:
+        if cid in old_cp_set:
+            db((db.TblVideoCuePoints.video_id == video_id) & (db.TblVideoCuePoints.id == cid)). \
+                update(time=dic[cid][0], description=dic[cid][1])
         else:
-            db.TblVideoCuePoints.insert(time=t, description=dic[t], video_id=video_id)
-    return dict()
+            tim = dic[cid][0]
+            new_id = db.TblVideoCuePoints.insert(time=tim, description=dic[cid][1], video_id=video_id)
+            # comment(f"new cue {new_id} was created in update video cue points")
+            added_cue_points[tim] = new_id
+    story_id = db(db.TblVideos.id==video_id).select().first().story_id
+    update_cuepoints_text(video_id);
+    invalidate_index(story_id)
+    return dict(cue_id=new_id)
 
 @serve_json
 def update_video_members(vars):
@@ -314,19 +321,21 @@ def update_video_members(vars):
     for mid in new_members:
         if mid not in old_members_set:
             db.TblMembersVideos.insert(video_id=video_id, member_id=mid)
-    members = db(db.TblMembers.id.belongs(new_members)).select(db.TblMembers.id, db.TblMembers.facePhotoURL)
+    members = db(db.TblMembers.id.belongs(new_members)).select(db.TblMembers.id, db.TblMembers.facephotourl)
     for member in members:
-        member.facePhotoURL = photos_folder('profile_photos') + (member.facePhotoURL or "dummy_face.png")
+        member.facephotourl = photos_folder(PROFILE_PHOTOS) + (member.facephotourl or "dummy_face.png")
     return dict(members=members)
 
 @serve_json
 def update_cue_members(vars):
     video_id = int(vars.video_id)
-    time = int(vars.time)
+    cid = int(vars.cue_id)
+    # if not cid:
+    #     cid = db.TblVideoCuePoints.insert(video_id=video_id, time=vars.time, description=vars.description, member_ids=vars.member_ids)
+    #     comment(f"updating members, new cid created {cid}")
     member_ids = vars.member_ids
-    old_member_ids = calc_cue_members(video_id, time)
-    q = (db.TblVideoCuePoints.video_id == video_id) & \
-        (db.TblVideoCuePoints.time == time)
+    old_member_ids = calc_cue_members(video_id, cid)
+    q = (db.TblVideoCuePoints.id == cid)
     rec = db(q).select().first()
     cue_id = rec.id
     for mem_id in old_member_ids:
@@ -334,21 +343,41 @@ def update_cue_members(vars):
             q = (db.TblMembersVideoCuePoints.cue_point_id==cue_id) & \
                 (db.TblMembersVideoCuePoints.member_id == mem_id)
             db(q).delete()
+            #update link between members and video
+            q = (db.TblMembersVideos.member_id==mem_id) & (db.TblMembersVideos.video_id==video_id)
+            vmrec = db(q).select().first()
+            if vmrec.cuepoints_count==1:
+                db(q).delete()
+            else:
+                vmrec.update_record(cuepoints_count=vmrec.cuepoints_count-1)
     for mem_id in member_ids:
         if mem_id not in old_member_ids:
             db.TblMembersVideoCuePoints.insert(member_id=mem_id, cue_point_id=cue_id)
-    members = db(db.TblMembersVideos.video_id==video_id).select(db.TblMembers.id, db.TblMembers.facePhotoURL)
-    return dict(members=members)
+            #update link between members and video
+            q = (db.TblMembersVideos.member_id==mem_id) & (db.TblMembersVideos.video_id==video_id)
+            vmrec = db(q).select().first()
+            if vmrec:
+                vmrec.update_record(cuepoints_count=vmrec.cuepoints_count+1)
+            else:
+                db.TblMembersVideos.insert(member_id=mem_id, video_id=video_id, cuepoints_count=1)
+    return dict(cue_id=cue_id)
 
 @serve_json
 def video_cue_points(vars):
     cue_points = calc_cue_points(vars.video_id)
     return dict(cue_points=cue_points)
 
-def calc_cue_members(video_id, time):
+@serve_json
+def replace_thumbnail_url(vars):
+    video_id = int(vars.video_id)
+    video_rec = db(db.TblVideos.id==video_id).select().first()
+    video_rec.update_record(thumbnail_url=vars.thumbnail_url)
+    return dict()
+
+def calc_cue_members(video_id, cue_id):
     q = (db.TblMembersVideoCuePoints.cue_point_id == db.TblVideoCuePoints.id) & \
         (db.TblVideoCuePoints.video_id == video_id) & \
-        (db.TblVideoCuePoints.time == time)
+        (db.TblVideoCuePoints.id == cue_id)
     lst = db(q).select()
     member_ids = [rec.TblMembersVideoCuePoints.member_id for rec in lst]
     return member_ids
@@ -356,7 +385,12 @@ def calc_cue_members(video_id, time):
 def calc_cue_points(video_id):
     q = (db.TblVideoCuePoints.video_id == video_id)
     lst = db(q).select(orderby=db.TblVideoCuePoints.time)
-    cue_points = [dict(time=rec.time, description=rec.description, member_ids=calc_cue_members(video_id, rec.time)) for rec in lst]
+    cue_points = [dict(
+        cue_id=rec.id, 
+        time=rec.time, 
+        description=rec.description, 
+        member_ids=calc_cue_members(video_id, rec.id)
+        ) for rec in lst]
     return cue_points
 
 
@@ -387,6 +421,8 @@ def make_videos_query(vars):
     if vars.selected_topics:
         q1 = get_topics_query(vars.selected_topics)
         q &= q1
+    if vars.show_untagged:
+        q &= (db.TblVideos.story_id==db.TblStories.id) & (db.TblStories.is_tagged==False)
     return q
 
 def get_video_topics(story_id):
@@ -400,3 +436,12 @@ def get_video_topics(story_id):
     lst = make_unique(lst, 'id')
     return lst
 
+@serve_json
+def story_id_to_video_id(vars):
+    id = vars.id
+    vrec = db(db.TblVideos.story_id==id).select().first()
+    return dict(video_id=vrec.id)
+
+def invalidate_index(story_id):
+    story_rec = db(db.TblStories.id==story_id).select().first()
+    story_rec.update_record(indexing_date=NO_DATE, last_update_date=request.now)

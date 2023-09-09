@@ -144,14 +144,16 @@ class MyAuth(Auth):
             )
         return info
     
-    def get_privileges(self):
-        if not self.user:
+    def get_privileges(self, user_id=None):
+        db = self.db
+        user = self.user
+        if not user:
+            user = db(db.auth_user.id==user_id).select().first()
+        if not user:
             return
-        user_groups = self.user_groups = {}
         table_group = self.table_group()
         table_membership = self.table_membership()
-        memberships = self.db(
-            table_membership.user_id == self.user.id).select()
+        memberships = db(table_membership.user_id == user.id).select()
         privileges = Storage()
         for membership in memberships:
             group = table_group(membership.group_id)
@@ -186,6 +188,12 @@ class MyAuth(Auth):
             result[u.id] = dict(name = u.first_name + ' ' + u.last_name,
                                 email = u.email)
         return result
+    
+    def role_user_list(self, role):
+        db = inject('db')
+        lst = db((db.auth_membership.group_id==role)&(db.auth_user.id==db.auth_membership.user_id)&(db.auth_user.id>1)).select(db.auth_user.email)
+        receivers = [r.email for r in lst]
+        return receivers   
     
         
         

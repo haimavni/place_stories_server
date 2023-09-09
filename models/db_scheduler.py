@@ -4,7 +4,7 @@ import ws_messaging
 from help_support import update_help_messages, update_letter_templates
 from create_app import create_pending_apps
 from words import update_word_index_all
-from docs_support import calc_doc_stories
+from members_support import set_story_sorting_keys
 import os
 from topics_support import fix_is_tagged
 from folders import safe_open
@@ -13,7 +13,7 @@ from video_support import calc_missing_youtube_info
 from health import check_health
 
 def test_scheduler(msg):
-    comment("test task {}", msg)
+    comment(f"test task {msg}")
 
 class MyScheduler(Scheduler):
     
@@ -40,9 +40,9 @@ class MyScheduler(Scheduler):
         return task_id
 
     def on_update_task_status(self, task_id, data):
-        ##comment("task {} status changed: {} ", task_id, data)
+        ##comment(f"task {task_id} status changed: {data}")
         try:
-            ###comment("task {task_id} status changed {data}", task_id=task_id, data=data)
+            ###comment(f"task {task_id} status changed {data}")
             ws_messaging.send_message(key='task_status_changed', group='TASK_MONITOR', task_id=task_id, data=data)
         except Exception as e:
             log_exception('failed broadcasting update task status')
@@ -84,7 +84,8 @@ def watchdog():
     '''.format(tsks=tsks_str, app=request.application, status=tsk.status)
     email(sender="admin", to="haimavni@gmail.com", subject = "A task failed", message=message)
     for tsk in db(q).select():
-        comment('Task {t} failed', t=tsk.function_name)
+        tfn = tsk.function_name
+        comment(f'Task {tfn} failed')
     db(q).update(status='QUEUED')
     db.commit()
     
@@ -96,7 +97,7 @@ def execute_task(*args, **vars):
     try:
         name = vars['name']
         command = vars['command']
-        comment('Started task {}: {}'.format(name, command))
+        comment(f'Started task {name}: {command}')
         function = scheduler.one_time_tasks[command]
     except Exception as e:
         log_exception('error enter execute task ')
@@ -107,7 +108,7 @@ def execute_task(*args, **vars):
     except Exception as e:
         log_exception('Error executing ' + name)
     else:
-        comment('Finished task {}. Returned {}.'.format(name, result))
+        comment(f'Finished task {name}. Returned {result}.')
         db.commit()
 
 def schedule_background_task(name, command, period=None, timeout=None):
@@ -209,20 +210,20 @@ def schedule_update_word_index_all():
         timeout = 600, # will time out if running for 10 minutes
     )
 
-def schedule_calc_doc_stories():
+def schedule_set_story_sorting_keys():
     now = datetime.datetime.now()
     return db.scheduler_task.insert(
         status='QUEUED',
         application_name=request.application,
-        task_name = 'calc doc stories',
-        function_name='calc_doc_stories',
+        task_name = 'set_story_sorting_keys',
+        function_name='set_story_sorting_keys',
         start_time=now,
         stop_time=now + datetime.timedelta(days=1461),
         repeats=0,
-        period=600,   # every 10 minutes
-        timeout = 500, # will time out if running for 500 seconds
+        period=1800,   # half an hour
+        timeout = 600, # will time out if running for 10 minutes
     )
-
+  
 def schedule_create_pending_apps():
     now = datetime.datetime.now()
     return db.scheduler_task.insert(
@@ -241,8 +242,8 @@ permanent_tasks = dict(
     #note that the key must also be function_name set by the keyed item
     watch_dog=schedule_watchdog,
     update_word_index_all=schedule_update_word_index_all,
+    set_story_sorting_keys=schedule_set_story_sorting_keys,
     calc_missing_youtube_info=schedule_calc_missing_youtube_info,
-    calc_doc_stories=schedule_calc_doc_stories,
     create_pending_apps=schedule_create_pending_apps,
     update_help_messages=schedule_update_help_messages,
     check_health=schedule_check_health,
@@ -252,8 +253,8 @@ permanent_tasks = dict(
 __tasks = dict(
     watchdog=watchdog,
     update_word_index_all=update_word_index_all,
+    set_story_sorting_keys=set_story_sorting_keys,
     calc_missing_youtube_info=calc_missing_youtube_info,
-    calc_doc_stories=calc_doc_stories,
     create_pending_apps=create_pending_apps,
     execute_task=execute_task,
     update_help_messages=update_help_messages,
@@ -280,7 +281,7 @@ def verify_tasks_started():
     for function_name in permanent_tasks:
         ###if db(db.scheduler_task.function_name==function_name).isempty():
         task_id = permanent_tasks[function_name]()
-        comment("start {}, task_id is {}", function_name, task_id)
+        comment(f"start {function_name}, task_id is {task_id}")
         db.commit()
         
 def promote_task(function_name):

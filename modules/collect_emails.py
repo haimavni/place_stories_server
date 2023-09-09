@@ -25,7 +25,7 @@ class EmailCollector:
     def collect(self):
         maildir_new = self.maildir + '/new'
         comment = inject('comment')
-        comment('maildir new: {}', maildir_new)
+        comment(f'maildir new: {maildir_new}')
         msg_list = [join(maildir_new, f) for f in listdir(maildir_new) if isfile(join(maildir_new, f))]
         for msg_file in msg_list:
             result = self.handle_msg(msg_file)
@@ -57,7 +57,7 @@ class EmailCollector:
             result.sender_email = lst[1][0][1:-1] #get rid of <>
         else:
             s = lst[0][0]
-            comment("sender email {}", s)
+            comment(f"sender email {s}")
             parts = s.split('<')
             if len(parts) == 1:
                 result.sender_email = s
@@ -152,12 +152,14 @@ def collect_mail():
                 continue
             ###user_id = user_id or 1 #todo: if we decide not to create new user
             text = msg.html_content or msg.plain_content
-            comment('New email: subject: {subject}, images: {image_names} sent by {sender}', 
-                    subject=msg.subject, image_names=list(msg.images.keys()), sender=msg.sender_email)
+            subject = msg.subject
+            image_names = list(msg.images.keys())
+            sender = msg.sender_email
+            comment(f'New email: subject: {subject}, images: {image_names} sent by {sender}')
             if msg.images:
                 result = save_uploaded_photo_collection(msg.images, user_id)
                 results.append(result)
-                comment("upload result {result}", result=result)
+                comment(f"upload result {result}")
             emsg = ''
             for fld in sorted(msg):
                 if fld == "images":
@@ -172,7 +174,7 @@ def collect_mail():
             if result:
                 comment("mail was forwarded")
             else:
-                comment("forwarding mail failed: {}", mail.error)
+                comment(f"forwarding mail failed: {mail.error}")
     except Exception as e:
         log_exception('Error collecting mail')
         raise

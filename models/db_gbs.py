@@ -18,13 +18,24 @@ STORY4DOC = 9
 STORY4AUDIO = 10
 STORY4LETTER = 11
 STORY4ARTICLE = 12
-STORY4DOCAB = 13
-STORY4USER = [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4AUDIO, STORY4ARTICLE, STORY4DOCAB]
+STORY4DOCAB = 13 #obsolete
+STORY4DOCSEGMENT = 14
+STORY4USER = [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, 
+    STORY4AUDIO, STORY4ARTICLE, STORY4DOCAB, STORY4DOCSEGMENT]
 
 VIS_NEVER = 0           #for non existing members such as the child of a childless couple (it just connects them)
 VIS_NOT_READY = 1
 VIS_VISIBLE = 2
-VIS_HIGH = 3            #
+VIS_HIGH = 3
+KW_SEP = ";  "  
+
+db.define_table('TblPrivateFields',
+                Field('name', type='string'),
+                Field('table_name', type='string'),
+                Field('type', type='string'),  #string|integer|date|boolean
+                Field('description', type='string'),
+                Field('options', type='string') #opt1|opt2|... or opt1=1|opt2=2|.. 
+)
 
 db.define_table('TblChatGroup',
                 Field('name', type='string'),
@@ -71,7 +82,8 @@ db.define_table('TblStories',
                 Field('imported_from', type='string'),
                 Field('first_story', type='integer'),
                 Field('chapter_num', type='integer'),
-                Field('num_chapters', type='integer')
+                Field('num_chapters', type='integer'),
+                Field('sorting_key', type='string', default=None)
 )                
 
 db.define_table('TblStoryVersions',
@@ -94,32 +106,9 @@ db.define_table('TblWordStories',
                 Field('word_count', type='integer')
 )
 
-db.define_table('TblDefaults',
-                Field('AdminHrefInitialAddress', type='string'),
-                Field('AdminMaxResultsInPage', type='integer'),
-                Field('AdminThumbnailPhotoHeight', type='integer'),
-                Field('CommentsEmailAddress', type='string'),
-                Field('CommentsEmailName', type='string'),
-                Field('IIDD', type='integer'),
-                Field('IdentifyEmailAddress', type='string'),
-                Field('IdentifyEmailName', type='string'),
-                Field('MailFromAddress', type='string'),
-                Field('MailFromName', type='string'),
-                Field('MailHost', type='string'),
-                Field('MailPort', type='integer'),
-                Field('NormalPhotoWidth', type='integer'),
-                Field('PageHitsCountingStatus', type='integer'),
-                Field('PhotosInEvent', type='integer'),
-                Field('PhotosInMember', type='integer'),
-                Field('ThumbnailPhotoWidth', type='integer'),
-                Field('UserMaxPhotosInUnidentifiedPage', type='integer'),
-                Field('UserMaxRandomEventsInMainPage', type='integer'),
-                Field('UserMaxResultsInPage', type='integer'),
-)
-
 db.define_table('TblEventMembers',
-                Field('Event_id', type='integer'),
-                Field('Member_id', type='integer'),
+                Field('event_id', type='integer'),
+                Field('member_id', type='integer'),
 )
 
 db.define_table('TblEventArticles',
@@ -128,47 +117,37 @@ db.define_table('TblEventArticles',
 )
 
 db.define_table('TblEventPhotos',
-                Field('EventID', type='integer'),
-                Field('Event_id', type='integer'),
-                Field('EventPhotoRank', type='integer'),
-                Field('PhotoID', type='integer'),
-                Field('Photo_id', type='integer'),
+                Field('event_id', type='integer'),
+                Field('photo_id', type='integer'),
 )
 
-db.define_table('TblEventTypes',
-                Field('Description', type='string'),
-                Field('IIDD', type='integer'),
-                Field('ImageName', type='string'),
-                Field('Name', type='string'),
-)
+db.define_table('TblEventDocs',
+               Field('event_id', type='integer'),
+               Field('doc_id', type='integer')
+               )
+
+db.define_table('TblEventVideos',
+               Field('event_id', type='integer'),
+               Field('video_id', type='integer')
+               )
 
 db.define_table('TblEvents',
-                Field('Description', type='text'),
-                Field('DescriptionNoHtml', type='text'),
+                Field('description', type='text'),
                 Field('story_id', type=db.TblStories),
-                Field('EventDate', type='string'),
                 Field('event_date', type='date', default=NO_DATE),
                 Field('event_date_dateunit', type='string', default='Y'),
                 Field('event_date_datespan', type='integer', default=1),
                 Field('event_date_dateend', type='date', default=NO_DATE),
-                Field('EventRank', type='integer'),
-                Field('IIDD', type='integer'),
-                Field('Name', type='string'),
-                Field('ObjectID', type='integer'),
-                Field('Object_id', type='integer'),
-                Field('PageHits', type='integer'),
-                Field('Place', type='string'),
-                Field('SSource', type='string'),
-                Field('StatusID', type='integer'),
-                Field('Status_id', type='integer'),
-                Field('TypeID', type='integer'),
-                Field('Type_id', type='integer'),
+                Field('name', type='string'),
+                Field('pagehits', type='integer'),
+                Field('place', type='string'),
+                Field('ssource', type='string'),
                 Field('deleted', type='boolean', default=False)
 )
 
 db.define_table('TblTermMembers',
                 Field('term_id', type='integer'),
-                Field('Member_id', type='integer'),
+                Field('member_id', type='integer'),
 )
 
 db.define_table('TblTermArticles',
@@ -178,19 +157,19 @@ db.define_table('TblTermArticles',
 
 db.define_table('TblTermPhotos',
                 Field('term_id', type='integer'),
-                Field('Photo_id', type='integer'),
+                Field('photo_id', type='integer'),
 )
 
 db.define_table('TblFamilyConnectionTypes',
-                Field('Description', type='string'),
-                Field('IIDD', type='integer'),
+                Field('description', type='string'),
+                Field('iidd', type='integer'),
 )
 
 db.define_table('TblMemberPhotos',
-                Field('MemberID', type='integer'),
-                Field('Member_id', type='integer'),
-                Field('PhotoID', type='integer'),
-                Field('Photo_id', type='integer'),
+                Field('memberid', type='integer'),
+                Field('member_id', type='integer'),
+                Field('photoid', type='integer'),
+                Field('photo_id', type='integer'),
                 Field('x', type='integer'),   #location of face in the picture
                 Field('y', type='integer'),
                 Field('r', type='integer'),
@@ -206,64 +185,72 @@ db.define_table('TblArticlePhotos',
                 Field('who_identified', type=db.auth_user)
 )
 
-db.define_table('TblMembers',
-                Field('title', type='string'),
-                Field('first_name', type='string'),
-                Field('last_name', type='string'),
-                Field.Virtual('full_name', lambda rec: (rec.title + ' ' if rec.title else '') + rec.first_name + ' ' + rec.last_name),
-                Field('former_first_name', type='string'),
-                Field('former_last_name', type='string'),
-                Field('DateOfAlia', type='string'),
-                Field('date_of_alia', type='date', default=NO_DATE),
-                Field('date_of_alia_dateunit', type='string', default='N'),
-                Field('date_of_alia_datespan', type='integer', default=0),
-                Field('date_of_alia_dateend', type='date', default=NO_DATE),
-                Field('DateOfBirth', type='string'),
-                Field('date_of_birth', type='date', default=NO_DATE), 
-                Field('date_of_birth_dateunit', type='string', default='N'), 
-                Field('date_of_birth_datespan', type='integer', default=0), 
-                Field('date_of_birth_dateend', type='date', default=NO_DATE),
-                Field('date_of_death', type='date', default=NO_DATE),
-                Field('date_of_death_dateunit', type='string', default='N'),
-                Field('date_of_death_datespan', type='integer', default=0),
-                Field('date_of_death_dateend', type='date', default=NO_DATE),
-                Field('cause_of_death', type='integer', default=0),
-                Field('DateOfMember', type='string'),
-                Field('date_of_member', type='date', default=NO_DATE),
-                Field('date_of_member_dateunit', type='string', default='N'),
-                Field('date_of_member_datespan', type='integer', default=0),
-                Field('date_of_member_dateend', type='date', default=NO_DATE),
-                Field('Education', type='string'),
-                Field('FormerName', type='string'),
-                Field('gender', type='string'), #F, M and also FM and MF for transgenders...
-                Field('IIDD', type='integer'),
-                Field('father_id', type='integer'), #all family relations can be derived from these 2 fields.
-                Field('mother_id', type='integer'), #virtual child can define childless married couple etc. 
-                Field('member_photo_id', type='integer'),
-                Field('visible', type='boolean'), #obsolete
-                Field('visibility', type='integer'),
-                Field('Institute', type='string'),
-                Field('LifeStory', type='text'),
-                Field('LifeStoryNoHtml', type='text'),
-                Field('story_id', type=db.TblStories),
-                Field('Name', type='string'),
-                Field('NickName', type='string'),
-                Field('ObjectID', type='integer'),
-                Field('Object_id', type='integer'),
-                Field('PageHits', type='integer'),
-                Field('PlaceOfBirth', type='string'),
-                Field('place_of_death', type='string', default=""),
-                Field('Professions', type='string'),
-                Field('StatusID', type='integer'),
-                Field('Status_id', type='integer'),
-                Field('facePhotoURL', type='string'),
-                Field('facePhotoURL_webp', type='string'),
-                Field('deleted', type='boolean', default=False),
-                Field('update_time', type='datetime'),
-                Field('updater_id', type=db.auth_user),
-                Field('divorced_parents', type='boolean', default=False),  #do not show parents as couple
-                Field('approved', type='boolean')
-)
+#db.define_table('TblMembers')
+fields = [
+    Field('title', type='string'),
+    Field('first_name', type='string'),
+    Field('last_name', type='string'),
+    Field.Virtual('full_name', lambda rec: (rec.title + ' ' if rec.title else '') + rec.first_name + ' ' + rec.last_name),
+    #Field.Virtual('name', lambda rec: (rec.first_name + ' ' if rec.first_name else "") + (rec.last_name if rec.last_name else "")),
+    Field('name', default="noname", compute=lambda rec: (rec.first_name + ' ' if rec.first_name else "") + (rec.last_name if rec.last_name else "")),
+    Field('former_first_name', type='string'),
+    Field('former_last_name', type='string'),
+    Field('date_of_alia', type='date', default=NO_DATE, description='date-of-alia'),
+    Field('date_of_alia_dateunit', type='string', default='N'),
+    Field('date_of_alia_datespan', type='integer', default=0),
+    Field('date_of_alia_dateend', type='date', default=NO_DATE),
+    Field('date_of_birth', type='date', default=NO_DATE, description='date-of-birth'), 
+    Field('date_of_birth_dateunit', type='string', default='N'), 
+    Field('date_of_birth_datespan', type='integer', default=0), 
+    Field('date_of_birth_dateend', type='date', default=NO_DATE),
+    Field('date_of_death', type='date', default=NO_DATE, description='date-of-death'),
+    Field('date_of_death_dateunit', type='string', default='N'),
+    Field('date_of_death_datespan', type='integer', default=0),
+    Field('date_of_death_dateend', type='date', default=NO_DATE),
+    Field('cause_of_death', type='integer', default=0, description='cause-of-death', options='died=0|fell=1|killed=3|murdered=3'),
+    Field('date_of_member', type='date', default=NO_DATE),
+    Field('date_of_member_dateunit', type='string', default='N'),
+    Field('date_of_member_datespan', type='integer', default=0),
+    Field('date_of_member_dateend', type='date', default=NO_DATE),
+    Field('date_of_entry', type='date', default=NO_DATE),
+    Field('date_of_entry_dateunit', type='string', default='N'),
+    Field('date_of_entry_datespan', type='integer', default=0),
+    Field('date_of_entry_dateend', type='date', default=NO_DATE),
+    Field('entry_type', type='integer', options="birth=1|joined=2|marry=3"),
+    Field('date_of_exit', type='date', default=NO_DATE),
+    Field('date_of_exit_dateunit', type='string', default='N'),
+    Field('date_of_exit_datespan', type='integer', default=0),
+    Field('date_of_exit_dateend', type='date', default=NO_DATE),
+    Field('exit_type', type='integer', options="death=1|left=2"),
+    Field('education', type='string'),
+    Field('formername', type='string'),
+    Field('gender', type='string', description='gender', options="male='M'|female='F'"), #F, M and also FM and MF for transgenders...
+    Field('father_id', type='integer'), #all family relations can be derived from these 2 fields.
+    Field('mother_id', type='integer'), #virtual child can define childless married couple etc.
+    Field('father2_id', type='integer'),#to enable same sex couples
+    Field('mother2_id', type='integer'),
+    Field('member_photo_id', type='integer'),
+    Field('visible', type='boolean'), #obsolete
+    Field('visibility', type='integer', description='visibility', options='vis-never=0|vis-not-ready=1|vis-visible=2|vis-high=3'),
+    Field('institute', type='string'),
+    Field('lifestory', type='text'),
+    Field('lifestorynohtml', type='text'),
+    Field('story_id', type=db.TblStories),
+    Field('name', type='string'),
+    Field('nickname', type='string'),
+    Field('placeofbirth', type='string'),
+    Field('place_of_death', type='string', default=""),
+    Field('professions', type='string'),
+    Field('facephotourl', type='string'),
+    Field('facephotourl_webp', type='string'),
+    Field('deleted', type='boolean', default=False),
+    Field('update_time', type='datetime'),
+    Field('updater_id', type=db.auth_user),
+    Field('parents_marital_status', type='integer', default=0, options='dp-normal=0|dp-divorced=1|dp-hide-couple=2'),  #do not show parents as couple
+    Field('approved', type='boolean'),
+    Field('family_connections_stored', type='boolean')    
+]
+db.define_table('TblMembers', *fields)
 
 db.define_table('TblArticles',
                 Field('name', type='string'),
@@ -277,8 +264,8 @@ db.define_table('TblArticles',
                 Field('date_end_dateend', type='date', default=NO_DATE),
                 Field('story_id', type=db.TblStories),
                 Field('deleted', type='boolean', default=False),
-                Field('facePhotoURL', type='string'),
-                Field('facePhotoURL_webp', type='string'),
+                Field('facephotourl', type='string'),
+                Field('facephotourl_webp', type='string'),
                 Field('update_time', type='datetime'),
                 Field('updater_id', type=db.auth_user),
 )
@@ -300,21 +287,13 @@ db.define_table('TblChats',
 )
 
 db.define_table('TblPhotos',
-                Field('ArchiveNum', type='string'),
-                Field('Description', type='text'),
-                Field('DescriptionNoHtml', type='text'),
+                Field('description', type='text'),
                 Field('story_id', type=db.TblStories),
-                Field('IIDD', type='integer'),
-                Field('LocationInDisk', type='string'),
                 Field('photo_path', type='string'),
                 Field('webp_photo_path', type='string'),
-                Field('Name', type='string'),
+                Field('name', type='string'),
                 Field('original_file_name', type='string'),
                 Field('embedded_photo_date', type='datetime'),
-                Field('ObjectID', type='integer'), #obsolete, to be replaced by the following line
-                Field('Object_id', type='integer'),
-                Field('PageHits', type='integer'),
-                Field('PhotoDate', type='string'),
                 Field('photo_date', type='date', default=NO_DATE),
                 Field('photo_date_dateunit', type='string', default='Y'), # D, M or Y for day, month, year
                 Field('photo_date_datespan', type='integer', default=1), # how many months or years in the range
@@ -323,13 +302,10 @@ db.define_table('TblPhotos',
                 Field('longitude', type='float'),
                 Field('has_geo_info', type='boolean'),
                 Field('zoom', type='integer', default=12),
-                Field('PhotoRank', type='integer'),
-                Field('Photographer', type='string'), #obsolete
+                Field('photographer', type='string'), #obsolete
                 Field('photographer_id', type='integer'),
-                Field('Recognized', type='boolean'),
+                Field('recognized', type='boolean', default=False),
                 Field('handled', type='boolean'), #show photo where recognition is still pending
-                Field('StatusID', type='integer'),
-                Field('Status_id', type='integer'),
                 Field('width', type='integer', default=0),
                 Field('height', type='integer', default=0),
                 Field('uploader', type=db.auth_user),
@@ -346,7 +322,8 @@ db.define_table('TblPhotos',
                 Field('no_slide_show', type='boolean', default=False),
                 Field('curr_dhash', type='string'),  #after editing such as rotation and cropping. will be used to reload photo after using photoshop etc.
                 Field('dup_checked', type='boolean'),  #to be used only once, to detect all old dups. 
-                Field('usage', type='integer', default=0) #1=has identified members 2=has assigned tags 3=both, #todo need to populate, then use
+                Field('usage', type='integer', default=0), #1=has identified members 2=has assigned tags 3=both, #todo need to populate, then use
+                Field('has_story_text', type='boolean')
                 #to select only relevant photos for opening slide show
 )
 
@@ -373,6 +350,12 @@ db.define_table('TblItemTopics',
           Field('story_id', type=db.TblStories)
 )
 
+db.define_table('TblFamilyConnections',
+                Field('member_id', type=db.TblMembers),
+                Field('relative_id', type=db.TblMembers),
+                Field('relation', type='string') #1=parent, 2=spouse, 3=sibling, 4=child, 
+                )
+
 db.define_table('TblVideos',
                 Field('name', type='string'),
                 Field('video_type', type='string'),
@@ -391,7 +374,10 @@ db.define_table('TblVideos',
                 Field('uploader', type='string'),
                 Field('title', type='string'),
                 Field('description', type='text'),
-                Field('upload_date', type='datetime')
+                Field('yt_upload_date', type='datetime'),
+                Field('thumbnail_url', type='string'),
+                Field('duration', type='integer'),
+                Field('cuepoints_text', type='text', default='')
                 )
 
 db.define_table('TblDocs',
@@ -415,6 +401,13 @@ db.define_table('TblDocs',
                 Field('upload_date', type='datetime')
                 )
 
+db.define_table('TblDocSegments',
+                Field('doc_id', type=db.TblDocs),
+                Field('page_num', type='integer'),
+                Field('page_part_num', type='integer'),
+                Field('story_id', type=db.TblStories)
+)                
+
 db.define_table('TblAudios',
                 Field('name', type='string'),
                 Field('audio_type', type='string'),
@@ -433,32 +426,12 @@ db.define_table('TblAudios',
                 Field('recorder_id', type=db.TblRecorders)
                 )
 
-db.define_table('TblStatuses',
-                Field('IIDD', type='integer'),
-                Field('Name', type='string'),
-)
-
-db.define_table('TblSuperAdmins',
-                Field('IIDD', type='integer'),
-                Field('Name', type='string'),
-                Field('Password', type='string'),
-)
 
 db.define_table('TblTerms',
-                Field('Background', type='text'),
-                Field('BackgroundNoHtml', type='text'),
+                Field('background', type='text'),
                 Field('story_id', type=db.TblStories),
-                Field('IIDD', type='integer'),
-                Field('InventedBy', type='string'),
-                Field('InventedByMemberID', type='integer'),
-                Field('InventedByMember_id', type='integer'),
-                Field('Name', type='string'),
-                Field('ObjectID', type='integer'),
-                Field('Object_id', type='integer'),
-                Field('PageHits', type='integer'),
-                Field('StatusID', type='integer'),
-                Field('Status_id', type='integer'),
-                Field('TermTranslation', type='string'),
+                Field('name', type='string'),
+                Field('termtranslation', type='string'),
                 Field('deleted', type='boolean', default=False)
 )
 
@@ -466,13 +439,16 @@ db.define_table('TblPageHits',
                 Field('what', type='string'),
                 Field('item_id', type='integer'),
                 Field('count', type='integer', default=0),
-                Field('new_count', type='integer', default=0)
+                Field('new_count', type='integer', default=0),
+                Field('date', type='date')
                 )
 
 db.define_table('TblFeedback',
                 Field('fb_code_version', type='string'), 
-                Field('fb_bad_message', type='text'),
-                Field('fb_good_message', type='text'),
+                Field('fb_date', type='date'),
+                Field('fb_bad_message', type='text'),  #todo: delete after fb_message is working
+                Field('fb_good_message', type='text'), #todo: ditto
+                Field('fb_message', type='text'),
                 Field('fb_email', type='string'),
                 Field('fb_name', type='string'),
                 Field('fb_device_type', type='string'),
@@ -505,7 +481,11 @@ db.define_table('TblConfiguration',
                 Field('exclusive', type='boolean'),
                 Field('enable_cuepoints', type='boolean', default=False),
                 Field('allow_publishing', type='boolean', default=False),
-                Field('expose_gallery', type='boolean', default=False)
+                Field('expose_gallery', type='boolean', default=False),
+                Field('short_bio_title', type='boolean', default=False),
+                Field('articles_in_menu', type='boolean', default=True),
+                Field('show_chat_buttons', type='boolean', default=True),
+                Field('single_doc_entry', type='boolean', default=False)
                 )
 
 db.define_table('TblLocaleCustomizations',
@@ -603,12 +583,19 @@ db.define_table('TblSearches',
 
 db.define_table('TblMembersVideos',
                 Field('video_id', type=db.TblVideos),
-                Field('member_id', type=db.TblMembers)
+                Field('member_id', type=db.TblMembers),
+                Field('cuepoints_count', type='integer')
                 )
 
 db.define_table('TblMembersDocs',
                 Field('doc_id', type=db.TblDocs),
                 Field('member_id', type=db.TblMembers)
+                )
+
+db.define_table('TblMembersDocSegments',
+                Field('doc_segment_id', type=db.TblDocSegments),
+                Field('member_id', type=db.TblMembers),
+                Field('member_count', type='integer')
                 )
 
 db.define_table('TblVideoCuePoints',
@@ -628,10 +615,10 @@ def write_indexing_sql_scripts():
        psql -f create_indexes.sql <database-name>
     '''
     indexes = [
-        ('"TblMemberPhotos"', '"Member_id"'),
-        ('"TblMemberPhotos"', '"Photo_id"', 'x', 'y'),
-        ('"TblEventMembers"', '"Member_id"'),
-        ('"TblEventMembers"', '"Event_id"'),
+        ('"TblMemberPhotos"', '"member_id"'),
+        ('"TblMemberPhotos"', '"photo_id"', 'x', 'y'),
+        ('"TblEventMembers"', '"member_id"'),
+        ('"TblEventMembers"', '"event_id"'),
         ('"TblWordStories"',  'word_id'),
         ('"TblPhotos"',       'crc')
     ]
@@ -657,10 +644,10 @@ def write_indexing_sql_scripts():
 write_indexing_sql_scripts()                
 
 translatable_fields = dict(
-    TblEvents = ['Description', 'Name', 'Keyword', 'Place', 'SSource'],
-    TblMembers = ['first_name', 'last_name', 'former_first_name', 'former_last_name', 'NickName'],
+    TblEvents = ['description', 'name'],
+    TblMembers = ['first_name', 'last_name', 'former_first_name', 'former_last_name', 'nickname'],
     TblPhotographers = ['name'],
-    TblPhotos = ['Description', 'Name'],
+    TblPhotos = ['description', 'name'],
     TblTopics = ['name', 'description'],
     TblVideos = ['name'],
     TblTerms = ['name']

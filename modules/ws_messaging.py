@@ -25,6 +25,7 @@ def send_message(key, user=None, group=None, **data):
         data=data
     )
     group = messaging_group(user, group)
+    comment(f"-------------------sending message. key is {key}")
     try:
         send_data(group, obj, key)
     except Exception as e:
@@ -45,10 +46,11 @@ def try_send_message(key, user=None, group=None, **data):
 
 
 def send_data(group, obj, key):
-    request = inject('request')
+    request, comment = inject('request', 'comment')
     host = request.env.http_host
     txt = jsondumps(obj)
-    # comment('send message: group={grp} key={key} text={txt}', grp=group, key=key, txt=txt[:40])
+    txt40 = txt[:40]
+    comment(f'send message: group={group} key={key} text={txt40}')
     if request.is_https:
         h = 'https'
         port = '8443' if host == 'tol.life' else '9443'

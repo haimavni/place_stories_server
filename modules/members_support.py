@@ -1,10 +1,12 @@
 from gluon.storage import Storage
 from .folders import *
 from .date_utils import get_all_dates
+from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 
 def get_member_rec(member_id, member_rec=None, prepend_path=False):
-    db, auth = inject('db', 'auth')
+    db, auth, comment, NO_DATE, RESTRICTED = inject('db', 'auth', 'comment', 'NO_DATE', 'RESTRICTED')
+    is_dead = False
     if member_rec:
         rec = member_rec  # used when initially all members are loaded into the cache
     elif not member_id:
@@ -15,8 +17,10 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
         return None
     if rec.deleted:
         return None
-    if rec.updater_id:
-        rec.updater_name = auth.user_name(rec.updater_id)
+    editing_ok = True
+    editing_ok = auth.current_user() == rec.updater_id or not auth.has_membership(RESTRICTED)
+    rec.editing_ok = editing_ok
+    is_dead = (rec.date_of_death != NO_DATE) & (rec.date_of_death != None)
     dates = get_all_dates(rec)
     rec = Storage(rec.as_dict())
     for d in dates:
@@ -24,16 +28,20 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
     rec.full_name = member_display_name(rec, full=True)
     rec.name = member_display_name(rec, full=False)
     if prepend_path:
-        rec.facePhotoURL = photos_folder('profile_photos') + (rec.facePhotoURL or 'dummy_face.png')
+        rec.facephotourl = photos_folder(PROFILE_PHOTOS) + (rec.facephotourl or 'dummy_face.png')
+    if is_dead:
+        rec.life_status = "dead"
+    else:
+        rec.life_status = "alive"
     return rec
 
 
 def older_display_name(rec, full):
-    s = rec.Name or ''
-    if full and rec.FormerName:
-        s += ' ({})'.format(rec.FormerName)
-    if full and rec.NickName:
-        s += ' - {}'.format(rec.NickName)
+    s = rec.name or ''
+    if full and rec.formername:
+        s += ' ({})'.format(rec.formername)
+    if full and rec.nickname:
+        s += ' - {}'.format(rec.nickname)
     return s
 
 
@@ -53,8 +61,8 @@ def member_display_name(rec=None, member_id=None, full=True):
                 s += ' '
             s += rec.former_last_name
         s += ')'
-    if rec.NickName:
-        s += ' - {}'.format(rec.NickName)
+    if rec.nickname:
+        s += ' - {}'.format(rec.nickname)
     return s
 
 
@@ -120,10 +128,10 @@ def init_query(tbl, editing=False, is_deleted=False, user_id=None):
         if not is_alive:
             return q
     else:
-        q &= (tbl.story_id == db.TblStories.id) & (tbl.deleted != is_alive)
+        q &= (tbl.story_id == db.TblStories.id) & (db.TblStories.deleted != is_alive)
     if editing and auth.has_membership(RESTRICTED, user_id):
         if tbl == db.TblStories:
-            q &= (tbl.author_id == user_id)
+            q &= (db.TblStories.author_id == user_id)
         elif tbl == db.TblPhotos or tbl == db.TblDocs or tbl == db.TblAudios:
             q &= (tbl.uploader == user_id)
         elif tbl == db.Tbl.Videos:
@@ -200,9 +208,9 @@ def pin_story(story_id):
 def member_photos_by_updater(updater_id):
     db = inject('db')
     lst = db((db.TblMembers.deleted != True) & (db.TblMembers.updater_id == updater_id) & \
-             (db.TblMemberPhotos.Member_id == db.TblMembers.id)). \
+             (db.TblMemberPhotos.member_id == db.TblMembers.id)). \
         select(db.TblMembers.id, db.TblMembers.first_name, db.TblMembers.last_name, db.TblMembers.updater_id,
-               db.TblMemberPhotos.Photo_id, orderby=db.TblMembers.id)
+               db.TblMemberPhotos.photo_id, orderby=db.TblMembers.id)
     return lst
 
 
@@ -211,11 +219,11 @@ def profile_photo_path(story_id):
     member_rec = db(db.TblMembers.story_id == story_id).select().first()
     if not member_rec:
         comment(f"story id={story_id} has no member")
-    if member_rec and member_rec.facePhotoURL:
-        fname = member_rec.facePhotoURL
+    if member_rec and member_rec.facephotourl:
+        fname = member_rec.facephotourl
     else:
         fname = "dummy_face.png"
-    return photos_folder('profile_photos') + fname
+    return photos_folder(PROFILE_PHOTOS) + fname
 
 def check_dups():
     db = inject('db')
@@ -236,15 +244,26 @@ def check_dups():
             duplicates.append(dic[itm])
     return duplicates
 
-    def remove_detached_member_stories():
-        db = inject('db')
-        lst = db(db.TblStories.used_for=='STORY4MEMBER').select(db.TblStories.id)
-        lst - [rec.id for rec in lst]
-        detached = 0
-        for sid in lst:
-            if db(db.TblMembers.story_id==sid).count() == 0:
-                comment(f'story #{sid} is detached')
-                detached += 1
-        return f'{detached} detached stories found'
-        
-
+def set_story_sorting_keys(refresh=False):
+    db, STORY4MEMBER = inject('db', 'STORY4MEMBER')
+    if refresh:
+        db(db.TblStories.deleted != True).update(sorting_key = None)
+    q = (db.TblStories.deleted != True) & \
+        (db.TblStories.used_for==STORY4MEMBER) & \
+        (db.TblStories.sorting_key==None) & \
+        (db.TblMembers.story_id==db.TblStories.id)
+    nms = 0
+    for rec in db(q).select():
+        nms += 1
+        story_rec = rec.TblStories
+        member_rec = rec.TblMembers
+        key = (member_rec.last_name or '') + ' ' + (member_rec.first_name or '')
+        story_rec.update_record(sorting_key=key)
+    q = (db.TblStories.deleted != True) & \
+        (db.TblStories.sorting_key==None) & \
+        (db.TblStories.used_for != STORY4MEMBER)
+    ns = 0
+    for rec in db(q).select():
+        ns += 1
+        rec.update_record(sorting_key=rec.name)
+    return dict(ns=ns, nms=nms)

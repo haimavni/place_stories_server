@@ -241,6 +241,26 @@ def set_expose_gallery_option(vars):
     return dict()
 
 @serve_json
+def short_bio_title_option(vars):
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    short_bio_title_on = vars.option == 'user.short-bio-title-on'
+    config_rec.update_record(short_bio_title=short_bio_title_on)
+    return dict()
+
+@serve_json
+def set_articles_in_menu_option(vars):
+    config_rec = db(db.TblConfiguration).select().first()
+    if not config_rec:
+        db.TblConfiguration.insert()
+        config_rec = db(db.TblConfiguration).select().first()
+    articles_in_menu_on = vars.option == 'user.articles-in-menu-on'
+    config_rec.update_record(articles_in_menu=articles_in_menu_on)
+    return dict()
+
+@serve_json
 def set_quick_upload_option(vars):
     config_rec = get_config_rec()
     quick_upload_on = vars.option == 'user.quick-upload-on'
@@ -261,6 +281,25 @@ def cover_photo(vars):
         config_rec.update_record(cover_photo=cover_photo, cover_photo_id=vars.cover_photo_id)
     return dict(cover_photo=cover_photo)
 
+@serve_json
+def editing_ok(vars):
+    table = vars.table or "TblStories"
+    id = vars.id
+    user_id = vars.user_id or auth.current_user()
+    privileges = auth.get_privileges(user_id)
+    if not privileges.RESTRICTED:
+        return True
+    if table == "TblMembers":
+        rec = db(db.TblMembers.id==id).select(db.TblMembers.updater_id).first()
+        updater_id = rec.updater_id
+    else:
+        if table != "TblStories":
+            tbl =  db[table]
+            rec = db(tbl.id==id).select().first()
+            id = rec.story_id
+        srec = db(db.TblStories.id==id).select(db.TblStories.updater_id).first()
+        updater_id = srec.updater_id
+    return dict(dict(user_can_edit=updater_id == user_id))
 
 def get_config_rec():
     config_rec = db(db.TblConfiguration).select().first()

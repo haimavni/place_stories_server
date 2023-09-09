@@ -1,9 +1,7 @@
 ### import yagmail
 from redmail import gmail
+from misc_utils import get_env_var
 
-import os
-
-# import keyring
 from injections import inject
 from folders import system_folder
 
@@ -11,8 +9,8 @@ def email(receivers=["haimavni@gmail.com"], subject=None, message="", sender=Non
     request = inject('request')
     host = request.env.http_host
     subject = subject or f"message from {host}"
-    gmail.username = 'lifestone2508@gmail.com' # Your Gmail address
-    gmail.password = 'wdxrovalrscyksty'
+    gmail.username = 'lifestories2508@gmail.com' # Your Gmail address
+    gmail.password = get_env_var('MAIL_PASSWORD') 
     if isinstance(receivers, str):
         receivers = [receivers]
     if not sender:
@@ -20,11 +18,12 @@ def email(receivers=["haimavni@gmail.com"], subject=None, message="", sender=Non
     if not sender:
         sender = f'info@{host}'
     result = gmail.send(
-        sender=sender + f'<lifestone2508@gmail.com>',
+        sender=sender + f'<lifestories2508@gmail.com>',
         subject=subject,
         receivers=receivers,
         html=message
     )
+    return result
 
 def get_app_title():
     db = inject('db')

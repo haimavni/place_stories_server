@@ -11,7 +11,7 @@ from .folders import url_folder, local_folder
 from .pdf_utils import pdf_to_text, save_pdf_jpg
 from time import sleep
 from . import ws_messaging
-from misc_utils import chmod
+from misc_utils import chmod, timestamp
 import array
 
 def create_uploading_doc(file_name, crc, user_id):
@@ -50,21 +50,17 @@ def create_uploading_doc(file_name, crc, user_id):
 
 def save_uploading_chunk(record_id, start, blob):
     db, comment = inject('db', 'comment')
-    comment(f"save_uploading_chunk. record id: {record_id}, start: {start}")
+    # comment(f"save_uploading_chunk. record id: {record_id}, start: {start}")
     drec = db(db.TblDocs.id==record_id).select().first()
     if not drec:
         raise Exception(f'record_id {record_id} not found')
     file_name = local_docs_folder() + drec.doc_path
-    comment(f"save_uploading_chunk. file_name: {file_name}, record id: {record_id}, start: {start}")
+    # comment(f"save_uploading_chunk. file_name: {file_name}, record id: {record_id}, start: {start}")
     with open(file_name, 'ab') as f:
         f.seek(start, 0)
-        comment('before tell')
         f.tell()
-        comment('before blob')
         f.write(blob)
-        comment('before flush')
         f.flush()
-        comment('after flush')
 
 
 def handle_loaded_doc(record_id):
@@ -77,14 +73,84 @@ def handle_loaded_doc(record_id):
     pdf_jpg_path = pdf_jpg_folder + file_name.replace('.pdf', '.jpg')
     save_pdf_jpg(doc_file_name, pdf_jpg_path)
     chmod(pdf_jpg_path, 0o777)
-    calc_doc_story(record_id)
-    db.commit()
 
-# code below is obsolete
-def save_uploaded_doc(file_name, s, user_id, sub_folder=None):
+def save_doc_segment_thumbnail(doc_segment_id):
+    # save using pdf2image which does not always works
+    db, comment = inject('db', 'comment')
+    pdf_seg_rec = db(db.TblDocSegments.id==doc_segment_id).select().first()
+    doc_rec = db(db.TblDocs.id==pdf_seg_rec.doc_id).select().first()
+    doc_file_name = local_docs_folder() + doc_rec.doc_path
+    #-------
+    pdf_jpg_path = get_pdf_jpg_path(doc_rec.doc_path, pdf_seg_rec.page_num)
+    comment(f"-----save doc seg thumb {doc_file_name} at {pdf_jpg_path} ")
+    save_pdf_jpg(doc_file_name, pdf_jpg_path, pdf_seg_rec.page_num)
+    chmod(pdf_jpg_path, 0o777)
+
+def save_uploaded_doc_seg_thumbnail(data, doc_id, segment_id, ptp_key):
+    #sometimes the above function silently fails to create file
+    db, comment = inject('db', 'comment')
+    # comment(f"------------ save uploaded thumbail {doc_id} / {segment_id}")
+    blob = array.array('B', [x for x in map(ord, data)]).tobytes()
+    doc_rec = db(db.TblDocs.id==doc_id).select().first()
+    page_num = None
+    if segment_id:
+        doc_seg_rec = db(db.TblDocSegments.id==segment_id).select().first()
+        page_num = doc_seg_rec.page_num
+    pdf_jpg_path = get_pdf_jpg_path(doc_rec.doc_path, page_num)
+    # comment(f"pdf_jpg_path: {pdf_jpg_path}")
+    with open(pdf_jpg_path, "bw") as f:
+        f.write(blob)
+    chmod(pdf_jpg_path, 0o777)
+    return True
+
+def save_uploaded_doc_thumbnail(data, doc_id, ptp_key):
+    #sometimes the above function silently fails to create file
+    db, comment = inject('db', 'comment')
+    # comment(f"------------ save uploaded doc thumbail {doc_id} ptp key: {ptp_key}")
+    blob = array.array('B', [x for x in map(ord, data)]).tobytes()
+    # doc_rec = db(db.TblDocs.id==doc_id).select().first()
+    pdf_jpg_path = calc_doc_jpg_path(doc_id)
+    # comment(f"pdf_jpg_path: {pdf_jpg_path}")
+    if os.path.exists(pdf_jpg_path):
+        os.rename(pdf_jpg_path, pdf_jpg_path + ".bak")
+    with open(pdf_jpg_path, "bw") as f:
+        f.write(blob)
+    chmod(pdf_jpg_path, 0o777)
+    return True
+
+def restore_doc_thumbnail(doc_id):
+    db, comment = inject('db', 'comment')
+    pdf_jpg_path = calc_doc_jpg_path(doc_id)
+    bak_path = pdf_jpg_path + ".bak"
+    if os.path.exists(bak_path):
+        os.remove(pdf_jpg_path)
+        os.rename(bak_path, pdf_jpg_path)
+    
+def confirm_doc_thumbnail(doc_id):
+    db, comment = inject('db', 'comment')
+    pdf_jpg_path = calc_doc_jpg_path(doc_id)
+    bak_path = pdf_jpg_path + ".bak"
+    if os.path.exists(bak_path):
+        os.remove(bak_path)
+
+def calc_doc_jpg_path(doc_id):
+    db, comment = inject('db', 'comment')
+    doc_rec = db(db.TblDocs.id==doc_id).select().first()
+    return get_pdf_jpg_path(doc_rec.doc_path)
+
+def get_pdf_jpg_path(doc_path, page_num=None):    
+    path, file_name = os.path.split(doc_path)
+    pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/' + path + '/'
+    dir_util.mkpath(pdf_jpg_folder)
+    s = f"-{page_num}.jpg" if page_num else ".jpg"
+    result = pdf_jpg_folder + file_name.replace('.pdf', s)
+    return result
+
+# code below is obsolete??
+def save_uploaded_doc(file_name, data, user_id, sub_folder=None):
     auth, log_exception, db, STORY4DOC = inject('auth', 'log_exception', 'db', 'STORY4DOC')
     user_id = user_id or auth.current_user()
-    blob = array.array('B', [x for x in map(ord, s)]).tobytes()
+    blob = array.array('B', [x for x in map(ord, data)]).tobytes()
     crc = zlib.crc32(blob)
     cnt = db((db.TblDocs.crc == crc) & (db.TblDocs.deleted != True)).count()
     if cnt > 0:
@@ -140,103 +206,33 @@ def generate_jpgs_for_all_pdfs():
         if not os.path.isfile(pdf_path):
             continue
         jpg_path = pdf_path.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', '.jpg')
-        r = jpg_path.rfind('/')
-        p = jpg_path[:r+1]
-        dir_util.mkpath(p)
-        jpg_path = pdf_jpg_folder + rec.doc_path.replace('.pdf', '.jpg')
+        # r = jpg_path.rfind('/')
+        # p = jpg_path[:r+1]
+        # dir_util.mkpath(p)
+        # jpg_path = pdf_jpg_folder + rec.doc_path.replace('.pdf', '.jpg')
         save_pdf_jpg(pdf_path, jpg_path)
     return len(lst)
 
-def calc_doc_story(doc_id):
-    try:
-        db, STORY4DOC, log_exception, comment = inject('db', 'STORY4DOC', 'log_exception', 'comment')
-        doc_rec = db(db.TblDocs.id==doc_id).select().first()
-        if doc_rec.text_extracted:
-            return True
-        doc_file_name = local_docs_folder() + doc_rec.doc_path
-        comment(f"enter calc_doc_story of {doc_file_name}")
-        sm = Stories()
-        good = True
-        pdf_result = None
-        try:
-            pdf_result = pdf_to_text(doc_file_name, doc_rec.num_pages_extracted)
-        except Exception as e:
-            log_exception(f'PDF to text error in {doc_rec.doc_path}. Name: {doc_rec.original_file_name}')
-            txt = ''
-            good = False
-            raise
-        if not pdf_result:
-            txt = '- - - - -'
-        if doc_rec.story_id:
-            txt = ''
-            if doc_rec.num_pages_extracted:
-                story_info = sm.get_story(doc_rec.story_id)
-                txt = story_info.story_text
-            txt = txt + pdf_result.text
-            story_info = Storage(
-                story_text=txt,
-                name=doc_rec.name
-            )
-            sm.update_story(doc_rec.story_id, story_info)
-            doc_rec.update_record(text_extracted=pdf_result.num_pages==pdf_result.num_pages_extracted,
-                                  num_pages=pdf_result.num_pages,
-                                  num_pages_extracted=pdf_result.num_pages_extracted)
-        else:
-            story_info = sm.get_empty_story(used_for=STORY4DOC, story_text=pdf_result.text, name=doc_rec.original_file_name)
-            result = sm.add_story(story_info)
-            story_id = result.story_id
-            doc_rec.update_record(story_id=story_id,
-                                  text_extracted=pdf_result.num_pages==pdf_result.num_pages_extracted,
-                                  num_pages=pdf_result.num_pages,
-                                  num_pages_extracted=pdf_result.num_pages_extracted)
-    except Exception as e:
-        log_exception('Error calculating {}'.format(doc_rec.doc_path))
-        return False
-    return good
-    
-def calc_doc_stories(time_budget=None):
-    try:
-        db, comment, log_exception = inject('db', 'comment', 'log_exception')
-        chunk = 10
-        comment("Start calc doc stories cycle")
-        q = (db.TblDocs.text_extracted != True) & (db.TblDocs.deleted != True)
-        n = db(q).count()
-        comment('Start calc doc stories. {} documents left to calculate.', n)
-        if not n:
-            return dict(result="nothing to recalculate")
-        time_budget = time_budget or (500 - 25) #will exit the loop 25 seconds before the a new cycle starts
-        t0 = datetime.datetime.now()
-        ns = 0
-        nf = 0
-        try:
-            while True:
-                dif = datetime.datetime.now() - t0
-                elapsed = int(dif.total_seconds())
-                if elapsed > time_budget:
-                    break
-                doc_ids = []
-                comment('Calc doc stories. {} documents left to calculate.', n)
-                lst = db(q).select(db.TblDocs.id, limitby=(0, chunk))
-                for rec in lst:
-                    if calc_doc_story(rec.id):
-                        doc_ids.append(rec.id)
-                        ns += 1
-                    else:
-                        nf += 1
-                db.commit()
-                comment("{} good, {} bad uploaded", ns, nf)
-                ws_messaging.send_message('DOCS_WERE_UPLOADED', group='ALL', doc_ids=doc_ids)
-                if ns + nf >= n:
-                    break;
-        except:
-            log_exception('Error while calculating doc stories')
-        finally:
-            comment("Finished cycle of calculating doc stories")
-    except Exception as e:
-        log_exception('Error calculating doc stories')
-        raise
-    return dict(good=ns, bad=nf)
-
+def generate_jpgs_for_all_pdf_segmements():
+    db = inject('db')
+    q = (db.TblDocSegments.story_id==db.TblStories.id) & \
+        (db.TblStories.deleted != True) & \
+        (db.TblDocs.id==db.TblDocSegments.doc_id)
+    lst = db(q).select()
+    pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/'
+    dir_util.mkpath(pdf_jpg_folder)
+    for rec in lst:
+        pdf_path = local_docs_folder() + rec.TblDocs.doc_path
+        if not os.path.isfile(pdf_path):
+            continue
+        page_num = rec.TblDocSegments.page_num
+        jpg_path = pdf_path.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', f"-{page_num}.jpg")
+        # r = jpg_path.rfind('/')
+        # p = jpg_path[:r+1]
+        # dir_util.mkpath(p)
+        # jpg_path = pdf_jpg_folder + rec.doc_path.replace('.pdf', '.jpg')
+        save_pdf_jpg(pdf_path, jpg_path, page_num=page_num)
+    return len(lst)
 
 def docs_folder(): 
     return url_folder('docs')
@@ -244,13 +240,48 @@ def docs_folder():
 def local_docs_folder(): 
     return local_folder('docs')
 
-def doc_url(story_id):
-    db = inject('db')
+def doc_url(story_id, drec=None):
+    db = inject("db")
+    if not drec:
+        drec = db(db.TblDocs.story_id==story_id).select().first()
     folder = docs_folder()
-    rec = db(db.TblDocs.story_id==story_id).select().first()
+    return folder + drec.doc_path
+
+def doc_jpg_url(story_id, drec=None):
+    db = inject("db")
+    if not drec:
+        drec = db(db.TblDocs.story_id==story_id).select().first()
+    folder = docs_folder() + "pdf_jpgs/"
+    jpg_path =  drec.doc_path.replace(".pdf", ".jpg")
+    local_fname = local_docs_folder() + "pdf_jpgs/" + jpg_path
+    return folder + jpg_path + timestamp(local_fname)
+
+def doc_segment_url(story_id, rec=None):
     if not rec:
-        return "Document not found"
-    path = folder + rec.doc_path
-    return path
+        rec = doc_segment_by_story_id(story_id)
+    if not rec:
+        return None
+    doc_rec = rec.TblDocs
+    seg_rec = rec.TblDocSegments
+    folder = docs_folder()
+    return folder + doc_rec.doc_path
 
+def doc_segment_jpg_url(story_id, rec=None):
+    if not rec:
+        rec = doc_segment_by_story_id(story_id)
+    if not rec:
+        return None
+    doc_rec = rec.TblDocs
+    seg_rec = rec.TblDocSegments
+    path = doc_rec.doc_path.replace(".pdf", f"-{seg_rec.page_num}.jpg")
+    folder = docs_folder() + "pdf_jpgs/"
+    local_folder = local_docs_folder() + "pdf_jpgs/"
+    local_path = local_folder + path
+    return folder + path + timestamp(local_path)
 
+def doc_segment_by_story_id(story_id):
+    db = inject("db")
+    q = (db.TblDocSegments.story_id==story_id) & \
+        (db.TblDocs.id==db.TblDocSegments.doc_id)
+    rec = db(q).select().first()
+    return rec

@@ -14,17 +14,7 @@ import re
 from gluon.storage import Storage
 from gluon.utils import web2py_uuid
 import array
-
-@serve_json
-def upload_photo(vars):
-    raise Exception("upload fhoto is broken")
-    user_id = vars.user_id or auth.current_user()
-    comment("start handling uploaded files")
-    user_id = int(vars.user_id) if vars.user_id else auth.current_user()
-    fil = vars.file
-    #blob = to_bytes(fil.BINvalue)
-    result = save_uploaded_photo(fil.name, fil.BINvalue, user_id)
-    return dict(upload_result=result)
+from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 @serve_json
 def get_photo_detail(vars):
@@ -50,7 +40,7 @@ def get_photo_detail(vars):
     else:
         back = None
     return dict(photo_src=timestamped_photo_path(rec, webp_supported=vars.webpSupported),
-                photo_name=rec.Name,
+                photo_name=rec.name,
                 original_file_name=rec.original_file_name,
                 embedded_photo_date=rec.embedded_photo_date,
                 photo_topics=photo_topics,
@@ -66,6 +56,7 @@ def get_photo_detail(vars):
                 latitude=rec.latitude,
                 longitude=rec.longitude,
                 zoom=rec.zoom,
+                has_story_text=rec.has_story_text,
                 chatroom_id=story.chatroom_id)
 
 @serve_json
@@ -73,8 +64,7 @@ def update_photo_caption(vars):
     photo_id = int(vars.photo_id)
     caption = vars.caption
     photo_rec = db((db.TblPhotos.id==photo_id) & (db.TblPhotos.deleted != True)).select().first()
-    ##photo_rec.update(Name=caption, Recognized=True)
-    photo_rec.update(Name=caption, handled=True)
+    photo_rec.update(name=caption, handled=True)
     sm = stories_manager.Stories()
     sm.update_story_name(photo_rec.story_id, caption)
     return dict(bla='bla')
@@ -114,12 +104,11 @@ def get_photo_info(vars):
     else:
         photographer_rec = Storage()
     result = dict(
-        name=rec.Name,
-        description=rec.Description,
+        name=rec.name,
+        description=rec.description,
         photographer=photographer_rec.name,
         photo_date_str=all_dates.photo_date.date,
-        photo_date_datespan=all_dates.photo_date.span,
-        photo_date_dateunit=all_dates.photo_date.unit
+        photo_date_datespan=all_dates.photo_date.span
     )
     return result
 
@@ -131,7 +120,7 @@ def save_photo_info(vars):
     pinf = vars.photo_info
     unit, date = parse_date(pinf.photo_date_str)
     photo_rec = db((db.TblPhotos.id == vars.photo_id) & (db.TblPhotos.deleted != True)).select().first()
-    if pinf.name != photo_rec.Name:
+    if pinf.name != photo_rec.name:
         smgr = stories_manager.Stories(vars.user_id)
         smgr.update_story_name(photo_rec.story_id, pinf.name)
     photo_date_str = pinf.photo_date_str
@@ -139,9 +128,7 @@ def save_photo_info(vars):
     pinf.photo_date = date
     pinf.photo_date_dateunit = unit
     del pinf.photographer
-    pinf.Name = pinf.name
-    del pinf.name
-    ###pinf.Recognized = True
+    ###pinf.recognized = True
     photo_rec.update_record(**pinf)
     if photo_date_str:
         dates_info = dict(
@@ -156,22 +143,22 @@ def get_faces(vars):
     get all faces on photo
     '''
     photo_id = vars.photo_id
-    lst = db(db.TblMemberPhotos.Photo_id == photo_id).select()
+    lst = db(db.TblMemberPhotos.photo_id == photo_id).select()
     faces = []
     candidates = []
     for rec in lst:
         if rec.r == None: #found old record which has a member but no location
-            if not rec.Member_id:
+            if not rec.member_id:
                 db(db.TblMemberPhotos.id == rec.id).delete()
                 continue
-            name = member_display_name(member_id=rec.Member_id)
-            candidate = dict(member_id=rec.Member_id, name=name)
+            name = member_display_name(member_id=rec.member_id)
+            candidate = dict(member_id=rec.member_id, name=name)
             candidates.append(candidate)
         else:
-            face = Storage(x=rec.x, y=rec.y, r=rec.r or 20, photo_id=rec.Photo_id)
-            if rec.Member_id:
-                face.member_id = rec.Member_id
-                face.name = member_display_name(member_id=rec.Member_id)
+            face = Storage(x=rec.x, y=rec.y, r=rec.r or 20, photo_id=rec.photo_id)
+            if rec.member_id:
+                face.member_id = rec.member_id
+                face.name = member_display_name(member_id=rec.member_id)
             faces.append(face)
     face_ids = set([face.member_id for face in faces])
     candidates = [c for c in candidates if not c['member_id'] in face_ids]
@@ -194,7 +181,6 @@ def get_articles(vars):
             article.article_id = rec.article_id
             article.name = rec1.TblArticles.name
         articles.append(article)
-    article_ids = set([article.article_id for articls in articles])
     return dict(articles=articles)
 
 @serve_json
@@ -209,8 +195,8 @@ def save_article(vars):
 def detach_photo_from_member(vars):
     member_id = int(vars.member_id)
     photo_id = int(vars.photo_id)
-    q = (db.TblMemberPhotos.Photo_id == photo_id) & \
-        (db.TblMemberPhotos.Member_id == member_id)
+    q = (db.TblMemberPhotos.photo_id == photo_id) & \
+        (db.TblMemberPhotos.member_id == member_id)
     good = db(q).delete() == 1
     ws_messaging.send_message(key='MEMBER_PHOTO_LIST_CHANGED', group='ALL', member_id=member_id, photo_id=photo_id)
     return dict(photo_detached=good)
@@ -231,13 +217,13 @@ def detach_photo_from_article(vars):
     return dict(photo_detached=good)
 
 def remove_duplicate_photo_members(): #todo: remove after all sites are fixed
-    lst = db(db.TblMemberPhotos).select(orderby=db.TblMemberPhotos.Member_id | \
-                                        db.TblMemberPhotos.Photo_id | \
+    lst = db(db.TblMemberPhotos).select(orderby=db.TblMemberPhotos.member_id | \
+                                        db.TblMemberPhotos.photo_id | \
                                                 ~db.TblMemberPhotos.id)
     prev_rec = Storage()
     nd = 0
     for rec in lst:
-        if rec.Member_id != prev_rec.Member_id or rec.Photo_id != prev_rec.Photo_id:
+        if rec.member_id != prev_rec.member_id or rec.photo_id != prev_rec.photo_id:
             prev_rec = rec
             continue
         nd += db(db.TblMemberPhotos.id == rec.id).delete()
@@ -245,6 +231,8 @@ def remove_duplicate_photo_members(): #todo: remove after all sites are fixed
 
 @serve_json
 def get_photo_list(vars):
+    if db(db.TblPhotos).isempty():
+        return dict(photo_list=[], last_photo_id=None, last_photo_date=None, total_photos=0)
     mprl = vars.max_photos_per_line or 8
     MAX_PHOTOS_COUNT = 250 + (mprl - 8) * 250
     selected_order_option = vars.selected_order_option or ""
@@ -314,6 +302,12 @@ def get_photo_list(vars):
     else:
         lst1 = []
     lst1_ids = [rec.id for rec in lst1]
+    recent_photo_ids = vars.recent_photo_ids
+    if recent_photo_ids:
+        lst2 = db(db.TblPhotos.id.belongs(recent_photo_ids)).select()
+        lst2 = [rec for rec in lst2 if rec.id not in lst1_ids]
+        lst1 += lst2;
+    lst1_ids = [rec.id for rec in lst1]
     lst = [rec.TblPhotos for rec in lst if rec.TblPhotos.id not in lst1_ids]
     lst = lst1 + lst
     photo_ids = [rec.id for rec in lst]
@@ -346,7 +340,7 @@ def get_photo_list(vars):
 
 @serve_json
 def get_theme_data(vars):
-    path = images_folder()
+    images_path = images_folder()
     local_path = local_images_folder()
     files = dict(
         header_background='header-background.png',
@@ -357,10 +351,11 @@ def get_theme_data(vars):
     )
     result = dict()
     for k in files:
-        result[k] = path + files[k] if os.path.exists(local_path + files[k]) else ''
-        if not os.path.exists(local_path + files[k]):
-            pass
-            #comment("file {} is missing", k)
+        path = local_path + files[k]
+        if not os.path.exists(path):
+            continue
+        ctime = round(os.path.getctime(path))
+        result[k] = images_path + files[k] + f"?d={ctime}" 
     return dict(files=result)
 
 @serve_json
@@ -413,7 +408,7 @@ def apply_to_selected_photos(vars):
                 #should remove 'P' from usage if it was the last one...
                 db(q).delete()
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
-        keywords = "; ".join(curr_tags)
+        keywords = KW_SEP.join(curr_tags)
         if story_id:
             db(db.TblStories.id == story_id).update(keywords=keywords, is_tagged=bool(keywords))
         if rec:
@@ -466,11 +461,11 @@ def apply_topics_to_photo(vars):
     curr_tag_ids -= deleted
     curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
     curr_tags = sorted(curr_tags)
-    keywords = "; ".join(curr_tags)
+    keywords = KW_SEP.join(curr_tags)
     is_tagged = len(curr_tags) > 0
     srec = db(db.TblStories.id==rec.story_id).select().first()
     srec.update_record(keywords=keywords, is_tagged=is_tagged)
-    # rec.update_record(Recognized=True)
+    # rec.update_record(recognized=True)
     rec.update_record(handled=True)
     
 @serve_json
@@ -501,7 +496,7 @@ def rotate_selected_photos(vars):
 def mark_as_recogized(vars):
     recognized = vars.unrecognize != 'true'
     rec = db(db.TblPhotos.id==int(vars.photo_id)).select().first()
-    rec.update_record(Recognized=recognized)
+    rec.update_record(recognized=recognized)
     db.commit()
     return dict()
 
@@ -509,16 +504,16 @@ def mark_as_recogized(vars):
 def download_files(vars):
     pl = vars.selected_photo_list
     lst = db(db.TblPhotos.id.belongs(pl)).select()
-    folder = local_photos_folder()
-    oversize_folder = local_photos_folder("oversize")
+    folder = local_photos_folder(RESIZED)
+    oversize_folder = local_photos_folder(ORIG)
     uuid = web2py_uuid()
     zip_name = "photos-" + uuid.split('-')[0]
     photo_list = []
     for p in lst:
         if p.oversize:
-            photo_list.append(Storage(path=oversize_folder + p.photo_path, name=p.Name))
+            photo_list.append(Storage(path=oversize_folder + p.photo_path, name=p.name))
         else:
-            photo_list.append(Storage(path=folder + p.photo_path, name=p.Name))
+            photo_list.append(Storage(path=folder + p.photo_path, name=p.name))
     create_zip_file(local_photos_folder("downloads") + zip_name, photo_list)
     download_url = photos_folder("downloads") + zip_name + ".zip"
     return dict(download_url=download_url)
@@ -546,7 +541,7 @@ def flip_photo(vars):
 
 @serve_json
 def crop_photo(vars):
-    faces = db(db.TblMemberPhotos.Photo_id==vars.photo_id).select()
+    faces = db(db.TblMemberPhotos.photo_id==vars.photo_id).select()
     crop_left = int(vars.crop_left)
     crop_top = int(vars.crop_top)
     crop_width = int(vars.crop_width)
@@ -555,7 +550,7 @@ def crop_photo(vars):
         if face.x:
             face.update_record(x=face.x - crop_left, y=face.y - crop_top)
     rec = db(db.TblPhotos.id==vars.photo_id).select().first()
-    path = local_photos_folder("orig") + rec.photo_path
+    path = local_photos_folder(RESIZED) + rec.photo_path
     curr_dhash = crop_a_photo(path, path, crop_left, crop_top, crop_width, crop_height)
     last_mod_time = request.now
     rec.update_record(width=crop_width, height=crop_height, last_mod_time=last_mod_time, curr_dhash=curr_dhash)
@@ -601,7 +596,9 @@ def get_uploaded_info(vars):
 @serve_json
 def replace_duplicate_photos(vars):
     similars, candidates = find_similar_photos(vars.photos_to_keep)
+    comment(f"photos to keep: {vars.photos_to_keep}, similars: {similars}, candidates: {candidates}")
     photos_to_keep_set = set(vars.photos_to_keep) & candidates #we do not allow automatic change to the old photo
+    comment(f"photos_to_keep_set: {photos_to_keep_set}")
     dup_grp = 0
     group = []
     photo_patches = []
@@ -617,6 +614,7 @@ def replace_duplicate_photos(vars):
     patch = handle_dup_group(group, photos_to_keep_set)
     if patch:
         photo_patches.append(patch)
+    comment(f"phtos to keep: {vars.photos_to_keep}")
     delete_photos(vars.photos_to_keep) #the image data was copied to the old photo which has more extra info
     return dict(photo_patches=photo_patches)
 
@@ -656,6 +654,7 @@ def replace_photo(pgroup):
         oversize=new_photo.oversize,
         crc=new_photo.crc,
         dhash=new_photo.dhash,
+        curr_dhash=new_photo.curr_dhash
     )
     db(db.TblPhotos.id==old_photo.id).update(**data)
     db(db.TblPhotos.id==new_photo.id).update( #make the change undoable
@@ -669,12 +668,13 @@ def replace_photo(pgroup):
         last_mod_time=request.now,
         oversize=old_photo.oversize,
         crc=old_photo.crc,
-    dhash=old_photo.dhash,
+        dhash=old_photo.dhash,
+        curr_dhash=old_photo.curr_dhash
     )
     ###data['status'] = 'regular'
     if old_photo.width != new_photo.width:
         ow, nw = old_photo.width, new_photo.width
-        for member_photo_rec in db(db.TblMemberPhotos.Photo_id==old_photo.id).select():
+        for member_photo_rec in db(db.TblMemberPhotos.photo_id==old_photo.id).select():
             if not member_photo_rec.x:
                 continue
             x = int(round(member_photo_rec.x * nw / ow))
@@ -740,9 +740,11 @@ def make_photos_query(vars):
         q &= q1
     if vars.selected_recognition == 'recognized':
         if date_opt != 'undated':
-            q &= ((db.TblPhotos.Recognized == True) | (db.TblPhotos.Recognized == None))
+            q &= ((db.TblPhotos.recognized == True) | (db.TblPhotos.recognized == None))
+
     elif vars.selected_recognition == 'unrecognized':
-        q &= ((db.TblPhotos.Recognized == False) | (db.TblPhotos.Recognized == None))
+        q &= ((db.TblPhotos.recognized == False) | (db.TblPhotos.recognized == None))
+
     elif vars.selected_recognition == 'recognized-not-located':
         lst = unlocated_faces()
         q &= (db.TblPhotos.id.belongs(lst))
@@ -757,7 +759,7 @@ def make_photos_query(vars):
 def with_members_query(member_ids):
     result = None
     for mid in member_ids:
-        q = (db.TblPhotos.id == db.TblMemberPhotos.Photo_id) & (db.TblMemberPhotos.Member_id == mid)
+        q = (db.TblPhotos.id == db.TblMemberPhotos.photo_id) & (db.TblMemberPhotos.member_id == mid)
         lst = db(q).select(db.TblPhotos.id)
         lst = [r.id for r in lst]
         if result:
@@ -768,7 +770,7 @@ def with_members_query(member_ids):
 
 
 def unlocated_faces():
-    q = (db.TblPhotos.id == db.TblMemberPhotos.Photo_id) & (db.TblMemberPhotos.x == None)
+    q = (db.TblPhotos.id == db.TblMemberPhotos.photo_id) & (db.TblMemberPhotos.x == None)
     lst = db(q).select(db.TblPhotos.id, db.TblMemberPhotos.id.count(), groupby=[db.TblPhotos.id], limitby=(0,5000))
     lst = [prec.TblPhotos.id for prec in lst]
     return lst
@@ -807,10 +809,10 @@ def process_photo_list(lst, photo_pairs=dict(), webpSupported=False):
     for rec in lst:
         tpp = timestamped_photo_path(rec, webp_supported=webpSupported)
         keywords=kws[rec.story_id]
-        rec_title='{}: {}'.format(rec.Name, keywords)
+        rec_title='{}: {}'.format(rec.name, keywords)
         dic = Storage(
-            description=rec.Description or "",
-            name=rec.Name,
+            description=rec.description or "",
+            name=rec.name,
             original_file_name=rec.original_file_name,
             keywords=keywords,
             title=rec_title,
@@ -821,13 +823,14 @@ def process_photo_list(lst, photo_pairs=dict(), webpSupported=False):
             side='front',
             photo_id=rec.id,
             src=tpp,
-            square_src=timestamped_photo_path(rec, what='squares', webp_supported=webpSupported),
+            square_src=timestamped_photo_path(rec, what=SQUARES, webp_supported=webpSupported),
             width=rec.width,
             height=rec.height,
+            has_story_text=rec.has_story_text,
             front=Storage(
                 photo_id=rec.id,
                 src=tpp,
-                square_src=timestamped_photo_path(rec, what='squares', webp_supported=webpSupported),
+                square_src=timestamped_photo_path(rec, what=SQUARES, webp_supported=webpSupported),
                 width=rec.width,
                 height=rec.height,
             )
@@ -844,6 +847,7 @@ def delete_photos(photo_list):
     a = db(db.TblPhotos.id.belongs(photo_list))
     a.update(deleted=True)
     story_ids = [rec.story_id for rec in a.select()]
+    comment(f"story ids to delete {story_ids}")
     db(db.TblStories.id.belongs(story_ids)).update(deleted=True)
 
 
@@ -857,7 +861,7 @@ def upload_chunk(vars):
     today = datetime.date.today()
     month = str(today)[:-3]
     sub_folder = 'uploads/' + month + '/'
-    path = local_photos_folder() + sub_folder
+    path = local_photos_folder(RESIZED) + sub_folder
     dir_util.mkpath(path)
     if vars.what == 'start':
         comment("starting upload")
@@ -877,7 +881,7 @@ def upload_chunk(vars):
         record_id = db.TblPhotos.insert(
             photo_path=sub_folder + file_name,
             original_file_name=original_file_name,
-            Name=original_file_name,
+            name=original_file_name,
             crc=crc,
             story_id=story_id,
             uploader=vars.user_id,
@@ -930,7 +934,7 @@ def get_padded_photo_url(vars):
     cards_folder = local_cards_folder() + 'padded_images/'
     dir_util.mkpath(cards_folder)
     target_photo_path = cards_folder + file_name
-    photo_path = local_photos_folder('orig') + photo_rec.photo_path
+    photo_path = local_photos_folder(RESIZED) + photo_rec.photo_path
     padded_photo_url = save_padded_photo(photo_path, target_photo_path)
     return dict(padded_photo_url=padded_photo_url)
 

@@ -13,6 +13,7 @@ import os
 
 ## app configuration made easy. Look inside private/appconfig.ini
 from gluon.contrib.appconfig import AppConfig
+from misc_utils import get_env_var
 
 ## once in production, remove reload=True to gain full speed
 myconf = AppConfig(reload=True)
@@ -22,8 +23,8 @@ def __open_db():
     db_host = os.getenv('DB_HOST') or "localhost"
     dbname = request.application
     adapter = 'psycopg2:'
-    db_user = os.getenv('DB_USER') or "lifestone"
-    db_password = os.getenv('DB_PASSWORD')
+    db_user = get_env_var('DB_USER')
+    db_password = get_env_var('DB_PASSWORD')
     #comment(f"db_password is {db_password}")
     #mystery - it is None!!!
     if not db_password:
@@ -37,7 +38,7 @@ def __open_db():
         db = DAL(db_spec,
                  pool_size=50,
                  debug=_debugging,
-                 lazy_tables=False)  # it causes an exeption!
+                 lazy_tables=True)  # it causes an exeption!
     except Exception as e:
         comment(f'Failed to open db {db_spec}. Error: {e}.')
         raise
@@ -149,8 +150,9 @@ from admin_support.access_manager import register_new_user
 
 try:
     if no_admin():
-        admin_id = register_new_user('admin@gbs.com', '931632', 'admin', 'admin')
-        auth.login_bare('admin@gbs.com', '931632')
+        admin_password = get_env_var("ADMIN_PASSWORD")
+        admin_id = register_new_user('admin@gbs.com', admin_password, 'admin', 'admin')
+        auth.login_bare('admin@gbs.com', admin_password)
         auth.set_access_manager(ACCESS_MANAGER, admin_id)
 except Exception as e:
     pass

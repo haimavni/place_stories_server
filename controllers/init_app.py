@@ -3,20 +3,20 @@
 import os
 import re
 from send_email import email
-
 from admin_support.access_manager import register_new_user, AccessManager
-
 from gluon.utils import web2py_uuid
+from misc_utils import get_env_var
 
 
 def init_database():
-    comment("init database args: ", str(request.args))
+    comment(f"init database args: {str(request.args)}")
     if len(request.args) < 4:
         return "database initialized without admin"
     email,password,first_name,last_name = request.args
     first_name = re.sub(r'[()]', '', first_name)
     last_name = re.sub(r'[()]', '', last_name)
-    admin_id = register_new_user('admin@gbs.com', '931632', 'admin', 'admin')
+    admin_password = get_env_var("ADMIN_PASSWORD")
+    admin_id = register_new_user('admin@gbs.com', admin_password, 'admin', 'admin')
     usr_id = register_new_user(email, password, first_name, last_name)
     am = AccessManager()
     am.enable_roles(admin_id, [ACCESS_MANAGER])
@@ -69,7 +69,7 @@ def request_new_app(vars):
         result = email(receivers=vars.email, subject='Your new site', message=mail_message)
         comment(f"confirmation mail was sent to {vars.email} with result {result}. message: {mail_message}")
         customer_rec = db(db.TblCustomers.id==id).select().first()
-        notify_developer(customer_rec)
+        notify_developers(customer_rec)
     return dict(error_message=error_message)
 
 def confirm_new_app():
@@ -78,7 +78,9 @@ def confirm_new_app():
     if not customer_rec.confirmation_key:
         return dict()
     if customer_rec.confirmation_key != vars.confirmation_key:
-        comment('customer rec key: {crk}, vars.conf key: {vck}', crk=customer_rec.confirmation_key, vck=vars.confirmation_key)
+        vck = vars.confirmation_key
+        crk = customer_rec.confirmation_key
+        comment(f'customer rec key: {crk}, vars.conf key: {vck}')
         raise Exception('Confirmation key mismatch')
     customer_rec.update_record(confirmation_key='')
     promote_task('create_pending_apps')
@@ -94,15 +96,18 @@ def get_frame_list(vars):
         result.append(dict(url=url))
     return dict(frame_urls=result)
 
-def notify_developer(rec):
-    mail, comment = inject('mail', 'comment')
-    comment('about to nofity me about new customer')
+def notify_developers(rec):
+    comment('about to notify me about new customer')
     name = rec.first_name + ' ' + rec.last_name
-    message = ('', '''
-    New site {site_name} was requested by {name} {email}.
-    '''.format(site_name=rec.app_name, name=name, email=rec.email))
-    result = email(receivers='haimavni@gmail.com', message=message, subject='New app requested')
-    comment('mail sent to developer? {}', result)
+    site_name = rec.app_name
+    mail = rec.email
+    message = f'''
+    New site {site_name} was requested by {name} {mail}.
+    '''
+    receivers = auth.role_user_list(DEVELOPER)
+    comment(f"message is {message}, receivers: {receivers}")
+    result = email(receivers=receivers, message=message, subject='New app requested')
+    comment(f'mail sent to developer? {result}')
 
 #-------------------support functions----------------------
 

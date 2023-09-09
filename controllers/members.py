@@ -6,9 +6,8 @@ import stories_manager
 import ws_messaging
 from audios_support import audio_path
 from dal_utils import insert_or_update
-from date_utils import parse_date, update_record_dates
-from docs_support import doc_url
-from family_connections import *
+from date_utils import parse_date, update_record_dates, date_str, day_of_year, days_since_epoch
+from docs_support import doc_url, doc_segment_url, doc_jpg_url, doc_segment_jpg_url
 from gluon.utils import web2py_uuid
 from html_utils import clean_html
 from http_utils import json_to_storage
@@ -16,12 +15,16 @@ from members_support import *
 from photos_support import get_slides_from_photo_list, get_video_thumbnails, save_member_face
 from quiz_support import use_quiz
 from words import calc_used_languages, read_words_index, get_all_story_previews, get_reisha
-
+from family_connections import calc_family_connections, find_family_path, get_family_connections, get_member_spouse_children, get_spouses
+from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 
 @serve_json
 def member_list(vars):
     return dict(member_list=get_member_names())
 
+@serve_json
+def get_deceased_members(vars):
+    return dict(members=_get_deceased_members())
 
 @serve_json
 def create_parent(vars):
@@ -36,13 +39,14 @@ def create_parent(vars):
     rec.member_info.date_of_death = NO_DATE
     parent_id = db.TblMembers.insert(**rec.member_info)
     rec.member_info.id = parent_id
-    rec.face_url = photos_folder("profile_photos") + rec.facePhotoURL
+    rec.face_url = photos_folder(PROFILE_PHOTOS) + rec.facephotourl
     child_id = int(vars.child_id)
     if gender == 'M':
         db(db.TblMembers.id == child_id).update(father_id=parent_id)
     else:
         db(db.TblMembers.id == child_id).update(mother_id=parent_id)
-
+    member_rec = get_member_rec(parent_id)
+    ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL', member_rec=member_rec, new_member=True)
     return dict(member_id=parent_id, member=rec)
 
 
@@ -50,6 +54,7 @@ def create_parent(vars):
 def create_new_member(vars):
     # todo: move code of photos/save_face to module and use it to complete the operation. in the client, go to
     #  the new member to edit its data
+    # todo: refactor - use create_member to replace first part
     name = (vars.name or vars.default_name).strip() + ' '
     lst = name.split(' ')
     first_name, last_name = lst[0], ' '.join(lst[1:])
@@ -74,11 +79,38 @@ def create_new_member(vars):
     tmp = save_member_face(params)
     rec.member_info.face_photo_url = tmp.face_photo_url
     member_rec = get_member_rec(member_id)
-    member_rec.facePhotoURL = tmp.face_photo_url
+    member_rec.facephotourl = tmp.face_photo_url
     member_rec = json_to_storage(member_rec)
     ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL', member_rec=member_rec, new_member=True)
     return dict(member_id=member_id, member=rec)
 
+@serve_json
+def create_spouse(vars):
+    member_id, rec = create_member(vars)
+    member_rec = get_member_rec(member_id)
+    member_rec.facephotourl = photos_folder(PROFILE_PHOTOS) + "dummy_face.png"
+    member_rec = json_to_storage(member_rec)
+    ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL', member_rec=member_rec, new_member=True)
+    return dict(member_id=member_id, member=rec)
+
+def create_member(vars):
+    name = (vars.name or vars.default_name).strip() + ' '
+    lst = name.split(' ')
+    first_name, last_name = lst[0], ' '.join(lst[1:])
+    first_name = first_name.strip()
+    last_name = last_name.strip()
+    rec = new_member_rec(first_name=first_name, last_name=last_name)
+    rec.member_info.updater_id = auth.current_user()
+    rec.member_info.update_time = datetime.datetime.now()
+    rec.member_info.approved = auth.has_membership(DATA_AUDITOR)
+    rec.member_info.date_of_birth = NO_DATE
+    rec.member_info.date_of_death = NO_DATE
+    rec.member_info.gender = vars.gender
+    rec.member_info.facephotourl="dummy_face.png"
+    member_id = db.TblMembers.insert(**rec.member_info)
+    rec.member_info.id = member_id
+    rec.member_info.facephotourl = photos_folder(PROFILE_PHOTOS) + "dummy_face.png"
+    return member_id, rec
 
 @serve_json
 def get_member_details(vars):
@@ -99,13 +131,16 @@ def get_member_details(vars):
         mem_id += 1
     elif vars.shift == 'prev':
         mem_id -= 1
-    member_stories = get_member_stories(mem_id) + get_member_terms(mem_id) + get_member_docs(mem_id) + get_member_video_stories(mem_id)
+    member_stories = get_member_stories(mem_id) + get_member_terms(mem_id) + \
+        get_member_docs(mem_id) + \
+        get_member_doc_segments(mem_id) + \
+        get_member_video_stories(mem_id)
     member_info = get_member_rec(mem_id)
     if not member_info:
         raise User_Error('No one there')
     sm = stories_manager.Stories()
     story_info = sm.get_story(member_info.story_id) or Storage(display_version='New Story', topic="member.life-summary",
-                                                               story_versions=[], story_text='', story_id=None)
+                                                               story_versions=[], story_text='', story_id=None, editing_ok=True)
     story_info.used_for = STORY4MEMBER
     family_connections = get_family_connections(member_info.id)
     slides = get_member_slides(mem_id)
@@ -124,19 +159,14 @@ def get_member_details(vars):
                 slides=slides,  # todo: duplicate?
                 spouses=spouses,  # this is just the key for translation
                 member_stories=member_stories,
-                facePhotoURL=photos_folder('profile_photos') + (member_info.facePhotoURL or "dummy_face.png")
+                facephotourl=photos_folder(PROFILE_PHOTOS) + (member_info.facephotourl or "dummy_face.png")
                 )
 
 
 @serve_json
 def get_all_relatives(vars):
     member_id = vars.member_id
-    fc = get_all_family_connections(member_id)
-    levels = fc.levels
-    relative_list = []
-    for level in levels:
-        lst = [mid for mid in level]
-        relative_list.append(lst)
+    relative_list=calc_family_connections(member_id)
     return dict(relative_list=relative_list)
 
 
@@ -144,10 +174,8 @@ def get_all_relatives(vars):
 def get_relatives_path(vars):
     origin_member_id = vars.origin_member_id
     other_member_id = vars.other_member_id
-    fc = get_all_family_connections(origin_member_id)
-    path = fc.find_path(other_member_id)
-    return dict(relatives_path=[origin_member_id] + path)
-
+    relatives_path = find_family_path(origin_member_id, other_member_id)
+    return dict(relatives_path=relatives_path)
 
 @serve_json
 def get_member_photo_list(vars):
@@ -201,7 +229,13 @@ def get_stories_index(vars):
 
 @serve_json
 def get_random_member(vars):
-    lst = get_members_stats()
+    if db(db.TblMembers.deleted != True).count() == 0:
+        return dict(member_data = None)
+    lst = []
+    try:
+        lst = get_members_stats()
+    except Exception as e:
+        lst = None
     if not lst:
         return dict(member_data=None)
     lst = sorted(lst, key=lambda rec: -rec.num_photos)
@@ -213,7 +247,7 @@ def get_random_member(vars):
             break
     if not member_data:
         return dict(member_data=None)
-    member_data.face_photo_url = photos_folder('profile_photos') + member_data.facePhotoURL
+    member_data.face_photo_url = photos_folder(PROFILE_PHOTOS) + member_data.facephotourl
     member_data.short_name = (member_data.title + ' ' if member_data.title else '') + member_data.first_name
     return dict(member_data=member_data)
 
@@ -253,6 +287,8 @@ def get_story_list(vars):
     qhd = query_has_data(vars.params)
     result1 = []
     result2 = []
+    result3 = []
+    result4 = []
     real_counters = None #will show true total numbers
     if params.selected_book:
         result0 = get_checked_stories(params)
@@ -265,34 +301,42 @@ def get_story_list(vars):
         result0 = get_checked_stories(params)
         result0 = process_story_list(result0, checked=True)
         checked_story_ids = set([r.id for r in result0])
-        has_keywords = bool(params.keywords_str)  # and vars.params.search_type in ['menu', 'simple']
-        result1 = _get_story_list(params, has_keywords)[0]
-        result1 = process_story_list(result1, exact=has_keywords)
+        #-------------------------------------------------------------
+        tmp = _get_story_list(params, exact=True)
+        result1 = tmp[0] if tmp else []
+        result1 = process_story_list(result1, exact=True)
         result1 = [r for r in result1 if r.id not in checked_story_ids]
-
-        if has_keywords and len(params.keywords_str.split()) > 1:  # find all pages containing all words in this string
-            result2 = _get_story_list(params, False)[0]
-            result2 = process_story_list(result2)
+        checked_story_ids |= set([r.id for r in result1])
+        #-------------------------------------------------------------
+        tmp = _get_story_list(params, exact=False)
+        result2 = tmp[0] if tmp else []
+        result2 = process_story_list(result2, exact=False)
+        result2 = [r for r in result2 if r.id not in checked_story_ids]
+        checked_story_ids |= set([r.id for r in result2])
+        #-------------------------------------------------------------
+        tmp = _get_story_list(params, exact=True, cuepoints=True)
+        result3 = tmp[0] if tmp else []
+        result3 = process_story_list(result3, exact=True)
+        result3 = [r for r in result3 if r.id not in checked_story_ids]
+        checked_story_ids |= set([r.id for r in result3])
+        #-------------------------------------------------------------
+        tmp = _get_story_list(params, exact=False, cuepoints=True)
+        result4 = tmp[0] if tmp else []
+        result4 = process_story_list(result4, exact=False)
+        result4 = [r for r in result4 if r.id not in checked_story_ids]
     else:
         result0, real_counters = _get_story_list(params, False)
         result0 = process_story_list(result0)
-    visited = set([r.id for r in result0])
-    result1 = [r for r in result1 if r.id not in visited]
-    visited |= set([r.id for r in result1])
-    result2 = [r for r in result2 if r.id not in visited]
-    result = result0 + result1 + result2
+    result = result0 + result1 + result2 + result3 + result4
     result_type_counters = dict()
     active_result_types = set()
     final_result = []
     for story in result:
         story_id = story.id
         k = story.used_for
-        if k == STORY4DOC and doc_has_story_about(story_id):
+        if k == STORY4DOCAB: #temp. debugging
             continue
-        if k == STORY4DOCAB:
-            story.used_for = STORY4DOC
-            k = STORY4DOC
-            story_id = story_id_of_story_about_id(story_id)
+
         active_result_types |= {k}
         if k not in result_type_counters:
             result_type_counters[k] = 0
@@ -302,12 +346,13 @@ def get_story_list(vars):
         story.editable_preview = False
         if k == STORY4DOC:
             story.doc_url = doc_url(story_id)
-            story.editable_preview = True
+        elif k == STORY4DOCSEGMENT:
+            story.doc_segment_url = doc_segment_url(story_id)
         elif k == STORY4AUDIO:
             story.audio_path = audio_path(story_id)
         elif k == STORY4MEMBER:
             story.profile_photo_path = profile_photo_path(story_id)
-        if result_type_counters[k] >= 100:
+        if result_type_counters[k] >= 100 and k != STORY4MEMBER:
             continue
         final_result.append(story)
     if real_counters:
@@ -316,8 +361,6 @@ def get_story_list(vars):
     active_result_types = sorted(active_result_types)
     result = final_result
     result = set_story_list_data(result)
-    for k in result_type_counters:
-        comment(f'result_type_counters[{k}]: {result_type_counters[k]}')
     return dict(no_results=len(result)==0,
                 result=result,
                 active_result_types=active_result_types,
@@ -413,9 +456,9 @@ def get_story_photo_list(vars):
     else:
         return dict(photo_list=[])
     if vars.story_type == "story":
-        qp = (db.TblEventPhotos.Event_id == item_id) & (db.TblPhotos.id == db.TblEventPhotos.Photo_id)
+        qp = (db.TblEventPhotos.event_id == item_id) & (db.TblPhotos.id == db.TblEventPhotos.photo_id)
     else:
-        qp = (db.TblTermPhotos.term_id == item_id) & (db.TblPhotos.id == db.TblTermPhotos.Photo_id)
+        qp = (db.TblTermPhotos.term_id == item_id) & (db.TblPhotos.id == db.TblTermPhotos.photo_id)
     qp &= (db.TblPhotos.deleted != True)
     photos = get_slides_from_photo_list(qp)
     return dict(photo_list=photos)
@@ -426,8 +469,8 @@ def save_member_info(vars):
     user_id = vars.user_id
     member_id = vars.member_id
     member_info = vars.member_info
-    if 'facePhotoURL' in member_info:
-        del member_info.facePhotoURL  # it is saved separately, not updated in client and can only destroy here
+    if 'facephotourl' in member_info:
+        del member_info.facephotourl  # it is saved separately, not updated in client and can only destroy here
     if member_info:
         new_member = not member_info.id
         # --------------handle dates - new version------------------
@@ -445,13 +488,15 @@ def save_member_info(vars):
         member_info.update_time = datetime.datetime.now()
         member_info.updater_id = vars.user_id or auth.current_user() or 2
         member_info.approved = auth.has_membership(DATA_AUDITOR, user_id=vars.user_id)
+        if member_info.spouse_id:
+            marry(member_info.id, member_info.spouse_id, member_info.gender)
         result = insert_or_update(db.TblMembers, **member_info)
         if isinstance(result, dict):
             return dict(errors=result['errors'])
         member_id = result
         member_rec = get_member_rec(member_id)
         if new_member:
-            member_rec.facePhotoURL = photos_folder('profile_photos') + "dummy_face.png"
+            member_rec.facephotourl = photos_folder(PROFILE_PHOTOS) + "dummy_face.png"
         member_rec = json_to_storage(member_rec)
         ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL', member_rec=member_rec, new_member=new_member)
     result = Storage(info=member_info)
@@ -472,6 +517,8 @@ def set_member_story_id(vars):
 
 def get_member_names():
     q = (db.TblMembers.deleted != True)
+    if db(q).isempty():
+        return 
     lst = db(q).select()
     arr = [Storage(id=rec.id,
                    name=member_display_name(rec, full=True),
@@ -480,17 +527,82 @@ def get_member_names():
                    last_name=rec.last_name,
                    former_first_name=rec.former_first_name,
                    former_last_name=rec.former_last_name,
-                   nick_name=rec.NickName,
+                   nick_name=rec.nickname,
+                   full_name=(rec.first_name or "") + ' ' + (rec.last_name or ""),
                    gender=rec.gender,
+                   parent_ids=get_parent_ids(rec),
                    birth_date=rec.date_of_birth,
                    visibility=rec.visibility,
                    approved=rec.approved,
-                   has_profile_photo=bool(rec.facePhotoURL),  # used in client!
+                   has_profile_photo=bool(rec.facephotourl),  # used in client!
                    rnd=random.randint(0, 1000000),
-                   facePhotoURL=photos_folder('profile_photos') + (rec.facePhotoURL or "dummy_face.png")) for rec in
+                   facephotourl=photos_folder(PROFILE_PHOTOS) + (rec.facephotourl or "dummy_face.png")) for rec in
            lst]
     arr.sort(key=lambda item: item.rnd)
     return arr
+
+def _get_deceased_members():
+    # have bio
+    q = (db.TblMembers.deleted!=True)&(db.TblMembers.date_of_death!=NO_DATE)&(db.TblMembers.story_id==db.TblStories.id)
+    lst = db(q).select(
+        db.TblMembers.id,
+        db.TblMembers.first_name,
+        db.TblMembers.last_name,
+        db.TblMembers.nickname,
+        db.TblMembers.date_of_birth,
+        db.TblMembers.date_of_birth_dateunit,
+        db.TblMembers.date_of_death,
+        db.TblMembers.date_of_death_dateunit,
+        db.TblMembers.gender,
+        db.TblMembers.facephotourl,
+        db.TblStories.preview
+        )
+    arr = [Storage(
+        id=rec.TblMembers.id,
+        last_name=rec.TblMembers.last_name,
+        full_name=(rec.TblMembers.first_name or "") + ' ' + (rec.TblMembers.last_name or ""),
+        birth_date=date_str(rec.TblMembers.date_of_birth, rec.TblMembers.date_of_birth_dateunit),
+        death_date=date_str(rec.TblMembers.date_of_death, rec.TblMembers.date_of_death_dateunit),
+        death_day_of_year=day_of_year(rec.TblMembers.date_of_death),
+        death_day_of_year_relative=day_of_year(rec.TblMembers.date_of_death, relative=True),
+        death_day_since_epoch=days_since_epoch(rec.TblMembers.date_of_death),
+        facephotourl=photos_folder(PROFILE_PHOTOS) + (rec.TblMembers.facephotourl or "dummy_face.png"),
+        bio_preview=rec.TblStories.preview
+    ) for rec in lst]
+    # do not have bio
+    q = (db.TblMembers.deleted!=True)&(db.TblMembers.date_of_death!=NO_DATE)&(db.TblMembers.story_id==None)
+    lst = db(q).select(
+        db.TblMembers.id,
+        db.TblMembers.first_name,
+        db.TblMembers.last_name,
+        db.TblMembers.nickname,
+        db.TblMembers.date_of_birth,
+        db.TblMembers.date_of_birth_dateunit,
+        db.TblMembers.date_of_death,
+        db.TblMembers.date_of_death_dateunit,
+        db.TblMembers.gender,
+        db.TblMembers.facephotourl
+        )
+    arr1 = [Storage(
+        id=rec.id,
+        last_name=rec.last_name,
+        full_name=(rec.first_name or "") + ' ' + (rec.last_name or ""),
+        birth_date=date_str(rec.date_of_birth, rec.date_of_birth_dateunit),
+        death_date=date_str(rec.date_of_death, rec.date_of_death_dateunit),
+        death_day_of_year=day_of_year(rec.date_of_death),
+        death_day_of_year_relative=day_of_year(rec.date_of_death, relative=True),
+        death_day_since_epoch=days_since_epoch(rec.date_of_death),
+        facephotourl=photos_folder(PROFILE_PHOTOS) + (rec.facephotourl or "dummy_face.png"),
+        bio_preview=""
+    ) for rec in lst]
+    return arr + arr1
+
+def get_parent_ids(member_rec):
+    result = []
+    for fld in ['father_id', 'mother_id', 'father2_id', 'mother2_id' ]:
+        if member_rec[fld]:
+            result.append(member_rec[fld])
+    return result
 
 
 @serve_json
@@ -510,11 +622,16 @@ def remove_member(vars):
 def remove_parent(vars):
     member_id = vars.member_id
     who = vars.who
+    member_rec = db(db.TblMembers.id == member_id).select().first()
     if who == 'pa':
-        db(db.TblMembers.id == member_id).update(father_id=None)
+        member_rec.update_record(father_id=None)
     elif who == 'ma':
-        db(db.TblMembers.id == member_id).update(mother_id=None)
-
+        member_rec.update_record(mother_id=None)
+    elif who == 'pa2':
+        member_rec.update_record(father2_id=None)
+    elif who == 'ma2':
+        member_rec.update_record(mother2_id=None)
+    return dict()
 
 @serve_json
 def get_message_list(vars):
@@ -601,11 +718,12 @@ def delete_checked_stories(vars):
     q = db.TblStories.id.belongs(checked_stories)
     n = db(q).update(deleted=deleted)
     tbls = {STORY4MEMBER: db.TblMembers, STORY4EVENT: db.TblEvents, STORY4PHOTO: db.TblPhotos, STORY4TERM: db.TblTerms,
-            STORY4VIDEO: db.TblVideos, STORY4DOC: db.TblDocs, STORY4ARTICLE: db.TblArticles}
+            STORY4VIDEO: db.TblVideos, STORY4DOC: db.TblDocs, STORY4DOCSEGMENT: db.TblDocSegments, 
+            STORY4ARTICLE: db.TblArticles}
 
     # if story is associated with member, photo, video or document, need to skip it or delete the item too
-    for usage in [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4AUDIO,
-                  STORY4ARTICLE]:
+    for usage in [STORY4MEMBER, STORY4EVENT, STORY4PHOTO, STORY4TERM, STORY4VIDEO, STORY4DOC, STORY4DOCSEGMENT,
+                  STORY4AUDIO, STORY4ARTICLE]:
         q1 = q & (db.TblStories.used_for == usage)
         lst = db(q1).select()
         story_ids = [rec.id for rec in lst]
@@ -636,7 +754,7 @@ def delete_story(vars):
 def apply_topics_to_selected_stories(vars):
     used_for = vars.used_for
     if used_for:
-        usage_chars = 'xMEPTxxxVDA'
+        usage_chars = 'xMEPTxxxVDAxxxS'
         usage_char = usage_chars[used_for]
     else:
         usage_char = 'x'
@@ -692,7 +810,7 @@ def apply_topics_to_selected_stories(vars):
 
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         curr_tags.sort()
-        keywords = "; ".join(curr_tags)
+        keywords = KW_SEP.join(curr_tags)
         rec = db(db.TblStories.id == story_id).select().first()
         rec.update_record(keywords=keywords, is_tagged=bool(keywords))
 
@@ -734,7 +852,7 @@ def apply_topics_to_story(vars):
             # should remove usage_char from usage if it was the last one...
             db(q).delete()
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
-        keywords = "; ".join(curr_tags)
+        keywords = KW_SEP.join(curr_tags)
         rec = db(db.TblStories.id == story_id).select().first()
         rec.update_record(keywords=keywords, is_tagged=bool(keywords))
 
@@ -763,10 +881,10 @@ def add_story_member(vars):
     story = db(db.TblStories.id == story_id).select().first()
     if story.used_for == STORY4EVENT:
         event = db(db.TblEvents.story_id == story_id).select().first()
-        db.TblEventMembers.insert(Member_id=member_id, Event_id=event.id)
+        db.TblEventMembers.insert(member_id=member_id, event_id=event.id)
     elif story.used_for == STORY4TERM:
         term = db(db.TblTerms.story_id == story_id).select().first()
-        db.TblTermMembers.insert(Member_id=member_id, term_id=term.id)
+        db.TblTermMembers.insert(member_id=member_id, term_id=term.id)
     else:
         raise Exception("Incompatible story usage")
     return dict()
@@ -779,7 +897,7 @@ def add_story_article(vars):
     story = db(db.TblStories.id == story_id).select().first()
     if story.used_for == STORY4EVENT:
         event = db(db.TblEvents.story_id == story_id).select().first()
-        db.TblEventArticles.insert(article_id=article_id, Event_id=event.id)
+        db.TblEventArticles.insert(article_id=article_id, event_id=event.id)
     elif story.used_for == STORY4TERM:
         term = db(db.TblTerms.story_id == story_id).select().first()
         db.TblTermArticles.insert(article_id=article_id, term_id=term.id)
@@ -796,9 +914,9 @@ def save_photo_group(vars):
         raise Exception('Unknown call type in save photo group')
     item_id = db(tbl.story_id == story_id).select().first().id
     if vars.caller_type == "story":
-        qp = (db.TblEventPhotos.Event_id == item_id) & (db.TblEventPhotos.Photo_id == db.TblPhotos.id)
+        qp = (db.TblEventPhotos.event_id == item_id) & (db.TblEventPhotos.photo_id == db.TblPhotos.id)
     elif vars.caller_type == "term":
-        qp = (db.TblTermPhotos.term_id == item_id) & (db.TblTermPhotos.Photo_id == db.TblPhotos.id)
+        qp = (db.TblTermPhotos.term_id == item_id) & (db.TblTermPhotos.photo_id == db.TblPhotos.id)
     else:
         raise Exception("Unknown caller type")
     qp &= (db.TblPhotos.deleted != True)
@@ -808,19 +926,19 @@ def save_photo_group(vars):
     for p in old_photos:
         if p not in photo_ids:
             if vars.caller_type == "story":
-                db((db.TblEventPhotos.Photo_id == p) & (db.TblEventPhotos.Event_id == item_id)).delete()
+                db((db.TblEventPhotos.photo_id == p) & (db.TblEventPhotos.event_id == item_id)).delete()
             elif vars.caller_type == "term":
-                db((db.TblTermPhotos.Photo_id == p) & (db.TblTermPhotos.term_id == item_id)).delete()
+                db((db.TblTermPhotos.photo_id == p) & (db.TblTermPhotos.term_id == item_id)).delete()
     for p in vars.photo_ids:
         if p not in old_photos:
             if vars.caller_type == "story":
-                db.TblEventPhotos.insert(Photo_id=p, Event_id=item_id)
+                db.TblEventPhotos.insert(photo_id=p, event_id=item_id)
             elif vars.caller_type == "term":
-                db.TblTermPhotos.insert(Photo_id=p, term_id=item_id)
+                db.TblTermPhotos.insert(photo_id=p, term_id=item_id)
     photos = db(db.TblPhotos.id.belongs(photo_ids)).select(db.TblPhotos.id, db.TblPhotos.photo_path)
     photos = [p.as_dict() for p in photos]
     for p in photos:
-        p['photo_path'] = photos_folder() + p['photo_path']
+        p['photo_path'] = photos_folder(RESIZED) + p['photo_path']
     return dict(photos=photos)
 
 
@@ -838,10 +956,10 @@ def consolidate_stories(vars):
         added_photo_ids |= set(get_story_photo_ids(story_id))
     added_photo_ids = added_photo_ids - base_photo_ids
     for pid in added_photo_ids:
-        db.TblEventPhotos.insert(Photo_id=pid, Event_id=base_event_id)
+        db.TblEventPhotos.insert(photo_id=pid, event_id=base_event_id)
     for pid in added_photo_ids:
         event_id = event_id_of_story_id(pid)
-        db((db.TblEventPhotos.Event_id == event_id) & (db.TblEventPhotos.Photo_id == pid)).delete()
+        db((db.TblEventPhotos.event_id == event_id) & (db.TblEventPhotos.photo_id == pid)).delete()
     # --------merge members--------------------------
     base_member_ids = set(get_story_member_ids(stm[0]))
     added_member_ids = set([])
@@ -849,10 +967,10 @@ def consolidate_stories(vars):
         added_member_ids |= set(get_story_member_ids(story_id))
     added_member_ids = added_member_ids - base_member_ids
     for pid in added_member_ids:
-        db.TblEventMembers.insert(Member_id=pid, Event_id=base_event_id)
+        db.TblEventMembers.insert(member_id=pid, event_id=base_event_id)
     for pid in added_member_ids:
         event_id = event_id_of_story_id(pid)
-        db((db.TblEventMembers.Event_id == event_id) & (db.TblEventMembers.Member_id == pid)).delete()
+        db((db.TblEventMembers.event_id == event_id) & (db.TblEventMembers.member_id == pid)).delete()
     # --------merge stories--------------------------
     story = get_story_text(stm[0])
     for i, story_id in enumerate(stm[1:]):
@@ -957,7 +1075,7 @@ def new_member_rec(gender=None, first_name="", last_name=""):
             last_name=last_name,
             former_first_name="",
             former_last_name="",
-            visibility=VIS_NOT_READY,
+            visibility=VIS_VISIBLE,
             date_of_death_dateunit='N',
             date_of_death=Storage(
                 date='',
@@ -979,17 +1097,17 @@ def new_member_rec(gender=None, first_name="", last_name=""):
         slides=[],
         spouses=[],
         member_stories=[],
-        facePhotoURL='dummy_face.png',
+        facephotourl='dummy_face.png',
         name=first_name
     )
     return new_member
 
 
 def get_members_stats():
-    q = (db.TblMembers.id == db.TblMemberPhotos.Member_id) & \
+    q = (db.TblMembers.id == db.TblMemberPhotos.member_id) & \
         (db.TblMembers.deleted != True) & \
-        (db.TblMembers.facePhotoURL != None) & (db.TblMembers.facePhotoURL != '')
-    ##(db.TblMembers.id == db.TblEventMembers.Member_id)
+        (db.TblMembers.facephotourl != None) & (db.TblMembers.facephotourl != '')
+    ##(db.TblMembers.id == db.TblEventMembers.member_id)
     lst = db(q).select(db.TblMembers.id, db.TblMembers.id.count(), groupby=[db.TblMembers.id])
     key = 'COUNT("TblMembers"."id")'
     lst = [Storage(member_id=rec.TblMembers.id, num_photos=rec._extra[key]) for rec in lst]
@@ -1017,9 +1135,9 @@ def get_checked_stories(params):
     return checked_story_list
 
 
-def _get_story_list(params, exact):  # exact means looking only for the passed keywords string as a whole
+def _get_story_list(params, exact, cuepoints=False):  # exact means looking only for the passed keywords string as a whole
     order_option = params.order_option.value if params.order_option else 'normal'
-    q = make_stories_query(params, exact)
+    q = make_stories_query(params, exact, cuepoints=cuepoints)
     real_counters = dict()
     if order_option == 'by-chats':
         q &= (db.TblStories.chatroom_id != None)
@@ -1044,13 +1162,13 @@ def _get_story_list(params, exact):  # exact means looking only for the passed k
         lst1 = [r for r in lst1]
     elif not query_has_data(params):
         lst1 = []
-        for used_for in story_kinds():
+        for used_for in story_kinds(params):
             q = (db.TblStories.deleted != True) & (db.TblStories.used_for == used_for)
             n = db(q).count()
             real_counters[used_for] = n
             if not n:
                 continue
-            sample_size = 100
+            sample_size = 100 if used_for != STORY4MEMBER else 500
             dic = None
             if n > sample_size:
                 q1, dic = stories_random_sample(sample_size, used_for)
@@ -1066,7 +1184,7 @@ def _get_story_list(params, exact):  # exact means looking only for the passed k
         if not q:
             return []
         lst1 = []
-        for used_for in story_kinds():
+        for used_for in story_kinds(params):
             q1 = q & (db.TblStories.used_for == used_for)
             lst0 = db(q1).select(limitby=(0, 1000), orderby=~db.TblStories.story_len)
             lst1 += lst0
@@ -1112,7 +1230,7 @@ def set_story_list_data(story_list):
         topics=rec.keywords,  ###'; '.join(story_topics[rec.id]) if rec.id in story_topics else "",
         doc_url=rec.doc_url,
         audio_path=rec.audio_path,
-        doc_jpg_url=rec.doc_url.replace('/docs/', '/docs/pdf_jpgs/').replace('.pdf', '.jpg') if rec.doc_url else '',
+        doc_jpg_url=calc_doc_jpg_url(rec.id, rec.used_for),
         profile_photo_path=rec.profile_photo_path if rec.used_for==STORY4MEMBER else "",
         used_for=rec.used_for,
         editable_preview=rec.editable_preview,
@@ -1121,10 +1239,18 @@ def set_story_list_data(story_list):
         updater=user_list[rec.updater_id] if rec.updater_id and rec.updater_id in user_list else dict(),
         checked=rec.checked,
         exact=rec.exact,
+        sorting_key=rec.sorting_key,
         ##exact=exact and params.search_type != 'advanced',
         author=rec.source or rec.author) for rec in story_list]
     assign_photos(result)
     return result
+
+def calc_doc_jpg_url(story_id, used_for):
+    if used_for == STORY4DOC:
+        return doc_jpg_url(story_id)
+    if used_for == STORY4DOCSEGMENT:
+        return doc_segment_jpg_url(story_id)
+    return ""
 
 
 def assign_photos(story_list):
@@ -1139,19 +1265,20 @@ def assign_photos(story_list):
     q = db.TblPhotos.story_id.belongs(photo_story_ids) & (db.TblPhotos.deleted != True)
     lst = db(q).select(db.TblPhotos.story_id, db.TblPhotos.photo_path, db.TblPhotos.id)
     for photo in lst:
-        photo_src = photos_folder('squares') + photo.photo_path
+        photo_src = photos_folder(SQUARES) + photo.photo_path
         photo_story_list[photo.story_id].photo_src = photo_src
         photo_story_list[photo.story_id].photo_id = photo.id
     video_story_ids = list(video_story_list.keys())
-    lst = db(db.TblVideos.story_id.belongs(video_story_ids)).select(db.TblVideos.story_id, db.TblVideos.src)
+    lst = db(db.TblVideos.story_id.belongs(video_story_ids)).select(db.TblVideos.story_id, db.TblVideos.src, db.TblVideos.thumbnail_url)
     for video in lst:
         video_story_list[video.story_id].video_src = video.src
+        video_story_list[video.story_id].thumbnail_url = video.thumbnail_url
 
 
 def photo_member_ids(photo_id):
-    qmp = (db.TblMemberPhotos.Photo_id == photo_id)
-    lst = db(qmp).select(db.TblMemberPhotos.Member_id)
-    return [mp.Member_id for mp in lst]
+    qmp = (db.TblMemberPhotos.photo_id == photo_id)
+    lst = db(qmp).select(db.TblMemberPhotos.member_id)
+    return [mp.member_id for mp in lst]
 
 
 def photo_article_ids(photo_id):
@@ -1177,8 +1304,8 @@ def photo_lst_article_ids(photo_id_lst):
 
 
 def get_member_photos(member_id):
-    q = (db.TblMemberPhotos.Member_id == member_id) & \
-        (db.TblPhotos.id == db.TblMemberPhotos.Photo_id) & \
+    q = (db.TblMemberPhotos.member_id == member_id) & \
+        (db.TblPhotos.id == db.TblMemberPhotos.photo_id) & \
         (db.TblPhotos.deleted != True) & \
         (db.TblPhotos.is_back_side != True)
     return get_slides_from_photo_list(q)
@@ -1216,32 +1343,19 @@ def save_story_data(story_info, user_id):
     if story_info.used_for == STORY4PHOTO:
         photo_rec = db(
             (db.TblPhotos.story_id == story_info.story_id) & (db.TblPhotos.deleted != True)).select().first()
-        photo_rec.update_record(Name=story_info.name)
-    if story_info.used_for == STORY4DOC:  # ugly...
+        photo_rec.update_record(name=story_info.name)
+    if story_info.used_for == STORY4DOC:  # ugly... #todo: use only names in tblstories
         doc_rec = db(db.TblDocs.story_id==story_id).select().first()
-        if doc_rec.story_about_id:
-            story_about_rec = db(db.TblStories.id==doc_rec.story_about_id).select().first()
-            story_about_rec.update_record(name=story_info.name)
-            doc_rec.update_record(name=story_info.name)
-    if story_info.used_for == STORY4DOCAB:  # uglier...
-        doc_rec = db(db.TblDocs.story_about_id == story_id).select().first()
-        if doc_rec:
-            main_story_rec = db(db.TblStories.id == doc_rec.story_id).select().first()
-            main_story_rec.update_record(name=story_info.name)
-            main_story_rec.update_record(preview=main_story_rec.preview)
-            if not main_story_rec.story:
-                main_story_rec.update_record(story=main_story_rec.preview)
-            doc_rec.update_record(name=story_info.name)
+        doc_rec.update_record(name=story_info.name)
 
     key = 'STORY_WAS_SAVED' if old_story else 'NEW_STORY_ADDED'
-    comment("save story data ", key)
     ws_messaging.send_message(key=key, group='ALL', story_data=result)
     return result
 
 
 def get_member_stories(member_id):
-    q = (db.TblEventMembers.Member_id == member_id) & \
-        (db.TblEventMembers.Event_id == db.TblEvents.id) & \
+    q = (db.TblEventMembers.member_id == member_id) & \
+        (db.TblEventMembers.event_id == db.TblEvents.id) & \
         (db.TblEvents.story_id == db.TblStories.id) & \
         (db.TblStories.deleted == False)
     result = []
@@ -1250,12 +1364,12 @@ def get_member_stories(member_id):
         event = rec.TblEvents
         story = rec.TblStories
         dic = dict(
-            topic=event.Name,
+            topic=event.name,
             name=story.name,
             story_id=story.id,
             story_text=story.story,
             preview=get_reisha(story.preview, 30),
-            source=event.SSource,
+            source=event.ssource,
             used_for=story.used_for,
             author_id=story.author_id,
             creation_date=story.creation_date,
@@ -1267,7 +1381,7 @@ def get_member_stories(member_id):
 
 
 def get_member_terms(member_id):
-    q = (db.TblTermMembers.Member_id == member_id) & \
+    q = (db.TblTermMembers.member_id == member_id) & \
         (db.TblTermMembers.term_id == db.TblTerms.id) & \
         (db.TblTerms.story_id == db.TblStories.id) & \
         (db.TblStories.deleted == False)
@@ -1277,12 +1391,12 @@ def get_member_terms(member_id):
         term = rec.TblTerms
         story = rec.TblStories
         dic = dict(
-            topic=term.Name,
+            topic=term.name,
             name=story.name,
             story_id=story.id,
             story_text=story.story,
             preview=get_reisha(story.preview, 30),
-            ###source = term.SSource,
+            ###source = term.ssource,
             used_for=story.used_for,
             author_id=story.author_id,
             creation_date=story.creation_date,
@@ -1307,7 +1421,31 @@ def get_member_docs(member_id):
             story_id=story.id,
             story_text=story.story,
             preview=get_reisha(story.preview, 30),
-            ###source = term.SSource,
+            ###source = term.ssource,
+            used_for=story.used_for,
+            author_id=story.author_id,
+            creation_date=story.creation_date,
+            last_update_date=story.last_update_date
+        )
+        result.append(dic)
+    return result
+
+def get_member_doc_segments(member_id):
+    q = (db.TblMembersDocSegments.member_id == member_id) & \
+        (db.TblMembersDocSegments.doc_segment_id == db.TblDocSegments.id) & \
+        (db.TblDocSegments.story_id == db.TblStories.id) & \
+        (db.TblStories.deleted == False)
+    result = []
+    lst = db(q).select()
+    for rec in lst:
+        story = rec.TblStories
+        dic = dict(
+            topic=story.name,
+            name=story.name,
+            story_id=story.id,
+            story_text=story.story,
+            preview=get_reisha(story.preview, 30),
+            ###source = term.ssource,
             used_for=story.used_for,
             author_id=story.author_id,
             creation_date=story.creation_date,
@@ -1334,7 +1472,7 @@ def get_member_video_stories(member_id):
             story_id=story.id,
             story_text=story.story,
             preview=get_reisha(story.preview, 30),
-            ###source = term.SSource,
+            ###source = term.ssource,
             used_for=story.used_for,
             author_id=story.author_id,
             creation_date=story.creation_date,
@@ -1350,25 +1488,48 @@ def query_has_data(params):
            (params.approval_state and params.approval_state.id in [2, 3]) or params.selected_topics or \
            params.show_untagged or params.selected_words or params.deleted_stories
 
-
-def make_stories_query(params, exact):
-    q = init_query(db.TblStories, editing=params.editing, is_deleted=params.deleted_stories)
-    q &= (db.TblStories.used_for.belongs(story_kinds()))
-    selected_stories = params.selected_stories
-    if params.keywords_str:
-        selected_stories = []
-        if exact:
-            q &= (db.TblStories.name.contains(params.keywords_str)) | (
-                db.TblStories.story.contains(params.keywords_str))
+def keywords_query(q, keywords_str, exact):
+    if exact:
+        single = len(keywords_str.split()) == 1
+        if single:
+            q1 = (db.TblStories.name.regexp(r"\y" + keywords_str + r"\y")) | (
+                    db.TblStories.story.regexp(r"\y" + keywords_str + r"\y"))
         else:
-            keywords = params.keywords_str.split()
-            if len(keywords) == 1:
-                return None
-            for kw in keywords:
-                q &= (db.TblStories.name.contains(kw)) | (db.TblStories.story.contains(kw))
-            # prevent duplicates:
-            q &= (~db.TblStories.name.contains(params.keywords_str)) & \
-                 (~db.TblStories.story.contains(params.keywords_str))
+            q1 = (db.TblStories.name.contains(keywords_str)) | \
+                    (db.TblStories.story.contains(keywords_str))
+        q &= q1
+    else:
+        keywords = keywords_str.split()
+        for kw in keywords:
+            q &= (db.TblStories.name.contains(kw)) | (db.TblStories.story.contains(kw))
+    return q
+
+def cuepoints_text_query(q, keywords_str, exact):
+    q1 = (db.TblStories.used_for == STORY4VIDEO) & (db.TblVideos.story_id==db.TblStories.id)
+    if exact:
+        single = len(keywords_str.split()) == 1 
+        if single:
+            q1 &= (db.TblVideos.cuepoints_text.regexp(r"\y" + keywords_str + r"\y"))
+        else:
+            q1 &= (db.TblVideos.cuepoints_text.contains(keywords_str))
+    else:
+        keywords = keywords_str.split()
+        for kw in keywords:
+            q1 &= (db.TblVideos.cuepoints_text.contains(kw))
+    q &= q1
+    return q
+        
+def make_stories_query(params, exact, cuepoints=False):
+    q = init_query(db.TblStories, editing=params.editing, is_deleted=params.deleted_stories)
+    q &= (db.TblStories.used_for.belongs(story_kinds(params)))
+    selected_stories = params.selected_stories
+    keywords_str = params.keywords_str
+    if keywords_str:
+        selected_stories = []
+        if cuepoints:
+            q = cuepoints_text_query(q, keywords_str, exact)
+        else:
+            q = keywords_query(q, keywords_str, exact)
     if selected_stories:
         q &= (db.TblStories.id.belongs(selected_stories))
     if params.days_since_update and params.days_since_update.value:
@@ -1408,15 +1569,15 @@ def calc_years_range(params):
 
 
 def _merge_members(mem1_id, mem2_id):
-    photos1 = db(db.TblMemberPhotos.Member_id == mem1_id).select()
-    photos2 = db(db.TblMemberPhotos.Member_id == mem2_id).select()
-    set1 = set([rec.Photo_id for rec in photos1])
-    set2 = set([rec.Photo_id for rec in photos2])
+    photos1 = db(db.TblMemberPhotos.member_id == mem1_id).select()
+    photos2 = db(db.TblMemberPhotos.member_id == mem2_id).select()
+    set1 = set([rec.photo_id for rec in photos1])
+    set2 = set([rec.photo_id for rec in photos2])
     for rec in photos2:
-        if rec.Photo_id in set1:
+        if rec.photo_id in set1:
             db(db.TblMemberPhotos.id == rec.id).delete()
         else:
-            rec.update_record(Member_id=mem1_id)
+            rec.update_record(member_id=mem1_id)
     db(db.TblMembers.id == mem2_id).update(deleted=True)
 
 
@@ -1431,7 +1592,7 @@ def save_story_members(caller_id, caller_type, member_ids):
     if caller_type == "story":
         tbl = db.TblEvents
         tbl1 = db.TblEventMembers
-        item_fld = tbl1.Event_id
+        item_fld = tbl1.event_id
     elif caller_type == "term":
         tbl = db.TblTerms
         tbl1 = db.TblTermMembers
@@ -1439,18 +1600,18 @@ def save_story_members(caller_id, caller_type, member_ids):
     else:
         return dict()
     item = db(tbl.story_id == caller_id).select().first()
-    qm = (item_fld == item.id) & (db.TblMembers.id == tbl1.Member_id)
+    qm = (item_fld == item.id) & (db.TblMembers.id == tbl1.member_id)
     old_members = db(qm).select(db.TblMembers.id)
     old_members = [m.id for m in old_members]
     for m in old_members:
         if m not in member_ids:
-            db((tbl1.Member_id == m) & (item_fld == item.id)).delete()
+            db((tbl1.member_id == m) & (item_fld == item.id)).delete()
     for m in member_ids:
         if m not in old_members:
             if caller_type == "story":
-                tbl1.insert(Member_id=m, Event_id=item.id)
+                tbl1.insert(member_id=m, event_id=item.id)
             else:
-                tbl1.insert(Member_id=m, term_id=item.id)
+                tbl1.insert(member_id=m, term_id=item.id)
     return dict()
 
 
@@ -1482,7 +1643,7 @@ def get_story_photo_ids(story_id):
     event_id = event_id_of_story_id(story_id)
     if not event_id:
         return []
-    qp = (db.TblEventPhotos.Event_id == event_id) & (db.TblPhotos.id == db.TblEventPhotos.Photo_id) & (
+    qp = (db.TblEventPhotos.event_id == event_id) & (db.TblPhotos.id == db.TblEventPhotos.photo_id) & (
                 db.TblPhotos.deleted != True)
     lst = db(qp).select(db.TblPhotos.id)
     lst = [p.id for p in lst]
@@ -1493,7 +1654,7 @@ def get_story_member_ids(story_id):
     event_id = event_id_of_story_id(story_id)
     if not event_id:
         return []
-    qm = (db.TblEventMembers.Event_id == event_id) & (db.TblMembers.id == db.TblEventMembers.Member_id)
+    qm = (db.TblEventMembers.event_id == event_id) & (db.TblMembers.id == db.TblEventMembers.member_id)
     lst = db(qm).select(db.TblMembers.id)
     lst = [m.id for m in lst]
     return lst
@@ -1510,6 +1671,7 @@ def item_of_story_id(used_for, story_id):
         STORY4FEEDBACK: None,
         STORY4VIDEO: db.TblVideos,
         STORY4DOC: db.TblDocs,
+        STORY4DOCSEGMENT: db.TblDocSegments,
         STORY4AUDIO: db.TblAudios,
         STORY4ARTICLE: db.TblArticles
     }
@@ -1550,6 +1712,13 @@ def copy_story_date_to_object_date(story_rec):
                               doc_date_datespan=story_rec.story_date_datespan,
                               doc_date_dateend=story_rec.story_date_dateend,
                               )
+    elif story_rec.used_for == STORY4DOCSEGMENT:
+        doc_seg_rec = db(db.TblDocsegments.story_id == story_rec.id).select().first()
+        doc_seg_rec.update_record(doc_seg_date=doc_seg_rec.story_date,
+                              doc_seg_date_dateunit=doc_seg_rec.story_date_dateunit,
+                              doc_seg_date_datespan=doc_seg_rec.story_date_datespan,
+                              doc_seg_date_dateend=doc_seg_rec.story_date_dateend,
+                              )
     elif story_rec.used_for == STORY4AUDIO:
         audio_rec = db(db.TblAudios.story_id == story_rec.id).select().first()
         audio_rec.update_record(audio_date=story_rec.story_date,
@@ -1588,8 +1757,23 @@ def collect_search_stats(vars):
     else:
         db.TblSearches.insert(pattern=vars.search_pattern, count=1)
 
+@serve_json
+def divorce(vars):
+    member_id = int(vars.member_id)
+    spouse_id = int(vars.spouse_id)
+    if vars.what == "undo-divorce":
+        value = 0
+    else:
+        value = int(vars.hide_spouse)
+    children = get_member_spouse_children(member_id, spouse_id)
+    for child in children:
+        child.update_record(parents_marital_status=value)
+    spouses = get_spouses(member_id)
+    return dict(spouses=spouses)
 
-def story_kinds():
+def story_kinds(params):
+    if (params.events_only):
+        return [STORY4EVENT]
     story_kinds_arr = STORY4USER
     if auth.user_has_privilege(HELP_AUTHOR):
         story_kinds_arr += [STORY4HELP]
@@ -1599,7 +1783,7 @@ def story_kinds():
 
 
 def get_story_members(event):
-    qp = (db.TblEventPhotos.Event_id == event.id) & (db.TblPhotos.id == db.TblEventPhotos.Photo_id) & (
+    qp = (db.TblEventPhotos.event_id == event.id) & (db.TblPhotos.id == db.TblEventPhotos.photo_id) & (
                 db.TblPhotos.deleted != True)
     photos = db(qp).select(db.TblPhotos.id, db.TblPhotos.photo_path)
     photo_ids = [photo.id for photo in photos]
@@ -1608,18 +1792,18 @@ def get_story_members(event):
 
     photos = [p.as_dict() for p in photos]
     for p in photos:
-        p['photo_path'] = photos_folder() + p['photo_path']
-    member_fields = [db.TblMembers.id, db.TblMembers.first_name, db.TblMembers.last_name, db.TblMembers.facePhotoURL]
+        p['photo_path'] = photos_folder(RESIZED) + p['photo_path']
+    member_fields = [db.TblMembers.id, db.TblMembers.first_name, db.TblMembers.last_name, db.TblMembers.facephotourl]
     # -----------------members-------------------
-    qm = (db.TblEventMembers.Event_id == event.id) & (db.TblMembers.id == db.TblEventMembers.Member_id) & (
+    qm = (db.TblEventMembers.event_id == event.id) & (db.TblMembers.id == db.TblEventMembers.member_id) & (
                 db.TblMembers.deleted != True)
     qa = (db.TblEventArticles.event_id == event.id) & (db.TblArticles.id == db.TblEventArticles.article_id)
     return _info_from_qm(qm, qa, member_fields, photo_member_set, photo_article_set, photos)
 
 
 def get_term_members(term):
-    member_fields = [db.TblMembers.id, db.TblMembers.first_name, db.TblMembers.last_name, db.TblMembers.facePhotoURL]
-    qp = (db.TblTermPhotos.term_id == term.id) & (db.TblPhotos.id == db.TblTermPhotos.Photo_id) & (
+    member_fields = [db.TblMembers.id, db.TblMembers.first_name, db.TblMembers.last_name, db.TblMembers.facephotourl]
+    qp = (db.TblTermPhotos.term_id == term.id) & (db.TblPhotos.id == db.TblTermPhotos.photo_id) & (
                 db.TblPhotos.deleted != True)
     photos = db(qp).select(db.TblPhotos.id, db.TblPhotos.photo_path)
     photo_ids = [photo.id for photo in photos]
@@ -1628,9 +1812,9 @@ def get_term_members(term):
 
     photos = [p.as_dict() for p in photos]
     for p in photos:
-        p['photo_path'] = photos_folder() + p['photo_path']
+        p['photo_path'] = photos_folder(RESIZED) + p['photo_path']
     # -----------------members-------------------
-    qm = (db.TblTermMembers.term_id == term.id) & (db.TblMembers.id == db.TblTermMembers.Member_id)
+    qm = (db.TblTermMembers.term_id == term.id) & (db.TblMembers.id == db.TblTermMembers.member_id)
     qa = (db.TblTermArticles.term_id == term.id) & (db.TblArticles.id == db.TblTermArticles.article_id)
     return _info_from_qm(qm, qa, member_fields, photo_member_set, photo_article_set, photos)
 
@@ -1658,13 +1842,13 @@ def _info_from_qm(qm, qa, member_fields, photo_member_set, photo_article_set, ph
     for arr in lst:
         for m in arr:
             m['full_name'] = (m['first_name'] or '') + ' ' + (m['last_name'] or '')
-            if not m['facePhotoURL']:
-                m['facePhotoURL'] = "dummy_face.png"
-            m['facePhotoURL'] = photos_folder("profile_photos") + m['facePhotoURL']
+            if not m['facephotourl']:
+                m['facephotourl'] = "dummy_face.png"
+            m['facephotourl'] = photos_folder(PROFILE_PHOTOS) + m['facephotourl']
     lst = [articles, article_candidates]
     for arr in lst:
         for a in arr:
-            a['facePhotoURL'] = photos_folder("profile_photos") + a['facePhotoURL']
+            a['facephotourl'] = photos_folder(PROFILE_PHOTOS) + a['facephotourl']
     return photos, members, candidates, articles, article_candidates
 
 
@@ -1682,12 +1866,21 @@ def decode_sorting_key(sk):
     lst = sk.split('-')
     return [int(s) for s in lst]
 
-def story_id_of_story_about_id(story_about_id):
-    doc_rec = db(db.TblDocs.story_about_id==story_about_id).select().first()
-    if doc_rec:
-        return doc_rec.story_id
-    return None
-
-def doc_has_story_about(story_id):
-    doc_rec = db(db.TblDocs.story_id == story_id).select().first()
-    return doc_rec and doc_rec.story_about_id
+def marry(member_id, spouse_id, member_gender):
+    spouse_rec = get_member_rec(spouse_id)
+    spouse_gender = spouse_rec.gender
+    info = Storage()
+    if member_gender == "M":
+        info.father_id = member_id;
+        if spouse_gender != member_gender:
+            info.mother_id = spouse_id
+        else:
+            info.father2_id = spouse_id
+    if member_gender == "F":
+        info.mother_id = member_id;
+        if spouse_gender != member_gender:
+            info.father_id = spouse_id
+        else:
+            info.mother2_id = spouse_id
+        info.visibility = 0
+    child_id = db.TblMembers.insert(**info)

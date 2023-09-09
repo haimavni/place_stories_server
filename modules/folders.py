@@ -5,6 +5,10 @@ from sys import platform
 if platform == 'linux':
     import pwd
 
+RESIZED  =        'orig'
+ORIG    =        'oversize'
+SQUARES =        'squares'
+PROFILE_PHOTOS = 'profile_photos'
 
 def url_folder(kind):
     request = inject('request')
@@ -51,7 +55,7 @@ def system_folder():
     return path
 
 
-def photos_folder(what="orig"):
+def photos_folder(what):
     # what may be orig, squares or profile_photos.
     return url_folder('photos') + what + '/'
 
@@ -60,8 +64,7 @@ def images_folder():
     return url_folder('images')
 
 
-def local_photos_folder(what="orig"):
-    # what may be orig, squares,images or profile_photos. (images is for customer-specific images such as logo)
+def local_photos_folder(what):
     return local_folder('photos' + '/' + what)
 
 
