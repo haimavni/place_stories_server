@@ -23,8 +23,9 @@ def replace_divs(s):
     result = pat.sub(replace_div, s)
     return result
 
-def replace_nbsps(s):
-    return s.replace('&nbsp;', '&#9899;')
+def replace_nbsps(s, repl=' '):
+    # black circle: '&#9899;'
+    return s.replace('&nbsp;', repl)
 
 def remove_special_chars(s):
     return s.replace("“", '"')
