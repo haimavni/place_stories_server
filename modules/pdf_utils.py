@@ -13,7 +13,7 @@ from gluon.storage import Storage
 
 from pdf2image import convert_from_path
 import pdfplumber
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 from .injections import inject
 import psutil
 import fitz

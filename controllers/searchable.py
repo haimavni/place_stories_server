@@ -48,6 +48,8 @@ def calc_href(what, id):
     r = app.find("__")
     if r > 0:
         app = app[:r]
+        if app == "gbs":
+            app += "__www"
     return f'https://{host}/{app}/aurelia#/{what}/{id}/*'
 
 def sitemap():
