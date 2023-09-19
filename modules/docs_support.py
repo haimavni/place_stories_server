@@ -8,7 +8,7 @@ from gluon.storage import Storage
 import random
 from .stories_manager import Stories
 from .folders import url_folder, local_folder
-from .pdf_utils import pdf_to_text, save_pdf_jpg
+from .pdf_utils import pdf_num_pages, save_pdf_jpg
 from time import sleep
 from . import ws_messaging
 from misc_utils import chmod, timestamp
@@ -68,6 +68,8 @@ def handle_loaded_doc(record_id):
     drec = db(db.TblDocs.id==record_id).select().first()
     path, file_name = os.path.split(drec.doc_path)
     doc_file_name = local_docs_folder() + drec.doc_path
+    num_pages = pdf_num_pages(doc_file_name)
+    drec.update_record(num_pages=num_pages)
     pdf_jpg_folder = local_docs_folder() + 'pdf_jpgs/' + path + '/'
     dir_util.mkpath(pdf_jpg_folder)
     pdf_jpg_path = pdf_jpg_folder + file_name.replace('.pdf', '.jpg')
