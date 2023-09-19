@@ -50,7 +50,7 @@ def detect_rtl(doc):
                 return True
     return n2 > n1
 
-def pdf_to_text(pdfname, extract_text=False):
+def pdf_to_text(pdfname):
     with open(pdfname, 'rb') as f:
         pdf = PdfReader(f)
         pages = pdf.pages
@@ -62,10 +62,9 @@ def pdf_to_text(pdfname, extract_text=False):
     return Storage(text=result, num_pages_extracted=num_pages, num_pages=num_pages)
 
 def pdf_num_pages(pdfname):
-    #faster than pdf_to_text
     with open(pdfname, 'rb') as f:
         pdf = PdfReader(f)
-        return pdf.numPages;
+        return len(pdf.pages)
 
 def pdf_to_text_obsolete(pdfname, num_pages_extracted):
     comment, log_exception = inject('comment', 'log_exception')
