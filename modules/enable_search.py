@@ -21,6 +21,11 @@ def create_sitemap():
     db, request, STORY4MEMBER, comment = inject('db', 'request', 'STORY4MEMBER', 'comment')
     host = request.env.http_host
     app = request.application
+    r = app.find("__")
+    if r > 0:
+        app1 = app[:r]
+    else:
+        app1 = app
     lst = db((db.TblStories.used_for==STORY4MEMBER)&(db.TblStories.id==db.TblMembers.story_id)).select(db.TblMembers.id)
     member_list = [rec.id for rec in lst]
     # comment(f'inside emit bio items: {member_list}')
@@ -31,7 +36,7 @@ def create_sitemap():
     xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 '''
-    fname = f'/apps_data/{app}/sitemap.xml'
+    fname = f'/apps_data/{app1}/sitemap.xml'
     # comment(f'writing to {fname}')
     # comment(f'header: {header}')
     with open(fname, 'w', encoding='utf-8') as f:
@@ -42,5 +47,5 @@ def create_sitemap():
             f.write(item)
         f.write('</urlset>')
     
-    url = f"https://{host}/{app}/static/apps_data/{app}/sitemap.xml"
+    url = f"https://{host}/{app}/static/apps_data/{app1}/sitemap.xml"
     return url
