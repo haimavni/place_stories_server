@@ -2,7 +2,7 @@ import datetime
 from docs_support import save_uploaded_doc, doc_url, doc_jpg_url, \
     doc_segment_url, doc_segment_jpg_url, create_uploading_doc, save_uploading_chunk, \
     handle_loaded_doc, save_doc_segment_thumbnail, save_uploaded_doc_seg_thumbnail, save_uploaded_doc_thumbnail, \
-    restore_doc_thumbnail, confirm_doc_thumbnail
+    restore_doc_thumbnail, confirm_doc_thumbnail, copy_doc_date_to_segments
 from members_support import calc_grouped_selected_options, calc_all_tags, get_tag_ids, init_query, get_topics_query, get_object_topics, photos_folder
 from date_utils import date_of_date_str, parse_date, get_all_dates, update_record_dates, fix_record_dates_in, \
     fix_record_dates_out
@@ -563,6 +563,12 @@ def upload_doc_thumbnail(vars):
     fil=vars.file
     result=save_uploaded_doc_thumbnail(fil.BINvalue, doc_id, ptp_key)
     return dict(upload_result=result)
+
+@serve_json
+def copy_doc_date_to_doc_segments(vars):
+    doc_id = int(vars.doc_id)
+    copy_doc_date_to_segments(doc_id)
+    return dict()
 
 def full_member_name(member):
     s = member.first_name or ""

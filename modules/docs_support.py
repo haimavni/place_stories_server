@@ -287,3 +287,17 @@ def doc_segment_by_story_id(story_id):
         (db.TblDocs.id==db.TblDocSegments.doc_id)
     rec = db(q).select().first()
     return rec
+
+def copy_doc_date_to_segments(doc_id):
+    db, NO_DATE = inject("db", "NO_DATE")
+    drec = db(db.TblDocs.id==doc_id).select().first()
+    segments = db(db.TblDocSegments.doc_id == drec.id).select()
+    for srec in segments:
+        if srec.doc_date != NO_DATE and srec.doc_date != None:
+            continue
+        srec.update_record(doc_date=drec.doc_date,
+                           doc_date_dateunit=drec.doc_date_dateunit,
+                           doc_date_datespan=drec.doc_date_datespan,
+                           doc_date_dateend=drec.doc_date_dateend
+                           )
+
