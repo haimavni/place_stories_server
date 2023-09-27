@@ -157,7 +157,7 @@ def apply_topics_to_doc(vars):
     curr_tags = sorted(curr_tags)
     keywords = KW_SEP.join(curr_tags)
     is_tagged = len(curr_tags) > 0
-    srec = db(db.TblStories.id == rec.story_id).select().first()
+    srec = db(db.TblStories.id == story_id).select().first()
     srec.update_record(keywords=keywords, is_tagged=is_tagged)
     return dict()
     # rec.update_record(recognized=True)
