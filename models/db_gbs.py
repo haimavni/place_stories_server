@@ -405,11 +405,7 @@ db.define_table('TblDocSegments',
                 Field('doc_id', type=db.TblDocs),
                 Field('page_num', type='integer'),
                 Field('page_part_num', type='integer'),
-                Field('story_id', type=db.TblStories),
-                Field('doc_date', type='date', default=NO_DATE),
-                Field('doc_date_dateunit', type='string', default='Y'), # D, M or Y for day, month, year
-                Field('doc_date_datespan', type='integer', default=1), # how many months or years in the range
-                Field('doc_date_dateend', type='date', default=NO_DATE),
+                Field('story_id', type=db.TblStories)
 )                
 
 db.define_table('TblAudios',
