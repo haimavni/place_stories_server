@@ -122,15 +122,8 @@ def delete_checked_docs(vars):
 @serve_json
 def apply_topics_to_doc(vars):
     all_tags = calc_all_tags()
-    if vars.doc_segment_id:
-        doc_segment_id = int(vars.doc_segment_id)
-        rec = db(db.TblDocSegments.id == doc_segment_id).select().first()
-        topic_type = "S"
-    else:
-        doc_id = int(vars.doc_id)
-        rec = db(db.TblDocs.id == doc_id).select().first()
-        topic_type = "D"
-    story_id = rec.story_id if rec else None
+    topic_type = "S" if vars.is_doc_segment else "D"
+    story_id = int(vars.story_id)
     topics = vars.topics
     curr_tag_ids = set(get_tag_ids(story_id, topic_type))
     new_tag_ids = set([t.id for t in topics])
@@ -373,12 +366,6 @@ def add_doc_segment(vars):
 
 @ serve_json
 def update_doc_date(vars):
-    # doc_date_str = vars.doc_date_str
-    # doc_dates_info = dict(
-    #     doc_date=(vars.doc_date_str, int(vars.doc_date_datespan))
-    # )
-    # rec = db((db.TblDocs.id == int(vars.doc_id)) & (db.TblDocs.deleted != True)).select().first()
-    # update_record_dates(rec, doc_dates_info)
     story_id=int(vars.story_id)
     story_rec=db(db.TblStories.id == story_id).select().first()
     dates_info=dict(
