@@ -114,10 +114,6 @@ def fix_family_connection_stored():
         mrec.update_record(family_connections_stored=False)
     return 'done'
 
-def fix_doc_segment_dates():
-    for srec in db(db.TblDocSegments).select():
-        if srec.doc_date == None:
-            srec.update_record(doc_date=NO_DATE)
 
 _fixes = {
     1: init_photo_back_sides,
@@ -134,8 +130,7 @@ _fixes = {
     12: fix_feedback_messages,
     13: fix_member_names,
     14: fix_family_connection_stored,
-    15: update_video_thumbnails,
-    16: fix_doc_segment_dates  
+    15: update_video_thumbnails
 }
 
 _init_configuration_table()
