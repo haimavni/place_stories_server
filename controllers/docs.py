@@ -79,7 +79,7 @@ def get_doc_segment_list(vars):
     params = vars.params
     if params.checked_doc_list:
         q = (db.TblDocSegments.story_id.belongs(params.checked_doc_list)) & \
-            (db.TblStories.id == db.TblDocSegments.story_id) \
+            (db.TblStories.id == db.TblDocSegments.story_id) & \
             (db.TblDocs.id == db.TblDocSegments.doc_id)
         lst0 = db(q).select()
         lst0 = [rec for rec in lst0]
@@ -417,8 +417,7 @@ def update_doc_segment_members(vars):
     db(q).delete()
     for mid in new_members:
         if mid not in old_members_set:
-            db.TblMembersDocSegments.insert(
-                doc_segment_id=doc_segment_id, member_id=mid)
+            db.TblMembersDocSegments.insert(doc_segment_id=doc_segment_id, member_id=mid)
     members=db(db.TblMembers.id.belongs(new_members)).select(
         db.TblMembers.id, db.TblMembers.facephotourl)
     for member in members:

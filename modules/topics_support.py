@@ -7,6 +7,8 @@ def recalc_keywords_str(story_id):
         db.TblTopics.id == db.TblItemTopics.topic_id)
     lst = db(q).select()
     topic_names = [r.TblTopics.name for r in lst]
+    topic_names = sorted(topic_names)
+    
     topics_str = KW_SEP.join(topic_names)
     db(db.TblStories.id == story_id).update(keywords=topics_str)
 
@@ -106,7 +108,8 @@ def rename_a_topic(topic_id, new_name):
     if new_name == rec.name:
         return
     rec.update_record(name=new_name)
-    # todo: recalculate keyword list for all relevant stories
+    recalc_all_keywords()
+    # todo: recalculate keyword list only for all relevant stories
 
 
 def fix_is_tagged(first=0, chunk=100000):
