@@ -218,10 +218,7 @@ def apply_to_checked_docs(vars):
 @serve_json
 def get_doc_info(vars):
     doc_id = int(vars.doc_id)
-    if vars.caller == "stories" or vars.caller == "member":
-        q = (db.TblDocs.story_id == doc_id)
-    else:
-        q = (db.TblDocs.id == doc_id)
+    q = (db.TblDocs.id == doc_id)
     q &= (db.TblStories.id == db.TblDocs.story_id)
     rec = db(q).select().first()
     if not rec:
@@ -291,10 +288,7 @@ def get_doc_info(vars):
 @serve_json
 def get_doc_segment_info(vars):
     doc_segment_id = int(vars.doc_segment_id)
-    if vars.caller == "stories" or vars.caller == "member":
-        q = (db.TblDocSegments.story_id == doc_segment_id)
-    else:
-        q = (db.TblDocSegments.id == doc_segment_id)
+    q = (db.TblDocSegments.id == doc_segment_id)
     q &= (db.TblDocs.id == db.TblDocSegments.doc_id)
     rec = db(q).select().first()
     doc_segment_rec = rec.TblDocSegments;
@@ -336,9 +330,6 @@ def get_doc_segment_info(vars):
 @ serve_json
 def create_segment(vars):
     doc_id=vars.doc_id
-    if vars.caller == "stories":
-        doc_rec=db(db.TblDocs.story_id == doc_id).select().first()
-        doc_id=doc_rec.id
     page_num=vars.page_num
     page_part_num=int(vars.page_part_num)
     untitled=vars.untitled
@@ -461,6 +452,26 @@ def doc_thumbnail_confirm(vars):
     doc_id = int(vars.doc_id)
     confirm_doc_thumbnail(doc_id)
     return dict()
+
+@serve_json
+def convert_story_ids(vars):
+    result = dict()
+    id = int(vars.id)
+    segment_id = int(vars.segment_id)
+    doc_ids = [int(di) for di in vars.doc_ids]
+    drec = db(db.TblDocs.story_id==id).select().first()
+    result["doc_id"] = drec.id
+    if segment_id:
+        dsrec = db(db.TblDocSegments.story_id==segment_id).select().first()
+        result["doc_segment_id"] = dsrec.id
+        lst = db(db.TblDocSegments.story_id.belongs(doc_ids)).select()
+        doc_segment_ids = [ds.id for ds in lst]
+        result["doc_segment_ids"] = doc_segment_ids
+    else:
+        lst = db(db.TblDocs.story_id.belongs(doc_ids)).select()
+        doc_ids = [doc.id for doc in lst]
+        result["doc_ids"] = doc_ids
+    return result
 
 # ----------------support functions-----------------
 
