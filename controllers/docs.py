@@ -459,15 +459,16 @@ def convert_story_ids(vars):
     id = int(vars.id)
     segment_id = int(vars.segment_id) if vars.segment_id else None
     doc_ids = [int(di) for di in vars.doc_ids]
-    drec = db(db.TblDocs.story_id==id).select().first()
-    result["doc_id"] = drec.id
     if segment_id:
         dsrec = db(db.TblDocSegments.story_id==segment_id).select().first()
+        result["doc_id"] = dsrec.doc_id
         result["doc_segment_id"] = dsrec.id
         lst = db(db.TblDocSegments.story_id.belongs(doc_ids)).select()
         doc_segment_ids = [ds.id for ds in lst]
         result["doc_segment_ids"] = doc_segment_ids
     else:
+        drec = db(db.TblDocs.story_id==id).select().first()
+        result["doc_id"] = drec.id
         lst = db(db.TblDocs.story_id.belongs(doc_ids)).select()
         doc_ids = [doc.id for doc in lst]
         result["doc_ids"] = doc_ids
