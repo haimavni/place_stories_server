@@ -458,7 +458,7 @@ def convert_story_ids(vars):
     result = dict()
     id = int(vars.id)
     segment_id = int(vars.segment_id) if vars.segment_id else None
-    doc_ids = [int(di) for di in vars.doc_ids]
+    doc_ids = [int(di) for di in vars.doc_ids] if vars.doc_ids else []
     if segment_id:
         dsrec = db(db.TblDocSegments.story_id==segment_id).select().first()
         result["doc_id"] = dsrec.doc_id
