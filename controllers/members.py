@@ -342,6 +342,7 @@ def get_story_list(vars):
             result_type_counters[k] = 0
         result_type_counters[k] += 1
         story.doc_url = None
+        story.doc_segment_url = None
         story.audio_path = None
         story.editable_preview = False
         if k == STORY4DOC:
