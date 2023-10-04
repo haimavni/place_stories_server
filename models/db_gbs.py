@@ -485,7 +485,9 @@ db.define_table('TblConfiguration',
                 Field('short_bio_title', type='boolean', default=False),
                 Field('articles_in_menu', type='boolean', default=True),
                 Field('show_chat_buttons', type='boolean', default=True),
-                Field('single_doc_entry', type='boolean', default=False)
+                Field('single_doc_entry', type='boolean', default=False) # if true, click on image enters doc details
+                                                                         # if false, click on hamburger for doc details
+                                                                         # click on image opens doc immediately
                 )
 
 db.define_table('TblLocaleCustomizations',
