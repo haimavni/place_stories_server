@@ -1229,6 +1229,7 @@ def set_story_list_data(story_list):
         story_id=rec.id,
         topics=rec.keywords,  ###'; '.join(story_topics[rec.id]) if rec.id in story_topics else "",
         doc_url=rec.doc_url,
+        doc_segment_url=rec.doc_segment_url,
         audio_path=rec.audio_path,
         doc_jpg_url=calc_doc_jpg_url(rec.id, rec.used_for),
         profile_photo_path=rec.profile_photo_path if rec.used_for==STORY4MEMBER else "",
