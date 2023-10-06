@@ -812,7 +812,6 @@ def process_photo_list(lst, photo_pairs=dict(), webpSupported=False):
         tpp = timestamped_photo_path(rec.TblPhotos, webp_supported=webpSupported)
         # keywords=kws[rec.story_id]
         
-        rec_title='{}: {}'.format(rec.TblStories.name, keywords)
         dic = Storage(
             description=rec.TblPhotos.description or "",
             name=rec.TblStories.name,
