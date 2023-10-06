@@ -56,7 +56,7 @@ def get_photo_detail(vars):
                 latitude=rec.latitude,
                 longitude=rec.longitude,
                 zoom=rec.zoom,
-                has_story_text=rec.has_story_text,
+                has_story_text=len(story.story_text) > 0,
                 chatroom_id=story.chatroom_id)
 
 @serve_json
@@ -295,25 +295,24 @@ def get_photo_list(vars):
         lst = lst1
     selected_photo_list = vars.selected_photo_list
     if selected_photo_list:
-        lst1 = db(db.TblPhotos.id.belongs(selected_photo_list)).select()
+        lst1 = db((db.TblPhotos.id.belongs(selected_photo_list)) &
+                  (db.TblStories.id==db.TblPhotos.story_id)).select()
         lst1 = [rec for rec in lst1]
         for rec in lst1:
             rec.selected = 'photo-selected'
     else:
         lst1 = []
-    lst1_ids = [rec.id for rec in lst1]
+    lst1_ids = [rec.TblPhotos.id for rec in lst1]
     recent_photo_ids = vars.recent_photo_ids
     if recent_photo_ids:
-        lst2 = db(db.TblPhotos.id.belongs(recent_photo_ids)).select()
-        lst2 = [rec for rec in lst2 if rec.id not in lst1_ids]
+        lst2 = db(db.TblPhotos.id.belongs(recent_photo_ids)&
+                  (db.TblStories.id==db.TblPhotos.story_id)).select()
+        lst2 = [rec for rec in lst2 if rec.TblPhotos.id not in lst1_ids]
         lst1 += lst2
-    lst1_ids = [rec.id for rec in lst1]
-    for rec in lst:
-        srec = rec.TblStories
-        rec.TblPhotos.has_story_text = srec.story_len > 0
-    lst = [rec.TblPhotos for rec in lst if rec.TblPhotos.id not in lst1_ids]
+    lst1_ids = [rec.TblPhotos.id for rec in lst1]
+    lst = [rec for rec in lst if rec.TblPhotos.id not in lst1_ids]
     lst = lst1 + lst
-    photo_ids = [rec.id for rec in lst]
+    photo_ids = [rec.TblPhotos.id for rec in lst]
     photo_pairs = get_photo_pairs(photo_ids)
     result = process_photo_list(lst, photo_pairs, webpSupported=vars.webpSupported)
     if selected_order_option == 'upload-time-order' and lst:
@@ -804,42 +803,44 @@ def process_photo_list(lst, photo_pairs=dict(), webpSupported=False):
     for rec in lst:
         fix_record_dates_out(rec)
     result = []
-    story_ids = [rec.story_id for rec in lst]
-    lst1 = db(db.TblStories.id.belongs(story_ids)).select(db.TblStories.id, db.TblStories.keywords)
-    kws = dict()
-    for rec in lst1:
-        kws[rec.id] = rec.keywords
+    # story_ids = [rec.TblPhotos.story_id for rec in lst]
+    # lst1 = db(db.TblStories.id.belongs(story_ids)).select(db.TblStories.id, db.TblStories.keywords)
+    # kws = dict()
+    # for rec in lst1:
+    #     kws[rec.id] = rec.keywords
     for rec in lst:
-        tpp = timestamped_photo_path(rec, webp_supported=webpSupported)
-        keywords=kws[rec.story_id]
-        rec_title='{}: {}'.format(rec.name, keywords)
+        tpp = timestamped_photo_path(rec.TblPhotos, webp_supported=webpSupported)
+        # keywords=kws[rec.story_id]
+        
+        rec_title='{}: {}'.format(rec.TblStories.name, keywords)
         dic = Storage(
-            description=rec.description or "",
-            name=rec.name,
-            original_file_name=rec.original_file_name,
-            keywords=keywords,
-            title=rec_title,
-            photo_date_datestr=rec.photo_date_datestr,
-            photo_date_span=rec.photo_date_datespan,
-            photographer_id=rec.photographer_id,
+            description=rec.TblPhotos.description or "",
+            name=rec.TblStories.name,
+            original_file_name=rec.TblPhotos.original_file_name,
+            keywords = rec.TblStories.keywords
+            # title=rec_title,
+            title=f"{rec.TblStories.name}: {rec.TblStories.keywords}"
+            photo_date_datestr=rec.TblPhotos.photo_date_datestr,
+            photo_date_span=rec.TblPhotos.photo_date_datespan,
+            photographer_id=rec.TblPhotos.photographer_id,
             selected=rec.selected if 'selected' in rec else '',
             side='front',
-            photo_id=rec.id,
+            photo_id=rec.TblPhotos.id,
             src=tpp,
-            square_src=timestamped_photo_path(rec, what=SQUARES, webp_supported=webpSupported),
-            width=rec.width,
-            height=rec.height,
-            has_story_text=rec.has_story_text,
+            square_src=timestamped_photo_path(rec.TblPhotos, what=SQUARES, webp_supported=webpSupported),
+            width=rec.TblPhotos.width,
+            height=rec.TblPhotos.height,
+            has_story_text=rec.TblStories.story_len>0, #todo duplicated?
             front=Storage(
-                photo_id=rec.id,
+                photo_id=rec.TblPhotos.id,
                 src=tpp,
-                square_src=timestamped_photo_path(rec, what=SQUARES, webp_supported=webpSupported),
-                width=rec.width,
-                height=rec.height,
+                square_src=timestamped_photo_path(rec.TblPhotos, what=SQUARES, webp_supported=webpSupported),
+                width=rec.TblPhotos.width,
+                height=rec.TblPhotos.height,
             )
         )
-        if rec.id in photo_pairs:
-            dic.back = photo_pairs[rec.id]
+        if rec.TblPhotos.id in photo_pairs:
+            dic.back = photo_pairs[rec.TblPhotos.id]
             dic.flipped = False
             dic.flipable = 'flipable'
         result.append(dic)
