@@ -817,9 +817,9 @@ def process_photo_list(lst, photo_pairs=dict(), webpSupported=False):
             description=rec.TblPhotos.description or "",
             name=rec.TblStories.name,
             original_file_name=rec.TblPhotos.original_file_name,
-            keywords = rec.TblStories.keywords
+            keywords = rec.TblStories.keywords,
             # title=rec_title,
-            title=f"{rec.TblStories.name}: {rec.TblStories.keywords}"
+            title=f"{rec.TblStories.name}: {rec.TblStories.keywords}",
             photo_date_datestr=rec.TblPhotos.photo_date_datestr,
             photo_date_span=rec.TblPhotos.photo_date_datespan,
             photographer_id=rec.TblPhotos.photographer_id,
