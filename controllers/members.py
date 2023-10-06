@@ -1309,7 +1309,8 @@ def get_member_photos(member_id):
     q = (db.TblMemberPhotos.member_id == member_id) & \
         (db.TblPhotos.id == db.TblMemberPhotos.photo_id) & \
         (db.TblPhotos.deleted != True) & \
-        (db.TblPhotos.is_back_side != True)
+        (db.TblPhotos.is_back_side != True) & \
+        (db.TblStories.id==db.TblPhotos.story_id)
     return get_slides_from_photo_list(q)
 
 def get_member_videos(member_id):
