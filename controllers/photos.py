@@ -801,7 +801,7 @@ def flip_photo_pair(front_id, back_id):
 
 def process_photo_list(lst, photo_pairs=dict(), webpSupported=False):
     for rec in lst:
-        fix_record_dates_out(rec)
+        fix_record_dates_out(rec.TblPhotos)
     result = []
     # story_ids = [rec.TblPhotos.story_id for rec in lst]
     # lst1 = db(db.TblStories.id.belongs(story_ids)).select(db.TblStories.id, db.TblStories.keywords)
