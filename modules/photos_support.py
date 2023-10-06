@@ -380,12 +380,12 @@ def get_slides_from_photo_list(q):
                 src=timestamped_photo_path(rec),
                 width=rec.width,
                 height=rec.height,
-                has_story_text=rec.has_story_text
+                has_story_text=len(rec.TblStories.story) > 0
                 ),
             src=timestamped_photo_path(rec),
             width=rec.width,
             height=rec.height,
-            has_story_text=rec.has_story_text,
+            has_story_text=len(rec.TblStories.story) > 0,
             title=rec.description or rec.name)
         if rec.id in photo_pairs:
             dic['back'] = photo_pairs[rec.id]
@@ -1034,17 +1034,6 @@ def save_qr_photo(data):
     target_file_name = local_folder('temp') + file_name
     img.save(target_file_name)
     return url_folder('temp') + file_name
-
-def calc_story_has_text():
-    db = inject('db')
-    q = (db.TblPhotos.deleted!=True) & (db.TblStories.id==db.TblPhotos.story_id)
-    n = 0
-    for rec in db(q).select():
-        has_text = len(rec.TblStories.story) > 10
-        if has_text:
-            n += 1
-        rec.TblPhotos.update_record(has_story_text=has_text)
-    return f"{n} photos have story text"
 
 def str_to_image(binVal: str):
     blob = to_bytes(binVal)
