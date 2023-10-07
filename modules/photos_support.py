@@ -357,38 +357,36 @@ def get_slides_from_photo_list(q):
     lst = db(q).select()
     if not lst:
         return []
-    if 'TblPhotos' in lst[0]:
-        lst = [rec.TblPhotos for rec in lst]
     lst1 = []
     visited = set([])
     for rec in lst:
-        if rec.id in visited:
+        if rec.TblPhotos.id in visited:
             continue
-        visited |= set([rec.id])
+        visited |= set([rec.TblPhotos.id])
         lst1.append(rec)
     lst = lst1
 
-    photo_ids = [rec.id for rec in lst]
+    photo_ids = [rec.TblPhotos.id for rec in lst]
     photo_pairs = get_photo_pairs(photo_ids)
     slides = []
     for rec in lst:
         dic = dict(
-            photo_id=rec.id,
+            photo_id=rec.TblPhotos.id,
             side='front',
             front=dict(
-                photo_id=rec.id,
-                src=timestamped_photo_path(rec),
-                width=rec.width,
-                height=rec.height,
-                has_story_text=len(rec.TblStories.story) > 0
+                photo_id=rec.TblPhotos.id,
+                src=timestamped_photo_path(rec.TblPhotos),
+                width=rec.TblPhotos.width,
+                height=rec.TblPhotos.height,
+                has_story_text=len(rec.TblStories.story) > 0 #todo - temporay
                 ),
-            src=timestamped_photo_path(rec),
-            width=rec.width,
-            height=rec.height,
-            has_story_text=len(rec.TblStories.story) > 0,
-            title=rec.description or rec.name)
-        if rec.id in photo_pairs:
-            dic['back'] = photo_pairs[rec.id]
+            src=timestamped_photo_path(rec.TblPhotos),
+            width=rec.TblPhotos.width,
+            height=rec.TblPhotos.height,
+            has_story_text=len(rec.TblStories.story) > 0, #todo: ditto
+            title=rec.TblPhotos.description or rec.name)
+        if rec.TblPhotos.id in photo_pairs:
+            dic['back'] = photo_pairs[rec.TblPhotos.id]
             dic['flipped'] = False
             dic['flipable'] = 'flipable'
         slides.append(dic)
