@@ -384,7 +384,7 @@ def get_slides_from_photo_list(q):
             width=rec.TblPhotos.width,
             height=rec.TblPhotos.height,
             has_story_text=len(rec.TblStories.story) > 0, #todo: ditto
-            title=rec.TblPhotos.description or rec.name)
+            title=rec.TblPhotos.description or rec.TblPhotos.name)
         if rec.TblPhotos.id in photo_pairs:
             dic['back'] = photo_pairs[rec.TblPhotos.id]
             dic['flipped'] = False
