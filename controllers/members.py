@@ -461,6 +461,7 @@ def get_story_photo_list(vars):
     else:
         qp = (db.TblTermPhotos.term_id == item_id) & (db.TblPhotos.id == db.TblTermPhotos.photo_id)
     qp &= (db.TblPhotos.deleted != True)
+    qp &= (db.TblStories.id == db.TblPhotos.story_id)
     photos = get_slides_from_photo_list(qp)
     return dict(photo_list=photos)
 
