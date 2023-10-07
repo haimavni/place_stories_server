@@ -231,7 +231,8 @@ def get_article_slides(article_id):
     q = (db.TblArticlePhotos.article_id == article_id) & \
         (db.TblPhotos.id == db.TblArticlePhotos.photo_id) & \
         (db.TblPhotos.deleted != True) &\
-        (db.TblPhotos.is_back_side != True)
+        (db.TblPhotos.is_back_side != True) &\
+        (db.TblStories.id == db.TblPhotos.story_id)
     return get_slides_from_photo_list(q)
 
 def get_article_stories(article_id):
