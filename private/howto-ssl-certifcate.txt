@@ -1,0 +1,17 @@
+How to set ssl certificate
+
+See ssl/ssl24/command.bash to create csr file
+go to namecheap site to initiate certificate
+Select validation method using dns record
+copy the name/value couple
+open cloudflare
+create CNAME record using the above couple
+Change temporarily to non-proxy
+Expect email with zip file
+expand the zip file
+cat <crt file> <cbundle-file> > <combined-crt>
+
+copy the combined file to /etc/nginx/ssl
+change name of ssl files in two places to the new name:
+    /etc/nginx/sites-enabled/conf-file
+    /etc/systemd/system/sslmessaging.service
