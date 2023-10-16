@@ -41,15 +41,14 @@ def try_send_message(key, user=None, group=None, **data):
     try:
         send_data(group, obj, key)
     except Exception as e:
-        return f"send message failed: {e.message}"
+        return f"send message failed: {e}"
     return "send message was successful"
 
 
 def send_data(group, obj, key):
-    request, comment = inject('request', 'comment')
+    request, comment, log_exception= inject('request', 'comment', 'log_exception')
     host = request.env.http_host
     txt = jsondumps(obj)
-    txt40 = txt[:40]
     comment(f'send message: group={group} key={key} text={txt}')
     if request.is_https:
         h = 'https'
@@ -64,5 +63,6 @@ def send_data(group, obj, key):
     try:
         websocket_send(f'{h}://{server_name}:{port}', txt, key, group)
     except Exception as e:
-        comment(f"send message failed: {e.message}. txt: {txt}")
+        log_exception("send message failed")
+        comment(f"send message failed: {e}. txt: {txt}")
     
