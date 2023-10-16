@@ -121,7 +121,8 @@ def extract_story_words(story_id):
         s += remove_all_tags(preview) + ' '
     if rec.used_for == STORY4VIDEO:
         vid_rec = db(db.TblVideos.story_id==story_id).select().first()
-        s += vid_rec.cuepoints_text
+        if vid_rec:
+            s += vid_rec.cuepoints_text
     s += remove_all_tags(html)
     lst = extract_words(s)
     if not lst:
