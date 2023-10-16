@@ -118,7 +118,8 @@ def websocket_send(url, message, hmac_key=None, group='default'):
     except HTTPError as e:
         comment(f"send failed with error {e.code}")
     except Exception as e:
-        comment(f"websocket_send failed {e}")
+        eclass = e.__class__
+        comment(f"websocket_send failed. {eclass}: {e.code}")
     return data
 
 

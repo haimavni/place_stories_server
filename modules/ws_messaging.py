@@ -50,7 +50,7 @@ def send_data(group, obj, key):
     host = request.env.http_host
     txt = jsondumps(obj)
     txt40 = txt[:40]
-    comment(f'send message: group={group} key={key} text={txt40}')
+    comment(f'send message: group={group} key={key} text={txt}')
     if request.is_https:
         h = 'https'
         port = '8443' if host == 'tol.life' else '9443'
@@ -64,5 +64,5 @@ def send_data(group, obj, key):
     try:
         websocket_send(f'{h}://{server_name}:{port}', txt, key, group)
     except Exception as e:
-        comment(f"send message failed: {e.message}")
+        comment(f"send message failed: {e.message}. txt: {txt}")
     
