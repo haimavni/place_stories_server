@@ -116,10 +116,9 @@ def websocket_send(url, message, hmac_key=None, group='default'):
             data = f.read()
             f.close()
     except HTTPError as e:
-        comment(f"send failed with error {e.code}")
+        comment(f"send failed with error {e}")
     except Exception as e:
-        eclass = e.__class__
-        comment(f"websocket_send failed. {eclass}: {e.code}")
+        comment(f"websocket_send failed. e: {e}")
     return data
 
 
