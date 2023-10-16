@@ -61,5 +61,8 @@ def send_data(group, obj, key):
         port = '8888'
         key = 'mykey'
         server_name = '127.0.0.1'
-    websocket_send(f'{h}://{server_name}:{port}', txt, key, group)
+    try:
+        websocket_send(f'{h}://{server_name}:{port}', txt, key, group)
+    except Exception as e:
+        comment(f"send message failed: {e.message}")
     
