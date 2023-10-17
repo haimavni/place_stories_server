@@ -48,7 +48,7 @@ def try_send_message(key, user=None, group=None, **data):
 def send_data(group, obj, key):
     request, comment, log_exception= inject('request', 'comment', 'log_exception')
     host = request.env.http_host
-    comment(f"host is {host}. req is https: {request.is_https}")
+    # comment(f"host is {host}. req is https: {request.is_https}")
     host = 'tol.life'       #in bacground the computed values are wrong
     is_https = True
     txt = jsondumps(obj)
