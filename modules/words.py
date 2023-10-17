@@ -148,9 +148,6 @@ def retrieve_story_words(story_id):
 def update_story_words_index(story_id):
     db, comment = inject('db', 'comment')
     comment(f"start indexing story {story_id}")
-    #delete soon!!!!!!!!
-    ws_messaging.send_message('WORD_INDEX_CHANGED', group='ALL', 
-                              story_id=story_id)
     now = datetime.datetime.now()
     added_words = []
     deleted_words = []
@@ -175,7 +172,6 @@ def update_story_words_index(story_id):
             if db(db.TblWordStories.word_id==word_id).count() == 0:
                 db(db.TblWords.id==word_id).delete()
     db.commit()
-    comment(f"=======word index changed. add words: {added_words}. deleted_words: {deleted_words}. new words: {new_words}")
     ws_messaging.send_message('WORD_INDEX_CHANGED', group='ALL', 
                               story_id=story_id, added_words=added_words, deleted_words=deleted_words, new_words=new_words)
     db(db.TblStories.id==story_id).update(indexing_date=now)

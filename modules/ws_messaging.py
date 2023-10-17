@@ -49,7 +49,6 @@ def send_data(group, obj, key):
     request, comment, log_exception= inject('request', 'comment', 'log_exception')
     host = request.env.http_host
     txt = jsondumps(obj)
-    comment(f'send message: group={group} key={key} text={txt}')
     if request.is_https:
         h = 'https'
         port = '8443' if host == 'tol.life' else '9443'
