@@ -317,7 +317,7 @@ def get_photo_list(vars):
     result = process_photo_list(lst, photo_pairs, webpSupported=vars.webpSupported)
     if selected_order_option == 'upload-time-order' and lst:
         if lst:
-            last_photo_id = lst[-1].id
+            last_photo_id = lst[-1].TblPhotos.id
             q1 = q & (db.TblPhotos.id < last_photo_id)
             if db(q1).count() == 0:
                 last_photo_id = 'END'
@@ -325,8 +325,8 @@ def get_photo_list(vars):
             last_photo_id = 'END'
     elif selected_order_option.startswith('chronological') and lst:
         if lst:
-            last_photo_date = lst[-1].photo_date
-            last_photo_id = lst[-1].id
+            last_photo_date = lst[-1].TblPhotos.photo_date
+            last_photo_id = lst[-1].TblPhotos.id
             if selected_order_option.endswith('reverse'):
                 q1 = (db.TblPhotos.photo_date < last_photo_date) | (db.TblPhotos.photo_date == last_photo_date) & (db.TblPhotos.id < last_photo_id)
             else:
