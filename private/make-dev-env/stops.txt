@@ -1,0 +1,2 @@
+to enable sudo:
+    usermod -a -G sudo haim
