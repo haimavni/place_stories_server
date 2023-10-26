@@ -1,0 +1,4 @@
+to enable sudo:
+    usermod -a -G sudo haim
+apt install python-is-python3
+apt install python3-pip

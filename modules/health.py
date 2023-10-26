@@ -74,3 +74,17 @@ def check_health():
                 detached_member_stories=detached_member_stories,
                 missing_photos=missing
                 )
+    
+def misplaced_photos():
+    db = inject("db")
+    lst = db(db.TblPhotos.photo_path.like("%uploads%")).select(db.TblPhotos.id,db.TblPhotos.photo_path,db.TblPhotos.name,orderby=db.TblPhotos.id)
+    misplaced_top = []
+    for r in lst:
+        if r.photo_path[7] != "/":
+            misplaced_top.append(r)
+    lst = db(db.TblPhotos.photo_path.like("%202%-%")).select(db.TblPhotos.id,db.TblPhotos.photo_path,db.TblPhotos.name,orderby=db.TblPhotos.id)
+    misplaced_year = []
+    for r in lst:
+        if r.photo_path[15] != "/":
+            misplaced_year.append(r)
+    return dict(misplaced_top=misplaced_top, misplaced_year=misplaced_year)
