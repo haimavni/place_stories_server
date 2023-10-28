@@ -866,6 +866,7 @@ def upload_chunk(vars):
     sub_folder = 'uploads/' + month + '/'
     path = local_photos_folder(RESIZED) + sub_folder
     dir_util.mkpath(path)
+    comment(f"upload chunk. what: {vars.what}, file name: {vars.file_name}, start: {vars.start}")
     if vars.what == 'start':
         comment("starting upload")
         prec = db((db.TblPhotos.crc == crc) & (db.TblPhotos.deleted != True)).select().first()
@@ -881,8 +882,10 @@ def upload_chunk(vars):
         story_info = sm.get_empty_story(used_for=STORY4PHOTO, story_text="", name=original_file_name)
         result = sm.add_story(story_info)
         story_id = result.story_id
+        photo_path = sub_folder + file_name
+        comment(f"--- upload chunk. photo_path: {photo_path}")
         record_id = db.TblPhotos.insert(
-            photo_path=sub_folder + file_name,
+            photo_path=photo_path,
             original_file_name=original_file_name,
             name=original_file_name,
             crc=crc,
