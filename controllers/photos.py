@@ -584,7 +584,7 @@ def get_uploaded_info(vars):
     similar_photos = process_photo_list(similars)
     for prec in similar_photos:
         prec['status'] = 'similar'
-    duplicates = db(db.TblPhotos.id.belongs(duplicates)).select()
+    duplicates = db(db.TblPhotos.id.belongs(duplicates) & (db.TblPhotos.story_id==db.TblStories.id)).select()
     duplicate_photos = process_photo_list(duplicates)
     for prec in duplicate_photos:
         prec['status'] = 'duplicate'
