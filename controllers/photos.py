@@ -588,7 +588,7 @@ def get_uploaded_info(vars):
     duplicate_photos = process_photo_list(duplicates)
     for prec in duplicate_photos:
         prec['status'] = 'duplicate'
-    regulars = db(db.TblPhotos.id.belongs(regulars)).select()
+    regulars = db(db.TblPhotos.id.belongs(regulars) & (db.TblPhotos.story_id==db.TblStories.id)).select()
     regular_photos = process_photo_list(regulars)
     for prec in regular_photos:
         prec['status'] = 'regular'
