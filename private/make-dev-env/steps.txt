@@ -1,4 +1,6 @@
-to enable sudo:
+wsl --install -d Ubuntu-22.04
+to enable sudo if no enabled:
     usermod -a -G sudo haim
+
 apt install python-is-python3
-apt install python3-pip
+apt install python3-pip   if necessary
