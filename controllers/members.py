@@ -31,12 +31,14 @@ def create_parent(vars):
     gender = vars.gender
     child_name = vars.child_name
     what = vars.parent_of + ' '
-    rec = new_member_rec(gender=gender, first_name=what + child_name)
+    name = what + child_name
+    rec = new_member_rec(gender=gender, first_name=name)
     rec.member_info.updater_id = auth.current_user()
     rec.member_info.update_time = datetime.datetime.now()
     rec.member_info.approved = auth.has_membership(DATA_AUDITOR)
     rec.member_info.date_of_birth = NO_DATE
     rec.member_info.date_of_death = NO_DATE
+    rec.member_info.story_id = new_bio(name)
     parent_id = db.TblMembers.insert(**rec.member_info)
     rec.member_info.id = parent_id
     rec.face_url = photos_folder(PROFILE_PHOTOS) + rec.facephotourl
@@ -60,12 +62,14 @@ def create_new_member(vars):
     first_name, last_name = lst[0], ' '.join(lst[1:])
     first_name = first_name.strip()
     last_name = last_name.strip()
+    name = name_from_first_last(first_name, last_name)
     rec = new_member_rec(first_name=first_name, last_name=last_name)
     rec.member_info.updater_id = auth.current_user()
     rec.member_info.update_time = datetime.datetime.now()
     rec.member_info.approved = auth.has_membership(DATA_AUDITOR)
     rec.member_info.date_of_birth = NO_DATE
     rec.member_info.date_of_death = NO_DATE
+    rec.member_info.story_id = new_bio(name)
     member_id = db.TblMembers.insert(**rec.member_info)
     rec.member_info.id = member_id
     params = Storage(
@@ -93,12 +97,16 @@ def create_spouse(vars):
     ws_messaging.send_message(key='MEMBER_LISTS_CHANGED', group='ALL', member_rec=member_rec, new_member=True)
     return dict(member_id=member_id, member=rec)
 
+def name_from_first_last(first_name, last_name):
+    return ((first_name.strip() or "") + ' ' + (last_name.strip() or "")).strip()
+
 def create_member(vars):
     name = (vars.name or vars.default_name).strip() + ' '
     lst = name.split(' ')
     first_name, last_name = lst[0], ' '.join(lst[1:])
     first_name = first_name.strip()
     last_name = last_name.strip()
+    name = name_from_first_last(first_name, last_name)
     rec = new_member_rec(first_name=first_name, last_name=last_name)
     rec.member_info.updater_id = auth.current_user()
     rec.member_info.update_time = datetime.datetime.now()
@@ -107,6 +115,7 @@ def create_member(vars):
     rec.member_info.date_of_death = NO_DATE
     rec.member_info.gender = vars.gender
     rec.member_info.facephotourl="dummy_face.png"
+    rec.member_info.story_id = new_bio(name)
     member_id = db.TblMembers.insert(**rec.member_info)
     rec.member_info.id = member_id
     rec.member_info.facephotourl = photos_folder(PROFILE_PHOTOS) + "dummy_face.png"
@@ -995,11 +1004,12 @@ def clean_html_format(vars):
 def count_hit(vars):
     what = vars.what.upper()
     item_id = int(vars.item_id)
+    story_id, item_id = calc_hit_story_id(what, item_id)
     rec = db((db.TblPageHits.what == what) & (db.TblPageHits.item_id == item_id)).select().first()
     if rec:
         rec.update_record(count=rec.count + 1, new_count=(rec.new_count or 0) + 1)
     else:
-        db.TblPageHits.insert(what=what, item_id=item_id, count=1, new_count=1)
+        db.TblPageHits.insert(what=what, item_id=item_id, story_id=story_id, count=1, new_count=1)
     return dict()
 
 
@@ -1886,5 +1896,6 @@ def marry(member_id, spouse_id, member_gender):
             info.father_id = spouse_id
         else:
             info.mother2_id = spouse_id
-        info.visibility = 0
+    info.visibility = 0
+    info.story_id = new_bio("???") 
     child_id = db.TblMembers.insert(**info)

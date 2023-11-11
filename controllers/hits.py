@@ -58,18 +58,42 @@ def get_hit_statistics(vars):
                 continue
             if tbl:
                 q &= (tbl.story_id==db.TblStories.id)
-            q &= (db.TblPageHits.item_id == tbl.id)
+            q &= (db.TblPageHits.item_id == tbl.id) #todo: use story_id?
             q &= (db.TblStories.deleted != True)
             precs = db(q).select(db.TblPageHits.item_id, db.TblStories.name, db.TblPageHits.count.sum(),
                                  groupby=[db.TblPageHits.item_id, db.TblStories.name],
                                  orderby=~db.TblPageHits.count.sum())
-            detailed[period] = [parse(prec) for prec in precs]
+            detailed[period] = [parse(prec, what) for prec in precs]
         result[what] = dict(totals=totals, detailed=detailed)
     return result
 
 
-def parse(prec):
+def parse(prec, what):
     return dict(count=prec._extra['SUM("TblPageHits"."count")'],
                 name=prec.TblStories.name,
-                item_id=prec.TblPageHits.item_id
+                item_id=prec.TblPageHits.item_id,
+                story_id=prec.TblPageHits.story_id,
+                url=calc_item_url(what, prec.TblPageHits)
                 )
+    
+def calc_item_url(what, rec):
+    host, app = calc_host_and_app()
+    if what == "MEMBER":
+        return f"https://{host}/{app}/aurelia#/member-details/{rec.item_id}/*"
+    if what == "EVENT":
+        return f"https://{host}/{app}/aurelia#/story-detail/{rec.story_id}/*"
+    if what == "PHOTO":
+        return f"https://{host}/{app}/aurelia#/photos/{rec.item_id}/*"
+    if what == "TERM":
+        return f"https://{host}/{app}/aurelia#/term-detail/{rec.story_id}/*"
+    if what == "DOC":
+         return f"https://{host}/{app}/aurelia#/doc-detail/{rec.item_id}/*"
+    if what == "DOCSEG":
+         return f"https://{host}/{app}/aurelia#/doc-detail/1/*?caller=docs&segment_id={rec.item_id}"
+    if what == "VIDEO":
+        return f"https://{host}/{app}/aurelia#/annotate-video/{rec.item_id}/*"
+    
+def calc_host_and_app():
+    host = request.env.HTTP_HOST
+    app = request.application
+    return host, app

@@ -2,6 +2,7 @@ from gluon.storage import Storage
 from .folders import *
 from .date_utils import get_all_dates
 from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
+import stories_manager
 
 
 def get_member_rec(member_id, member_rec=None, prepend_path=False):
@@ -267,3 +268,69 @@ def set_story_sorting_keys(refresh=False):
         ns += 1
         rec.update_record(sorting_key=rec.name)
     return dict(ns=ns, nms=nms)
+
+def new_bio(name):
+    STORY4MEMBER = inject("STORY4MEMBER")
+    sm = stories_manager.Stories()
+    story_info = sm.get_empty_story(used_for=STORY4MEMBER, story_text="", name=name)
+    result = sm.add_story(story_info)
+    return result.story_id
+
+def attach_bio_to_member(member_rec):
+    if member_rec.story_id:
+        return
+    name = (member_rec.first_name or "") + " " + (member_rec.last_name or "")
+    name = name.strip()
+    story_id = new_bio(name)
+    member_rec.update_record(story_id=story_id)
+    
+def add_missing_bios():
+    db = inject("db")
+    q = (db.TblMembers.deleted!=True) & (db.TblMembers.story_id==None)
+    for member_rec in db(q).select():
+        attach_bio_to_member(member_rec)
+        
+def add_story_id_to_hits():
+    db = inject("db")
+    tables = [
+        'MEMBER',
+        'EVENT',
+        'PHOTO',
+        'TERM',
+        'DOC',
+        'DOCSEG',
+        'VIDEO'
+    ]
+    for what in tables:
+        lst = db((db.TblPageHits.story_id==None) & (db.TblPageHits.what==what)).select()
+        for hit_rec in lst:
+            story_id, item_id = calc_hit_story_id(what, hit_rec.item_id)
+            hit_rec.update_record(story_id=story_id, item_id=item_id)
+                
+def calc_hit_story_id(what, item_id):
+    if what == "APP":
+        return (None, None)
+    db = inject("db")
+    tables = dict(
+        APP=None,
+        MEMBER=db.TblMembers,
+        EVENT=db.TblEvents,
+        PHOTO=db.TblPhotos,
+        TERM=db.TblTerms,
+        DOC=db.TblDocs,
+        DOCSEG=db.TblDocSegments,
+        VIDEO=db.TblVideos
+    )
+    tbl = tables[what]
+    if what == "EVENT":
+        rec = db(tbl.story_id==item_id).select().first()
+        item_id = rec.id
+        story_id = item_id
+    else:
+        rec = db(tbl.id==item_id).select().first()
+        story_id = rec.story_id
+    return (story_id, item_id)
+    
+            
+        
+    

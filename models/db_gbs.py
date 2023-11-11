@@ -436,6 +436,7 @@ db.define_table('TblTerms',
 db.define_table('TblPageHits',
                 Field('what', type='string'),
                 Field('item_id', type='integer'),
+                Field('story_id', type='integer'),
                 Field('count', type='integer', default=0),
                 Field('new_count', type='integer', default=0),
                 Field('date', type='date')
