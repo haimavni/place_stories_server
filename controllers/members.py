@@ -1083,6 +1083,8 @@ def get_story_versions(vars):
 ###---------------------support functions
 
 def new_member_rec(gender=None, first_name="", last_name=""):
+    name = name = name_from_first_last(first_name, last_name)
+    story_id=new_bio(name)
     new_member = Storage(
         member_info=Storage(
             first_name=first_name,
@@ -1100,6 +1102,7 @@ def new_member_rec(gender=None, first_name="", last_name=""):
                 date='',
                 span=0
             ),
+            story_id=story_id,
             gender=gender),
         story_info=Storage(display_version='New Story', story_versions=[], story_text='', story_id=None),
         family_connections=Storage(
