@@ -115,7 +115,9 @@ def create_member(vars):
     rec.member_info.date_of_death = NO_DATE
     rec.member_info.gender = vars.gender
     rec.member_info.facephotourl="dummy_face.png"
+    comment(f"before new bio({name})")
     rec.member_info.story_id = new_bio(name)
+    comment(f"story id is {rec.member_info.story_id}")
     member_id = db.TblMembers.insert(**rec.member_info)
     rec.member_info.id = member_id
     rec.member_info.facephotourl = photos_folder(PROFILE_PHOTOS) + "dummy_face.png"
