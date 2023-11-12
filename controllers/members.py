@@ -1085,6 +1085,7 @@ def get_story_versions(vars):
 def new_member_rec(gender=None, first_name="", last_name=""):
     name = name = name_from_first_last(first_name, last_name)
     story_id=new_bio(name)
+    comment(f"new member rec ({name}). story_id: {story_id}")
     new_member = Storage(
         member_info=Storage(
             first_name=first_name,
