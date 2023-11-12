@@ -28,6 +28,8 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
         rec[d] = dates[d]
     rec.full_name = member_display_name(rec, full=True)
     rec.name = member_display_name(rec, full=False)
+    if rec.story_id:
+        handle_bio_name(rec.story_id, rec.name)
     if prepend_path:
         rec.facephotourl = photos_folder(PROFILE_PHOTOS) + (rec.facephotourl or 'dummy_face.png')
     if is_dead:
@@ -36,6 +38,11 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
         rec.life_status = "alive"
     return rec
 
+def handle_bio_name(story_id, name):
+    db = inject("db")
+    rec = db(db.TblStories.id==story_id).select(db.TblStories.id, db.TblStories.name).first()
+    if not rec.name:
+        rec.update_record(name=name)
 
 def older_display_name(rec, full):
     s = rec.name or ''
