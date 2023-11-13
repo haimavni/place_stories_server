@@ -40,7 +40,7 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
 
 def handle_bio_name(rec):
     db = inject("db")
-    rec = db(db.TblStories.id==rec.story_id).select(db.TblStories.id, db.TblStories.name).first()
+    rec = db(db.TblStories.id==rec.story_id).select().first()
     if not rec.name:
         rec.update_record(name=rec.name)
     rec.has_bio_text = len(rec.story) > 0
@@ -318,9 +318,8 @@ def add_story_id_to_hits():
 def calc_hit_story_id(what, item_id):
     if what == "APP":
         return (None, None)
-    db = inject("db")
+    db, comment = inject("db", "comment")
     tables = dict(
-        APP=None,
         MEMBER=db.TblMembers,
         EVENT=db.TblEvents,
         PHOTO=db.TblPhotos,
@@ -336,7 +335,11 @@ def calc_hit_story_id(what, item_id):
         story_id = item_id
     else:
         rec = db(tbl.id==item_id).select().first()
-        story_id = rec.story_id
+        if rec:
+            story_id = rec.story_id
+        else:
+            story_id = None
+            comment(f"rec {item_id} of {what} not found")
     return (story_id, item_id)
     
 def fix_hit_records():
