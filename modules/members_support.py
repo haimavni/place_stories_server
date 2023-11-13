@@ -29,7 +29,7 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
     rec.full_name = member_display_name(rec, full=True)
     rec.name = member_display_name(rec, full=False)
     if rec.story_id:
-        handle_bio_name(rec.story_id, rec.name)
+        handle_bio_name(rec)
     if prepend_path:
         rec.facephotourl = photos_folder(PROFILE_PHOTOS) + (rec.facephotourl or 'dummy_face.png')
     if is_dead:
@@ -38,11 +38,12 @@ def get_member_rec(member_id, member_rec=None, prepend_path=False):
         rec.life_status = "alive"
     return rec
 
-def handle_bio_name(story_id, name):
+def handle_bio_name(rec):
     db = inject("db")
-    rec = db(db.TblStories.id==story_id).select(db.TblStories.id, db.TblStories.name).first()
+    rec = db(db.TblStories.id==rec.story_id).select(db.TblStories.id, db.TblStories.name).first()
     if not rec.name:
-        rec.update_record(name=name)
+        rec.update_record(name=rec.name)
+    rec.has_bio_text = len(rec.story) > 0
 
 def older_display_name(rec, full):
     s = rec.name or ''
@@ -338,6 +339,6 @@ def calc_hit_story_id(what, item_id):
         story_id = rec.story_id
     return (story_id, item_id)
     
-            
-        
-    
+def fix_hit_records():
+    add_missing_bios()
+    add_story_id_to_hits()
