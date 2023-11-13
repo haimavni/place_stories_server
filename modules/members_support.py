@@ -331,8 +331,12 @@ def calc_hit_story_id(what, item_id):
     tbl = tables[what]
     if what == "EVENT":
         rec = db(tbl.story_id==item_id).select().first()
-        item_id = rec.id
-        story_id = item_id
+        if rec:
+            item_id = rec.id
+            story_id = item_id
+        else:
+            comment(f"rec {item_id} of {what} not found")
+            story_id = None
     else:
         rec = db(tbl.id==item_id).select().first()
         if rec:
