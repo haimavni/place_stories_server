@@ -280,7 +280,7 @@ def doc_segment_url(story_id, rec=None):
     doc_rec = rec.TblDocs
     seg_rec = rec.TblDocSegments
     folder = docs_folder()
-    return folder + doc_rec.doc_path + f"#page={seg_rec.page_num}"
+    return folder + doc_rec.doc_path # + f"#page={seg_rec.page_num}"
 
 
 def doc_segment_jpg_url(story_id, rec=None):
