@@ -1283,6 +1283,7 @@ def assign_photos(story_list):
     photo_story_ids = list(photo_story_list.keys())
     q = db.TblPhotos.story_id.belongs(photo_story_ids) & (db.TblPhotos.deleted != True)
     lst = db(q).select(db.TblPhotos.story_id, db.TblPhotos.photo_path, db.TblPhotos.id)
+    lst = [rec of lst if rec]
     for photo in lst:
         photo_src = photos_folder(SQUARES) + photo.photo_path
         photo_story_list[photo.story_id].photo_src = photo_src
