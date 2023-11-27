@@ -1,6 +1,8 @@
 wsl --install -d Ubuntu-22.04
-to enable sudo if no enabled:
+to enable sudo if not enabled:
     usermod -a -G sudo haim
 
 apt install python-is-python3
 apt install python3-pip   if necessary
+apt install nodejs npm yarn
+npm install -g aurelia-cli
