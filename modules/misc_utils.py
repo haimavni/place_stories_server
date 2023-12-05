@@ -72,7 +72,7 @@ def chmod(path, mod):
             os.chmod(os.path.join(root, f), mod)
 
 def get_env_var(var_name):            
-    load_dotenv('/home/www-data/web2py/.env')
+    load_dotenv('.env')
     return os.getenv(var_name)
 
 def timestamp(path):
