@@ -11,9 +11,29 @@ git clone https://github.com/haimavni/place_stories_server.git ~/server_src
 git clone https://github.com/haimavni/gbs.git ~/client_src
 git clone https://github.com/web2py/web2py.git
 
+#copy files from ~/server_src/private/make-dev-env
+
 cd ~/web2py
 git submodule update --init --recursive
 
 sudo apt install postgresql postgresql-contrib
+# see instructions at https://www.digitalocean.com/community/tutorials/how-to-install-postgresql-on-ubuntu-22-04-quickstart
+
+pip install python-dotenv
+
+#edit .env to replace password by your choice
+#run Python script load_dotenv(path to .env)
+
+psg create user $DB_USER with encrypted password $DB_PASSWORD;
+#psg createuser -P lifestone
+#   create user with password "V3geHanu"
+
+install psycopg2:
+
+sudo apt update
+sudo apt -y install python3-psycopg2
+
+mkdir /apps_data
+
 
 
