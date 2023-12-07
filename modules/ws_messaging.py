@@ -1,7 +1,6 @@
 from .websocket_messaging import websocket_send
 from .http_utils import jsondumps
 from .injections import inject
-from .my_cache import Cache
 
 
 def messaging_group(user=None, group=None):
@@ -10,8 +9,27 @@ def messaging_group(user=None, group=None):
             auth = inject('auth')
             user = str(auth.user_id)
         group = 'USER' + str(user)
-    group = Cache.fix_key(group)  # to distinguish between dev, test and www messages
+    group = fix_key(group)  # to distinguish between dev, test and www messages
     return group
+
+
+def fix_key(key):
+    #prefix with server id and convert to hex if key contains control characters
+    valid_key_chars_re = re.compile('[\x21-\x7e\x80-\xff]+$')
+    request = inject('request')
+    s = request.env.http_host
+    if '.' in s:
+        prefix = s.split('.')[0] + '-'
+        if prefix == '127-':  #just for the development PC
+            prefix = ''
+    else:
+        prefix = ''
+    prefix += request.application + '-'
+    key = prefix + key
+    if not valid_key_chars_re.match(key):
+        key = key.encode('hex')
+    return key
+
 
 def send_message(key, user=None, group=None, **data):
     # request = inject('request')

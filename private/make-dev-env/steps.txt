@@ -35,5 +35,7 @@ sudo apt -y install python3-psycopg2
 
 mkdir /apps_data
 
+in web2py/gluon/contrib/memcache import pickle (no cpickle)
+
 
 

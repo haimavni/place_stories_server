@@ -1,6 +1,5 @@
 import stories_manager
 from gluon.storage import Storage
-from my_cache import Cache
 import ws_messaging
 from http_utils import json_to_storage
 import datetime

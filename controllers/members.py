@@ -378,11 +378,6 @@ def get_story_list(vars):
                 active_result_types=active_result_types,
                 result_type_counters=result_type_counters)
 
-@serve_json
-def get_story_previews(vars):
-    lst = get_all_story_previews()
-    return dict(story_previews=lst)
-
 
 @serve_json
 def get_story(vars):

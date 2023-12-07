@@ -4,7 +4,6 @@ import re
 from bs4 import BeautifulSoup
 from .langs import extract_words, language_name
 from langdetect import detect, detect_langs
-from .my_cache import Cache
 from .injections import inject
 #from base64 import b64decode, b64encode
 from math import log
@@ -296,18 +295,6 @@ def calc_used_languages(vars, refresh=False):
     ##c = Cache('used_languages' + str(used_for))
     ##return c(lambda: _calc_used_languages(used_for), refresh)
 
-def _get_all_story_previews():
-    db = inject('db')
-    result = []
-    for rec in db(db.TblStories).select(orderby=~db.TblStories.story_len):
-        html = rec.story
-        preview = get_reisha(html, 30)
-        result.append(dict(name=rec.name, id=rec.id, prview=preview))
-    return result
-
-def get_all_story_previews(refresh=False):
-    c = Cache('get_all_story_previews')
-    return c(_get_all_story_previews, refresh)
 
 def test():
     html = 'חיים אבני כותב תוכנית מחשב computer program'
