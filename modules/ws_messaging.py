@@ -1,6 +1,7 @@
 from .websocket_messaging import websocket_send
 from .http_utils import jsondumps
 from .injections import inject
+import re
 
 
 def messaging_group(user=None, group=None):
