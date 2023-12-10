@@ -34,7 +34,8 @@ def __open_db():
         raise Exception("db_password is still missing")
 
     _debugging = False  # request.function not in ('whats_up', 'log_file_data')
-    db_spec = f"postgres:{adapter}//{db_user}:{db_password}@{db_host}:{db_port}/{dbname}"
+    # db_spec = f"postgres:{adapter}//{db_user}:{db_password}@{db_host}:{db_port}/{dbname}"
+    db_spec = f"postgres:{adapter}//{db_user}:{db_password}@{db_host}/{dbname}"
     try:
         db = DAL(db_spec,
                  pool_size=50,
