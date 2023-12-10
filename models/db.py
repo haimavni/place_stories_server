@@ -34,12 +34,11 @@ def __open_db():
         raise Exception("db_password is still missing")
 
     _debugging = False  # request.function not in ('whats_up', 'log_file_data')
-    db_spec = f"postgres:{adapter}//{db_user}:{db_password}@{db_host}/{dbname}"
+    db_spec = f"postgres:{adapter}//{db_user}:{db_password}@{db_host}:{db_port}/{dbname}"
     try:
         db = DAL(db_spec,
                  pool_size=50,
                  debug=_debugging,
-                #  port=db_port,
                  lazy_tables=True)  # it causes an exeption!
     except Exception as e:
         comment(f'Failed to open db {db_spec}. Error: {e}.')
