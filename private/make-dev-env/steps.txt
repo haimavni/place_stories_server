@@ -24,7 +24,7 @@ pip install python-dotenv
 #edit .env to replace password by your choice
 #run Python script load_dotenv(path to .env)
 
-psg create user $DB_USER with encrypted password $DB_PASSWORD;
+psg createuser $DB_USER with encrypted password '$DB_PASSWORD';
 #psg createuser -P lifestone
 #   create user with password "V3geHanu"
 
@@ -36,6 +36,10 @@ sudo apt -y install python3-psycopg2
 mkdir /apps_data
 
 in web2py/gluon/contrib/memcache import pickle (no cpickle)
+
+To work on the password failure:
+import psycopg2
+psycopg2.connect(dbname="demo", user="lifestone", password="V3g3Hanu", host="localhost", port ="5432")
 
 
 

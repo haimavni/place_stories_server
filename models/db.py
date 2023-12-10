@@ -25,6 +25,7 @@ def __open_db():
     adapter = 'psycopg2:'
     db_user = get_env_var('DB_USER')
     db_password = get_env_var('DB_PASSWORD')
+    db_port = get_env_var("DB_PORT") or 5432
     #comment(f"db_password is {db_password}")
     #mystery - it is None!!!
     if not db_password:
@@ -38,6 +39,7 @@ def __open_db():
         db = DAL(db_spec,
                  pool_size=50,
                  debug=_debugging,
+                 port=db_port,
                  lazy_tables=True)  # it causes an exeption!
     except Exception as e:
         comment(f'Failed to open db {db_spec}. Error: {e}.')
