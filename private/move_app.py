@@ -2,8 +2,8 @@ from hashlib import md5
 from os import listdir
 import sys
 
-def db_id(app):
-    prefix = 'postgres:psycopg2://lifestone:V3geHanu@localhost/'
+def db_id(app, port=""):
+    prefix = f'postgres:psycopg2://lifestone:V3geHanu@localhost{port}/'
     uri = prefix + app
     uri = uri.encode('utf-8')
     return md5(uri).hexdigest()
@@ -25,6 +25,7 @@ def move_app(cp_or_mv, app=None, new_app=None, src=None, dst=None):
         else:
             src = "/home/www-data/tol_" + ("www" if option == "1" else "test" if option == "2" else "master")
         print(f"source is {src}")
+    src_port = select_port("source")
     if not dst:
         print("Select destination:")
         print("1 - www")
@@ -37,18 +38,20 @@ def move_app(cp_or_mv, app=None, new_app=None, src=None, dst=None):
         else:
             dst = "/home/www-data/tol_" + ("www" if option == "1" else "test" if option == "2" else "master" if option == "3" else "local")
         print(f"Destination is {dst}")
-    app_id = db_id(app)
+    dst_port = select_port("destination")
+        
+    src_app_id = db_id(app, src_port)
     target_app = input(f"enter target app ({app}): ")
     if not target_app:
-        if src == dst:
+        if (src == dst) and (src_port == dst_port):
             print("Copying into itself!")
             exit()
         target_app = ""
     path = src + '/databases'
     file_list = listdir(path)
-    n = len(app_id)
-    target_app_id = db_id(target_app)
-    file_list = [f for f in file_list if app_id in f]
+    n = len(src_app_id)
+    target_app_id = db_id(target_app, dst_port)
+    file_list = [f for f in file_list if src_app_id in f]
     if not file_list:
         print(f"app {app} not found in {path}!")
         exit()
@@ -60,7 +63,15 @@ def move_app(cp_or_mv, app=None, new_app=None, src=None, dst=None):
             else:
                 out.write(f"{cp_or_mv} {path}/{src:64} {dst}/\n")
         out.write(f"chown www-data:www-data {dst}/databases/*")
-    
+        
+def select_port(what):
+    print(f"Select {what} port:")
+    print("1 - 5432")
+    print("2 - 5433")
+    print("3 - Omit port")
+    option = input("Enter option: ")
+    return ":5432" if option == "1" else ":5433" if option == "2" else ""
+   
 def remove_obsolete_dbs(active_apps=None):
     active_ids = set([])
     path = input("Enter folder name: ")
@@ -74,7 +85,8 @@ def remove_obsolete_dbs(active_apps=None):
             arr.append(app_name)
         active_apps = set(arr)
     for app in active_apps:
-        id = db_id(app)
+        port =select_port()
+        id = db_id(app, port)
         active_ids |= set([id])
     file_list = listdir(path)
     with open("/home/haim/remove_obsolete_apps.bash", "w") as out:
@@ -93,7 +105,8 @@ if __name__ == '__main__':
         option = input("Enter option: ")
         if option == "1":
             app_name = input("Enter app name: ")
-            print("The db id is ", db_id(app_name))
+            port = select_port()
+            print("The db id is ", db_id(app_name, port))
         elif option == "2":
             cp_or_mv = input("Enter cp or mv (cp): ")
             if not cp_or_mv:

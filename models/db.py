@@ -25,17 +25,18 @@ def __open_db():
     adapter = 'psycopg2:'
     db_user = get_env_var('DB_USER')
     db_password = get_env_var('DB_PASSWORD')
-    db_port = get_env_var("DB_PORT") or 5432
+    db_port = get_env_var("DB_PORT")
+    if db_port:
+        db_port = ":" + db_port
+    else:
+        db_port = ""
     #comment(f"db_password is {db_password}")
     #mystery - it is None!!!
     if not db_password:
         db_password = "V3geHanu"
-    if not db_password:
-        raise Exception("db_password is still missing")
 
     _debugging = False  # request.function not in ('whats_up', 'log_file_data')
-    # db_spec = f"postgres:{adapter}//{db_user}:{db_password}@{db_host}:{db_port}/{dbname}"
-    db_spec = f"postgres:{adapter}//{db_user}:{db_password}@{db_host}:5432/{dbname}"
+    db_spec = f"postgres:{adapter}//{db_user}:{db_password}@{db_host}{db_port}/{dbname}"
     try:
         db = DAL(db_spec,
                  pool_size=50,
