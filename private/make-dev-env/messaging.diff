@@ -1,0 +1,31 @@
+86c86,87
+< from __future__ import print_function
+---
+> import sys
+> sys.path += ['/home/www-data/py38env/web2py']
+92d92
+< import sys
+95,97c95,96
+< import sys
+< import gluon.utils
+< import hashlib
+---
+> # haim import gluon.utils
+> from gluon.utils import compare as u_compare
+103c102,103
+<     sig = hmac_key and hmac.new(to_bytes(hmac_key), to_bytes(message), hashlib.md5).hexdigest() or ''
+---
+>     # haim sig = hmac_key and hmac.new(to_bytes(hmac_key), to_bytes(message)).hexdigest() or ''
+>     sig = hmac_key and hmac.new(to_bytes(hmac_key), to_bytes(message), digestmod='MD5').hexdigest() or ''
+125,126c125,126
+<                 actual_signature = hmac.new(to_bytes(hmac_key), to_bytes(message), hashlib.md5).hexdigest()
+<                 if not gluon.utils.compare(to_native(signature), actual_signature):
+---
+>                 actual_signature = hmac.new(to_bytes(hmac_key), to_bytes(message), digestmod='MD5').hexdigest()
+>                 if not u_compare(to_native(signature), actual_signature):
+145,146c145,146
+<                 actual_signature = hmac.new(to_bytes(hmac_key), to_bytes(message), hashlib.md5).hexdigest()
+<                 if not gluon.utils.compare(to_native(signature), actual_signature):
+---
+>                 actual_signature = hmac.new(to_bytes(hmac_key), to_bytes(message), digestmod='MD5').hexdigest()
+>                 if not u_compare(to_native(signature), actual_signature):
