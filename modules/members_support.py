@@ -329,7 +329,7 @@ def calc_hit_story_id(what, item_id):
         VIDEO=db.TblVideos
     )
     tbl = tables[what]
-    if what == "EVENT":
+    if what == "EVENT" or what == "TERM":
         rec = db(tbl.story_id==item_id).select().first()
         if rec:
             item_id = rec.id
