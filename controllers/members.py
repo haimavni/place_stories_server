@@ -419,10 +419,12 @@ def get_story_detail(vars):
         event = db(db.TblEvents.story_id == story_id).select().first()
         if event:
             photos, members, candidates, articles, article_candidates = get_story_members(event)
+            item_id = event.id
     elif story.used_for == STORY4TERM:  # todo: try to consolidate with the above
         term = db(db.TblTerms.story_id == story_id).select().first()
         if term:
             photos, members, candidates, articles, article_candidates = get_term_members(term)
+            item_id = term.id
     story_topics = get_story_topics(story_id)
     story_rec = db(db.TblStories.id == story_id).select(db.TblStories.sorting_key, db.TblStories.story_date,
                                                         db.TblStories.book_id,
@@ -437,7 +439,7 @@ def get_story_detail(vars):
         book_name = None
         sorting_key = None
     dates = get_all_dates(story_rec)
-    return dict(story=story, members=members, candidates=candidates,
+    return dict(story=story, members=members, candidates=candidates, item_id=item_id,
                 articles=articles, article_candidates=article_candidates,
                 story_topics=story_topics, photos=photos, sorting_key=sorting_key, story_date=dates.story_date,
                 book_id=book_id, book_name=book_name)

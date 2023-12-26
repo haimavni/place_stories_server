@@ -7,6 +7,9 @@ apt install python3-pip   if necessary
 apt install nodejs npm yarn
 npm install -g aurelia-cli
 
+git config --global user.name haimavni
+git config --global user.email haimavni@gmail.com
+
 git clone https://github.com/haimavni/place_stories_server.git ~/server_src
 git clone https://github.com/haimavni/gbs.git ~/client_src
 git clone https://github.com/web2py/web2py.git
