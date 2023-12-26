@@ -5,7 +5,8 @@ import datetime
 def count_hit(vars):
     what = vars.what.upper()
     date = datetime.datetime.today()
-    item_id = int(vars.item_id)
+    id = int(vars.item_id)
+    item_id, story_id = item_and_story_ids(what, id)
     rec = db(
         (db.TblPageHits.what == what) &
         (db.TblPageHits.date == date) &
@@ -14,7 +15,7 @@ def count_hit(vars):
         rec.update_record(count=rec.count + 1,
                           new_count=(rec.new_count or 0) + 1)
     else:
-        db.TblPageHits.insert(what=what, item_id=item_id,
+        db.TblPageHits.insert(what=what, item_id=item_id, story_id=story_id,
                               date=date, count=1, new_count=1)
     return dict()
 
@@ -27,16 +28,7 @@ def get_hit_statistics(vars):
     result = dict()
     # whats = db(db.TblPageHits).select(db.TblPageHits.what, groupby=db.TblPageHits.what)
     # whats = [w.what for w in whats]
-    tables = dict(
-        APP=None,
-        MEMBER=db.TblMembers,
-        EVENT=db.TblEvents,
-        PHOTO=db.TblPhotos,
-        TERM=db.TblTerms,
-        DOC=db.TblDocs,
-        DOCSEG=db.TblDocSegments,
-        VIDEO=db.TblVideos
-    )
+    tables = get_tables_dic()
     for what in tables:
         totals = dict()
         detailed = dict()
@@ -97,3 +89,33 @@ def calc_host_and_app():
     host = request.env.HTTP_HOST
     app = request.application
     return host, app
+
+def get_tables_dic():
+    return dict(
+        APP=None,
+        MEMBER=db.TblMembers,
+        EVENT=db.TblEvents,
+        PHOTO=db.TblPhotos,
+        TERM=db.TblTerms,
+        DOC=db.TblDocs,
+        DOCSEG=db.TblDocSegments,
+        VIDEO=db.TblVideos
+    )
+    
+def item_and_story_ids(what, id):
+    tbls = get_tables_dic()
+    tbl = tbls[what]
+    if what == "EVENT" or what == "TERM":
+        story_id = id
+        rec = db(tbl.story_id==story_id).select().first()
+        if rec:
+            item_id = rec.id
+        else:
+            item_id = None
+    else:
+        rec = db(tbl.id==id).select().first()
+        if rec:
+            story_id = rec.story_id
+        else:
+            story_id = None
+    return item_id, story_id
