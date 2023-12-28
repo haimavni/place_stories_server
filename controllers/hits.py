@@ -115,6 +115,7 @@ def item_and_story_ids(what, id):
         else:
             item_id = None
     else:
+        item_id = id
         rec = db(tbl.id==id).select().first()
         if rec:
             story_id = rec.story_id
