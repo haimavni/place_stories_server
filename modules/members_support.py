@@ -303,6 +303,7 @@ def add_story_id_to_hits():
     tables = [
         'MEMBER',
         'EVENT',
+        'STORY',
         'PHOTO',
         'TERM',
         'DOC',
@@ -322,6 +323,7 @@ def calc_hit_story_id(what, item_id):
     tables = dict(
         MEMBER=db.TblMembers,
         EVENT=db.TblEvents,
+        STORY=db.TblEvents,
         PHOTO=db.TblPhotos,
         TERM=db.TblTerms,
         DOC=db.TblDocs,
@@ -336,7 +338,7 @@ def calc_hit_story_id(what, item_id):
             story_id = item_id
         else:
             comment(f"rec {item_id} of {what} not found")
-            story_id = None
+            story_id = item_id
     else:
         rec = db(tbl.id==item_id).select().first()
         if rec:
