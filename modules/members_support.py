@@ -300,6 +300,7 @@ def add_missing_bios():
         
 def add_story_id_to_hits():
     db = inject("db")
+    bads = []
     tables = [
         'MEMBER',
         'EVENT',
@@ -313,7 +314,11 @@ def add_story_id_to_hits():
         lst = db((db.TblPageHits.story_id==None) & (db.TblPageHits.what==what)).select()
         for hit_rec in lst:
             story_id, item_id = calc_hit_story_id(what, hit_rec.item_id)
+            if not story_id:
+                err = dict(what=what, item_id=hit_rec.item_id, hit_id=hit_rec.id)
+                bads.append(err)
             hit_rec.update_record(story_id=story_id, item_id=item_id)
+    return dict(bad_hit_records = bads)
                 
 def calc_hit_story_id(what, item_id):
     if what == "APP":
@@ -333,10 +338,14 @@ def calc_hit_story_id(what, item_id):
         n = db(tbl).count()
         if item_id > n: # item_id is actually story_id
             rec = db(tbl.story_id==item_id).select().first()
+            if not rec:
+                return item_id, None
             item_id = rec.id
             story_id = item_id
         else:
-            rec = db(tbl.id==item_id).select().first() 
+            rec = db(tbl.id==item_id).select().first()
+            if not rec:
+                return item_id, None
             story_id = rec.story_id
     else:
         rec = db(tbl.id==item_id).select().first()
