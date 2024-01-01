@@ -315,11 +315,13 @@ def add_story_id_to_hits():
         lst = db((db.TblPageHits.story_id==None) & (db.TblPageHits.what==what)).select()
         for hit_rec in lst:
             story_id, item_id = calc_hit_story_id(what, hit_rec.item_id)
-            if not story_id:
+            if story_id:
+                n_goods += 1
+            else:
                 err = dict(what=what, item_id=hit_rec.item_id, hit_id=hit_rec.id)
                 bads.append(err)
             hit_rec.update_record(story_id=story_id, item_id=item_id)
-            n_goods += 1
+            
     return dict(bad_hit_records = bads, n_goods = n_goods)
                 
 def calc_hit_story_id(what, item_id):
