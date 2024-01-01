@@ -339,16 +339,18 @@ def calc_hit_story_id(what, item_id):
         if item_id > n: # item_id is actually story_id
             rec = db(tbl.story_id==item_id).select().first()
             if not rec:
-                return item_id, None
+                return None, item_id
             item_id = rec.id
             story_id = item_id
         else:
             rec = db(tbl.id==item_id).select().first()
             if not rec:
-                return item_id, None
+                return None, item_id
             story_id = rec.story_id
     else:
         rec = db(tbl.id==item_id).select().first()
+        if not rec:
+            return None, item_id
         story_id = rec.story_id
     return (story_id, item_id)
     
