@@ -303,7 +303,6 @@ def add_story_id_to_hits():
     tables = [
         'MEMBER',
         'EVENT',
-        'STORY',
         'PHOTO',
         'TERM',
         'DOC',
@@ -323,7 +322,6 @@ def calc_hit_story_id(what, item_id):
     tables = dict(
         MEMBER=db.TblMembers,
         EVENT=db.TblEvents,
-        STORY=db.TblEvents,
         PHOTO=db.TblPhotos,
         TERM=db.TblTerms,
         DOC=db.TblDocs,
@@ -332,20 +330,17 @@ def calc_hit_story_id(what, item_id):
     )
     tbl = tables[what]
     if what == "EVENT" or what == "TERM":
-        rec = db(tbl.story_id==item_id).select().first()
-        if rec:
+        n = db(tbl).count()
+        if item_id > n: # item_id is actually story_id
+            rec = db(tbl.story_id==item_id).select().first()
             item_id = rec.id
             story_id = item_id
         else:
-            comment(f"rec {item_id} of {what} not found")
-            story_id = item_id
+            rec = db(tbl.id==item_id).select().first() 
+            story_id = rec.story_id
     else:
         rec = db(tbl.id==item_id).select().first()
-        if rec:
-            story_id = rec.story_id
-        else:
-            story_id = None
-            comment(f"rec {item_id} of {what} not found")
+        story_id = rec.story_id
     return (story_id, item_id)
     
 def fix_hit_records():
