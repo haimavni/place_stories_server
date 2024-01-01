@@ -301,6 +301,7 @@ def add_missing_bios():
 def add_story_id_to_hits():
     db = inject("db")
     bads = []
+    n_goods = 0
     tables = [
         'MEMBER',
         'EVENT',
@@ -318,7 +319,8 @@ def add_story_id_to_hits():
                 err = dict(what=what, item_id=hit_rec.item_id, hit_id=hit_rec.id)
                 bads.append(err)
             hit_rec.update_record(story_id=story_id, item_id=item_id)
-    return dict(bad_hit_records = bads)
+            n_goods += 1
+    return dict(bad_hit_records = bads, n_goods = n_goods)
                 
 def calc_hit_story_id(what, item_id):
     if what == "APP":
