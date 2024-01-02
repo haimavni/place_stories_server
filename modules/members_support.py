@@ -338,9 +338,9 @@ def calc_hit_story_id(what, hit_rec):
         VIDEO=db.TblVideos
     )
     tbl = tables[what]
+    item_id = hit_rec.item_id
+    story_id = hit_rec.story_id
     if what == "EVENT" or what == "TERM":
-        item_id = hit_rec.item_id
-        story_id = hit_rec.story_id
         n = db(tbl).count()
         if item_id == None:
             rec = db(tbl.story_id == story_id).select().first()
