@@ -312,9 +312,9 @@ def add_story_id_to_hits():
         'VIDEO'
     ]
     for what in tables:
-        lst = db((db.TblPageHits.story_id==None) & (db.TblPageHits.what==what)).select()
+        lst = db(((db.TblPageHits.story_id==None) | ((db.TblPageHits.item_id==None))) & (db.TblPageHits.what==what)).select()
         for hit_rec in lst:
-            story_id, item_id = calc_hit_story_id(what, hit_rec.item_id)
+            story_id, item_id = calc_hit_story_id(what, hit_rec)
             if story_id:
                 n_goods += 1
             else:
@@ -324,7 +324,7 @@ def add_story_id_to_hits():
             
     return dict(bad_hit_records = bads, n_goods = n_goods)
                 
-def calc_hit_story_id(what, item_id):
+def calc_hit_story_id(what, hit_rec):
     if what == "APP":
         return (None, None)
     db, comment = inject("db", "comment")
@@ -339,8 +339,15 @@ def calc_hit_story_id(what, item_id):
     )
     tbl = tables[what]
     if what == "EVENT" or what == "TERM":
+        item_id = hit_rec.item_id
+        story_id = hit_rec.story_id
         n = db(tbl).count()
-        if item_id > n: # item_id is actually story_id
+        if item_id == None:
+            rec = db(tbl.story_id == story_id).select().first()
+            if not rec:
+                return None, story_id
+            item_id = rec.id
+        elif item_id > n: # item_id is actually story_id
             rec = db(tbl.story_id==item_id).select().first()
             if not rec:
                 return None, item_id
