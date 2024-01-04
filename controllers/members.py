@@ -409,6 +409,7 @@ def get_story_detail(vars):
         story = sm.get_empty_story(used_for=used_for)
         return dict(story=story, members=[], photos=[], story_date=dict(date="", span_size=None))
     story_id = int(story_id)
+    item_id = None
     story = sm.get_story(story_id)
     members = []
     candidates = []  # members found in the attached photos
