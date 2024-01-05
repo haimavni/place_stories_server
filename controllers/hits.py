@@ -7,6 +7,9 @@ def count_hit(vars):
     date = datetime.datetime.today()
     id = int(vars.item_id)
     item_id, story_id = item_and_story_ids(what, id)
+    if not (item_id and story_id):
+        comment(f"!!!!!!!!!!!! missing item_id or story_id: {item_id} / {story_id}!!!!!!")
+        return dict()
     rec = db(
         (db.TblPageHits.what == what) &
         (db.TblPageHits.date == date) &
