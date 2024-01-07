@@ -5,7 +5,9 @@ import datetime
 def count_hit(vars):
     what = vars.what.upper()
     date = datetime.datetime.today()
-    if what != "APP":
+    if what == "APP":
+        item_id, story_id = (None, None)
+    else:
         id = int(vars.item_id)
         item_id, story_id = item_and_story_ids(what, id)
         if not (item_id and story_id):
