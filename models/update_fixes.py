@@ -3,7 +3,7 @@ import time
 from date_utils import fix_all_date_ends, init_story_dates
 from video_support import upgrade_youtube_info, update_video_thumbnails
 import os
-from members_support import fix_hit_records
+from members_support import fix_hit_records, fix_hit_record_stories
 
 #from topics_support import fix_is_tagged
 
@@ -132,7 +132,8 @@ _fixes = {
     13: fix_member_names,
     14: fix_family_connection_stored,
     15: update_video_thumbnails,
-    16: fix_hit_records
+    16: fix_hit_records,
+    17: fix_hit_record_stories
 }
 
 _init_configuration_table()
