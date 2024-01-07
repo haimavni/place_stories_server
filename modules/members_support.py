@@ -365,7 +365,7 @@ def calc_hit_story_id(what, hit_rec):
         story_id = rec.story_id
     return (story_id, item_id)
 
-def fix_hit_records():
+def fix_hit_record_stories():
     db, STORY4EVENT, STORY4TERM, STORY4MEMBERS = ('db', 'STORY4EVENT', 'STORY4TERM', 'STORY4MEMBERS')
     n_bad_hits = db(db.TblPageHits.item_id==0).delete()
     hits = db((db.TblPageHits.what=="EVENT")&(db.TblPageHits.story_id==None)&(db.TblPageHits.date!=None)).select(orderby=~db.TblPageHits.id)
@@ -419,5 +419,5 @@ def fix_hit_records():
     
 def fix_hit_records():
     add_missing_bios()
-    fix_hit_records()
+    fix_hit_record_stories()
     # add_story_id_to_hits()
