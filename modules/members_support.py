@@ -444,7 +444,7 @@ def check_hit_matches_story_usage(what, to_fix=False):
     mismatch = []
     hits = db((db.TblPageHits.what==what)&(db.TblPageHits.story_id!=None)).select()
     for hit in hits:
-        story = db(db.TblStories.id==hit.story_id).select(db.TblStories.name, db.TblStories.used_for)
+        story = db(db.TblStories.id==hit.story_id).select(db.TblStories.name, db.TblStories.used_for).first()
         if story:
             if story.used_for != usage:
                 mismatch += [hit]
