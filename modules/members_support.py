@@ -421,3 +421,36 @@ def fix_hit_records():
     add_missing_bios()
     fix_hit_record_stories()
     # add_story_id_to_hits()
+    
+    
+   
+def check_hit_matches_story_usage(what, to_fix=False):
+    db, STORY4MEMBER, STORY4EVENT, STORY4TERM, STORY4PHOTO, STORY4DOC, STORY4DOCSEGMENT, DOC4VIDEO = inject( 
+        'db', 'STORY4MEMBER', 'STORY4EVENT', 'STORY4TERM', 'STORY4', 'PHOTO', 'STORY4DOC', 'STORY4DOCSEGMENT', 'DOC4VIDEO')
+    usage_of_hit_what = dict(
+        MEMBER=STORY4MEMBER,
+        EVENT=STORY4EVENT,
+        TERM=STORY4TERM,
+        PHOTO=STORY4PHOTO,
+        DOC=STORY4DOC,
+        DOCSEG=STORY4DOCSEGMENT,
+        VIDEO=DOC4VIDEO
+    )
+    what_of_usage = dict()
+    for w in usage_of_hit_what:
+        what_of_usage[usage_of_hit_what[w]] = w
+    usage = usage_of_hit_what[what]
+    missing = []
+    mismatch = []
+    hits = db((db.TblPageHits.what==what)&(db.TblPageHits.story_id!=None))
+    for hit in hits:
+        story = db(db.TblStories.id==hit.story_id).select(db.TblStories.name, db.TblStories.used_for)
+        if story:
+            if story.used_for != usage:
+                mismatch += [hit]
+                if to_fix:
+                    w = what_of_usage[story.used_for]
+                    hit.update_record(what=w)
+        else:
+            missing += [hit]
+    return dict(missing=missing, mismatch=mismatch)
