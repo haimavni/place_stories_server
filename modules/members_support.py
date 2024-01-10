@@ -367,7 +367,7 @@ def calc_hit_story_id(what, hit_rec):
 
 def fix_hit_record_stories():
     db, STORY4EVENT, STORY4TERM, STORY4MEMBER = inject('db', 'STORY4EVENT', 'STORY4TERM', 'STORY4MEMBER')
-    n_bad_hits = db((db.TblPageHits.item_id==0) and (db.TblPageHits.what!="APP")).delete()
+    # n_bad_hits = db((db.TblPageHits.item_id==0) and (db.TblPageHits.what!="APP")).delete()
     hits = db((db.TblPageHits.what=="EVENT")&(db.TblPageHits.story_id==None)&(db.TblPageHits.date!=None)).select(orderby=~db.TblPageHits.id)
 
     bad = []
