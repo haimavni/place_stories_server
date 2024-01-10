@@ -442,7 +442,7 @@ def check_hit_matches_story_usage(what, to_fix=False):
     usage = usage_of_hit_what[what]
     missing = []
     mismatch = []
-    hits = db((db.TblPageHits.what==what)&(db.TblPageHits.story_id!=None))
+    hits = db((db.TblPageHits.what==what)&(db.TblPageHits.story_id!=None)).select()
     for hit in hits:
         story = db(db.TblStories.id==hit.story_id).select(db.TblStories.name, db.TblStories.used_for)
         if story:
