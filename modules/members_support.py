@@ -304,6 +304,7 @@ def add_story_id_to_hits():
     n_goods = 0
     tables = [
         'MEMBER',
+        'ARTILE',
         'EVENT',
         'PHOTO',
         'TERM',
@@ -330,6 +331,7 @@ def calc_hit_story_id(what, hit_rec):
     db, comment = inject("db", "comment")
     tables = dict(
         MEMBER=db.TblMembers,
+        ARTICLE=db.TblArticles,
         EVENT=db.TblEvents,
         PHOTO=db.TblPhotos,
         TERM=db.TblTerms,
@@ -337,7 +339,7 @@ def calc_hit_story_id(what, hit_rec):
         DOCSEG=db.TblDocSegments,
         VIDEO=db.TblVideos
     )
-    tbl = tables[what]
+    tbl = table_of_hit_what(what)
     item_id = hit_rec.item_id
     story_id = hit_rec.story_id
     if what == "EVENT" or what == "TERM":
@@ -366,7 +368,7 @@ def calc_hit_story_id(what, hit_rec):
     return (story_id, item_id)
 
 def fix_hit_record_stories():
-    db, STORY4EVENT, STORY4TERM, STORY4MEMBER = inject('db', 'STORY4EVENT', 'STORY4TERM', 'STORY4MEMBER')
+    db, STORY4EVENT, STORY4TERM, STORY4MEMBER, STORY4ARTICLE = inject('db', 'STORY4EVENT', 'STORY4TERM', 'STORY4MEMBER', 'STORY4ARTICLE')
     # n_bad_hits = db((db.TblPageHits.item_id==0) and (db.TblPageHits.what!="APP")).delete()
     hits = db((db.TblPageHits.what=="EVENT")&(db.TblPageHits.story_id==None)&(db.TblPageHits.date!=None)).select(orderby=~db.TblPageHits.id)
 
@@ -410,6 +412,10 @@ def fix_hit_record_stories():
                 member = db(db.TblMembers.story_id == hit.item_id).select().first()
                 if member:
                     hit.update_record(what="MEMBER", item_id=member.id, story_id=hit.item_id)
+            elif story.used_for==STORY4ARTICLE:
+                article = db(db.TblArtcles.story_id == hit.item_id).select().first()
+                if article:
+                    hit.update_record(what="ARTICLE", item_id=article.id, story_id=hit.item_id)
             elif story.used_for==STORY4TERM:
                 term = db(db.TblTerms.story_id==hit.item_id).select().first()
                 if term:
@@ -425,10 +431,11 @@ def fix_hit_records():
     
    
 def check_hit_matches_story_usage(what, to_fix=False):
-    db, STORY4MEMBER, STORY4EVENT, STORY4TERM, STORY4PHOTO, STORY4DOC, STORY4DOCSEGMENT, DOC4VIDEO = inject( 
-        'db', 'STORY4MEMBER', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO', 'STORY4DOC', 'STORY4DOCSEGMENT', 'STORY4VIDEO')
+    db, STORY4MEMBER, STORY4ARTICLE, STORY4EVENT, STORY4TERM, STORY4PHOTO, STORY4DOC, STORY4DOCSEGMENT, DOC4VIDEO = inject( 
+        'db', 'STORY4MEMBER', 'STORY4ARTICLE', 'STORY4EVENT', 'STORY4TERM', 'STORY4PHOTO', 'STORY4DOC', 'STORY4DOCSEGMENT', 'STORY4VIDEO')
     usage_of_hit_what = dict(
         MEMBER=STORY4MEMBER,
+        ARTICLE=STORY4ARTICLE,
         EVENT=STORY4EVENT,
         TERM=STORY4TERM,
         PHOTO=STORY4PHOTO,
@@ -450,7 +457,36 @@ def check_hit_matches_story_usage(what, to_fix=False):
                 mismatch += [hit]
                 if to_fix:
                     w = what_of_usage[story.used_for]
-                    hit.update_record(what=w)
+                    tbl = table_of_hit_what(w)
+                    rec = db(tbl.story_id==hit.story_id).select().first()
+                    if rec:
+                        item_id = rec.id
+                    else:
+                        item_id = None
+                    hit.update_record(what=w, item_id=item_id)
         else:
             missing += [hit]
     return dict(missing=missing, mismatch=mismatch)
+
+def all_hit_mismatches(to_fix=False):
+    result = dict()
+    for what in ['MEMBER', 'ARTICLE', 'EVENT', 'TERM', 'PHOTO', 'DOC', 'DOCSEG', 'VIDEO']:
+       tmp = check_hit_matches_story_usage(what, to_fix=to_fix)
+       result[what] = tmp
+    return result
+       
+       
+def table_of_hit_what(what):
+    db = inject("db")
+    tables = dict(
+        MEMBER=db.TblMembers,
+        ARTICLE=db.TblArticles,
+        EVENT=db.TblEvents,
+        PHOTO=db.TblPhotos,
+        TERM=db.TblTerms,
+        DOC=db.TblDocs,
+        DOCSEG=db.TblDocSegments,
+        VIDEO=db.TblVideos
+    )
+    return tables[what]
+    
