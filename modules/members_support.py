@@ -426,7 +426,7 @@ def fix_hit_records():
    
 def check_hit_matches_story_usage(what, to_fix=False):
     db, STORY4MEMBER, STORY4EVENT, STORY4TERM, STORY4PHOTO, STORY4DOC, STORY4DOCSEGMENT, DOC4VIDEO = inject( 
-        'db', 'STORY4MEMBER', 'STORY4EVENT', 'STORY4TERM', 'STORY4', 'PHOTO', 'STORY4DOC', 'STORY4DOCSEGMENT', 'DOC4VIDEO')
+        'db', 'STORY4MEMBER', 'STORY4EVENT', 'STORY4TERM', 'PHOTO', 'STORY4DOC', 'STORY4DOCSEGMENT', 'DOC4VIDEO')
     usage_of_hit_what = dict(
         MEMBER=STORY4MEMBER,
         EVENT=STORY4EVENT,
