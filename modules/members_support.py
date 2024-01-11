@@ -305,9 +305,9 @@ def add_story_id_to_hits():
     tables = [
         'MEMBER',
         'ARTILE',
-        'EVENT',
+        # 'EVENT',
         'PHOTO',
-        'TERM',
+        # 'TERM',
         'DOC',
         'DOCSEG',
         'VIDEO'
@@ -319,8 +319,8 @@ def add_story_id_to_hits():
             if story_id:
                 n_goods += 1
             else:
-                err = dict(what=what, item_id=hit_rec.item_id, hit_id=hit_rec.id)
-                bads.append(err)
+                # err = dict(what=what, item_id=hit_rec.item_id, hit_id=hit_rec.id)
+                bads.append(hit_rec)
             hit_rec.update_record(story_id=story_id, item_id=item_id)
             
     return dict(bad_hit_records = bads, n_goods = n_goods)
@@ -368,9 +368,10 @@ def calc_hit_story_id(what, hit_rec):
     return (story_id, item_id)
 
 def fix_hit_record_stories():
+    what = 'EVENT'
     db, STORY4EVENT, STORY4TERM, STORY4MEMBER, STORY4ARTICLE = inject('db', 'STORY4EVENT', 'STORY4TERM', 'STORY4MEMBER', 'STORY4ARTICLE')
     # n_bad_hits = db((db.TblPageHits.item_id==0) and (db.TblPageHits.what!="APP")).delete()
-    hits = db((db.TblPageHits.what=="EVENT")&(db.TblPageHits.story_id==None)&(db.TblPageHits.date!=None)).select(orderby=~db.TblPageHits.id)
+    hits = db((db.TblPageHits.what==what)&(db.TblPageHits.story_id==None)&(db.TblPageHits.date!=None)).select(orderby=~db.TblPageHits.id)
 
     bad = []
     total_miss = []
@@ -395,7 +396,7 @@ def fix_hit_record_stories():
     not_stories = []
     missing = []
     found_events = []
-    old_hits = db((db.TblPageHits.what=="EVENT")&(db.TblPageHits.story_id==None)&(db.TblPageHits.date==None)).select(orderby=~db.TblPageHits.id)
+    old_hits = db((db.TblPageHits.what==what)&(db.TblPageHits.story_id==None)&(db.TblPageHits.date==None)).select(orderby=~db.TblPageHits.id)
     for hit in old_hits:
         event = db(db.TblEvents.story_id==hit.item_id).select().first()
         if event:
@@ -406,20 +407,20 @@ def fix_hit_record_stories():
         story = db(db.TblStories.id==hit.item_id).select(db.TblStories.name, db.TblStories.used_for).first()
         if not story:
             missing += [hit]
-        elif story.used_for!=STORY4EVENT:
-            not_stories += [dict(hit=hit, story=story)]
-            if story.used_for==STORY4MEMBER:
-                member = db(db.TblMembers.story_id == hit.item_id).select().first()
-                if member:
-                    hit.update_record(what="MEMBER", item_id=member.id, story_id=hit.item_id)
-            elif story.used_for==STORY4ARTICLE:
-                article = db(db.TblArtcles.story_id == hit.item_id).select().first()
-                if article:
-                    hit.update_record(what="ARTICLE", item_id=article.id, story_id=hit.item_id)
-            elif story.used_for==STORY4TERM:
-                term = db(db.TblTerms.story_id==hit.item_id).select().first()
-                if term:
-                    hit.update_record(what="TERM", story_id=hit.item_id, item_id=term.id) 
+        # elif story.used_for!=STORY4EVENT:
+        #     not_stories += [dict(hit=hit, story=story)]
+        #     if story.used_for==STORY4MEMBER:
+        #         member = db(db.TblMembers.story_id == hit.item_id).select().first()
+        #         if member:
+        #             hit.update_record(what="MEMBER", item_id=member.id, story_id=hit.item_id)
+        #     elif story.used_for==STORY4ARTICLE:
+        #         article = db(db.TblArtcles.story_id == hit.item_id).select().first()
+        #         if article:
+        #             hit.update_record(what="ARTICLE", item_id=article.id, story_id=hit.item_id)
+        #     elif story.used_for==STORY4TERM:
+        #         term = db(db.TblTerms.story_id==hit.item_id).select().first()
+        #         if term:
+        #             hit.update_record(what="TERM", story_id=hit.item_id, item_id=term.id) 
     return dict(bad=bad, total_miss=total_miss, dfukim=dfukim, missing=missing, not_stories=not_stories)
 
     
