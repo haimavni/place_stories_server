@@ -78,6 +78,8 @@ def calc_item_url(what, rec):
     host, app = calc_host_and_app()
     if what == "MEMBER":
         return f"https://{host}/{app}/aurelia#/member-details/{rec.item_id}/*"
+    if what == "ARTICLE":
+        return f"https://{host}/{app}/aurelia#/article-details/{rec.item_id}/*"
     if what == "EVENT":
         return f"https://{host}/{app}/aurelia#/story-detail/{rec.story_id}/*"
     if what == "PHOTO":
@@ -100,6 +102,7 @@ def get_tables_dic():
     return dict(
         APP=None,
         MEMBER=db.TblMembers,
+        ARTICLE=db.TblArticles,
         EVENT=db.TblEvents,
         PHOTO=db.TblPhotos,
         TERM=db.TblTerms,
