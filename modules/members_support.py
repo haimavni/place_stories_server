@@ -298,6 +298,26 @@ def add_missing_bios():
     for member_rec in db(q).select():
         attach_bio_to_member(member_rec)
         
+def new_article_story(name):
+    STORY4ARTICLE = inject("STORY4ARTICLE")
+    sm = stories_manager.Stories()
+    story_info = sm.get_empty_story(used_for=STORY4ARTICLE, story_text="", name=name)
+    result = sm.add_story(story_info)
+    return result.story_id
+
+def attach_story_to_article(article_rec):
+    if article_rec.story_id:
+        return
+    name = article_rec.name.strip()
+    story_id = new_article_story(name)
+    article_rec.update_record(story_id=story_id)
+    
+def add_missing_article_stories():
+    db = inject("db")
+    q = (db.TblArticles.deleted!=True) & (db.TblArticles.story_id==None)
+    for article_rec in db(q).select():
+        attach_story_to_article(article_rec)
+        
 def add_story_id_to_hits():
     db = inject("db")
     bads = []
