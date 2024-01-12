@@ -294,7 +294,7 @@ def attach_bio_to_member(member_rec):
     
 def add_missing_bios():
     db = inject("db")
-    q = (db.TblMembers.deleted!=True) & (db.TblMembers.story_id==None)
+    q = db.TblMembers.story_id==None
     for member_rec in db(q).select():
         attach_bio_to_member(member_rec)
         
@@ -314,7 +314,7 @@ def attach_story_to_article(article_rec):
     
 def add_missing_article_stories():
     db = inject("db")
-    q = (db.TblArticles.deleted!=True) & (db.TblArticles.story_id==None)
+    q = db.TblArticles.story_id==None
     for article_rec in db(q).select():
         attach_story_to_article(article_rec)
         
