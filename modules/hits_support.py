@@ -28,7 +28,7 @@ def fix_hit_stories():
 
 def handle_itemless_hits():
     db = inject("db")
-    for hit in db(((db.TblPageHits.item_id == None | db.TblPageHits.item_id == 0)) & (db.TblPageHits.what != "APP")):
+    for hit in db(((db.TblPageHits.item_id == None) | (db.TblPageHits.item_id == 0)) & (db.TblPageHits.what != "APP")):
         hit.update_record(what="APP")
 
         
