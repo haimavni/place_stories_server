@@ -124,7 +124,8 @@ def table_of_hit_what(what):
         TERM=db.TblTerms,
         DOC=db.TblDocs,
         DOCSEG=db.TblDocSegments,
-        VIDEO=db.TblVideos
+        VIDEO=db.TblVideos,
+        HELP=db.TblEvents
     )
     return tables[what]    
     
