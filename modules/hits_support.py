@@ -67,7 +67,7 @@ def attach_story_to_article(article_rec):
 
 def calc_story_id_of_event_or_term(what):
     db = inject("db")
-    hits = db((db.TblHits.what == what) & (db.TblHits.story_id == None)).select()
+    hits = db((db.TblPageHits.what == what) & (db.TblPageHits.story_id == None)).select()
     for hit in hits:
         if not hit.item_id:
             hit.update_record(what="APP")
