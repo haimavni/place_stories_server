@@ -22,6 +22,7 @@ def fix_hit_stories():
     add_missing_article_stories()
     for what in ("EVENT", "TERM"):
         calc_story_id_of_event_or_term(what)
+    add_story_ids() #other than EVENT/TERM
         
 #---------------internal---------------------------- 
 
