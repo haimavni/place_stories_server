@@ -87,9 +87,9 @@ def calc_item_url(what, rec):
     if what == "TERM":
         return f"https://{host}/{app}/aurelia#/term-detail/{rec.story_id}/*"
     if what == "DOC":
-         return f"https://{host}/{app}/aurelia#/doc-detail/{rec.item_id}/*"
+        return f"https://{host}/{app}/aurelia#/doc-detail/{rec.item_id}/*"
     if what == "DOCSEG":
-         return f"https://{host}/{app}/aurelia#/doc-detail/1/*?caller=docs&segment_id={rec.item_id}"
+        return f"https://{host}/{app}/aurelia#/doc-detail/1/*?caller=docs&segment_id={rec.item_id}"
     if what == "VIDEO":
         return f"https://{host}/{app}/aurelia#/annotate-video/{rec.item_id}/*"
     
