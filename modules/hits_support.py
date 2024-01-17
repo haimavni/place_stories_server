@@ -78,9 +78,13 @@ def calc_story_id_of_event_or_term(what):
             true_what = what_of_used_for(story.used_for)
             tbl = table_of_hit_what(true_what)
             story_id = hit.item_id
-            item = db(tbl.story_id == story_id).select().first()
+            if tbl:
+                item = db(tbl.story_id == story_id).select().first()
             if item:
-                hit.update_record(what=true_what, item_id=item.id, story_id=story_id)
+                item_id = item.id
+            else:
+                item_id = 0
+            hit.update_record(what=true_what, item_id=item_id, story_id=story_id)
 
                 
 def add_story_id(what):
@@ -126,7 +130,8 @@ def table_of_hit_what(what):
         DOC=db.TblDocs,
         DOCSEG=db.TblDocSegments,
         VIDEO=db.TblVideos,
-        HELP=db.TblEvents
+        HELP=None,
+        MESSAGE=None
     )
     return tables[what]    
     
