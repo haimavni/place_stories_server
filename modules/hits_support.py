@@ -78,12 +78,12 @@ def calc_story_id_of_event_or_term(what):
             true_what = what_of_used_for(story.used_for)
             tbl = table_of_hit_what(true_what)
             story_id = hit.item_id
+            item = None
+            item_id = 0
             if tbl:
                 item = db(tbl.story_id == story_id).select().first()
-            if item:
-                item_id = item.id
-            else:
-                item_id = 0
+                if item:
+                    item_id = item.id
             hit.update_record(what=true_what, item_id=item_id, story_id=story_id)
 
                 
