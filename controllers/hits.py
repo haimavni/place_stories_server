@@ -1,4 +1,5 @@
 import datetime
+from hits_support import what_of_used_for, table_of_hit_what
 
 
 @serve_json
@@ -9,7 +10,7 @@ def count_hit(vars):
         item_id, story_id = (None, None)
     else:
         id = int(vars.item_id)
-        item_id, story_id = item_and_story_ids(what, id)
+        item_id, story_id, what = item_and_story_ids(what, id)
         if not (item_id and story_id):
             comment(f"!!!!!!!!!!!! missing item_id or story_id of {what}: {item_id} / {story_id}!!!!!!")
             return dict()
@@ -123,7 +124,16 @@ def item_and_story_ids(what, id):
         if rec:
             item_id = rec.id
         else:
+            story = db(db.TblStories.id==story_id).select(db.TblStories.used_for).first()
             item_id = None
+            if story:
+                orig_what = what
+                what = what_of_used_for(story.used_for)
+                tbl = table_of_hit_what(what)
+                rec = db(tbl.story_id==story_id).select().first()
+                if rec:
+                    item_id = rec.id
+                comment(f"======hit kind changed from {orig_what} to {what} story_id: {story_id}") 
     else:
         item_id = id
         rec = db(tbl.id==id).select().first()
@@ -131,4 +141,4 @@ def item_and_story_ids(what, id):
             story_id = rec.story_id
         else:
             story_id = None
-    return item_id, story_id
+    return item_id, story_id, what
