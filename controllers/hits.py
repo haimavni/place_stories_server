@@ -32,8 +32,6 @@ def get_hit_statistics(vars):
     periods = [1, 7, 30, 0]
     end_date = end_date - datetime.timedelta(days=1)
     result = dict()
-    # whats = db(db.TblPageHits).select(db.TblPageHits.what, groupby=db.TblPageHits.what)
-    # whats = [w.what for w in whats]
     tables = get_tables_dic()
     hit_kinds = ["APP"]
     for what in tables:
@@ -66,7 +64,7 @@ def get_hit_statistics(vars):
                 hit_kinds += [what]
             detailed[period] = [parse(prec, what) for prec in precs]
         result[what] = dict(totals=totals, detailed=detailed)
-    return result
+    return dict(result=result, hit_kinds=hit_kinds)
 
 
 def parse(prec, what):
