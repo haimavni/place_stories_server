@@ -117,7 +117,7 @@ def item_and_story_ids(what, id):
     tbls = get_tables_dic()
     tbl = tbls[what]
     if not tbl:
-        return None, None
+        return None, None, what
     if what == "EVENT" or what == "TERM":
         story_id = id
         rec = db(tbl.story_id==story_id).select().first()
