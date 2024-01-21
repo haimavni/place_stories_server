@@ -60,7 +60,7 @@ def get_hit_statistics(vars):
             precs = db(q).select(db.TblPageHits.item_id, db.TblPageHits.story_id, db.TblStories.name, db.TblPageHits.count.sum(),
                                  groupby=[db.TblPageHits.item_id, db.TblPageHits.story_id, db.TblStories.name],
                                  orderby=~db.TblPageHits.count.sum())
-            if (period == 0) and len(precs > 0):
+            if (period == 0) and len(precs) > 0:
                 hit_kinds += [what]
             detailed[period] = [parse(prec, what) for prec in precs]
         result[what] = dict(totals=totals, detailed=detailed)
