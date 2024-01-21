@@ -35,6 +35,7 @@ def get_hit_statistics(vars):
     # whats = db(db.TblPageHits).select(db.TblPageHits.what, groupby=db.TblPageHits.what)
     # whats = [w.what for w in whats]
     tables = get_tables_dic()
+    hit_kinds = ["APP"]
     for what in tables:
         totals = dict()
         detailed = dict()
@@ -61,6 +62,8 @@ def get_hit_statistics(vars):
             precs = db(q).select(db.TblPageHits.item_id, db.TblPageHits.story_id, db.TblStories.name, db.TblPageHits.count.sum(),
                                  groupby=[db.TblPageHits.item_id, db.TblPageHits.story_id, db.TblStories.name],
                                  orderby=~db.TblPageHits.count.sum())
+            if (period == 0) and len(precs > 0):
+                hit_kinds += [what]
             detailed[period] = [parse(prec, what) for prec in precs]
         result[what] = dict(totals=totals, detailed=detailed)
     return result
