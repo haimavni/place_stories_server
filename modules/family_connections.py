@@ -72,21 +72,33 @@ def get_siblings(member_id, hidden_too=False):
     if not parents:
         return []
     db, VIS_NEVER = inject('db', 'VIS_NEVER')
-    pa, ma = parents.pa, parents.ma
+    pa, ma, pa2, ma2 = parents.pa, parents.ma, parents.pa2, parents.ma2
     q = (db.TblMembers.id != member_id) & (db.TblMembers.deleted == False)
     if not hidden_too:
         q &= (db.TblMembers.visibility != VIS_NEVER)
+    
     if pa:
-        lst1 = db(q & (db.TblMembers.father_id==pa.id)).select(orderby=db.TblMembers.date_of_birth) if pa else []
+        lst1 = db(q & (db.TblMembers.father_id==pa.id)).select(orderby=db.TblMembers.date_of_birth)
         lst1 = [r.id for r in lst1]
     else:
         lst1 = []
     if ma:
-        lst2 = db(q & (db.TblMembers.mother_id==ma.id)).select(orderby=db.TblMembers.date_of_birth) if ma else []
+        lst2 = db(q & (db.TblMembers.mother_id==ma.id)).select(orderby=db.TblMembers.date_of_birth)
         lst2 = [r.id for r in lst2]
     else:
         lst2 = []
-    lst = list(set(lst1 + lst2)) #make it unique
+    if pa2:
+        lst3 = db(q & (db.TblMembers.father2_id==pa2.id)).select(orderby=db.TblMembers.date_of_birth)
+        lst3 = [r.id for r in lst3]
+    else:
+        lst3= []
+    if ma2:
+        lst4 = db(q & (db.TblMembers.mother2_id==ma2.id)).select(orderby=db.TblMembers.date_of_birth)
+        lst4 = [r.id for r in lst4]
+    else:
+        lst4 = []
+        
+    lst = list(set(lst1 + lst2 + lst3 + lst4)) #make it unique
     lst = [get_member_rec(id, prepend_path=True) for id in lst]
     for rec in lst:
         if not rec.date_of_birth:
