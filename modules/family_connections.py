@@ -83,7 +83,10 @@ def get_siblings(member_id, hidden_too=False):
     else:
         lst1 = []
     if ma:
-        lst2 = db(q & (db.TblMembers.mother_id==ma.id)).select(orderby=db.TblMembers.date_of_birth)
+        q1 = (db.TblMembers.mother_id==ma.id)
+        if ma2:
+            q1 |= (db.TblMembers.mother_id==ma2.id) 
+        lst2 = db(q &q1).select(orderby=db.TblMembers.date_of_birth)
         lst2 = [r.id for r in lst2]
     else:
         lst2 = []
@@ -93,7 +96,8 @@ def get_siblings(member_id, hidden_too=False):
     else:
         lst3= []
     if ma2:
-        lst4 = db(q & (db.TblMembers.mother2_id==ma2.id)).select(orderby=db.TblMembers.date_of_birth)
+        q1 = (db.TblMembers.mother2_id==ma2.id) | (db.TblMembers.mother2_id==ma.id)
+        lst4 = db(q & q1).select(orderby=db.TblMembers.date_of_birth)
         lst4 = [r.id for r in lst4]
     else:
         lst4 = []
