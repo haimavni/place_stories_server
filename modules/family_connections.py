@@ -78,7 +78,10 @@ def get_siblings(member_id, hidden_too=False):
         q &= (db.TblMembers.visibility != VIS_NEVER)
     
     if pa:
-        lst1 = db(q & (db.TblMembers.father_id==pa.id)).select(orderby=db.TblMembers.date_of_birth)
+        q1 = (db.TblMembers.father_id==pa.id)
+        if pa2:
+            q1 |= (db.TblMembers.father_id==pa2.id)
+        lst1 = db(q & q1).select(orderby=db.TblMembers.date_of_birth)
         lst1 = [r.id for r in lst1]
     else:
         lst1 = []
@@ -86,24 +89,25 @@ def get_siblings(member_id, hidden_too=False):
         q1 = (db.TblMembers.mother_id==ma.id)
         if ma2:
             q1 |= (db.TblMembers.mother_id==ma2.id) 
-        lst2 = db(q &q1).select(orderby=db.TblMembers.date_of_birth)
+        lst2 = db(q & q1).select(orderby=db.TblMembers.date_of_birth)
         lst2 = [r.id for r in lst2]
     else:
         lst2 = []
     if pa2:
-        lst3 = db(q & (db.TblMembers.father2_id==pa2.id)).select(orderby=db.TblMembers.date_of_birth)
+        q1 = (db.TblMembers.father2_id.belongs(pa2.id, pa.id))
+        lst3 = db(q & q1).select(orderby=db.TblMembers.date_of_birth)
         lst3 = [r.id for r in lst3]
     else:
         lst3= []
     if ma2:
-        q1 = (db.TblMembers.mother2_id==ma2.id) | (db.TblMembers.mother2_id==ma.id)
+        q1 = (db.TblMembers.mother2_id.belongs(ma2.id, ma.id))
         lst4 = db(q & q1).select(orderby=db.TblMembers.date_of_birth)
         lst4 = [r.id for r in lst4]
     else:
         lst4 = []
         
     lst = list(set(lst1 + lst2 + lst3 + lst4)) #make it unique
-    lst = [get_member_rec(id, prepend_path=True) for id in lst]
+    lst = [get_member_rec(mid, prepend_path=True) for mid in lst]
     for rec in lst:
         if not rec.date_of_birth:
             rec.date_of_birth = datetime.date(year=1, month=1, day=1) #should not happen but it did...
