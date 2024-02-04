@@ -13,36 +13,45 @@ git config --global user.email haimavni@gmail.com
 git clone https://github.com/haimavni/place_stories_server.git ~/server_src
 git clone https://github.com/haimavni/gbs.git ~/client_src
 git clone https://github.com/web2py/web2py.git
-
-#copy files from ~/server_src/private/make-dev-env
-
 cd ~/web2py
 git submodule update --init --recursive
+
+cd ~client_src
+npm install
+
+#copy files from ~/server_src/private/make-dev-env:
+cd ~/server_src/private/make-dev-env/
+sudo cp ./etc/* /etc/
+cp .bash_aliases ~/
+cp .bashrc ~/
+cp .bash_logout ~/
+cp .bash_profile-hidden ~/web2py/.env
+sudo bash git-aliases.bash
+pip install -r requirements.txt
+
+mkdir /apps_data
+#chown to your user?
+
+cd  ~/server_src/static/
+ln -s /apps_data ./apps_data
+wget ./fontawesome.zip https://tol.life/rishpon__master/static/apps_data/system_data/fontawesome.zip
+unzip fontawesome
+rm ./fontawesome.zip
 
 sudo apt install postgresql postgresql-contrib
 # see instructions at https://www.digitalocean.com/community/tutorials/how-to-install-postgresql-on-ubuntu-22-04-quickstart
 
-pip install python-dotenv
 
-#edit .env to replace password by your choice
-#run Python script load_dotenv(path to .env)
+#edit .env to replace passwords by your choice
 
-psg createuser $DB_USER with encrypted password '$DB_PASSWORD';
-#psg createuser -P lifestone
-#   create user with password "V3geHanu"
-
-install psycopg2:
+# install psycopg2:
 
 sudo apt update
 sudo apt -y install python3-psycopg2
 
-mkdir /apps_data
+python createdbuser.py
 
-in web2py/gluon/contrib/memcache import pickle (no cpickle)
 
 To work on the password failure:
 import psycopg2
 psycopg2.connect(dbname="demo", user="lifestone", password="V3g3Hanu", host="localhost", port ="5432")
-
-
-

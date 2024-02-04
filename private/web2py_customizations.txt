@@ -1,5 +1,3 @@
-Only in web2py/applications: coolano
-Only in web2py: deposit
 diff -r -x '*.pyc' -U 3 web2py-2.13.4-original/gluon/myregex.py web2py/gluon/myregex.py
 --- web2py-2.13.4-original/gluon/myregex.py	2015-12-26 04:58:52.000000000 +0200
 +++ web2py/gluon/myregex.py	2016-02-14 12:19:39.668635365 +0200
