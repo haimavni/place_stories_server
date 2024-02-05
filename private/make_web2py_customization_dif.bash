@@ -1,1 +1,1 @@
-diff -r -u  --exclude=*.pyc --no-dereference /home/haim/web2py_orig/gluon /home/haim//web2py/gluon | grep -v ^O > ./w2.dif
+diff -ruN --exclude=*.pyc --no-dereference  gluon /home/haim/web2py/gluon | grep -v ^O > ./w2.dif

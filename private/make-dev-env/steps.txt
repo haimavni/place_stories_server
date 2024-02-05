@@ -20,6 +20,10 @@ git clone https://github.com/web2py/web2py.git
 cd ~/web2py
 git submodule update --init --recursive
 
+# patch web2py using ~/server_src/private/make-dev-env/web2py_customizations.patch
+# patch documentation https://www.pair.com/support/kb/paircloud-diff-and-patch/
+patch -s -p0 < ~/server_src/private/make-dev-env/web2py_customizations.patch
+
 cd ~client_src
 npm install
 
