@@ -1,6 +1,6 @@
-diff -r -u '--exclude=*.pyc' --no-dereference /home/haim/web2py_orig/gluon/compileapp.py /home/haim//web2py/gluon/compileapp.py
---- /home/haim/web2py_orig/gluon/compileapp.py	2024-02-04 18:29:14.740928889 +0200
-+++ /home/haim//web2py/gluon/compileapp.py	2023-12-18 11:31:09.566353087 +0200
+diff -ruN '--exclude=*.pyc' --no-dereference gluon/compileapp.py /home/haim/web2py/gluon/compileapp.py
+--- gluon/compileapp.py	2024-02-05 13:42:44.830874781 +0200
++++ /home/haim/web2py/gluon/compileapp.py	2023-12-18 11:31:09.566353087 +0200
 @@ -554,7 +554,10 @@
  
  
@@ -13,9 +13,9 @@ diff -r -u '--exclude=*.pyc' --no-dereference /home/haim/web2py_orig/gluon/compi
  
  
  def find_exposed_functions(data):
-diff -r -u '--exclude=*.pyc' --no-dereference /home/haim/web2py_orig/gluon/contrib/memcache/__init__.py /home/haim//web2py/gluon/contrib/memcache/__init__.py
---- /home/haim/web2py_orig/gluon/contrib/memcache/__init__.py	2024-02-04 18:29:14.750928885 +0200
-+++ /home/haim//web2py/gluon/contrib/memcache/__init__.py	2023-12-07 11:46:20.358286365 +0200
+diff -ruN '--exclude=*.pyc' --no-dereference gluon/contrib/memcache/__init__.py /home/haim/web2py/gluon/contrib/memcache/__init__.py
+--- gluon/contrib/memcache/__init__.py	2024-02-05 13:42:44.830874781 +0200
++++ /home/haim/web2py/gluon/contrib/memcache/__init__.py	2023-12-07 11:46:20.358286365 +0200
 @@ -8,7 +8,7 @@
  cache.memcache = MemcacheClient(request,[127.0.0.1:11211],debug=true)
  """
@@ -25,9 +25,9 @@ diff -r -u '--exclude=*.pyc' --no-dereference /home/haim/web2py_orig/gluon/contr
  import thread
  from gluon import current
  
-diff -r -u '--exclude=*.pyc' --no-dereference /home/haim/web2py_orig/gluon/contrib/websocket_messaging.py /home/haim//web2py/gluon/contrib/websocket_messaging.py
---- /home/haim/web2py_orig/gluon/contrib/websocket_messaging.py	2024-02-04 18:29:14.760928881 +0200
-+++ /home/haim//web2py/gluon/contrib/websocket_messaging.py	2023-12-19 11:52:15.477160298 +0200
+diff -ruN '--exclude=*.pyc' --no-dereference gluon/contrib/websocket_messaging.py /home/haim/web2py/gluon/contrib/websocket_messaging.py
+--- gluon/contrib/websocket_messaging.py	2024-02-05 13:42:44.850874876 +0200
++++ /home/haim/web2py/gluon/contrib/websocket_messaging.py	2023-12-19 11:52:15.477160298 +0200
 @@ -89,18 +89,17 @@
  import tornado.ioloop
  import tornado.web
@@ -68,9 +68,54 @@ diff -r -u '--exclude=*.pyc' --no-dereference /home/haim/web2py_orig/gluon/contr
                      self.send_error(401)
              tokens[message] = None
  
-diff -r -u '--exclude=*.pyc' --no-dereference /home/haim/web2py_orig/gluon/serializers.py /home/haim//web2py/gluon/serializers.py
---- /home/haim/web2py_orig/gluon/serializers.py	2024-02-04 18:29:14.760928881 +0200
-+++ /home/haim//web2py/gluon/serializers.py	2023-12-19 12:22:45.363357183 +0200
+diff -ruN '--exclude=*.pyc' --no-dereference gluon/packages/dal/pydal/adapters/base.py /home/haim/web2py/gluon/packages/dal/pydal/adapters/base.py
+--- gluon/packages/dal/pydal/adapters/base.py	2024-02-05 13:43:20.135369467 +0200
++++ /home/haim/web2py/gluon/packages/dal/pydal/adapters/base.py	2023-12-19 12:14:33.360819497 +0200
+@@ -197,8 +197,6 @@
+                 value = value.decode(self.db._db_codec)
+             except Exception:
+                 pass
+-        if PY2 and isinstance(value, unicode):
+-            value = value.encode("utf-8")
+         if isinstance(field_type, SQLCustomType):
+             value = field_type.decoder(value)
+         if not isinstance(field_type, str) or value is None:
+@@ -517,7 +515,7 @@
+         query = self._insert(table, fields)
+         try:
+             self.execute(query)
+-        except:
++        except Exception as e:
+             e = sys.exc_info()[1]
+             if hasattr(table, "_on_insert_error"):
+                 return table._on_insert_error(table, fields, e)
+diff -ruN '--exclude=*.pyc' --no-dereference gluon/packages/dal/pydal/base.py /home/haim/web2py/gluon/packages/dal/pydal/base.py
+--- gluon/packages/dal/pydal/base.py	2024-02-05 13:43:20.135369467 +0200
++++ /home/haim/web2py/gluon/packages/dal/pydal/base.py	2023-12-01 17:00:44.077025401 +0200
+@@ -644,7 +644,7 @@
+                 raise SyntaxError("table already defined: %s" % tablename)
+         elif (
+             tablename.startswith("_")
+-            or hasattr(self, tablename)
++            or tablename in dir(self)
+             or REGEX_PYTHON_KEYWORDS.match(tablename)
+         ):
+             raise SyntaxError("invalid table name: %s" % tablename)
+diff -ruN '--exclude=*.pyc' --no-dereference gluon/packages/dal/pydal/objects.py /home/haim/web2py/gluon/packages/dal/pydal/objects.py
+--- gluon/packages/dal/pydal/objects.py	2024-02-05 13:43:20.145369495 +0200
++++ /home/haim/web2py/gluon/packages/dal/pydal/objects.py	2023-12-01 17:00:44.077025401 +0200
+@@ -2072,7 +2072,7 @@
+         uuid_key = self._db.uuid().replace("-", "")[-16:] if self._db else uuidstr()
+         encoded_filename = to_native(base64.urlsafe_b64encode(to_bytes(filename)))
+         newfilename = "%s.%s.%s.%s" % (
+-            getattr(self, '_tablename', 'no_table'),
++            self._tablename if '_tablename' in self.__dir__() and self._tablename else 'no_table',
+             self.name,
+             uuid_key,
+             encoded_filename,
+diff -ruN '--exclude=*.pyc' --no-dereference gluon/serializers.py /home/haim/web2py/gluon/serializers.py
+--- gluon/serializers.py	2024-02-05 13:42:44.850874876 +0200
++++ /home/haim/web2py/gluon/serializers.py	2023-12-19 12:22:45.363357183 +0200
 @@ -94,7 +94,9 @@
      elif hasattr(o, "as_dict") and callable(o.as_dict):
          return o.as_dict()
