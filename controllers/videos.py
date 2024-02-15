@@ -267,6 +267,7 @@ def get_video_info(vars):
                 photo_date_datespan = all_dates.video_date.span,
                 video_topics=video_topics,
                 members=members,
+                thumbnail_url=vrec.thumbnail_url,
                 cue_points=cue_points)
 
 def get_full_name(member):
