@@ -13,8 +13,10 @@ git config --global user.email haimavni@gmail.com
 git clone https://github.com/haimavni/place_stories_server.git ~/server_src
 git clone https://github.com/haimavni/gbs.git ~/client_src
 
-ssh-keygen -f sshkey
-ssh-copy-id -i ~/.ssh/sshkey root@tol.life
+cd ~
+mkdir .ssh
+ssh-keygen -f ./ssh/sshkey
+ssh-copy-id -i ~/.ssh/sshkey root@lifestone.net
 
 git clone https://github.com/web2py/web2py.git
 cd ~/web2py
