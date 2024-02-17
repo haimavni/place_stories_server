@@ -63,3 +63,6 @@ python createdbuser.py
 To work on the password failure:
 import psycopg2
 psycopg2.connect(dbname="demo", user="lifestone", password="V3g3Hanu", host="localhost", port ="5432")
+
+target of the chrome shortcut to overcome security:
+"C:\Program Files\Google\Chrome\Application\chrome.exe" --disable-web-security --disable-gpu --user-data-dir=d:/temp/chromTemp
