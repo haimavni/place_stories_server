@@ -102,8 +102,8 @@ def get_doc_segment_list(vars):
         #for the filters to work
         rec.name = story.name
         rec.source = story.source
-        rec.doc_url = doc_segment_url(None, rec1)
-        rec.doc_jpg_url = doc_segment_jpg_url(None, rec1)
+        rec.doc_url = doc_segment_url(story.id, rec1)
+        rec.doc_jpg_url = doc_segment_jpg_url(story.id, rec1)
         rec.keywords = rec1.TblStories.keywords
         # rec.name = rec1.TblStories.name
         rec.doc_date = rec1.TblStories.story_date
@@ -311,7 +311,7 @@ def get_doc_segment_info(vars):
     doc_topics=get_object_topics(story_id, "S")
     all_dates=get_all_dates(doc_segment_story)
     doc_src=doc_segment_url(None, rec)
-    doc_segment_thumbnail_url = doc_segment_jpg_url(None, doc_segment_rec)
+    doc_segment_thumbnail_url = doc_segment_jpg_url(doc_segment_rec.story_id, doc_segment_rec)
 
     return dict(
         doc_segment=doc_segment_rec,
