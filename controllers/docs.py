@@ -310,9 +310,9 @@ def get_doc_segment_info(vars):
                for member in members]
     doc_topics=get_object_topics(story_id, "S")
     all_dates=get_all_dates(doc_segment_story)
-    doc_src=doc_segment_url(None, rec)
-    # doc_segment_thumbnail_url = doc_segment_jpg_url(doc_segment_rec.story_id, doc_segment_rec)
-    doc_segment_thumbnail_url = None
+    doc_src=doc_segment_url(story_id, rec)
+    doc_segment_thumbnail_url = doc_segment_jpg_url(story_id, None)
+    # doc_segment_thumbnail_url = None
 
     return dict(
         doc_segment=doc_segment_rec,
