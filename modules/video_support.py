@@ -122,8 +122,10 @@ def parse_video_url(input_url):
             typ = t
             break
     if not src:
-        User_Error = inject("User_Error")
-        raise User_Error('!videos.unknown-video-type')
+        typ = "raw"
+        src = input_url
+        # User_Error = inject("User_Error")
+        # raise User_Error('!videos.unknown-video-type')
     return Storage(src=src, video_type=typ)
 
 

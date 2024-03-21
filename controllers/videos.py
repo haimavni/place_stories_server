@@ -10,6 +10,7 @@ from folders import url_video_folder
 from members_support import *
 from video_support import upgrade_youtube_info, update_cuepoints_text, parse_video_url, youtube_info
 from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
+from gluon.storage import Storage
 
 @serve_json
 def save_video(vars):
@@ -28,7 +29,7 @@ def save_video(vars):
         story_info = sm.get_empty_story(used_for=STORY4VIDEO, story_text="", name=params.name)
         result = sm.add_story(story_info)
         story_id = result.story_id
-        yt_info = youtube_info(vidi.src)
+        yt_info = youtube_info(vidi.src) if vidi.video_type == "youtube" else Storage()
         data = dict(
             video_type=vidi.video_type,
             name=params.name,
@@ -241,6 +242,7 @@ def get_video_info(vars):
     else:
         vrec = db(db.TblVideos.id==video_id).select().first()
     video_source = vrec.src
+    video_url = calc_video_url(vrec.video_type, video_source)
     if vars.cuepoints_enabled:
         cue_points = calc_cue_points(video_id)
     else:
@@ -259,6 +261,7 @@ def get_video_info(vars):
                        facephotourl=photos_folder(PROFILE_PHOTOS) + (member.facephotourl or "dummy_face.png"),
                        full_name=get_full_name(member)) for member in members]
     return dict(video_source=video_source,
+                video_url=video_url,
                 video_story=video_story,
                 video_id=video_id,
                 photographer_name=photographer_name,
@@ -279,6 +282,13 @@ def get_full_name(member):
             result += " "
         result += member.last_name
     return result
+
+def calc_video_url(video_type, video_src):
+    if video_type == "youtube":
+        return "https://www.youtube.com/embed/" + video_src + "?wmode=opaque"
+    if video_type == "raw":
+        return video_src;
+    raise Exception(video_type + " not ready yet")
 
 @serve_json
 def update_video_cue_points(vars):
