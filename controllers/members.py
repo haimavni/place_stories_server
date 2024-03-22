@@ -834,12 +834,13 @@ def apply_topics_to_story(vars):
     story_id = vars.story_id
     used_for = vars.used_for
     if used_for:
-        usage_chars = 'xMEPTxxxVDA'
+        usage_chars = 'xMEPTxxxVDAxxxS'
         usage_char = usage_chars[used_for]
     else:
         usage_char = 'x'
     all_tags = calc_all_tags()
     story_topics = vars.story_topics
+    comment(f"================story_id: {story_id}, used_for: {used_for}, story_topics: {story_topics}")
     current_ids = [topic.id for topic in story_topics]
     current_ids = set(current_ids)
     new_topic_was_added = False
@@ -861,7 +862,8 @@ def apply_topics_to_story(vars):
                         db.TblItemTopics.topic_id == topic_id)
             ###deleted.append(item)
             # should remove usage_char from usage if it was the last one...
-            db(q).delete()
+            ndel = db(q).delete()
+            comment(f"topic id: {topic_id}, deleted? {ndel}, usage_char: {usage_char}")
         curr_tags = [all_tags[tag_id] for tag_id in curr_tag_ids]
         keywords = KW_SEP.join(curr_tags)
         rec = db(db.TblStories.id == story_id).select().first()
