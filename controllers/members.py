@@ -845,6 +845,7 @@ def apply_topics_to_story(vars):
     current_ids = set(current_ids)
     new_topic_was_added = False
     curr_tag_ids = set(get_tag_ids(story_id, usage_char))
+    comment(f"curr tag ids: {curr_tag_ids}")
     for topic_id in current_ids:
         if topic_id not in curr_tag_ids:
             new_id = db.TblItemTopics.insert(item_type=usage_char, story_id=story_id, topic_id=topic_id)
