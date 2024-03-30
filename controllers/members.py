@@ -1183,6 +1183,8 @@ def _get_story_list(params, exact, cuepoints=False):  # exact means looking only
         lst1 = []
         for used_for in story_kinds(params):
             q = (db.TblStories.deleted != True) & (db.TblStories.used_for == used_for)
+            if used_for == STORY4MEMBER:
+                q &= (db.TblStories.story_len > 0)
             n = db(q).count()
             real_counters[used_for] = n
             if not n:
