@@ -1544,7 +1544,7 @@ def cuepoints_text_query(q, keywords_str, exact):
 def make_stories_query(params, exact, cuepoints=False):
     q = init_query(db.TblStories, editing=params.editing, is_deleted=params.deleted_stories)
     q &= (db.TblStories.used_for.belongs(story_kinds(params)))
-    q &= (db.TblStories.story_len > 0 | db.TblStories.used_for != STORY4MEMBER)
+    q &= (db.TblStories.story_len > 0) | (db.TblStories.used_for != STORY4MEMBER)
     selected_stories = params.selected_stories
     keywords_str = params.keywords_str
     if keywords_str:
