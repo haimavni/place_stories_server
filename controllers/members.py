@@ -17,7 +17,6 @@ from quiz_support import use_quiz
 from words import calc_used_languages, read_words_index, get_reisha
 from family_connections import calc_family_connections, find_family_path, get_family_connections, get_member_spouse_children, get_spouses
 from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
-from models.db_gbs import STORY4MEMBER
 
 @serve_json
 def member_list(vars):
