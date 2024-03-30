@@ -17,6 +17,7 @@ from quiz_support import use_quiz
 from words import calc_used_languages, read_words_index, get_reisha
 from family_connections import calc_family_connections, find_family_path, get_family_connections, get_member_spouse_children, get_spouses
 from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
+from models.db_gbs import STORY4MEMBER
 
 @serve_json
 def member_list(vars):
@@ -1544,6 +1545,7 @@ def cuepoints_text_query(q, keywords_str, exact):
 def make_stories_query(params, exact, cuepoints=False):
     q = init_query(db.TblStories, editing=params.editing, is_deleted=params.deleted_stories)
     q &= (db.TblStories.used_for.belongs(story_kinds(params)))
+    q &= (db.TblStories.story_len > 0 | db.TblStories.used_for != STORY4MEMBER)
     selected_stories = params.selected_stories
     keywords_str = params.keywords_str
     if keywords_str:
