@@ -85,7 +85,7 @@ def remove_obsolete_dbs(active_apps=None):
             arr.append(app_name)
         active_apps = set(arr)
     for app in active_apps:
-        port =select_port()
+        port = select_port("")
         id = db_id(app, port)
         active_ids |= set([id])
     file_list = listdir(path)
