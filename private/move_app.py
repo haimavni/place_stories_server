@@ -105,7 +105,7 @@ if __name__ == '__main__':
         option = input("Enter option: ")
         if option == "1":
             app_name = input("Enter app name: ")
-            port = select_port()
+            port = select_port("")
             print("The db id is ", db_id(app_name, port))
         elif option == "2":
             cp_or_mv = input("Enter cp or mv (cp): ")
