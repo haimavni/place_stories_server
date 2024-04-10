@@ -17,8 +17,6 @@ class ProcessPortedPhotos:
         self.log_it(f"enter process_photo {photo_id}")
         photo_rec = db(db.TblPhotos.id==photo_id).select().first()
         orig_file_name = local_photos_folder(ORIG) + photo_rec.photo_path
-        square_file_name = orig_file_name.replace(f"/{ORIG}/", f"/{SQUARES}/")
-        resized_file_name = orig_file_name.replace(f"/{ORIG}/", f"/{RESIZED}/")
         try:
             with open(orig_file_name, 'rb') as f:
                 blob = f.read()
@@ -27,7 +25,11 @@ class ProcessPortedPhotos:
             self.log_it(f"file {orig_file_name} could not be opened")
             return
         crc = zlib.crc32(blob)
-        photo_rec.update_record(crc=crc)
+        #rename file using crc
+        file_name = local_photos_folder(ORIG) + self.rename_file(photo_rec.photo_path, crc)
+        square_file_name = file_name.replace(f"/{ORIG}/", f"/{SQUARES}/")
+        resized_file_name = file_name.replace(f"/{ORIG}/", f"/{RESIZED}/")
+        photo_rec.update_record(crc=crc, photo_path=)
         stream = BytesIO(blob)
         img = Image.open(stream)
         try:
@@ -69,9 +71,9 @@ class ProcessPortedPhotos:
                 fix_owner(square_file_name)
             else:
                 self.log_it(f"Could not create square for photo {photo_id}")
-            path, fn = os.path.split(orig_file_name)
+            path, fn = os.path.split(file_name)
             fix_owner(path)
-            fix_owner(orig_file_name)
+            fix_owner(file_name)
             if height > MAX_HEIGHT or width > MAX_WIDTH:
                 oversize = True
             else:
@@ -102,6 +104,15 @@ class ProcessPortedPhotos:
         )
         db.commit()
         return Storage(photo_id=photo_id)
+    
+    def rename_file_name(self, fname, crc):
+        path, name = os.path.split(fname)
+        name, ext = os.path.splitext(name)
+        file_name = f'{path}{crc & 0xffffffff:x}{ext}'
+        src = local_photos_folder(ORIG) + fname
+        dst = local_photos_folder(ORIG) + file_name
+        os.rename(src, dst)
+        return file_name
     
     def process_all_unprocessed_photos(self, limit=None):
         limit = limit or 99999

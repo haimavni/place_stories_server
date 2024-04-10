@@ -132,6 +132,7 @@ class Migrate:
                 recognized=True,
                 # todo: use only story name and remove this field
                 photo_path=item.photo_path,
+                original_file_name=item.photo_path,
                 photo_date=datetime.date(year=int(item.year), month=1, day=1),
                 photo_date_dateend=datetime.date(year=int(item.year), month=1, day=1)
             )

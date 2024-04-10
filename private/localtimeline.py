@@ -385,7 +385,8 @@ class PortTL():
             self.categories[cn] += 1
         return cat_names
     
-    def write_command_file(self):
+    def write_command_file_obsol(self):
+        print("Using older write command file")
         app = self.site_name
         web2py_path = "/home/www-data/py38env/web2py/web2py.py"
         path = f"/home/haim/migrations/{app}"
@@ -404,6 +405,7 @@ fi
 '''    
         cmd1 = f"ssh  root@lifestone.net bash /home/www-data/tol_master/private/create_app.bash {app} master haimavni@gmail.com 0522433248 Haim Avni"
         cmd2 = f"ssh  root@lifestone.net bash /apps_data/{app}/downloader.bash"
+        python = "/home/www-data/py38env/bin/python"
         with open(f"/home/haim/migrations/{app}/doit.bash", "w", encoding="utf-8") as f:
             f.write(f"echo Starting new app {app}\n")
             f.write(cmd1 + '\n')
@@ -414,13 +416,13 @@ fi
             f.write("echo About to build database\n")
             f.write(confirm)
             f.write("ssh root@lifestone.net source /home/www-data/py38env/bin/activate\n")
-            f.write(f"ssh root@lifestone.net python {web2py_path} -S {app}/migrate/build_database\n")
+            f.write(f"ssh root@lifestone.net {python} {web2py_path} -S {app}/migrate/build_database\n")
             f.write("echo About to process ported photos\n")
             f.write(confirm)
-            f.write(f"ssh root@lifestone.net python {web2py_path} -S {app}/migrate/process_ported_photos\n")
+            f.write(f"ssh root@lifestone.net {python} {web2py_path} -S {app}/migrate/process_ported_photos\n")
             f.write("echo About to process ported docs\n")
             f.write(confirm)
-            f.write(f"ssh root@lifestone.net python {web2py_path} -S {app}/migrate/process_ported_docs\n")
+            f.write(f"ssh root@lifestone.net {python} {web2py_path} -S {app}/migrate/process_ported_docs\n")
             f.write(f"ssh root@lifestone.net cd /apps_data/{app}; chown -R www-data:www-data .\n")
             f.write("echo Done\n")
             
@@ -445,17 +447,19 @@ fi
         f.write(confirm)
 
     def write_command_file(self):
+        print("Using more recent write command file")
         app = self.site_name
         web2py_path = "/home/www-data/py38env/web2py/web2py.py"
         path = f"/home/haim/migrations/{app}"
         os.makedirs(path, exist_ok=True)
+        python = "/home/www-data/py38env/bin/python"
         cmd1 = f"ssh  root@lifestone.net bash /home/www-data/tol_master/private/create_app.bash {app} master haimavni@gmail.com 0522433248 Haim Avni"
         cmd2 = f"sftp -b sftp_cmds.batch root@lifestone.net"
         cmd3 = f"ssh  root@lifestone.net bash /apps_data/{app}/downloader.bash"
         cmd4 = ["ssh root@lifestone.net source /home/www-data/py38env/bin/activate",
-                f"ssh root@lifestone.net python {web2py_path} -S {app}/migrate/build_database"]
-        cmd5 = f"ssh root@lifestone.net python {web2py_path} -S {app}/migrate/process_ported_photos"
-        cmd6 = f"ssh root@lifestone.net python {web2py_path} -S {app}/migrate/process_ported_docs"
+                f"ssh root@lifestone.net {python} {web2py_path} -S {app}/migrate/build_database"]
+        cmd5 = f"ssh root@lifestone.net {python} {web2py_path} -S {app}/migrate/process_ported_photos"
+        cmd6 = f"ssh root@lifestone.net {python} {web2py_path} -S {app}/migrate/process_ported_docs"
         cmd7 = f"echo ssh root@lifestone.net cd /apps_data/{app}; chown -R www-data:www-data ."
         with open(f"{path}/sftp_cmds.batch", "w", encoding="utf-8") as f:
             f.write(f"lcd /home/haim/migrations/{app}\n")
