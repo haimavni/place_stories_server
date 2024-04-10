@@ -571,6 +571,14 @@ def find_duplicates(vars):
     return dict(photo_list=photo_list, got_duplicates=len(lst) > 0, candidates=list(candidates))
 
 @serve_json
+def mark_duplicates(vars):
+    lst = vars.selected_photos
+    photo1, photo2 = db(db.TblPhotos.id.belongs(lst)).select()
+    dh = photo1.dhash
+    photo2.update_record(dhash=dh)
+    return dict()
+
+@serve_json
 def get_uploaded_info(vars):
     uploaded_set = set(vars.uploaded)
     similars, candidates = find_similar_photos(vars.uploaded)
