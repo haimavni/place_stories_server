@@ -19,6 +19,7 @@ def index():
     comment(f"--------ico path: {private_ico_path}/favicon.ico")
     if os.path.exists(private_ico_path + '/favicon.ico'):
         ico_path = f'{app}/static' + private_ico_path # not working yet
+        comment(f"{ico_path} was found")
     else:
         ico_path = f'/{app}/static/aurelia'
     vendor_bundle = None
