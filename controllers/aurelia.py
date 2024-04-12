@@ -16,7 +16,7 @@ def index():
     lst = os.listdir(folder)
     fname = (app + '__').split('__')[0]
     private_ico_path = f'/apps_data/{fname}/images'
-    if os.path.exists(private_ico_path + '/favicn.ico'):
+    if os.path.exists(private_ico_path + '/favicon.ico'):
         ico_path = f'{app}/static' + private_ico_path # not working yet
     else:
         ico_path = f'/{app}/static/aurelia'
