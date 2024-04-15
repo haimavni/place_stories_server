@@ -275,6 +275,8 @@ def set_promoted_story_expiration(vars):
 
 @serve_json
 def cover_photo(vars):
+    if not vars.photo_id:
+        return dict(cover_photo=None)
     cover_photo = get_padded_photo_url(vars.cover_photo_id)
     config_rec = get_config_rec()
     if cover_photo is not None:
