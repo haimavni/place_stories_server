@@ -483,6 +483,8 @@ def convert_story_ids(vars):
 
 def make_docs_query(params):
     q=init_query(db.TblDocs, params.editing)
+    n = db(q).count()
+    comment(f"AA============docs query {n}")
     if params.days_since_upload:
         days=params.days_since_upload.value
         if days:
@@ -500,6 +502,8 @@ def make_docs_query(params):
         q &= (db.TblDocs.doc_date != NO_DATE)
     elif opt == 'undated':
         q &= (db.TblDocs.doc_date == NO_DATE)
+    n = db(q).count()
+    comment(f"BB============docs query {n}")
     if params.selected_docs:
         q &= (db.TblDocs.story_id.belongs(params.selected_docs))
     if params.selected_topics:
