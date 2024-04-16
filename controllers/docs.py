@@ -509,6 +509,8 @@ def make_docs_query(params):
         q &= (db.TblDocs.story_id == db.TblStories.id) & (
             db.TblStories.is_tagged == False)
     q &= (db.TblDocs.crc != None)
+    n = db(q).count()
+    comment(f"============docs query {n}")
     return q
 
 def make_doc_segments_query(params):
