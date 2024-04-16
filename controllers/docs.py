@@ -509,9 +509,13 @@ def make_docs_query(params):
     if params.selected_topics:
         q1=get_topics_query(params.selected_topics)
         q &= q1
+    n = db(q).count()
+    comment(f"BB============docs query {n}")
     if params.show_untagged:
         q &= (db.TblDocs.story_id == db.TblStories.id) & (
             db.TblStories.is_tagged == False)
+    n = db(q).count()
+    comment(f"CC============docs query {n}")
     q &= (db.TblDocs.crc != None)
     n = db(q).count()
     comment(f"============docs query {n}")
