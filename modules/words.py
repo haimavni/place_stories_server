@@ -263,7 +263,7 @@ def read_words_index():
             GROUP BY "TblWords"."word", "TblWords"."id";
         """
     log_available_memory('before words index query')
-    # lst = db.executesql(cmd)
+    lst = db.executesql(cmd)
     log_available_memory('after words index query')
     lst = sorted(lst, key=lambda item: item[1], reverse=False)
 
