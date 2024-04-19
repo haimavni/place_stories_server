@@ -29,7 +29,8 @@ def save_video(vars):
         story_info = sm.get_empty_story(used_for=STORY4VIDEO, story_text="", name=params.name)
         result = sm.add_story(story_info)
         story_id = result.story_id
-        yt_info = youtube_info(vidi.src) if vidi.video_type == "youtube" else Storage()
+        comment(f"......thumbnail src: {vars.thumbnail_src}")
+        yt_info = youtube_info(vidi.src) if vidi.video_type == "youtube" else Storage(thumbnail_url=vars.thumbnail_src, allow="encrypted-media")
         data = dict(
             video_type=vidi.video_type,
             name=params.name,
@@ -41,7 +42,8 @@ def save_video(vars):
             description=yt_info.description,
             uploader=yt_info.uploader,
             duration=yt_info.duration,
-            yt_upload_date=yt_info.upload_date
+            yt_upload_date=yt_info.upload_date,
+            allow=yt_info.allow
         )
         vid = db.TblVideos.insert(**data)
         data.update(id=vid)
