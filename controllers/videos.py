@@ -272,6 +272,7 @@ def get_video_info(vars):
                 video_topics=video_topics,
                 members=members,
                 thumbnail_url=vrec.thumbnail_url,
+                allow="encrypted-media",
                 cue_points=cue_points)
 
 def get_full_name(member):
