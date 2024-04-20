@@ -29,7 +29,6 @@ def save_video(vars):
         story_info = sm.get_empty_story(used_for=STORY4VIDEO, story_text="", name=params.name)
         result = sm.add_story(story_info)
         story_id = result.story_id
-        comment(f"......thumbnail src: {vars.thumbnail_src}")
         yt_info = youtube_info(vidi.src) if vidi.video_type == "youtube" else Storage(thumbnail_url=vars.thumbnail_src, allow="encrypted-media")
         data = dict(
             video_type=vidi.video_type,
