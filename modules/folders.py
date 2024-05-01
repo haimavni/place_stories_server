@@ -52,7 +52,7 @@ def url_cards_folder():
     return f'cards.{host}/{app}/'
 
 def url_of_local_path(local_path):
-    return root_url_folder() + local_path
+    return root_url_folder() + local_path[1:]
 
 def system_folder():
     path = '/apps_data/system_data/'
