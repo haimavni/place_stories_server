@@ -4,6 +4,9 @@ from gluon.storage import Storage
 from injections import inject
 import datetime
 import re
+from pythumb import Thumbnail
+from folders import local_photos_folder, url_of_local_path
+from photos_support import save_padded_photo
 
 
 def youtube_info(src):
@@ -128,4 +131,11 @@ def parse_video_url(input_url):
         # raise User_Error('!videos.unknown-video-type')
     return Storage(src=src, video_type=typ)
 
-
+def save_yt_thumbnail(src):
+    t = Thumbnail(src)
+    t.fetch()
+    folder = local_photos_folder("padded")
+    path = t.save(folder)
+    save_padded_photo(path + ".padded")
+    url = url_of_local_path(path)
+    return url

@@ -10,12 +10,20 @@ ORIG    =        'oversize'
 SQUARES =        'squares'
 PROFILE_PHOTOS = 'profile_photos'
 
+def root_url_folder()
+    request = inject('request')
+    host = request.env.http_host
+    app = request.application
+    h = 'https' if request.is_https else 'http'
+    return f'{h}://{host}/{app}/static/')
+
 def url_folder(kind):
     request = inject('request')
+    host = request.env.http_host
     app = request.application
     app1 = app.split('__')[0]  # we want dev, test and www apps share the same photos
     h = 'https' if request.is_https else 'http'
-    return '{h}://{host}/{app}/static/apps_data/{app1}/{kind}/'.format(h=h, host=request.env.http_host, app=app, app1=app1, kind=kind)
+    return f'{h}://{host}/{app}/static/apps_data/{app1}/{kind}/'
 
 
 def local_folder(kind):
@@ -42,6 +50,9 @@ def url_cards_folder():
     app = request.application
     host = request.env.http_host
     return f'cards.{host}/{app}/'
+
+def url_of_local_path(local_path):
+    return root_url_folder() + local_path
 
 def system_folder():
     path = '/apps_data/system_data/'

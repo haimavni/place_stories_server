@@ -937,6 +937,8 @@ def set_cover_photo(vars):
 def get_padded_photo_url(vars):
     #todo: duplicates code in photos suport
     photo_id = int(vars.photo_id)
+    target_height = int(vars.target_height) if vars.target_height else None
+    target_width = int(vars.target_width) if vars.target_width else None
     photo_rec = db(db.TblPhotos.id==photo_id).select().first()
     if photo_rec:
         crc = photo_rec.crc
@@ -949,7 +951,7 @@ def get_padded_photo_url(vars):
     dir_util.mkpath(cards_folder)
     target_photo_path = cards_folder + file_name
     photo_path = local_photos_folder(RESIZED) + photo_rec.photo_path
-    padded_photo_url = save_padded_photo(photo_path, target_photo_path)
+    padded_photo_url = save_padded_photo(photo_path, target_photo_path, target_height=target_height, target_width=target_width)
     return dict(padded_photo_url=padded_photo_url)
 
 @serve_json

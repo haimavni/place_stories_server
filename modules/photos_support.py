@@ -1,4 +1,3 @@
-import PIL
 from PIL import Image, ImageFile
 from PIL.ExifTags import TAGS, GPSTAGS
 import dhash
@@ -17,7 +16,7 @@ if platform == 'linux':
     import pwd
 from .stories_manager import Stories
 from .folders import *
-from .members_support import member_display_name, older_display_name, get_member_rec, init_query #init_query is used indirectly
+from .members_support import member_display_name
 import zipfile
 from pybktree import BKTree, hamming_distance
 import time
@@ -259,19 +258,23 @@ def fit_all_sizes():
     return dict(num_failed=num_failed)
 
 def scan_all_unscanned_photos():
-    db, request, comment = inject('db', 'request', 'comment')
+    db, comment = inject('db', 'comment')
     q = (db.TblPhotos.crc==None) & (db.TblPhotos.photo_missing == False) & (db.TblPhotos.deleted!=True)
     to_scan = db(q).count()
     comment(f"{to_scan} photos still unscanned")
     failed_crops = 0
     chunk = 100
     folder = local_photos_folder(RESIZED)
-    while True:
+    lst = db(q).select(limitby=(0, chunk))
+    if not len(lst):
+        comment('No unscanned photos were found!')
+        return dict(message='No unscanned photos were found!', to_scan=to_scan)
+    n = 0
+    while lst:
+        n += 1
+        if n > 1000:
+            return dict(message="scan all unscanned photos loop")
         comment('started scanning chunk of photos')
-        lst = db(q).select(limitby=(0, chunk))
-        if not len(lst):
-            comment('No unscanned photos were found!')
-            return dict(message='No unscanned photos were found!', to_scan=to_scan)
         for rec in lst:
             if not rec.photo_path:
                 continue
@@ -292,10 +295,11 @@ def scan_all_unscanned_photos():
                 db.TblMemberPhotos.insert(photo_id=rec.id, x=x, y=y, w=w, h=h) # for older records,
                                                             # merge with record photo_id-member_id
         db.commit()
-        missing = db((db.TblPhotos.photo_missing == True) & \
-                     (db.TblPhotos.deleted != True)).count()
-        done = db((db.TblPhotos.width > 0) & (db.TblPhotos.deleted != True)).count()
-        total = db((db.TblPhotos) & (db.TblPhotos.deleted != True)).count()
+        lst = db(q).select(limitby=(0, chunk))
+    missing = db((db.TblPhotos.photo_missing == True) & \
+                    (db.TblPhotos.deleted != True)).count()
+    done = db((db.TblPhotos.width > 0) & (db.TblPhotos.deleted != True)).count()
+    total = db((db.TblPhotos) & (db.TblPhotos.deleted != True)).count()
     return dict(done=done, total=total, missing=missing, to_scan=to_scan, failed_crops=failed_crops)
 
 def calc_missing_dhash_values(max_to_hash=20000):
@@ -974,12 +978,10 @@ def save_padded_photo(photo_path, target_photo_path, target_width=1200, target_h
     im = Image.open(photo_path)
     padded = resize_with_pad(im, target_width, target_height, color)
     padded.save(target_photo_path, quality=90)
-    r = target_photo_path.rfind('/')
-    file_name = target_photo_path[r+1:]
-    url = 'https://' + url_cards_folder() + f'padded_images/{file_name}'
+    url = url_of_local_path(target_photo_path)
     return url
 
-def get_padded_photo_url(photo_id):
+def get_padded_photo_url(photo_id, target_width=1200, target_height=630):
     db, request = inject('db', 'request')
     app = request.application
     app_area = app.split('__')[0]
@@ -994,7 +996,7 @@ def get_padded_photo_url(photo_id):
     path = local_cards_folder() + 'padded_images/'
     dir_util.mkpath(path)
     target_photo_path = path + file_name
-    padded_photo_url = save_padded_photo(photo_path, target_photo_path)
+    padded_photo_url = save_padded_photo(photo_path, target_photo_path, target_width=target_width, target_height=target_height)
     return padded_photo_url
 
 def save_qr_photo(data):
