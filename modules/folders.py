@@ -10,7 +10,7 @@ ORIG    =        'oversize'
 SQUARES =        'squares'
 PROFILE_PHOTOS = 'profile_photos'
 
-def root_url_folder()
+def root_url_folder():
     request = inject('request')
     host = request.env.http_host
     app = request.application
