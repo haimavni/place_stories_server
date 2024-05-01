@@ -15,7 +15,7 @@ def root_url_folder():
     host = request.env.http_host
     app = request.application
     h = 'https' if request.is_https else 'http'
-    return f'{h}://{host}/{app}/static/')
+    return f'{h}://{host}/{app}/static/'
 
 def url_folder(kind):
     request = inject('request')
