@@ -139,4 +139,4 @@ def save_yt_thumbnail(src):
     target_path = path.replace(".", "-padded.")
     save_padded_photo(path, target_path)
     url = url_of_local_path(target_path)
-    return dict(target_path=target_path, url=url)
+    return dict(target_path=target_path, url=url, path=path)
