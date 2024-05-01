@@ -139,6 +139,6 @@ def save_yt_thumbnail(src):
     r = path.rfind("/")
     path = folder + path[r+1:]
     target_path = path.replace(".", "-padded.")
-    save_padded_photo(path, target_path)
+    save_padded_photo(path, target_path, width=227, height=133, color=0)
     url = url_of_local_path(target_path)
     return dict(target_path=target_path, url=url, path=path)
