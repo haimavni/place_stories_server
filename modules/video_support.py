@@ -141,3 +141,9 @@ def save_yt_thumbnail(src, size="mqdefault"):
     path = folder + path[r+1:]
     url = url_of_local_path(path)
     return url + timestamp(path)
+
+def save_all_yt_thumbnails():
+    db = inject("db")
+    for vid in db(db.TblVideos.video_type=="youtube").select():
+        thumbnail_url = save_yt_thumbnail(vid.src)
+        vid.update_record(thumbnail_url=thumbnail_url)

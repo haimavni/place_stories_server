@@ -398,6 +398,7 @@ def make_fb_card(vars):
     app = request.application
     host = request.env.http_host
     img_src = vars.img_src
+    comment(f"============make fb card. img src: {img_src}")
     r = img_src.rfind('/')
     img_name = img_src[r+1:]
     img_src = url_cards_folder() + f'padded_images/{img_name}'
