@@ -134,7 +134,7 @@ def parse_video_url(input_url):
 
 def save_yt_thumbnail(src):
     t = Thumbnail(src)
-    t.fetch()
+    t.fetch(size="hqdefault")
     folder = local_photos_folder("padded")
     path = t.save(folder, overwrite=True)
     r = path.rfind("/")
