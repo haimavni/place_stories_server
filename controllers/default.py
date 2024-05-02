@@ -405,6 +405,7 @@ def make_fb_card(vars):
     r = img_src.rfind('/')
     img_name = img_src[r+1:]
     img_src = url_cards_folder() + f'padded_images/{img_name}'
+    comment(f"-------img_src final: {img_src}")
     fname = create_key()
     card_url = f'https://cards.{host}/{app}/{fname}.html'
     content = create_card.card_data(vars.url, img_src, vars.title, vars.description)
