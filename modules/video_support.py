@@ -132,7 +132,7 @@ def parse_video_url(input_url):
         # raise User_Error('!videos.unknown-video-type')
     return Storage(src=src, video_type=typ)
 
-def save_yt_thumbnail(src, size="default"):
+def save_yt_thumbnail(src, size="mqdefault"):
     t = Thumbnail(src)
     t.fetch(size=size)
     folder = local_photos_folder("padded")
