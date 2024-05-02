@@ -398,6 +398,9 @@ def make_fb_card(vars):
     app = request.application
     host = request.env.http_host
     img_src = vars.img_src
+    r = img_src.rfind("?")
+    if r > 0:
+        img_src = img_src[:r]
     comment(f"============make fb card. img src: {img_src}")
     r = img_src.rfind('/')
     img_name = img_src[r+1:]
