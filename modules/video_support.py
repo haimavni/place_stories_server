@@ -139,8 +139,5 @@ def save_yt_thumbnail(src, size="mqdefault"):
     path = t.save(folder, overwrite=True)
     r = path.rfind("/")
     path = folder + path[r+1:]
-    # target_path = path.replace(".", "-padded.")
-    # save_padded_photo(path, target_path, target_width=462, target_height=260, color=0)
-    # url = url_of_local_path(target_path)
     url = url_of_local_path(path)
     return url + timestamp(path)
