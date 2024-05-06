@@ -957,7 +957,7 @@ def get_padded_photo_url(vars):
         r = file_name.rfind("?")
         if r > 0:
             file_name = file_name[:r]
-        tmp_folder = photos_folder("temp")
+        tmp_folder = local_photos_folder("temp")
         photo_path = tmp_folder + file_name
         urllib.request.urlretrieve(photo_url, photo_path)
     cards_folder = local_cards_folder() + 'padded_images/'
