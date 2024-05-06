@@ -937,8 +937,8 @@ def set_cover_photo(vars):
 @serve_json
 def get_padded_photo_url(vars):
     #todo: duplicates code in photos suport
-    target_height = int(vars.target_height) if vars.target_height else None
-    target_width = int(vars.target_width) if vars.target_width else None
+    target_height = int(vars.target_height) if vars.target_height else 630
+    target_width = int(vars.target_width) if vars.target_width else 1200
     photo_id = int(vars.photo_id)
     if photo_id: # the photo is in the app photos collection
         photo_rec = db(db.TblPhotos.id==photo_id).select().first()
