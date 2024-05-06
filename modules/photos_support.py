@@ -975,6 +975,8 @@ def resize_with_pad(im, target_width, target_height, color=(255,255,255,255)):
 
 
 def save_padded_photo(photo_path, target_photo_path, target_width=1200, target_height=630, color=(224,224,224,255)):
+    comment = inject("comment")
+    comment(f"+++++++++photo path: {photo_path}. target_photo_path: , {target_photo_path}")
     im = Image.open(photo_path)
     padded = resize_with_pad(im, target_width, target_height, color)
     padded.save(target_photo_path, quality=90)
