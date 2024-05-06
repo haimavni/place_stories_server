@@ -15,6 +15,7 @@ from gluon.storage import Storage
 from gluon.utils import web2py_uuid
 import array
 from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
+import urllib.request
 
 @serve_json
 def get_photo_detail(vars):
@@ -936,21 +937,32 @@ def set_cover_photo(vars):
 @serve_json
 def get_padded_photo_url(vars):
     #todo: duplicates code in photos suport
-    photo_id = int(vars.photo_id)
     target_height = int(vars.target_height) if vars.target_height else None
     target_width = int(vars.target_width) if vars.target_width else None
-    photo_rec = db(db.TblPhotos.id==photo_id).select().first()
-    if photo_rec:
-        crc = photo_rec.crc
+    photo_id = int(vars.photo_id)
+    if photo_id: # the photo is in the app photos collection
+        photo_rec = db(db.TblPhotos.id==photo_id).select().first()
+        if photo_rec:
+            crc = photo_rec.crc
+        else:
+            raise Exception(f"photo id: {photo_id} - photo not found!")
+        r = photo_rec.photo_path.rfind('.')
+        ext = photo_rec.photo_path[r:]
+        file_name = f'{crc & 0xffffffff:x}{ext}'
+        photo_path = local_photos_folder(RESIZED) + photo_rec.photo_path
     else:
-        raise Exception(f"photo id: {photo_id} - photo not found!")
-    r = photo_rec.photo_path.rfind('.')
-    ext = photo_rec.photo_path[r:]
-    file_name = f'{crc & 0xffffffff:x}{ext}'
+        photo_url = vars.photo_url
+        r = photo_url.rfind("/")
+        file_name = photo_url[r+1:]
+        r = file_name.rfind("?")
+        if r > 0:
+            file_name = file_name[:r]
+        tmp_folder = photos_folder("temp")
+        photo_path = tmp_folder + file_name
+        urllib.request.urlretrieve(photo_url, photo_path)
     cards_folder = local_cards_folder() + 'padded_images/'
     dir_util.mkpath(cards_folder)
     target_photo_path = cards_folder + file_name
-    photo_path = local_photos_folder(RESIZED) + photo_rec.photo_path
     padded_photo_url = save_padded_photo(photo_path, target_photo_path, target_height=target_height, target_width=target_width)
     return dict(padded_photo_url=padded_photo_url)
 
