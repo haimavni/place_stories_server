@@ -26,10 +26,10 @@ class ProcessPortedPhotos:
             return
         crc = zlib.crc32(blob)
         #rename file using crc
-        file_name = local_photos_folder(ORIG) + self.rename_file(photo_rec.photo_path, crc)
-        square_file_name = file_name.replace(f"/{ORIG}/", f"/{SQUARES}/")
-        resized_file_name = file_name.replace(f"/{ORIG}/", f"/{RESIZED}/")
-        photo_rec.update_record(crc=crc, photo_path=)
+        file_name = self.rename_file(photo_rec.photo_path, crc, ORIG)
+        self.rename_file(photo_rec.photo_path, crc, SQUARES)
+        self.rename_file(photo_rec.photo_path, crc, RESIZED)
+        photo_rec.update_record(crc=crc, photo_path=file_name)
         stream = BytesIO(blob)
         img = Image.open(stream)
         try:
@@ -105,12 +105,12 @@ class ProcessPortedPhotos:
         db.commit()
         return Storage(photo_id=photo_id)
     
-    def rename_file_name(self, fname, crc):
+    def rename_file(self, fname, crc, what):
         path, name = os.path.split(fname)
         name, ext = os.path.splitext(name)
         file_name = f'{path}{crc & 0xffffffff:x}{ext}'
-        src = local_photos_folder(ORIG) + fname
-        dst = local_photos_folder(ORIG) + file_name
+        src = local_photos_folder(what) + fname
+        dst = local_photos_folder(what) + file_name
         os.rename(src, dst)
         return file_name
     
