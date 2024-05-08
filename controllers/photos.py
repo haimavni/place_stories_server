@@ -958,14 +958,12 @@ def get_padded_photo_url(vars):
         file_name = photo_url.replace("/mq2", "")
         r = file_name.rfind("/")
         file_name = file_name[r+1:]
-        comment(f"-------get padded photo url - photo_url: {photo_url}. file name: {file_name}")
         tmp_folder = local_photos_folder("temp")
         photo_path = tmp_folder + file_name
         urllib.request.urlretrieve(photo_url, photo_path)
     cards_folder = local_cards_folder() + 'padded_images/'
     dir_util.mkpath(cards_folder)
     target_photo_path = cards_folder + file_name
-    comment(f"-=-=-=-=-=-=-=photo path: {photo_path}. target_photo_path: , {target_photo_path}")
     padded_photo_url = save_padded_photo(photo_path, target_photo_path, target_height=target_height, target_width=target_width)
     return dict(padded_photo_url=padded_photo_url)
 
