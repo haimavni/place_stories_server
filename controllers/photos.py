@@ -952,7 +952,7 @@ def get_padded_photo_url(vars):
         photo_path = local_photos_folder(RESIZED) + photo_rec.photo_path
     else:
         photo_url = vars.photo_url
-        r = file_name.rfind("?")
+        r = photo_url.rfind("?")
         if r > 0:
             photo_url = photo_url[:r]
         file_name = photo_url.replace("/mq2", "")
