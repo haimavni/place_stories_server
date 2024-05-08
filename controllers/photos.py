@@ -954,6 +954,7 @@ def get_padded_photo_url(vars):
         photo_url = vars.photo_url
         r = photo_url.rfind("/")
         file_name = photo_url[r+1:]
+        comment(f"-------get padded photo url - photo_url: {photo_url}. file name: {file_name}")
         r = file_name.rfind("?")
         if r > 0:
             file_name = file_name[:r]
