@@ -952,13 +952,13 @@ def get_padded_photo_url(vars):
         photo_path = local_photos_folder(RESIZED) + photo_rec.photo_path
     else:
         photo_url = vars.photo_url
-        file_name = photo_url.replace("/mq2", "")
-        r = photo_url.rfind("/")
-        file_name = photo_url[r+1:]
-        comment(f"-------get padded photo url - photo_url: {photo_url}. file name: {file_name}")
         r = file_name.rfind("?")
         if r > 0:
-            file_name = file_name[:r]
+            photo_url = photo_url[:r]
+        file_name = photo_url.replace("/mq2", "")
+        r = file_name.rfind("/")
+        file_name = file_name[r+1:]
+        comment(f"-------get padded photo url - photo_url: {photo_url}. file name: {file_name}")
         tmp_folder = local_photos_folder("temp")
         photo_path = tmp_folder + file_name
         urllib.request.urlretrieve(photo_url, photo_path)
