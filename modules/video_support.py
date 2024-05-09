@@ -7,8 +7,8 @@ import re
 from pythumb import Thumbnail
 from folders import local_photos_folder, url_of_local_path
 from photos_support import save_padded_photo
-from misc_utils import timestamp
-
+from misc_utils import chmod, timestamp
+import array
 
 def youtube_info(src):
     url = "https://www.youtube.com/embed/" + src + "?wmode=opaque"
@@ -147,3 +147,31 @@ def save_all_yt_thumbnails():
     for vid in db(db.TblVideos.video_type=="youtube").select():
         thumbnail_url = save_yt_thumbnail(vid.src)
         vid.update_record(thumbnail_url=thumbnail_url)
+        
+def save_uploaded_video_thumbnail(data, video_id, ptp_key):
+    # sometimes the above function silently fails to create file
+    db, comment = inject('db', 'comment')
+    # comment(f"------------ save uploaded video thumbail {doc_id} ptp key: {ptp_key}")
+    blob = array.array('B', [x for x in map(ord, data)]).tobytes()
+    # doc_rec = db(db.TblDocs.id==doc_id).select().first()
+    video_jpg_path, video_jpg_url = calc_video_jpg_path(video_id)
+    # comment(f"pdf_jpg_path: {pdf_jpg_path}")
+    if os.path.exists(video_jpg_path):
+        os.rename(video_jpg_path, video_jpg_path + ".bak")
+    with open(video_jpg_path, "bw") as f:
+        f.write(blob)
+    chmod(video_jpg_path, 0o777)
+    return True
+
+def calc_video_jpg_path(video_id):
+    db, request = inject("db", "request")
+    video_rec = db(db.TblVideos.id == video_id).select().first()
+    src = video_rec.src
+    host = request.env.HTTP_HOST
+    app = request.application
+    url = f'https://cards.{host}/{app}/padded/padded_images/{src}.jpg'
+    video_rec.update_record(thumbnail_url=url)
+    path = f'/apps_data/cards/{app}/padded_images/{src}.jpg'
+    return path
+   
+    

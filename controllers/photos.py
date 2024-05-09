@@ -955,7 +955,7 @@ def get_padded_photo_url(vars):
         r = photo_url.rfind("?")
         if r > 0:
             photo_url = photo_url[:r]
-        file_name = photo_url.replace("/mq2", "")
+        file_name = photo_url.replace("/mq2", "").replace("hqdefault", "").replace("maxresdefault", "")
         r = file_name.rfind("/")
         file_name = file_name[r+1:]
         tmp_folder = local_photos_folder("temp")

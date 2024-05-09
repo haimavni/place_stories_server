@@ -8,7 +8,7 @@ import ws_messaging
 from date_utils import update_record_dates, fix_record_dates_in, fix_record_dates_out
 from folders import url_video_folder
 from members_support import *
-from video_support import upgrade_youtube_info, update_cuepoints_text, parse_video_url, youtube_info
+from video_support import upgrade_youtube_info, update_cuepoints_text, parse_video_url, youtube_info, save_uploaded_video_thumbnail
 from folders import RESIZED, ORIG, SQUARES, PROFILE_PHOTOS
 from gluon.storage import Storage
 
@@ -458,3 +458,15 @@ def story_id_to_video_id(vars):
 def invalidate_index(story_id):
     story_rec = db(db.TblStories.id==story_id).select().first()
     story_rec.update_record(indexing_date=NO_DATE, last_update_date=request.now)
+    
+@ serve_json
+def upload_video_thumbnail(vars):
+    comment("-----------------enter upload doc thumbnail.")
+    info=vars.file.info
+    video_id=info.video_id
+    ptp_key=info.ptp_key
+    fil=vars.file
+    result=save_uploaded_video_thumbnail(fil.BINvalue, video_id, ptp_key)
+    return dict(upload_result=result)
+
+    
