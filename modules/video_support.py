@@ -167,7 +167,7 @@ def calc_video_jpg_path(video_id):
     comment(f"::::::::::::calc video jpg path. src: {src}")
     host = request.env.HTTP_HOST
     app = request.application
-    thumbnail_url = f'https://cards.{host}/{app}/padded/padded_images/{src}.jpg'
+    thumbnail_url = f'https://cards.{host}/{app}/padded_images/{src}.jpg'
     video_rec.update_record(thumbnail_url=thumbnail_url)
     path = f'/apps_data/cards/{app}/padded_images/{src}.jpg'
     comment(f"~~~~~~~~~~~~~path is {path}")
