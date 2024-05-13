@@ -1332,7 +1332,9 @@ def get_member_photos(member_id):
         (db.TblPhotos.deleted != True) & \
         (db.TblPhotos.is_back_side != True) & \
         (db.TblStories.id==db.TblPhotos.story_id)
-    return get_slides_from_photo_list(q)
+    lst = get_slides_from_photo_list(q)
+    result = sorted(lst, key=lambda rec: rec.TblPhotos.photo_date, reverse=True)
+    return result
 
 def get_member_videos(member_id):
     q = (db.TblMembersVideos.member_id==member_id) & \

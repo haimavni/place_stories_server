@@ -24,6 +24,7 @@ from . import ws_messaging
 from misc_utils import multisort
 from gluon._compat import to_bytes
 import qrcode
+import urllib.request
 
 MAX_WIDTH = 1200
 MAX_HEIGHT = 800
@@ -1044,3 +1045,36 @@ def str_to_image(binVal: str):
     stream = BytesIO(blob)
     img = Image.open(stream)
     return (img, crc)
+
+def create_padded_photo(photo_id=0, photo_url=None, file_name=None, target_height=630, target_width=1200):
+    #todo: duplicates code in photos suport
+    assert (photo_id > 0) or (photo_url != None)
+    db = inject("db")
+    if photo_id: # the photo is in the app photos collection
+        photo_rec = db(db.TblPhotos.id==photo_id).select().first()
+        if photo_rec:
+            crc = photo_rec.crc
+        else:
+            raise Exception(f"photo id: {photo_id} - photo not found!")
+        r = photo_rec.photo_path.rfind('.')
+        ext = photo_rec.photo_path[r:]
+        file_name = f'{crc & 0xffffffff:x}{ext}'
+        photo_path = local_photos_folder(RESIZED) + photo_rec.photo_path
+    else:
+        r = photo_url.rfind("?")
+        if r > 0:
+            photo_url = photo_url[:r]
+        if not file_name:
+            file_name = photo_url.replace("/mq2", "").replace("hqdefault", "").replace("maxresdefault", "")
+            r = file_name.rfind("/")
+            file_name = file_name[r+1:]
+        tmp_folder = local_photos_folder("temp")
+        photo_path = tmp_folder + file_name
+        urllib.request.urlretrieve(photo_url, photo_path)
+    cards_folder = local_cards_folder() + 'padded_images/'
+    dir_util.mkpath(cards_folder)
+    target_photo_path = cards_folder + file_name
+    padded_photo_url = save_padded_photo(photo_path, target_photo_path, target_height=target_height, target_width=target_width)
+    return padded_photo_url
+
+
