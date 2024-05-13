@@ -378,6 +378,7 @@ def get_slides_from_photo_list(q):
         dic = dict(
             photo_id=rec.TblPhotos.id,
             side='front',
+            photo_date=rec.TblPhotos.photo_date,
             front=dict(
                 photo_id=rec.TblPhotos.id,
                 src=timestamped_photo_path(rec.TblPhotos),

@@ -1333,7 +1333,7 @@ def get_member_photos(member_id):
         (db.TblPhotos.is_back_side != True) & \
         (db.TblStories.id==db.TblPhotos.story_id)
     lst = get_slides_from_photo_list(q)
-    # result = sorted(lst, key=lambda rec: rec.TblPhotos.photo_date, reverse=True)
+    result = sorted(lst, key=lambda rec: rec["photo_date"], reverse=True)
     comment(f"------=====-----slides: {lst[:5]}")
     result = lst
     return result
