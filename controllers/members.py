@@ -1334,7 +1334,8 @@ def get_member_photos(member_id):
         (db.TblStories.id==db.TblPhotos.story_id)
     lst = get_slides_from_photo_list(q)
     result = sorted(lst, key=lambda rec: rec["photo_date"], reverse=True)
-    comment(f"------=====-----slides: {lst[:25]}")
+    comment(f"------=====-----slides unsorted: {lst[:25]}")
+    comment(f"*************slides sorted: {lst[:25]}")
     return result
 
 def get_member_videos(member_id):
